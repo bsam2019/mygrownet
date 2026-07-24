@@ -274,6 +274,6 @@ class MessageController extends Controller
 
     private function getBusiness(Request $request)
     {
-        return \App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel::where('user_id', $request->user()->id)->firstOrFail();
+        return app(\App\Domain\BizBoost\Services\BusinessService::class)->getBusinessOrFail($request->user()->id);
     }
 }

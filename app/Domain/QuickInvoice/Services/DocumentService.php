@@ -174,6 +174,16 @@ class DocumentService
         return $this->documentRepository->findByUserId($userId);
     }
 
+    public function getRecentDocumentsByUser(int $userId, int $limit = 5): array
+    {
+        return $this->documentRepository->findRecentByUser($userId, $limit);
+    }
+
+    public function getTotalDocumentCount(): int
+    {
+        return $this->documentRepository->countAll();
+    }
+
     /**
      * Delete a document
      * 

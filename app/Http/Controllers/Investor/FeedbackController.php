@@ -4,32 +4,30 @@ namespace App\Http\Controllers\Investor;
 
 use App\Http\Controllers\Controller;
 use App\Domain\Investor\Services\InvestorFeedbackService;
-use App\Models\Investor\InvestorAccount;
+use App\Domain\Investor\Repositories\InvestorAccountRepositoryInterface;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class FeedbackController extends Controller
 {
     public function __construct(
-        private readonly InvestorFeedbackService $feedbackService
+        private readonly InvestorFeedbackService $feedbackService,
+        private readonly InvestorAccountRepositoryInterface $accountRepository
     ) {}
 
-    /**
-     * Display feedback page with surveys and polls
-     */
     public function index(Request $request)
     {
         $user = $request->user();
-        $investorAccount = InvestorAccount::where('user_id', $user->id)->first();
+        $investorAccount = $this->accountRepository->findByUserId($user->id);
 
         if (!$investorAccount) {
             return redirect()->route('investor.dashboard')
                 ->with('error', 'Investor account not found.');
         }
 
-        $myFeedback = $this->feedbackService->getInvestorFeedback($investorAccount->id);
-        $activeSurveys = $this->feedbackService->getActiveSurveys($investorAccount->id);
-        $activePolls = $this->feedbackService->getActivePolls($investorAccount->id);
+        $myFeedback = $this->feedbackService->getInvestorFeedback($investorAccount->getId());
+        $activeSurveys = $this->feedbackService->getActiveSurveys($investorAccount->getId());
+        $activePolls = $this->feedbackService->getActivePolls($investorAccount->getId());
 
         return Inertia::render('Investor/Feedback', [
             'myFeedback' => $myFeedback,
@@ -38,9 +36,6 @@ class FeedbackController extends Controller
         ]);
     }
 
-    /**
-     * Submit feedback
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -51,35 +46,37 @@ class FeedbackController extends Controller
             'satisfaction_rating' => 'nullable|integer|min:1|max:5',
         ]);
 
-        $investorAccount = InvestorAccount::where('user_id', $request->user()->id)->firstOrFail();
-        
-        $this->feedbackService->submitFeedback($investorAccount->id, $validated);
+        $investorAccount = $this->accountRepository->findByUserId($request->user()->id);
+
+        if (!$investorAccount) {
+            return back()->withErrors(['error' => 'Investor account not found.']);
+        }
+
+        $this->feedbackService->submitFeedback($investorAccount->getId(), $validated);
 
         return back()->with('success', 'Thank you for your feedback!');
     }
 
-    /**
-     * Submit survey response
-     */
     public function submitSurvey(Request $request, int $surveyId)
     {
         $validated = $request->validate([
             'responses' => 'required|array',
         ]);
 
-        $investorAccount = InvestorAccount::where('user_id', $request->user()->id)->firstOrFail();
+        $investorAccount = $this->accountRepository->findByUserId($request->user()->id);
+
+        if (!$investorAccount) {
+            return back()->withErrors(['error' => 'Investor account not found.']);
+        }
 
         try {
-            $this->feedbackService->submitSurveyResponse($surveyId, $investorAccount->id, $validated['responses']);
+            $this->feedbackService->submitSurveyResponse($surveyId, $investorAccount->getId(), $validated['responses']);
             return back()->with('success', 'Survey submitted successfully!');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
     }
 
-    /**
-     * Submit poll vote
-     */
     public function submitPollVote(Request $request, int $pollId)
     {
         $validated = $request->validate([
@@ -87,10 +84,14 @@ class FeedbackController extends Controller
             'selected_options.*' => 'integer',
         ]);
 
-        $investorAccount = InvestorAccount::where('user_id', $request->user()->id)->firstOrFail();
+        $investorAccount = $this->accountRepository->findByUserId($request->user()->id);
+
+        if (!$investorAccount) {
+            return back()->withErrors(['error' => 'Investor account not found.']);
+        }
 
         try {
-            $this->feedbackService->submitPollVote($pollId, $investorAccount->id, $validated['selected_options']);
+            $this->feedbackService->submitPollVote($pollId, $investorAccount->getId(), $validated['selected_options']);
             return back()->with('success', 'Vote submitted!');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());

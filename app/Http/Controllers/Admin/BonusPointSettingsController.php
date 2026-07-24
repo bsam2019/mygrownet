@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\LifePointSetting;
-use App\Models\BonusPointSetting;
-use App\Models\BPConversionRate;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\LifePointSetting;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\BonusPointSetting;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\BPConversionRate;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 

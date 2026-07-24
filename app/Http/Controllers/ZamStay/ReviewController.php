@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\ZamStay;
 
+use App\Domain\ZamStay\Services\ReviewService;
 use App\Http\Controllers\Controller;
-use App\Models\ZamStay\ZamStayBooking;
-use App\Models\ZamStay\ZamStayReview;
 use Illuminate\Http\Request;
 
 class ReviewController extends Controller
 {
+    public function __construct(
+        private readonly ReviewService $reviewService,
+    ) {}
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -17,27 +20,7 @@ class ReviewController extends Controller
             'comment' => 'nullable|string|max:2000',
         ]);
 
-        $booking = ZamStayBooking::findOrFail($validated['booking_id']);
-
-        if ($booking->user_id !== $request->user()->id) {
-            abort(403);
-        }
-
-        if ($booking->status !== 'confirmed') {
-            return back()->withErrors(['booking' => 'You can only review confirmed bookings.']);
-        }
-
-        if ($booking->review()->exists()) {
-            return back()->withErrors(['booking' => 'You have already reviewed this booking.']);
-        }
-
-        ZamStayReview::create([
-            'booking_id' => $booking->id,
-            'user_id' => $request->user()->id,
-            'property_id' => $booking->property_id,
-            'rating' => $validated['rating'],
-            'comment' => $validated['comment'] ?? null,
-        ]);
+        $this->reviewService->create($request->user()->id, $validated);
 
         return back()->with('success', 'Review submitted successfully.');
     }

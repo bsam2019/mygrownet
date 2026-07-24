@@ -6,7 +6,7 @@ use Tests\TestCase;
 use App\Models\User;
 use App\Models\Investment;
 use App\Models\InvestmentTier;
-use App\Models\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use App\Infrastructure\Persistence\Eloquent\EmployeeModel;
 use App\Infrastructure\Persistence\Eloquent\DepartmentModel;
 use App\Infrastructure\Persistence\Eloquent\PositionModel;

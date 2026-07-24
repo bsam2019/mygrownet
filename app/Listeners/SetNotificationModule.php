@@ -37,15 +37,11 @@ class SetNotificationModule
      */
     private function getModuleFromClass(string $class): ?string
     {
-        if (str_contains($class, 'Notifications\\GrowFinance\\')) {
+        if (str_contains($class, 'Notifications\GrowFinance\\')) {
             return 'growfinance';
         }
 
-        if (str_contains($class, 'Notifications\\GrowBiz\\')) {
-            return 'growbiz';
-        }
-
-        if (str_contains($class, 'Notifications\\MyGrowNet\\')) {
+        if (str_contains($class, 'Notifications\MyGrowNet\\')) {
             return 'mygrownet';
         }
 

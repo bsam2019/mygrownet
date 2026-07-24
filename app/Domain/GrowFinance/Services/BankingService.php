@@ -4,13 +4,22 @@ declare(strict_types=1);
 
 namespace App\Domain\GrowFinance\Services;
 
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceAccountModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceJournalEntryModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceJournalLineModel;
+use App\Domain\GrowFinance\Entities\Account;
+use App\Domain\GrowFinance\Entities\JournalEntry;
+use App\Domain\GrowFinance\Entities\JournalLine;
+use App\Domain\GrowFinance\Repositories\AccountRepositoryInterface;
+use App\Domain\GrowFinance\Repositories\JournalEntryRepositoryInterface;
+use App\Domain\GrowFinance\Repositories\JournalLineRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 
 class BankingService
 {
+    public function __construct(
+        private AccountRepositoryInterface $accountRepo,
+        private JournalEntryRepositoryInterface $journalEntryRepo,
+        private JournalLineRepositoryInterface $journalLineRepo,
+    ) {}
+
     public function recordDeposit(
         int $businessId,
         int $accountId,
@@ -19,17 +28,12 @@ class BankingService
         ?string $reference,
         string $date,
         int $createdBy
-    ): GrowFinanceJournalEntryModel {
+    ): array {
         return DB::transaction(function () use ($businessId, $accountId, $amount, $description, $reference, $date, $createdBy) {
-            // Get the equity/income account for deposits (Owner's Capital or Other Income)
-            $equityAccount = GrowFinanceAccountModel::forBusiness($businessId)
-                ->where('code', '4200') // Other Income
-                ->first();
+            $equityAccount = $this->accountRepo->findByCode($businessId, '4200');
 
             if (!$equityAccount) {
-                $equityAccount = GrowFinanceAccountModel::forBusiness($businessId)
-                    ->where('code', '3000') // Owner's Capital
-                    ->first();
+                $equityAccount = $this->accountRepo->findByCode($businessId, '3000');
             }
 
             if (!$equityAccount) {
@@ -38,43 +42,79 @@ class BankingService
 
             $entryNumber = $this->generateEntryNumber($businessId);
 
-            $entry = GrowFinanceJournalEntryModel::create([
-                'business_id' => $businessId,
-                'entry_number' => $entryNumber,
-                'entry_date' => $date,
-                'description' => $description,
-                'reference' => $reference,
-                'is_posted' => true,
-                'created_by' => $createdBy,
-            ]);
+            $entry = $this->journalEntryRepo->save(new JournalEntry(
+                id: null,
+                businessId: $businessId,
+                entryNumber: $entryNumber,
+                entryDate: new \DateTimeImmutable($date),
+                description: $description,
+                reference: $reference,
+                isPosted: true,
+                createdBy: $createdBy,
+                createdAt: null,
+                updatedAt: null,
+            ));
 
-            // Debit cash account (increase)
-            GrowFinanceJournalLineModel::create([
-                'journal_entry_id' => $entry->id,
-                'account_id' => $accountId,
-                'debit_amount' => $amount,
-                'credit_amount' => 0,
-                'description' => $description,
-            ]);
+            $this->journalLineRepo->save(new JournalLine(
+                id: null,
+                journalEntryId: $entry->id,
+                accountId: $accountId,
+                debitAmount: $amount,
+                creditAmount: 0,
+                description: $description,
+                createdAt: null,
+                updatedAt: null,
+            ));
 
-            // Credit equity/income account
-            GrowFinanceJournalLineModel::create([
-                'journal_entry_id' => $entry->id,
-                'account_id' => $equityAccount->id,
-                'debit_amount' => 0,
-                'credit_amount' => $amount,
-                'description' => $description,
-            ]);
+            $this->journalLineRepo->save(new JournalLine(
+                id: null,
+                journalEntryId: $entry->id,
+                accountId: $equityAccount->id,
+                debitAmount: 0,
+                creditAmount: $amount,
+                description: $description,
+                createdAt: null,
+                updatedAt: null,
+            ));
 
-            // Update account balances
-            $cashAccount = GrowFinanceAccountModel::findOrFail($accountId);
-            $cashAccount->current_balance += $amount;
-            $cashAccount->save();
+            $cashAccount = $this->accountRepo->findById($accountId);
+            if (!$cashAccount) {
+                throw new \RuntimeException('Cash account not found');
+            }
 
-            $equityAccount->current_balance += $amount;
-            $equityAccount->save();
+            $this->accountRepo->save(new Account(
+                id: $cashAccount->id,
+                businessId: $cashAccount->businessId,
+                code: $cashAccount->code,
+                name: $cashAccount->name,
+                type: $cashAccount->type,
+                category: $cashAccount->category,
+                description: $cashAccount->description,
+                isSystem: $cashAccount->isSystem,
+                isActive: $cashAccount->isActive,
+                openingBalance: $cashAccount->openingBalance,
+                currentBalance: $cashAccount->currentBalance + $amount,
+                createdAt: $cashAccount->createdAt,
+                updatedAt: null,
+            ));
 
-            return $entry->load('lines.account');
+            $this->accountRepo->save(new Account(
+                id: $equityAccount->id,
+                businessId: $equityAccount->businessId,
+                code: $equityAccount->code,
+                name: $equityAccount->name,
+                type: $equityAccount->type,
+                category: $equityAccount->category,
+                description: $equityAccount->description,
+                isSystem: $equityAccount->isSystem,
+                isActive: $equityAccount->isActive,
+                openingBalance: $equityAccount->openingBalance,
+                currentBalance: $equityAccount->currentBalance + $amount,
+                createdAt: $equityAccount->createdAt,
+                updatedAt: null,
+            ));
+
+            return $entry->toArray();
         });
     }
 
@@ -86,12 +126,9 @@ class BankingService
         ?string $reference,
         string $date,
         int $createdBy
-    ): GrowFinanceJournalEntryModel {
+    ): array {
         return DB::transaction(function () use ($businessId, $accountId, $amount, $description, $reference, $date, $createdBy) {
-            // Get the drawings account
-            $drawingsAccount = GrowFinanceAccountModel::forBusiness($businessId)
-                ->where('code', '3200') // Owner's Drawings
-                ->first();
+            $drawingsAccount = $this->accountRepo->findByCode($businessId, '3200');
 
             if (!$drawingsAccount) {
                 throw new \RuntimeException('No drawings account found for withdrawal');
@@ -99,43 +136,79 @@ class BankingService
 
             $entryNumber = $this->generateEntryNumber($businessId);
 
-            $entry = GrowFinanceJournalEntryModel::create([
-                'business_id' => $businessId,
-                'entry_number' => $entryNumber,
-                'entry_date' => $date,
-                'description' => $description,
-                'reference' => $reference,
-                'is_posted' => true,
-                'created_by' => $createdBy,
-            ]);
+            $entry = $this->journalEntryRepo->save(new JournalEntry(
+                id: null,
+                businessId: $businessId,
+                entryNumber: $entryNumber,
+                entryDate: new \DateTimeImmutable($date),
+                description: $description,
+                reference: $reference,
+                isPosted: true,
+                createdBy: $createdBy,
+                createdAt: null,
+                updatedAt: null,
+            ));
 
-            // Debit drawings account
-            GrowFinanceJournalLineModel::create([
-                'journal_entry_id' => $entry->id,
-                'account_id' => $drawingsAccount->id,
-                'debit_amount' => $amount,
-                'credit_amount' => 0,
-                'description' => $description,
-            ]);
+            $this->journalLineRepo->save(new JournalLine(
+                id: null,
+                journalEntryId: $entry->id,
+                accountId: $drawingsAccount->id,
+                debitAmount: $amount,
+                creditAmount: 0,
+                description: $description,
+                createdAt: null,
+                updatedAt: null,
+            ));
 
-            // Credit cash account (decrease)
-            GrowFinanceJournalLineModel::create([
-                'journal_entry_id' => $entry->id,
-                'account_id' => $accountId,
-                'debit_amount' => 0,
-                'credit_amount' => $amount,
-                'description' => $description,
-            ]);
+            $this->journalLineRepo->save(new JournalLine(
+                id: null,
+                journalEntryId: $entry->id,
+                accountId: $accountId,
+                debitAmount: 0,
+                creditAmount: $amount,
+                description: $description,
+                createdAt: null,
+                updatedAt: null,
+            ));
 
-            // Update account balances
-            $cashAccount = GrowFinanceAccountModel::findOrFail($accountId);
-            $cashAccount->current_balance -= $amount;
-            $cashAccount->save();
+            $cashAccount = $this->accountRepo->findById($accountId);
+            if (!$cashAccount) {
+                throw new \RuntimeException('Cash account not found');
+            }
 
-            $drawingsAccount->current_balance += $amount; // Drawings is contra-equity
-            $drawingsAccount->save();
+            $this->accountRepo->save(new Account(
+                id: $cashAccount->id,
+                businessId: $cashAccount->businessId,
+                code: $cashAccount->code,
+                name: $cashAccount->name,
+                type: $cashAccount->type,
+                category: $cashAccount->category,
+                description: $cashAccount->description,
+                isSystem: $cashAccount->isSystem,
+                isActive: $cashAccount->isActive,
+                openingBalance: $cashAccount->openingBalance,
+                currentBalance: $cashAccount->currentBalance - $amount,
+                createdAt: $cashAccount->createdAt,
+                updatedAt: null,
+            ));
 
-            return $entry->load('lines.account');
+            $this->accountRepo->save(new Account(
+                id: $drawingsAccount->id,
+                businessId: $drawingsAccount->businessId,
+                code: $drawingsAccount->code,
+                name: $drawingsAccount->name,
+                type: $drawingsAccount->type,
+                category: $drawingsAccount->category,
+                description: $drawingsAccount->description,
+                isSystem: $drawingsAccount->isSystem,
+                isActive: $drawingsAccount->isActive,
+                openingBalance: $drawingsAccount->openingBalance,
+                currentBalance: $drawingsAccount->currentBalance + $amount,
+                createdAt: $drawingsAccount->createdAt,
+                updatedAt: null,
+            ));
+
+            return $entry->toArray();
         });
     }
 
@@ -147,54 +220,95 @@ class BankingService
         string $description,
         string $date,
         int $createdBy
-    ): GrowFinanceJournalEntryModel {
+    ): array {
         return DB::transaction(function () use ($businessId, $fromAccountId, $toAccountId, $amount, $description, $date, $createdBy) {
             $entryNumber = $this->generateEntryNumber($businessId);
 
-            $entry = GrowFinanceJournalEntryModel::create([
-                'business_id' => $businessId,
-                'entry_number' => $entryNumber,
-                'entry_date' => $date,
-                'description' => $description,
-                'reference' => 'TRANSFER',
-                'is_posted' => true,
-                'created_by' => $createdBy,
-            ]);
+            $entry = $this->journalEntryRepo->save(new JournalEntry(
+                id: null,
+                businessId: $businessId,
+                entryNumber: $entryNumber,
+                entryDate: new \DateTimeImmutable($date),
+                description: $description,
+                reference: 'TRANSFER',
+                isPosted: true,
+                createdBy: $createdBy,
+                createdAt: null,
+                updatedAt: null,
+            ));
 
-            // Debit destination account (increase)
-            GrowFinanceJournalLineModel::create([
-                'journal_entry_id' => $entry->id,
-                'account_id' => $toAccountId,
-                'debit_amount' => $amount,
-                'credit_amount' => 0,
-                'description' => $description,
-            ]);
+            $this->journalLineRepo->save(new JournalLine(
+                id: null,
+                journalEntryId: $entry->id,
+                accountId: $toAccountId,
+                debitAmount: $amount,
+                creditAmount: 0,
+                description: $description,
+                createdAt: null,
+                updatedAt: null,
+            ));
 
-            // Credit source account (decrease)
-            GrowFinanceJournalLineModel::create([
-                'journal_entry_id' => $entry->id,
-                'account_id' => $fromAccountId,
-                'debit_amount' => 0,
-                'credit_amount' => $amount,
-                'description' => $description,
-            ]);
+            $this->journalLineRepo->save(new JournalLine(
+                id: null,
+                journalEntryId: $entry->id,
+                accountId: $fromAccountId,
+                debitAmount: 0,
+                creditAmount: $amount,
+                description: $description,
+                createdAt: null,
+                updatedAt: null,
+            ));
 
-            // Update account balances
-            $fromAccount = GrowFinanceAccountModel::findOrFail($fromAccountId);
-            $fromAccount->current_balance -= $amount;
-            $fromAccount->save();
+            $fromAccount = $this->accountRepo->findById($fromAccountId);
+            if (!$fromAccount) {
+                throw new \RuntimeException('Source account not found');
+            }
 
-            $toAccount = GrowFinanceAccountModel::findOrFail($toAccountId);
-            $toAccount->current_balance += $amount;
-            $toAccount->save();
+            $toAccount = $this->accountRepo->findById($toAccountId);
+            if (!$toAccount) {
+                throw new \RuntimeException('Destination account not found');
+            }
 
-            return $entry->load('lines.account');
+            $this->accountRepo->save(new Account(
+                id: $fromAccount->id,
+                businessId: $fromAccount->businessId,
+                code: $fromAccount->code,
+                name: $fromAccount->name,
+                type: $fromAccount->type,
+                category: $fromAccount->category,
+                description: $fromAccount->description,
+                isSystem: $fromAccount->isSystem,
+                isActive: $fromAccount->isActive,
+                openingBalance: $fromAccount->openingBalance,
+                currentBalance: $fromAccount->currentBalance - $amount,
+                createdAt: $fromAccount->createdAt,
+                updatedAt: null,
+            ));
+
+            $this->accountRepo->save(new Account(
+                id: $toAccount->id,
+                businessId: $toAccount->businessId,
+                code: $toAccount->code,
+                name: $toAccount->name,
+                type: $toAccount->type,
+                category: $toAccount->category,
+                description: $toAccount->description,
+                isSystem: $toAccount->isSystem,
+                isActive: $toAccount->isActive,
+                openingBalance: $toAccount->openingBalance,
+                currentBalance: $toAccount->currentBalance + $amount,
+                createdAt: $toAccount->createdAt,
+                updatedAt: null,
+            ));
+
+            return $entry->toArray();
         });
     }
 
     private function generateEntryNumber(int $businessId): string
     {
-        $lastEntry = GrowFinanceJournalEntryModel::forBusiness($businessId)
+        $lastEntry = DB::table('growfinance_journal_entries')
+            ->where('business_id', $businessId)
             ->orderBy('id', 'desc')
             ->first();
 

@@ -2,10 +2,15 @@
 
 namespace App\Application\BizDocs\Services;
 
-use App\Infrastructure\BizDocs\Persistence\Eloquent\DocumentStatusHistoryModel;
+use App\Domain\BizDocs\DocumentManagement\Repositories\DocumentStatusHistoryRepositoryInterface;
 
 class DocumentStatusHistoryService
 {
+    public function __construct(
+        private readonly DocumentStatusHistoryRepositoryInterface $statusHistoryRepository
+    ) {
+    }
+
     public function recordStatusChange(
         int $documentId,
         ?string $fromStatus,
@@ -13,32 +18,11 @@ class DocumentStatusHistoryService
         ?string $notes = null,
         ?int $changedBy = null
     ): void {
-        DocumentStatusHistoryModel::create([
-            'document_id' => $documentId,
-            'from_status' => $fromStatus,
-            'to_status' => $toStatus,
-            'notes' => $notes,
-            'changed_by' => $changedBy,
-            'changed_at' => now(),
-        ]);
+        $this->statusHistoryRepository->record($documentId, $fromStatus, $toStatus, $notes, $changedBy);
     }
 
     public function getHistory(int $documentId): array
     {
-        return DocumentStatusHistoryModel::where('document_id', $documentId)
-            ->with('user:id,name')
-            ->orderBy('changed_at', 'desc')
-            ->get()
-            ->map(function ($history) {
-                return [
-                    'id' => $history->id,
-                    'fromStatus' => $history->from_status,
-                    'toStatus' => $history->to_status,
-                    'notes' => $history->notes,
-                    'changedBy' => $history->user?->name ?? 'System',
-                    'changedAt' => $history->changed_at->format('Y-m-d H:i:s'),
-                ];
-            })
-            ->toArray();
+        return $this->statusHistoryRepository->getByDocument($documentId);
     }
 }

@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Employee\StorePositionRequest;
-use App\Http\Requests\Employee\UpdatePositionRequest;
-use App\Infrastructure\Persistence\Eloquent\DepartmentModel;
+use App\Domain\Employee\Repositories\PositionRepositoryInterface;
+use App\Domain\Employee\Repositories\DepartmentRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\PositionModel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,18 +15,21 @@ use Inertia\Response;
 
 class PositionController extends Controller
 {
+    public function __construct(
+        private PositionRepositoryInterface $positionRepo,
+        private DepartmentRepositoryInterface $departmentRepo,
+    ) {}
+
     public function index(Request $request): Response|JsonResponse
     {
-        $query = PositionModel::query()
+        $query = $this->positionRepo->query()
             ->with(['department'])
             ->withCount(['employees']);
 
-        // Filter by active status
         if ($request->boolean('active_only', true)) {
             $query->active();
         }
 
-        // Search functionality
         if ($request->filled('search')) {
             $search = $request->string('search');
             $query->where(function ($q) use ($search) {
@@ -36,7 +38,6 @@ class PositionController extends Controller
             });
         }
 
-        // Filter by department
         if ($request->filled('department_id')) {
             $query->where('department_id', $request->integer('department_id'));
         }
@@ -45,7 +46,7 @@ class PositionController extends Controller
 
         return Inertia::render('Employee/Positions/Index', [
             'positions' => $positions,
-            'departments' => DepartmentModel::active()->orderBy('name')->get(['id', 'name']),
+            'departments' => $this->departmentRepo->getAllActive(),
             'filters' => $request->only(['search', 'department_id', 'active_only'])
         ]);
     }
@@ -84,19 +85,13 @@ class PositionController extends Controller
         return Inertia::render('Employee/Positions/Show', $data);
     }
 
-    /**
-     * Show the form for creating a new position
-     */
     public function create()
     {
         return Inertia::render('Employee/Positions/Create', [
-            'departments' => DepartmentModel::active()->orderBy('name')->get(['id', 'name'])
+            'departments' => $this->departmentRepo->getAllActive(),
         ]);
     }
 
-    /**
-     * Store a newly created position
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -108,7 +103,7 @@ class PositionController extends Controller
             'is_commission_eligible' => 'boolean'
         ]);
 
-        $position = PositionModel::create([
+        $this->positionRepo->save([
             'title' => $validated['title'],
             'description' => $validated['description'] ?? null,
             'department_id' => $validated['department_id'],
@@ -122,16 +117,13 @@ class PositionController extends Controller
             ->with('success', 'Position created successfully!');
     }
 
-    /**
-     * Show the form for editing the specified position
-     */
     public function edit(PositionModel $position)
     {
         $position->load('department');
-        
+
         return Inertia::render('Employee/Positions/Edit', [
             'position' => $position,
-            'departments' => DepartmentModel::active()->orderBy('name')->get(['id', 'name'])
+            'departments' => $this->departmentRepo->getAllActive(),
         ]);
     }
 
@@ -163,7 +155,6 @@ class PositionController extends Controller
 
     public function destroy(PositionModel $position): JsonResponse
     {
-        // Check if position has employees
         if ($position->employees()->exists()) {
             return response()->json([
                 'message' => 'Cannot delete position with active employees. Please reassign employees first.'
@@ -193,8 +184,7 @@ class PositionController extends Controller
 
     public function salaryRanges(): JsonResponse
     {
-        $ranges = PositionModel::active()
-            ->selectRaw('
+        $ranges = $this->positionRepo->query()->selectRaw('
                 MIN(min_salary) as overall_min,
                 MAX(max_salary) as overall_max,
                 AVG(min_salary) as avg_min,
@@ -202,7 +192,7 @@ class PositionController extends Controller
             ')
             ->first();
 
-        $departmentRanges = PositionModel::active()
+        $departmentRanges = $this->positionRepo->query()
             ->join('departments', 'positions.department_id', '=', 'departments.id')
             ->selectRaw('
                 departments.name as department_name,
@@ -225,7 +215,11 @@ class PositionController extends Controller
 
     public function commissionEligible(): JsonResponse
     {
-        $positions = PositionModel::commissionEligible()
+        $positions = $this->positionRepo->query()->active()
+            ->where(function($q) {
+                $q->where('base_commission_rate', '>', 0)
+                  ->orWhere('performance_commission_rate', '>', 0);
+            })
             ->with(['department'])
             ->withCount(['employees'])
             ->orderBy('title')

@@ -2,49 +2,20 @@
 
 namespace App\Domain\LifePlus\Services;
 
-use App\Infrastructure\Persistence\Eloquent\LifePlusTaskModel;
-use Carbon\Carbon;
+use App\Domain\LifePlus\Entities\LifePlusTask;
+use App\Domain\LifePlus\Exceptions\LifePlusException;
+use App\Domain\LifePlus\Repositories\TaskRepositoryInterface;
 
 class TaskService
 {
+    public function __construct(
+        private readonly TaskRepositoryInterface $taskRepo,
+    ) {}
+
     public function getTasks(int $userId, array $filters = []): array
     {
-        $query = LifePlusTaskModel::where('user_id', $userId);
-
-        if (isset($filters['is_completed'])) {
-            $query->where('is_completed', $filters['is_completed']);
-        }
-
-        if (!empty($filters['priority'])) {
-            $query->where('priority', $filters['priority']);
-        }
-
-        if (!empty($filters['due_date'])) {
-            $query->whereDate('due_date', $filters['due_date']);
-        }
-
-        if (!empty($filters['today'])) {
-            $query->whereDate('due_date', now()->toDateString());
-        }
-
-        if (!empty($filters['upcoming'])) {
-            $query->where('due_date', '>', now())
-                  ->where('due_date', '<=', now()->addDays(7));
-        }
-
-        if (!empty($filters['overdue'])) {
-            $query->where('is_completed', false)
-                  ->whereDate('due_date', '<', now()->toDateString());
-        }
-
-        return $query->orderBy('is_completed')
-            ->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END')
-            ->orderBy('due_date')
-            ->orderByRaw("CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END")
-            ->limit($filters['limit'] ?? 100)
-            ->get()
-            ->map(fn($t) => $this->mapTask($t))
-            ->toArray();
+        $tasks = $this->taskRepo->findByUser($userId, $filters);
+        return array_map(fn($t) => $this->mapTask($t), $tasks);
     }
 
     public function getTodayTasks(int $userId): array
@@ -54,7 +25,7 @@ class TaskService
 
     public function createTask(int $userId, array $data): array
     {
-        $task = LifePlusTaskModel::create([
+        $task = LifePlusTask::reconstitute([
             'user_id' => $userId,
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
@@ -66,42 +37,37 @@ class TaskService
             'local_id' => $data['local_id'] ?? null,
         ]);
 
-        return $this->mapTask($task);
+        return $this->mapTask($this->taskRepo->save($task));
     }
 
     public function updateTask(int $id, int $userId, array $data): ?array
     {
-        $task = LifePlusTaskModel::where('id', $id)
-            ->where('user_id', $userId)
-            ->first();
+        $task = $this->taskRepo->findById($id);
+        if (!$task || $task->userId !== $userId) return null;
 
-        if (!$task) return null;
-
-        $task->update($data);
-        return $this->mapTask($task->fresh());
+        $merged = array_merge($task->toArray(), $data);
+        $saved = $this->taskRepo->save(LifePlusTask::reconstitute($merged));
+        return $this->mapTask($saved);
     }
 
     public function toggleTask(int $id, int $userId): ?array
     {
-        $task = LifePlusTaskModel::where('id', $id)
-            ->where('user_id', $userId)
-            ->first();
+        $task = $this->taskRepo->findById($id);
+        if (!$task || $task->userId !== $userId) return null;
 
-        if (!$task) return null;
+        $merged = $task->toArray();
+        $merged['is_completed'] = !$task->isCompleted;
+        $merged['completed_at'] = $merged['is_completed'] ? now()->toDateTimeString() : null;
 
-        $task->update([
-            'is_completed' => !$task->is_completed,
-            'completed_at' => !$task->is_completed ? now() : null,
-        ]);
-
-        return $this->mapTask($task->fresh());
+        $saved = $this->taskRepo->save(LifePlusTask::reconstitute($merged));
+        return $this->mapTask($saved);
     }
 
     public function deleteTask(int $id, int $userId): bool
     {
-        return LifePlusTaskModel::where('id', $id)
-            ->where('user_id', $userId)
-            ->delete() > 0;
+        $task = $this->taskRepo->findById($id);
+        if (!$task || $task->userId !== $userId) return false;
+        return $this->taskRepo->delete($id);
     }
 
     public function syncTasks(int $userId, array $tasks): array
@@ -109,13 +75,9 @@ class TaskService
         $synced = [];
         foreach ($tasks as $task) {
             if (!empty($task['local_id'])) {
-                $existing = LifePlusTaskModel::where('user_id', $userId)
-                    ->where('local_id', $task['local_id'])
-                    ->first();
-
+                $existing = $this->taskRepo->findByLocalId($userId, $task['local_id']);
                 if ($existing) {
-                    $existing->update($task);
-                    $synced[] = $this->mapTask($existing->fresh());
+                    $synced[] = $this->updateTask($existing->id, $userId, $task);
                 } else {
                     $synced[] = $this->createTask($userId, $task);
                 }
@@ -123,71 +85,45 @@ class TaskService
                 $synced[] = $this->createTask($userId, $task);
             }
         }
-        return $synced;
+        return array_filter($synced);
     }
 
     public function getStats(int $userId): array
     {
-        $today = now()->toDateString();
-        
-        $total = LifePlusTaskModel::where('user_id', $userId)->count();
-        $completed = LifePlusTaskModel::where('user_id', $userId)->where('is_completed', true)->count();
-        $pending = $total - $completed;
-        $todayTasks = LifePlusTaskModel::where('user_id', $userId)
-            ->whereDate('due_date', $today)
-            ->where('is_completed', false)
-            ->count();
-        $overdue = LifePlusTaskModel::where('user_id', $userId)
-            ->where('is_completed', false)
-            ->whereDate('due_date', '<', $today)
-            ->count();
-
-        return [
-            'total' => $total,
-            'completed' => $completed,
-            'pending' => $pending,
-            'today' => $todayTasks,
-            'overdue' => $overdue,
-            'completion_rate' => $total > 0 ? round(($completed / $total) * 100, 1) : 0,
-        ];
+        return $this->taskRepo->getStats($userId);
     }
 
     public function getTasksForMonth(int $userId, string $month): array
     {
-        $startDate = Carbon::parse($month . '-01')->startOfMonth();
-        $endDate = $startDate->copy()->endOfMonth();
-
-        return LifePlusTaskModel::where('user_id', $userId)
-            ->whereBetween('due_date', [$startDate, $endDate])
-            ->orderBy('due_date')
-            ->get()
-            ->map(fn($t) => $this->mapTask($t))
-            ->toArray();
+        return array_map(fn($t) => $this->mapTask($t), $this->taskRepo->getForMonth($userId, $month));
     }
 
-    private function mapTask($task): array
+    private function mapTask(LifePlusTask $task): array
     {
-        $isOverdue = !$task->is_completed && $task->due_date && $task->due_date->isPast();
+        $now = new \DateTimeImmutable();
+        $isOverdue = !$task->isCompleted && $task->dueDate && $task->dueDate < $now;
+
+        $priorityColor = match($task->priority) {
+            'high' => '#dc2626',
+            'medium' => '#f59e0b',
+            default => '#10b981',
+        };
 
         return [
             'id' => $task->id,
             'title' => $task->title,
             'description' => $task->description,
             'priority' => $task->priority,
-            'priority_color' => match($task->priority) {
-                'high' => '#dc2626',
-                'medium' => '#f59e0b',
-                default => '#10b981',
-            },
-            'due_date' => $task->due_date?->format('Y-m-d'),
-            'due_time' => $task->due_time,
-            'formatted_due' => $task->due_date?->format('M d'),
-            'is_completed' => $task->is_completed,
-            'completed_at' => $task->completed_at?->toISOString(),
+            'priority_color' => $priorityColor,
+            'due_date' => $task->dueDate?->format('Y-m-d'),
+            'due_time' => $task->dueTime,
+            'formatted_due' => $task->dueDate?->format('M d'),
+            'is_completed' => $task->isCompleted,
+            'completed_at' => $task->completedAt?->format('Y-m-d\TH:i:s\Z'),
             'is_overdue' => $isOverdue,
-            'is_today' => $task->due_date?->isToday() ?? false,
-            'is_synced' => $task->is_synced,
-            'local_id' => $task->local_id,
+            'is_today' => $task->dueDate?->format('Y-m-d') === $now->format('Y-m-d'),
+            'is_synced' => $task->isSynced,
+            'local_id' => $task->localId,
         ];
     }
 }

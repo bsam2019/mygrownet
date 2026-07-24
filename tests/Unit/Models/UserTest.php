@@ -1,11 +1,11 @@
 <?php
 
-use App\Models\Commission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\Commission;
 use App\Models\Investment;
 use App\Models\InvestmentTier;
-use App\Models\MatrixPosition;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\MatrixPosition;
 use App\Models\ProfitShare;
-use App\Models\Referral;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\Referral;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 

@@ -2,24 +2,28 @@
 
 namespace App\Domain\GrowFinance\Services;
 
+use App\Domain\GrowFinance\Entities\WhiteLabel;
+use App\Domain\GrowFinance\Repositories\WhiteLabelRepositoryInterface;
 use App\Domain\Module\Services\SubscriptionService;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceWhiteLabelModel;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class WhiteLabelService
 {
+    private const DEFAULT_PRIMARY_COLOR = '#2563eb';
+    private const DEFAULT_SECONDARY_COLOR = '#1e40af';
+    private const DEFAULT_ACCENT_COLOR = '#059669';
+
     public function __construct(
-        private SubscriptionService $subscriptionService
+        private SubscriptionService $subscriptionService,
+        private WhiteLabelRepositoryInterface $whiteLabelRepo,
     ) {}
 
-    /**
-     * Get white-label settings for a business
-     */
     public function getSettings(int $businessId): ?array
     {
-        $settings = GrowFinanceWhiteLabelModel::forBusiness($businessId)->first();
+        $settings = $this->whiteLabelRepo->findByBusiness($businessId);
 
         if (!$settings) {
             return null;
@@ -27,24 +31,23 @@ class WhiteLabelService
 
         return [
             'id' => $settings->id,
-            'company_name' => $settings->company_name,
-            'logo_url' => $settings->getLogoUrl(),
-            'favicon_url' => $settings->getFaviconUrl(),
-            'primary_color' => $settings->primary_color,
-            'secondary_color' => $settings->secondary_color,
-            'accent_color' => $settings->accent_color,
-            'custom_domain' => $settings->custom_domain,
-            'hide_powered_by' => $settings->hide_powered_by,
-            'custom_css' => $settings->custom_css,
-            'email_branding' => $settings->email_branding,
+            'company_name' => $settings->companyName,
+            'logo_url' => $this->getLogoUrl($settings),
+            'favicon_url' => $this->getFaviconUrl($settings),
+            'primary_color' => $settings->primaryColor,
+            'secondary_color' => $settings->secondaryColor,
+            'accent_color' => $settings->accentColor,
+            'custom_domain' => $settings->customDomain,
+            'hide_powered_by' => $settings->hidePoweredBy,
+            'custom_css' => $settings->customCss,
+            'email_branding' => $settings->emailBranding,
         ];
     }
 
-    /**
-     * Check if user can use white-label features
-     */
-    public function canUseWhiteLabel(User $user): array
+    public function canUseWhiteLabel(int $userId): array
     {
+        $user = User::findOrFail($userId);
+
         if (!$this->subscriptionService->canPerformAction($user, 'white_label')) {
             return [
                 'allowed' => false,
@@ -55,130 +58,189 @@ class WhiteLabelService
         return ['allowed' => true];
     }
 
-    /**
-     * Create or update white-label settings
-     */
-    public function saveSettings(int $businessId, array $data): GrowFinanceWhiteLabelModel
+    public function saveSettings(int $businessId, array $data): array
     {
-        $settings = GrowFinanceWhiteLabelModel::forBusiness($businessId)->first();
+        $settings = $this->whiteLabelRepo->findByBusiness($businessId);
 
-        $updateData = [
-            'company_name' => $data['company_name'] ?? null,
-            'primary_color' => $data['primary_color'] ?? GrowFinanceWhiteLabelModel::DEFAULT_PRIMARY_COLOR,
-            'secondary_color' => $data['secondary_color'] ?? GrowFinanceWhiteLabelModel::DEFAULT_SECONDARY_COLOR,
-            'accent_color' => $data['accent_color'] ?? GrowFinanceWhiteLabelModel::DEFAULT_ACCENT_COLOR,
-            'custom_domain' => $data['custom_domain'] ?? null,
-            'hide_powered_by' => $data['hide_powered_by'] ?? false,
-            'custom_css' => $data['custom_css'] ?? null,
-            'email_branding' => $data['email_branding'] ?? null,
-        ];
+        $companyName = $data['company_name'] ?? $settings?->companyName;
+        $primaryColor = $data['primary_color'] ?? $settings?->primaryColor ?? self::DEFAULT_PRIMARY_COLOR;
+        $secondaryColor = $data['secondary_color'] ?? $settings?->secondaryColor ?? self::DEFAULT_SECONDARY_COLOR;
+        $accentColor = $data['accent_color'] ?? $settings?->accentColor ?? self::DEFAULT_ACCENT_COLOR;
+        $customDomain = $data['custom_domain'] ?? $settings?->customDomain;
+        $hidePoweredBy = $data['hide_powered_by'] ?? $settings?->hidePoweredBy ?? false;
+        $customCss = $data['custom_css'] ?? $settings?->customCss;
+        $emailBranding = $data['email_branding'] ?? $settings?->emailBranding;
 
         if ($settings) {
-            $settings->update($updateData);
-            return $settings->fresh();
+            $updated = new WhiteLabel(
+                id: $settings->id,
+                businessId: $businessId,
+                companyName: $companyName,
+                logoPath: $settings->logoPath,
+                faviconPath: $settings->faviconPath,
+                primaryColor: $primaryColor,
+                secondaryColor: $secondaryColor,
+                accentColor: $accentColor,
+                customDomain: $customDomain,
+                hidePoweredBy: $hidePoweredBy,
+                customCss: $customCss,
+                emailBranding: $emailBranding,
+                createdAt: $settings->createdAt,
+                updatedAt: new \DateTimeImmutable('now'),
+            );
+            return $this->whiteLabelRepo->save($updated)->toArray();
         }
 
-        return GrowFinanceWhiteLabelModel::create([
-            'business_id' => $businessId,
-            ...$updateData,
-        ]);
+        return $this->whiteLabelRepo->save(new WhiteLabel(
+            id: null,
+            businessId: $businessId,
+            companyName: $companyName,
+            logoPath: null,
+            faviconPath: null,
+            primaryColor: $primaryColor,
+            secondaryColor: $secondaryColor,
+            accentColor: $accentColor,
+            customDomain: $customDomain,
+            hidePoweredBy: $hidePoweredBy,
+            customCss: $customCss,
+            emailBranding: $emailBranding,
+            createdAt: null,
+            updatedAt: null,
+        ))->toArray();
     }
 
-    /**
-     * Upload logo
-     */
     public function uploadLogo(int $businessId, UploadedFile $file): array
     {
-        $settings = GrowFinanceWhiteLabelModel::forBusiness($businessId)->first();
+        $settings = $this->whiteLabelRepo->findByBusiness($businessId);
 
-        // Delete old logo if exists
-        if ($settings && $settings->logo_path) {
-            Storage::disk('public')->delete($settings->logo_path);
+        if ($settings && $settings->logoPath) {
+            Storage::disk('public')->delete($settings->logoPath);
         }
 
-        // Store new logo
         $path = $file->store("growfinance/{$businessId}/branding", 'public');
 
-        if (!$settings) {
-            $settings = GrowFinanceWhiteLabelModel::create([
-                'business_id' => $businessId,
-                'logo_path' => $path,
-            ]);
+        if ($settings) {
+            $updated = new WhiteLabel(
+                id: $settings->id,
+                businessId: $settings->businessId,
+                companyName: $settings->companyName,
+                logoPath: $path,
+                faviconPath: $settings->faviconPath,
+                primaryColor: $settings->primaryColor,
+                secondaryColor: $settings->secondaryColor,
+                accentColor: $settings->accentColor,
+                customDomain: $settings->customDomain,
+                hidePoweredBy: $settings->hidePoweredBy,
+                customCss: $settings->customCss,
+                emailBranding: $settings->emailBranding,
+                createdAt: $settings->createdAt,
+                updatedAt: new \DateTimeImmutable('now'),
+            );
+            $settings = $this->whiteLabelRepo->save($updated);
         } else {
-            $settings->update(['logo_path' => $path]);
+            $settings = $this->whiteLabelRepo->save(new WhiteLabel(
+                id: null,
+                businessId: $businessId,
+                logoPath: $path,
+            ));
         }
 
         return [
             'success' => true,
-            'logo_url' => $settings->getLogoUrl(),
+            'logo_url' => $this->getLogoUrl($settings),
         ];
     }
 
-    /**
-     * Upload favicon
-     */
     public function uploadFavicon(int $businessId, UploadedFile $file): array
     {
-        $settings = GrowFinanceWhiteLabelModel::forBusiness($businessId)->first();
+        $settings = $this->whiteLabelRepo->findByBusiness($businessId);
 
-        // Delete old favicon if exists
-        if ($settings && $settings->favicon_path) {
-            Storage::disk('public')->delete($settings->favicon_path);
+        if ($settings && $settings->faviconPath) {
+            Storage::disk('public')->delete($settings->faviconPath);
         }
 
-        // Store new favicon
         $path = $file->store("growfinance/{$businessId}/branding", 'public');
 
-        if (!$settings) {
-            $settings = GrowFinanceWhiteLabelModel::create([
-                'business_id' => $businessId,
-                'favicon_path' => $path,
-            ]);
+        if ($settings) {
+            $updated = new WhiteLabel(
+                id: $settings->id,
+                businessId: $settings->businessId,
+                companyName: $settings->companyName,
+                logoPath: $settings->logoPath,
+                faviconPath: $path,
+                primaryColor: $settings->primaryColor,
+                secondaryColor: $settings->secondaryColor,
+                accentColor: $settings->accentColor,
+                customDomain: $settings->customDomain,
+                hidePoweredBy: $settings->hidePoweredBy,
+                customCss: $settings->customCss,
+                emailBranding: $settings->emailBranding,
+                createdAt: $settings->createdAt,
+                updatedAt: new \DateTimeImmutable('now'),
+            );
+            $settings = $this->whiteLabelRepo->save($updated);
         } else {
-            $settings->update(['favicon_path' => $path]);
+            $settings = $this->whiteLabelRepo->save(new WhiteLabel(
+                id: null,
+                businessId: $businessId,
+                faviconPath: $path,
+            ));
         }
 
         return [
             'success' => true,
-            'favicon_url' => $settings->getFaviconUrl(),
+            'favicon_url' => $this->getFaviconUrl($settings),
         ];
     }
 
-    /**
-     * Remove logo
-     */
     public function removeLogo(int $businessId): bool
     {
-        $settings = GrowFinanceWhiteLabelModel::forBusiness($businessId)->first();
+        $settings = $this->whiteLabelRepo->findByBusiness($businessId);
 
-        if ($settings && $settings->logo_path) {
-            Storage::disk('public')->delete($settings->logo_path);
-            $settings->update(['logo_path' => null]);
+        if ($settings && $settings->logoPath) {
+            Storage::disk('public')->delete($settings->logoPath);
+
+            $updated = new WhiteLabel(
+                id: $settings->id,
+                businessId: $settings->businessId,
+                companyName: $settings->companyName,
+                logoPath: null,
+                faviconPath: $settings->faviconPath,
+                primaryColor: $settings->primaryColor,
+                secondaryColor: $settings->secondaryColor,
+                accentColor: $settings->accentColor,
+                customDomain: $settings->customDomain,
+                hidePoweredBy: $settings->hidePoweredBy,
+                customCss: $settings->customCss,
+                emailBranding: $settings->emailBranding,
+                createdAt: $settings->createdAt,
+                updatedAt: new \DateTimeImmutable('now'),
+            );
+            $this->whiteLabelRepo->save($updated);
         }
 
         return true;
     }
 
-    /**
-     * Get CSS variables for white-label styling
-     */
     public function getCssVariables(int $businessId): string
     {
-        $settings = GrowFinanceWhiteLabelModel::forBusiness($businessId)->first();
+        $settings = $this->whiteLabelRepo->findByBusiness($businessId);
 
         if (!$settings) {
             return '';
         }
 
-        return $settings->getCssVariables();
+        return <<<CSS
+:root {
+    --gf-primary: {$settings->primaryColor};
+    --gf-secondary: {$settings->secondaryColor};
+    --gf-accent: {$settings->accentColor};
+}
+CSS;
     }
 
-    /**
-     * Validate custom domain
-     */
     public function validateCustomDomain(string $domain): array
     {
-        // Basic validation
         if (!filter_var($domain, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
             return [
                 'valid' => false,
@@ -186,8 +248,10 @@ class WhiteLabelService
             ];
         }
 
-        // Check if domain is already in use
-        $existing = GrowFinanceWhiteLabelModel::where('custom_domain', $domain)->first();
+        $existing = DB::table('growfinance_white_label_settings')
+            ->where('custom_domain', $domain)
+            ->first();
+
         if ($existing) {
             return [
                 'valid' => false,
@@ -204,5 +268,21 @@ class WhiteLabelService
                 'ttl' => 3600,
             ],
         ];
+    }
+
+    private function getLogoUrl(WhiteLabel $settings): ?string
+    {
+        if (!$settings->logoPath) {
+            return null;
+        }
+        return asset('storage/' . $settings->logoPath);
+    }
+
+    private function getFaviconUrl(WhiteLabel $settings): ?string
+    {
+        if (!$settings->faviconPath) {
+            return null;
+        }
+        return asset('storage/' . $settings->faviconPath);
     }
 }

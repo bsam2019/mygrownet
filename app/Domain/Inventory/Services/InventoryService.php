@@ -2,168 +2,106 @@
 
 namespace App\Domain\Inventory\Services;
 
-use App\Infrastructure\Persistence\Eloquent\InventoryItemModel;
-use App\Infrastructure\Persistence\Eloquent\InventoryCategoryModel;
-use App\Infrastructure\Persistence\Eloquent\StockMovementModel;
-use App\Infrastructure\Persistence\Eloquent\InventoryAlertModel;
+use App\Domain\Inventory\Entities\InventoryAlert;
+use App\Domain\Inventory\Entities\InventoryCategory;
+use App\Domain\Inventory\Entities\InventoryItem;
+use App\Domain\Inventory\Entities\StockMovement;
+use App\Domain\Inventory\Repositories\InventoryAlertRepositoryInterface;
+use App\Domain\Inventory\Repositories\InventoryCategoryRepositoryInterface;
+use App\Domain\Inventory\Repositories\InventoryItemRepositoryInterface;
+use App\Domain\Inventory\Repositories\StockMovementRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Standalone Inventory Service
- * 
- * This service can be used by any module (GrowBiz, BizBoost, POS, standalone)
- * The module_context parameter determines which module is using the service
- */
 class InventoryService
 {
     protected string $moduleContext = 'inventory';
     protected ?int $userId = null;
 
-    /**
-     * Set the module context for all operations
-     */
+    public function __construct(
+        private InventoryCategoryRepositoryInterface $categoryRepository,
+        private InventoryItemRepositoryInterface $itemRepository,
+        private StockMovementRepositoryInterface $movementRepository,
+        private InventoryAlertRepositoryInterface $alertRepository,
+    ) {}
+
     public function forModule(string $module): self
     {
         $this->moduleContext = $module;
         return $this;
     }
 
-    /**
-     * Set the user for all operations
-     */
     public function forUser(int $userId): self
     {
         $this->userId = $userId;
         return $this;
     }
 
-    /**
-     * Get current user ID
-     */
     protected function getUserId(): int
     {
         return $this->userId ?? auth()->id();
     }
 
-    // ==================== CATEGORIES ====================
-
-    /**
-     * Get all categories
-     */
-    public function getCategories()
+    public function getCategories(): array
     {
-        return InventoryCategoryModel::where('user_id', $this->getUserId())
-            ->withCount('items')
-            ->orderBy('sort_order')
-            ->get();
+        $categories = $this->categoryRepository->findAllByUser($this->getUserId());
+        return array_map(fn(InventoryCategory $c) => [
+            ...$c->toArray(),
+            'items_count' => 0,
+        ], $categories);
     }
 
-    /**
-     * Create a category
-     */
-    public function createCategory(array $data): InventoryCategoryModel
+    public function createCategory(array $data): InventoryCategory
     {
-        return InventoryCategoryModel::create([
+        $category = InventoryCategory::reconstitute([
             'user_id' => $this->getUserId(),
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
             'color' => $data['color'] ?? '#6b7280',
             'sort_order' => $data['sort_order'] ?? 0,
         ]);
+
+        return $this->categoryRepository->save($category);
     }
 
-    /**
-     * Update a category
-     */
-    public function updateCategory(int $categoryId, array $data): InventoryCategoryModel
+    public function updateCategory(int $categoryId, array $data): InventoryCategory
     {
-        $category = InventoryCategoryModel::where('id', $categoryId)
-            ->where('user_id', $this->getUserId())
-            ->firstOrFail();
+        $category = $this->categoryRepository->findById($categoryId);
 
-        $category->update($data);
-        return $category->fresh();
+        if (!$category) {
+            throw new \RuntimeException('Category not found');
+        }
+
+        $updated = InventoryCategory::reconstitute([
+            ...$category->toArray(),
+            ...$data,
+        ]);
+
+        return $this->categoryRepository->save($updated);
     }
 
-    /**
-     * Delete a category
-     */
     public function deleteCategory(int $categoryId): bool
     {
-        return InventoryCategoryModel::where('id', $categoryId)
-            ->where('user_id', $this->getUserId())
-            ->delete() > 0;
+        return $this->categoryRepository->delete($categoryId);
     }
 
-    // ==================== ITEMS ====================
-
-    /**
-     * Get items with optional filters
-     */
     public function getItems(array $filters = [])
     {
-        $query = InventoryItemModel::where('user_id', $this->getUserId())
-            ->with('category');
-
-        if (isset($filters['category_id'])) {
-            $query->where('category_id', $filters['category_id']);
-        }
-
-        if (isset($filters['is_active'])) {
-            $query->where('is_active', $filters['is_active']);
-        }
-
-        if (isset($filters['low_stock']) && $filters['low_stock']) {
-            $query->whereColumn('current_stock', '<=', 'low_stock_threshold');
-        }
-
-        if (isset($filters['search'])) {
-            $search = $filters['search'];
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%")
-                    ->orWhere('barcode', 'like', "%{$search}%");
-            });
-        }
-
-        $sortBy = $filters['sort_by'] ?? 'name';
-        $sortDir = $filters['sort_dir'] ?? 'asc';
-        $query->orderBy($sortBy, $sortDir);
-
-        return isset($filters['per_page']) 
-            ? $query->paginate($filters['per_page'])
-            : $query->get();
+        return $this->itemRepository->findAllByUser($this->getUserId(), $filters);
     }
 
-    /**
-     * Get a single item
-     */
-    public function getItem(int $itemId): ?InventoryItemModel
+    public function getItem(int $itemId): ?InventoryItem
     {
-        return InventoryItemModel::where('id', $itemId)
-            ->where('user_id', $this->getUserId())
-            ->with('category')
-            ->first();
+        return $this->itemRepository->findByIdForUser($itemId, $this->getUserId());
     }
 
-    /**
-     * Find item by SKU or barcode
-     */
-    public function findBySkuOrBarcode(string $code): ?InventoryItemModel
+    public function findBySkuOrBarcode(string $code): ?InventoryItem
     {
-        return InventoryItemModel::where('user_id', $this->getUserId())
-            ->where(function ($q) use ($code) {
-                $q->where('sku', $code)->orWhere('barcode', $code);
-            })
-            ->first();
+        return $this->itemRepository->findBySkuOrBarcode($this->getUserId(), $code);
     }
 
-    /**
-     * Create an item
-     */
-    public function createItem(array $data): InventoryItemModel
+    public function createItem(array $data): InventoryItem
     {
-        $item = InventoryItemModel::create([
+        $item = InventoryItem::reconstitute([
             'user_id' => $this->getUserId(),
             'name' => $data['name'],
             'sku' => $data['sku'] ?? null,
@@ -181,288 +119,216 @@ class InventoryService
             'track_stock' => $data['track_stock'] ?? true,
         ]);
 
-        // Record initial stock movement
-        if ($item->current_stock > 0) {
-            $this->recordMovement($item->id, 'initial', $item->current_stock, 'Initial stock');
+        $saved = $this->itemRepository->save($item);
+
+        if ($saved->currentStock > 0) {
+            $this->recordMovement(
+                $saved->id,
+                'initial',
+                $saved->currentStock,
+                'Initial stock',
+                $saved->costPrice,
+                null
+            );
         }
 
-        return $item;
+        return $saved;
     }
 
-    /**
-     * Update an item
-     */
-    public function updateItem(int $itemId, array $data): InventoryItemModel
+    public function updateItem(int $itemId, array $data): InventoryItem
     {
-        $item = InventoryItemModel::where('id', $itemId)
-            ->where('user_id', $this->getUserId())
-            ->firstOrFail();
+        $item = $this->itemRepository->findByIdForUser($itemId, $this->getUserId());
 
-        $item->update($data);
-        return $item->fresh();
+        if (!$item) {
+            throw new \RuntimeException('Item not found');
+        }
+
+        $updated = InventoryItem::reconstitute([
+            ...$item->toArray(),
+            ...$data,
+        ]);
+
+        return $this->itemRepository->save($updated);
     }
 
-    /**
-     * Delete an item (soft delete)
-     */
     public function deleteItem(int $itemId): bool
     {
-        return InventoryItemModel::where('id', $itemId)
-            ->where('user_id', $this->getUserId())
-            ->delete() > 0;
+        return $this->itemRepository->delete($itemId);
     }
 
-    // ==================== STOCK MANAGEMENT ====================
-
-    /**
-     * Adjust stock level
-     */
-    public function adjustStock(int $itemId, int $quantity, string $type, string $notes = null, $reference = null): InventoryItemModel
+    public function adjustStock(int $itemId, int $quantity, string $type, string $notes = null, $reference = null): InventoryItem
     {
-        $item = InventoryItemModel::where('id', $itemId)
-            ->where('user_id', $this->getUserId())
-            ->firstOrFail();
+        $item = $this->itemRepository->findByIdForUser($itemId, $this->getUserId());
 
-        if (!$item->track_stock) {
+        if (!$item) {
+            throw new \RuntimeException('Item not found');
+        }
+
+        if (!$item->trackStock) {
             return $item;
         }
 
         return DB::transaction(function () use ($item, $quantity, $type, $notes, $reference) {
-            $stockBefore = $item->current_stock;
+            $stockBefore = $item->currentStock;
             $stockAfter = $stockBefore + $quantity;
 
-            // Update stock
-            $item->update(['current_stock' => $stockAfter]);
+            $updated = InventoryItem::reconstitute([
+                ...$item->toArray(),
+                'current_stock' => $stockAfter,
+            ]);
 
-            // Record movement
+            $saved = $this->itemRepository->save($updated);
+
             $this->recordMovement(
-                $item->id,
+                $saved->id,
                 $type,
                 $quantity,
                 $notes,
+                $saved->costPrice,
+                $reference,
                 $stockBefore,
-                $stockAfter,
-                $reference
+                $stockAfter
             );
 
-            // Check for alerts
-            $this->checkStockAlerts($item->fresh());
+            $this->checkStockAlerts($saved);
 
-            return $item->fresh();
+            return $saved;
         });
     }
 
-    /**
-     * Add stock (purchase, return, etc.)
-     */
-    public function addStock(int $itemId, int $quantity, string $type = 'purchase', string $notes = null): InventoryItemModel
+    public function addStock(int $itemId, int $quantity, string $type = 'purchase', string $notes = null): InventoryItem
     {
         return $this->adjustStock($itemId, abs($quantity), $type, $notes);
     }
 
-    /**
-     * Remove stock (sale, damage, etc.)
-     */
-    public function removeStock(int $itemId, int $quantity, string $type = 'sale', string $notes = null, $reference = null): InventoryItemModel
+    public function removeStock(int $itemId, int $quantity, string $type = 'sale', string $notes = null, $reference = null): InventoryItem
     {
         return $this->adjustStock($itemId, -abs($quantity), $type, $notes, $reference);
     }
 
-    /**
-     * Record a stock movement
-     */
     protected function recordMovement(
         int $itemId,
         string $type,
         int $quantity,
         string $notes = null,
+        float $unitCost = null,
+        $reference = null,
         int $stockBefore = null,
         int $stockAfter = null,
-        $reference = null
-    ): StockMovementModel {
-        $item = InventoryItemModel::find($itemId);
-        
-        return StockMovementModel::create([
+    ): StockMovement {
+        $movement = StockMovement::reconstitute([
             'item_id' => $itemId,
             'user_id' => $this->getUserId(),
             'type' => $type,
             'quantity' => $quantity,
-            'stock_before' => $stockBefore ?? $item->current_stock,
-            'stock_after' => $stockAfter ?? ($item->current_stock + $quantity),
-            'unit_cost' => $item->cost_price,
-            'total_value' => abs($quantity) * $item->cost_price,
+            'stock_before' => $stockBefore ?? 0,
+            'stock_after' => $stockAfter ?? 0,
+            'unit_cost' => $unitCost,
+            'total_value' => $unitCost ? abs($quantity) * $unitCost : null,
             'reference_type' => $reference ? get_class($reference) : null,
             'reference_id' => $reference?->id,
             'notes' => $notes,
-            'movement_date' => now(),
+            'movement_date' => now()->toDateTimeString(),
         ]);
+
+        return $this->movementRepository->save($movement);
     }
 
-    /**
-     * Get stock movements for an item
-     */
     public function getStockMovements(int $itemId, array $filters = [])
     {
-        $query = StockMovementModel::where('item_id', $itemId)
-            ->where('user_id', $this->getUserId());
-
-        if (isset($filters['type'])) {
-            $query->where('type', $filters['type']);
-        }
-
-        if (isset($filters['date_from'])) {
-            $query->whereDate('movement_date', '>=', $filters['date_from']);
-        }
-
-        if (isset($filters['date_to'])) {
-            $query->whereDate('movement_date', '<=', $filters['date_to']);
-        }
-
-        return $query->orderBy('movement_date', 'desc')
-            ->paginate($filters['per_page'] ?? 20);
+        return $this->movementRepository->findByItem($itemId, $filters);
     }
 
-    // ==================== ALERTS ====================
+    public function getRecentMovements(int $limit = 10): array
+    {
+        return $this->movementRepository->findRecentByUser($this->getUserId(), $limit);
+    }
 
-    /**
-     * Check and create stock alerts
-     */
-    protected function checkStockAlerts(InventoryItemModel $item): void
+    public function getAllMovements(array $filters = [])
+    {
+        return $this->movementRepository->findAllByUser($this->getUserId(), $filters);
+    }
+
+    protected function checkStockAlerts(InventoryItem $item): void
     {
         $userId = $this->getUserId();
 
-        // Clear existing unacknowledged alerts for this item
-        InventoryAlertModel::where('item_id', $item->id)
-            ->where('user_id', $userId)
-            ->where('is_acknowledged', false)
-            ->delete();
+        $this->alertRepository->deleteUnacknowledgedForItem($item->id, $userId);
 
-        // Check for out of stock
-        if ($item->current_stock <= 0) {
-            InventoryAlertModel::create([
+        if ($item->currentStock <= 0) {
+            $alert = InventoryAlert::reconstitute([
                 'item_id' => $item->id,
                 'user_id' => $userId,
                 'type' => 'out_of_stock',
                 'threshold_value' => 0,
-                'current_value' => $item->current_stock,
+                'current_value' => $item->currentStock,
             ]);
-        }
-        // Check for low stock
-        elseif ($item->current_stock <= $item->low_stock_threshold) {
-            InventoryAlertModel::create([
+            $this->alertRepository->save($alert);
+        } elseif ($item->isLowStock()) {
+            $alert = InventoryAlert::reconstitute([
                 'item_id' => $item->id,
                 'user_id' => $userId,
                 'type' => 'low_stock',
-                'threshold_value' => $item->low_stock_threshold,
-                'current_value' => $item->current_stock,
+                'threshold_value' => $item->lowStockThreshold,
+                'current_value' => $item->currentStock,
             ]);
+            $this->alertRepository->save($alert);
         }
     }
 
-    /**
-     * Get active alerts
-     */
-    public function getAlerts(bool $unacknowledgedOnly = true)
+    public function getAlerts(bool $unacknowledgedOnly = true): array
     {
-        $query = InventoryAlertModel::where('user_id', $this->getUserId())
-            ->with('item');
-
-        if ($unacknowledgedOnly) {
-            $query->where('is_acknowledged', false);
-        }
-
-        return $query->orderBy('created_at', 'desc')->get();
+        return $this->alertRepository->findAllByUser($this->getUserId(), $unacknowledgedOnly);
     }
 
-    /**
-     * Acknowledge an alert
-     */
     public function acknowledgeAlert(int $alertId): bool
     {
-        return InventoryAlertModel::where('id', $alertId)
-            ->where('user_id', $this->getUserId())
-            ->update([
-                'is_acknowledged' => true,
-                'acknowledged_at' => now(),
-            ]) > 0;
+        return $this->alertRepository->acknowledge($alertId, $this->getUserId());
     }
 
-    // ==================== REPORTS ====================
-
-    /**
-     * Get inventory summary
-     */
     public function getSummary(): array
     {
         $userId = $this->getUserId();
-        $items = InventoryItemModel::where('user_id', $userId)->get();
-        $recentMovementsCount = StockMovementModel::where('user_id', $userId)
-            ->where('movement_date', '>=', now()->subDays(7))
-            ->count();
+        $items = $this->itemRepository->findAllByUser($userId);
+        $recentMovementsCount = $this->movementRepository->countRecentByUser($userId, 7);
+
+        $totalItems = count($items);
+        $activeItems = 0;
+        $totalStockValue = 0;
+        $totalRetailValue = 0;
+        $lowStockCount = 0;
+        $outOfStockCount = 0;
+
+        foreach ($items as $item) {
+            if ($item->isActive) {
+                $activeItems++;
+            }
+            $totalStockValue += $item->stockValue();
+            $totalRetailValue += $item->retailValue();
+            if ($item->isLowStock()) {
+                $lowStockCount++;
+            }
+            if ($item->isOutOfStock()) {
+                $outOfStockCount++;
+            }
+        }
+
+        $categories = $this->categoryRepository->findAllByUser($userId);
 
         return [
-            'total_items' => $items->count(),
-            'active_items' => $items->where('is_active', true)->count(),
-            'total_stock_value' => $items->sum(fn($i) => $i->current_stock * $i->cost_price),
-            'total_retail_value' => $items->sum(fn($i) => $i->current_stock * $i->selling_price),
-            'low_stock_count' => $items->filter(fn($i) => $i->current_stock <= $i->low_stock_threshold)->count(),
-            'out_of_stock_count' => $items->where('current_stock', '<=', 0)->count(),
-            'categories_count' => InventoryCategoryModel::where('user_id', $userId)->count(),
+            'total_items' => $totalItems,
+            'active_items' => $activeItems,
+            'total_stock_value' => $totalStockValue,
+            'total_retail_value' => $totalRetailValue,
+            'low_stock_count' => $lowStockCount,
+            'out_of_stock_count' => $outOfStockCount,
+            'categories_count' => count($categories),
             'recent_movements_count' => $recentMovementsCount,
         ];
     }
-    
-    /**
-     * Get recent stock movements across all items
-     */
-    public function getRecentMovements(int $limit = 10)
+
+    public function getLowStockItems(): array
     {
-        return StockMovementModel::where('user_id', $this->getUserId())
-            ->with('item')
-            ->orderBy('movement_date', 'desc')
-            ->limit($limit)
-            ->get();
-    }
-    
-    /**
-     * Get all movements with filters
-     */
-    public function getAllMovements(array $filters = [])
-    {
-        $query = StockMovementModel::where('user_id', $this->getUserId())
-            ->with('item');
-
-        if (isset($filters['item_id'])) {
-            $query->where('item_id', $filters['item_id']);
-        }
-
-        if (isset($filters['type'])) {
-            $query->where('type', $filters['type']);
-        }
-
-        if (isset($filters['date_from'])) {
-            $query->whereDate('movement_date', '>=', $filters['date_from']);
-        }
-
-        if (isset($filters['date_to'])) {
-            $query->whereDate('movement_date', '<=', $filters['date_to']);
-        }
-
-        return $query->orderBy('movement_date', 'desc')
-            ->paginate($filters['per_page'] ?? 20);
-    }
-
-    /**
-     * Get low stock items
-     */
-    public function getLowStockItems()
-    {
-        return InventoryItemModel::where('user_id', $this->getUserId())
-            ->where('is_active', true)
-            ->where('track_stock', true)
-            ->whereColumn('current_stock', '<=', 'low_stock_threshold')
-            ->with('category')
-            ->orderBy('current_stock')
-            ->get();
+        return $this->itemRepository->findLowStockByUser($this->getUserId());
     }
 }

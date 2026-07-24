@@ -2,150 +2,192 @@
   "hash": "86ccda93",
   "configHash": "6457698e",
   "lockfileHash": "f1697cd2",
-  "browserHash": "ce6ed3d2",
+  "browserHash": "a89447cb",
   "optimized": {
     "vue": {
       "src": "../../node_modules/vue/dist/vue.runtime.esm-bundler.js",
       "file": "vue.js",
-      "fileHash": "b7623c95",
+      "fileHash": "56546b73",
       "needsInterop": false
     },
     "@inertiajs/vue3": {
       "src": "../../node_modules/@inertiajs/vue3/dist/index.esm.js",
       "file": "@inertiajs_vue3.js",
-      "fileHash": "63b2f6cc",
+      "fileHash": "e6613717",
       "needsInterop": false
     },
     "axios": {
       "src": "../../node_modules/axios/index.js",
       "file": "axios.js",
-      "fileHash": "9ec45467",
+      "fileHash": "d4172cdd",
       "needsInterop": false
     },
     "ziggy-js": {
       "src": "../../vendor/tightenco/ziggy/dist/index.js",
       "file": "ziggy-js.js",
-      "fileHash": "c5385486",
+      "fileHash": "4dd4c84e",
       "needsInterop": false
     },
     "@headlessui/vue": {
       "src": "../../node_modules/@headlessui/vue/dist/headlessui.esm.js",
       "file": "@headlessui_vue.js",
-      "fileHash": "6d96e541",
+      "fileHash": "e1920ff0",
       "needsInterop": false
     },
     "@heroicons/vue/24/outline": {
       "src": "../../node_modules/@heroicons/vue/24/outline/esm/index.js",
       "file": "@heroicons_vue_24_outline.js",
-      "fileHash": "8a7eebb9",
+      "fileHash": "e81459d6",
       "needsInterop": false
     },
     "@heroicons/vue/24/solid": {
       "src": "../../node_modules/@heroicons/vue/24/solid/esm/index.js",
       "file": "@heroicons_vue_24_solid.js",
-      "fileHash": "8a5f519c",
+      "fileHash": "6987e41d",
       "needsInterop": false
     },
     "@laravel/echo-vue": {
       "src": "../../node_modules/@laravel/echo-vue/dist/index.js",
       "file": "@laravel_echo-vue.js",
-      "fileHash": "918caccd",
+      "fileHash": "ecbc165d",
       "needsInterop": false
     },
     "aos": {
       "src": "../../node_modules/aos/dist/aos.esm.js",
       "file": "aos.js",
-      "fileHash": "9bd67d48",
+      "fileHash": "424e9b90",
       "needsInterop": false
     },
     "chart.js": {
       "src": "../../node_modules/chart.js/dist/chart.js",
       "file": "chart__js.js",
-      "fileHash": "99b66384",
+      "fileHash": "2ded3949",
       "needsInterop": false
     },
     "class-variance-authority": {
       "src": "../../node_modules/class-variance-authority/dist/index.mjs",
       "file": "class-variance-authority.js",
-      "fileHash": "eaeadf6d",
+      "fileHash": "d20cebb0",
       "needsInterop": false
     },
     "clsx": {
       "src": "../../node_modules/clsx/dist/clsx.mjs",
       "file": "clsx.js",
-      "fileHash": "146b1385",
+      "fileHash": "bbffc36d",
       "needsInterop": false
     },
     "laravel-echo": {
       "src": "../../node_modules/laravel-echo/dist/echo.js",
       "file": "laravel-echo.js",
-      "fileHash": "851e823a",
+      "fileHash": "bcb36c50",
       "needsInterop": false
     },
     "laravel-vite-plugin/inertia-helpers": {
       "src": "../../node_modules/laravel-vite-plugin/inertia-helpers/index.js",
       "file": "laravel-vite-plugin_inertia-helpers.js",
-      "fileHash": "ee4c2cae",
+      "fileHash": "0445938a",
       "needsInterop": false
     },
     "lucide-vue-next": {
       "src": "../../node_modules/lucide-vue-next/dist/esm/lucide-vue-next.js",
       "file": "lucide-vue-next.js",
-      "fileHash": "6f427006",
+      "fileHash": "35bbc468",
       "needsInterop": false
     },
     "pinia": {
       "src": "../../node_modules/pinia/dist/pinia.mjs",
       "file": "pinia.js",
-      "fileHash": "5f675520",
+      "fileHash": "095dde57",
       "needsInterop": false
     },
     "pusher-js": {
       "src": "../../node_modules/pusher-js/dist/web/pusher.js",
       "file": "pusher-js.js",
-      "fileHash": "10cfd96e",
+      "fileHash": "86f14165",
       "needsInterop": true
     },
     "radix-vue": {
       "src": "../../node_modules/radix-vue/dist/index.js",
       "file": "radix-vue.js",
-      "fileHash": "25a9cae3",
+      "fileHash": "6ba9fa3a",
       "needsInterop": false
     },
     "tailwind-merge": {
       "src": "../../node_modules/tailwind-merge/dist/bundle-mjs.mjs",
       "file": "tailwind-merge.js",
-      "fileHash": "e3de008e",
+      "fileHash": "9c1df551",
       "needsInterop": false
     },
     "sweetalert2": {
       "src": "../../node_modules/sweetalert2/dist/sweetalert2.esm.all.js",
       "file": "sweetalert2.js",
-      "fileHash": "62219265",
+      "fileHash": "a1e8b1bd",
       "needsInterop": false
     },
     "@heroicons/vue/20/solid": {
       "src": "../../node_modules/@heroicons/vue/20/solid/esm/index.js",
       "file": "@heroicons_vue_20_solid.js",
-      "fileHash": "8b217526",
+      "fileHash": "41590f71",
       "needsInterop": false
+    },
+    "pptxgenjs": {
+      "src": "../../node_modules/pptxgenjs/dist/pptxgen.es.js",
+      "file": "pptxgenjs.js",
+      "fileHash": "9d2be679",
+      "needsInterop": false
+    },
+    "html2canvas-pro": {
+      "src": "../../node_modules/html2canvas-pro/dist/html2canvas-pro.esm.js",
+      "file": "html2canvas-pro.js",
+      "fileHash": "6b9a8a00",
+      "needsInterop": false
+    },
+    "jspdf": {
+      "src": "../../node_modules/jspdf/dist/jspdf.es.min.js",
+      "file": "jspdf.js",
+      "fileHash": "5b2c9b97",
+      "needsInterop": false
+    },
+    "lodash": {
+      "src": "../../node_modules/lodash/lodash.js",
+      "file": "lodash.js",
+      "fileHash": "a89b7d8d",
+      "needsInterop": true
     }
   },
   "chunks": {
-    "chunk-WEC475PH": {
-      "file": "chunk-WEC475PH.js"
+    "node_fs-5V5UZUIS": {
+      "file": "node_fs-5V5UZUIS.js"
     },
-    "chunk-HTPP2NTQ": {
-      "file": "chunk-HTPP2NTQ.js"
+    "node_https-54L4AZ5R": {
+      "file": "node_https-54L4AZ5R.js"
     },
-    "chunk-CEBIFPJU": {
-      "file": "chunk-CEBIFPJU.js"
+    "html2canvas.esm-BJYJRQTM": {
+      "file": "html2canvas__esm-BJYJRQTM.js"
+    },
+    "purify.es-IRHLURLP": {
+      "file": "purify__es-IRHLURLP.js"
+    },
+    "index.es-UKVGJW6B": {
+      "file": "index__es-UKVGJW6B.js"
+    },
+    "chunk-SITVF2AJ": {
+      "file": "chunk-SITVF2AJ.js"
     },
     "chunk-KDVGFZWC": {
       "file": "chunk-KDVGFZWC.js"
     },
-    "chunk-DC5AMYBS": {
-      "file": "chunk-DC5AMYBS.js"
+    "chunk-WHYHP74K": {
+      "file": "chunk-WHYHP74K.js"
+    },
+    "chunk-QS5LMDO4": {
+      "file": "chunk-QS5LMDO4.js"
+    },
+    "chunk-CEBIFPJU": {
+      "file": "chunk-CEBIFPJU.js"
+    },
+    "chunk-2TUXWMP5": {
+      "file": "chunk-2TUXWMP5.js"
     }
   }
 }

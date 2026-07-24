@@ -12,98 +12,12 @@ class ModuleTierSeeder extends Seeder
     public function run(): void
     {
         DB::transaction(function () {
-            $this->seedGrowBizTiers();
             $this->seedBizBoostTiers();
             $this->seedGrowFinanceTiers();
             $this->seedLifePlusTiers();
             $this->seedGrowBuilderTiers();
         });
     }
-
-    private function seedGrowBizTiers(): void
-    {
-        $moduleId = 'growbiz';
-        
-        $tiers = [
-            [
-                'tier_key' => 'free',
-                'name' => 'Free',
-                'description' => 'Get started with basic features',
-                'price_monthly' => 0,
-                'price_annual' => 0,
-                'user_limit' => 1,
-                'is_default' => true,
-                'sort_order' => 0,
-                'features' => [
-                    ['key' => 'business_profiles', 'name' => 'Business Profiles', 'type' => 'limit', 'limit' => 1],
-                    ['key' => 'employees', 'name' => 'Employees', 'type' => 'limit', 'limit' => 5],
-                    ['key' => 'basic_pos', 'name' => 'Basic POS', 'type' => 'boolean', 'value' => true],
-                    ['key' => 'basic_reports', 'name' => 'Basic Reports', 'type' => 'boolean', 'value' => true],
-                    ['key' => 'inventory_management', 'name' => 'Inventory Management', 'type' => 'boolean', 'value' => false],
-                    ['key' => 'advanced_analytics', 'name' => 'Advanced Analytics', 'type' => 'boolean', 'value' => false],
-                    ['key' => 'priority_support', 'name' => 'Priority Support', 'type' => 'boolean', 'value' => false],
-                ],
-            ],
-            [
-                'tier_key' => 'starter',
-                'name' => 'Starter',
-                'description' => 'Perfect for small businesses',
-                'price_monthly' => 50,
-                'price_annual' => 500,
-                'user_limit' => 10,
-                'sort_order' => 1,
-                'features' => [
-                    ['key' => 'business_profiles', 'name' => 'Business Profiles', 'type' => 'limit', 'limit' => 1],
-                    ['key' => 'employees', 'name' => 'Employees', 'type' => 'limit', 'limit' => 10],
-                    ['key' => 'full_pos', 'name' => 'Full POS Features', 'type' => 'boolean', 'value' => true],
-                    ['key' => 'inventory_management', 'name' => 'Inventory Management', 'type' => 'boolean', 'value' => true],
-                    ['key' => 'basic_reports', 'name' => 'Basic Reports', 'type' => 'boolean', 'value' => true],
-                    ['key' => 'advanced_analytics', 'name' => 'Advanced Analytics', 'type' => 'boolean', 'value' => false],
-                    ['key' => 'priority_support', 'name' => 'Priority Support', 'type' => 'boolean', 'value' => false],
-                ],
-            ],
-            [
-                'tier_key' => 'professional',
-                'name' => 'Professional',
-                'description' => 'For growing businesses',
-                'price_monthly' => 150,
-                'price_annual' => 1500,
-                'user_limit' => null,
-                'sort_order' => 2,
-                'features' => [
-                    ['key' => 'business_profiles', 'name' => 'Business Profiles', 'type' => 'limit', 'limit' => 3],
-                    ['key' => 'employees', 'name' => 'Employees', 'type' => 'limit', 'limit' => null],
-                    ['key' => 'full_pos', 'name' => 'Full POS Features', 'type' => 'boolean', 'value' => true],
-                    ['key' => 'inventory_management', 'name' => 'Inventory Management', 'type' => 'boolean', 'value' => true],
-                    ['key' => 'advanced_analytics', 'name' => 'Advanced Analytics', 'type' => 'boolean', 'value' => true],
-                    ['key' => 'custom_reports', 'name' => 'Custom Reports', 'type' => 'boolean', 'value' => true],
-                    ['key' => 'priority_support', 'name' => 'Priority Support', 'type' => 'boolean', 'value' => false],
-                ],
-            ],
-            [
-                'tier_key' => 'enterprise',
-                'name' => 'Enterprise',
-                'description' => 'For large organizations',
-                'price_monthly' => 300,
-                'price_annual' => 3000,
-                'user_limit' => null,
-                'sort_order' => 3,
-                'features' => [
-                    ['key' => 'business_profiles', 'name' => 'Business Profiles', 'type' => 'limit', 'limit' => null],
-                    ['key' => 'employees', 'name' => 'Employees', 'type' => 'limit', 'limit' => null],
-                    ['key' => 'full_pos', 'name' => 'Full POS Features', 'type' => 'boolean', 'value' => true],
-                    ['key' => 'inventory_management', 'name' => 'Inventory Management', 'type' => 'boolean', 'value' => true],
-                    ['key' => 'advanced_analytics', 'name' => 'Advanced Analytics', 'type' => 'boolean', 'value' => true],
-                    ['key' => 'custom_reports', 'name' => 'Custom Reports', 'type' => 'boolean', 'value' => true],
-                    ['key' => 'priority_support', 'name' => 'Priority Support', 'type' => 'boolean', 'value' => true],
-                    ['key' => 'api_access', 'name' => 'API Access', 'type' => 'boolean', 'value' => true],
-                ],
-            ],
-        ];
-
-        $this->createTiersWithFeatures($moduleId, $tiers);
-    }
-
 
     private function seedBizBoostTiers(): void
     {

@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
-use App\Models\PointTransaction;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PointTransaction;
 use Illuminate\Console\Command;
 
 class CheckPointTransactions extends Command

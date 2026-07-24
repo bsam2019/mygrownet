@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\PhysicalRewardAllocation;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalRewardAllocation;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;

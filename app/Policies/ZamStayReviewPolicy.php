@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\User;
-use App\Models\ZamStay\ZamStayReview;
+use App\Infrastructure\Persistence\Eloquent\ZamStay\ZamStayReviewModel;
 
 class ZamStayReviewPolicy
 {
@@ -12,12 +12,12 @@ class ZamStayReviewPolicy
         return true;
     }
 
-    public function update(User $user, ZamStayReview $review): bool
+    public function update(User $user, ZamStayReviewModel $review): bool
     {
         return $user->id === $review->user_id;
     }
 
-    public function delete(User $user, ZamStayReview $review): bool
+    public function delete(User $user, ZamStayReviewModel $review): bool
     {
         return $user->id === $review->user_id;
     }

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\CommissionSettingsService;
-use App\Models\ReferralCommission;
+use App\Domain\GrowNet\Services\CommissionSettingsService;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;

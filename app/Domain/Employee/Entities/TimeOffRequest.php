@@ -73,6 +73,45 @@ final class TimeOffRequest
         );
     }
 
+    public static function reconstitute(array $data): self
+    {
+        $instance = new self(
+            $data['employee_id'],
+            $data['type'],
+            $data['start_date'],
+            $data['end_date'],
+            $data['days_requested'],
+            $data['reason'] ?? null
+        );
+        $instance->id = $data['id'] ?? 0;
+        $instance->status = $data['status'] ?? self::STATUS_PENDING;
+        $instance->reviewedBy = $data['reviewed_by'] ?? null;
+        $instance->reviewedAt = $data['reviewed_at'] ?? null;
+        $instance->reviewNotes = $data['review_notes'] ?? null;
+        $instance->createdAt = $data['created_at'] ?? new DateTimeImmutable();
+        $instance->updatedAt = $data['updated_at'] ?? new DateTimeImmutable();
+        return $instance;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'employee_id' => $this->employeeId,
+            'type' => $this->type,
+            'start_date' => $this->startDate,
+            'end_date' => $this->endDate,
+            'days_requested' => $this->daysRequested,
+            'reason' => $this->reason,
+            'status' => $this->status,
+            'reviewed_by' => $this->reviewedBy,
+            'reviewed_at' => $this->reviewedAt,
+            'review_notes' => $this->reviewNotes,
+            'created_at' => $this->createdAt,
+            'updated_at' => $this->updatedAt,
+        ];
+    }
+
     public function approve(EmployeeId $reviewerId, ?string $notes = null): void
     {
         if (!$this->isPending()) {

@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\MatrixPosition;
-use App\Services\MatrixService;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\MatrixPosition;
+use App\Domain\GrowNet\Services\MatrixService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;

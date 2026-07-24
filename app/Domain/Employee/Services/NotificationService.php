@@ -2,19 +2,20 @@
 
 namespace App\Domain\Employee\Services;
 
+use App\Domain\Employee\Repositories\NotificationRepositoryInterface;
+use App\Domain\Employee\Repositories\EmployeeRepositoryInterface;
+use App\Domain\Employee\ValueObjects\EmployeeId;
 use App\Events\Employee\EmployeeNotificationCreated;
 use App\Events\Employee\TaskStatusUpdated;
 use App\Events\Employee\TimeOffRequestUpdated;
-use App\Models\Employee\Employee;
-use App\Models\Employee\EmployeeNotification;
-use App\Models\Employee\EmployeeTask;
-use App\Models\Employee\EmployeeTimeOffRequest;
 
 class NotificationService
 {
-    /**
-     * Create a notification and broadcast it in real-time
-     */
+    public function __construct(
+        private NotificationRepositoryInterface $notificationRepo,
+        private EmployeeRepositoryInterface $employeeRepo
+    ) {}
+
     public function createNotification(
         int $employeeId,
         string $type,
@@ -22,8 +23,8 @@ class NotificationService
         string $message,
         ?string $actionUrl = null,
         ?array $data = null
-    ): EmployeeNotification {
-        $notification = EmployeeNotification::create([
+    ): object {
+        $notification = $this->notificationRepo->create([
             'employee_id' => $employeeId,
             'type' => $type,
             'title' => $title,
@@ -32,18 +33,14 @@ class NotificationService
             'data' => $data,
         ]);
 
-        // Broadcast the notification in real-time
         broadcast(new EmployeeNotificationCreated($notification))->toOthers();
 
         return $notification;
     }
 
-    /**
-     * Notify about task assignment
-     */
-    public function notifyTaskAssigned(EmployeeTask $task): void
+    public function notifyTaskAssigned(object $task): void
     {
-        $assignee = Employee::find($task->assigned_to);
+        $assignee = $this->employeeRepo->findById(EmployeeId::fromInt($task->assigned_to));
         if (!$assignee) return;
 
         $this->createNotification(
@@ -56,15 +53,10 @@ class NotificationService
         );
     }
 
-    /**
-     * Notify about task status change
-     */
-    public function notifyTaskStatusChanged(EmployeeTask $task, string $oldStatus, string $newStatus): void
+    public function notifyTaskStatusChanged(object $task, string $oldStatus, string $newStatus): void
     {
-        // Broadcast task status update
         broadcast(new TaskStatusUpdated($task, $oldStatus, $newStatus))->toOthers();
 
-        // Notify the assigner if task is completed
         if ($newStatus === 'completed' && $task->assigned_by && $task->assigned_by !== $task->assigned_to) {
             $this->createNotification(
                 $task->assigned_by,
@@ -77,12 +69,8 @@ class NotificationService
         }
     }
 
-    /**
-     * Notify about time off request status change
-     */
-    public function notifyTimeOffStatusChanged(EmployeeTimeOffRequest $request, string $action): void
+    public function notifyTimeOffStatusChanged(object $request, string $action): void
     {
-        // Broadcast time off update
         broadcast(new TimeOffRequestUpdated($request, $action))->toOthers();
 
         $statusMessages = [
@@ -101,9 +89,6 @@ class NotificationService
         );
     }
 
-    /**
-     * Notify about goal deadline approaching
-     */
     public function notifyGoalDeadlineApproaching(int $employeeId, int $goalId, string $goalTitle, int $daysRemaining): void
     {
         $this->createNotification(
@@ -116,9 +101,6 @@ class NotificationService
         );
     }
 
-    /**
-     * Notify about new announcement
-     */
     public function notifyNewAnnouncement(int $employeeId, int $announcementId, string $title): void
     {
         $this->createNotification(
@@ -131,45 +113,24 @@ class NotificationService
         );
     }
 
-    /**
-     * Mark notification as read
-     */
     public function markAsRead(int $notificationId): bool
     {
-        return EmployeeNotification::where('id', $notificationId)
-            ->whereNull('read_at')
-            ->update(['read_at' => now()]) > 0;
+        return $this->notificationRepo->markAsRead($notificationId);
     }
 
-    /**
-     * Mark all notifications as read for an employee
-     */
     public function markAllAsRead(int $employeeId): int
     {
-        return EmployeeNotification::where('employee_id', $employeeId)
-            ->whereNull('read_at')
-            ->update(['read_at' => now()]);
+        return $this->notificationRepo->markAllAsRead($employeeId);
     }
 
-    /**
-     * Get unread notification count
-     */
     public function getUnreadCount(int $employeeId): int
     {
-        return EmployeeNotification::where('employee_id', $employeeId)
-            ->whereNull('read_at')
-            ->count();
+        return $this->notificationRepo->getUnreadCount($employeeId);
     }
 
-    /**
-     * Get recent notifications for an employee
-     */
     public function getRecentNotifications(int $employeeId, int $limit = 10): array
     {
-        return EmployeeNotification::where('employee_id', $employeeId)
-            ->orderBy('created_at', 'desc')
-            ->limit($limit)
-            ->get()
+        return $this->notificationRepo->getRecent($employeeId, $limit)
             ->toArray();
     }
 }

@@ -2,7 +2,7 @@
 import { Link } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
-import ToastContainer from '@/components/GrowBiz/ToastContainer.vue';
+import ToastContainer from '@/components/Shared/ToastContainer.vue';
 import { useToast } from '@/composables/useToast';
 
 defineProps<{

@@ -60,4 +60,25 @@ class Order
         $daysSinceDelivery = $this->deliveredAt->diff(new \DateTimeImmutable())->days;
         return $daysSinceDelivery >= 7;
     }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'order_number' => $this->orderNumber,
+            'buyer_id' => $this->buyerId,
+            'seller_id' => $this->sellerId,
+            'status' => $this->status->value(),
+            'subtotal' => $this->subtotal->amount(),
+            'delivery_fee' => $this->deliveryFee->amount(),
+            'total' => $this->total->amount(),
+            'delivery_method' => $this->deliveryMethod->value(),
+            'delivery_address' => $this->deliveryAddress,
+            'delivery_notes' => $this->deliveryNotes,
+            'items' => $this->items,
+            'delivered_at' => $this->deliveredAt?->format('Y-m-d H:i:s'),
+            'confirmed_at' => $this->confirmedAt?->format('Y-m-d H:i:s'),
+            'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),
+        ];
+    }
 }

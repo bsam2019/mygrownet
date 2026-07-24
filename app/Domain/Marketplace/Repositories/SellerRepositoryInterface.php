@@ -14,4 +14,9 @@ interface SellerRepositoryInterface
     public function updateKycStatus(int $sellerId, string $status): void;
     public function incrementOrderCount(int $sellerId): void;
     public function updateRating(int $sellerId, float $rating): void;
+    public function updateSellerMetrics(int $sellerId, array $metrics): void;
+    public function updateTierWithCommission(int $sellerId, string $tier, float $commissionRate): void;
+    public function getBalance(int $sellerId): int;
+    public function decrementBalance(int $sellerId, int $amount): void;
+    public function incrementBalance(int $sellerId, int $amount): void;
 }

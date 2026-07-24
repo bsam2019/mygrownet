@@ -6,9 +6,9 @@ use PHPUnit\Framework\TestCase;
 use App\Services\PhysicalRewardAllocationService;
 use App\Services\TierQualificationTrackingService;
 use App\Models\User;
-use App\Models\PhysicalReward;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalReward;
 use App\Models\InvestmentTier;
-use App\Models\TeamVolume;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TeamVolume;
 
 class PhysicalRewardAllocationServiceUnitTest extends TestCase
 {

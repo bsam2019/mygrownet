@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use App\Models\MonthlyActivityStatus;
-use App\Services\PointService;
+use App\Domain\GrowNet\Services\PointService;
 use App\Notifications\MonthlyQualificationAtRisk;
 use Illuminate\Console\Command;
 

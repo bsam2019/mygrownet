@@ -2,27 +2,26 @@
 
 namespace App\Domain\GrowStream\Presentation\Http\Controllers\Api;
 
-use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoSeries;
+use App\Domain\GrowStream\Repositories\VideoSeriesRepositoryInterface;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SeriesController extends Controller
 {
-    /**
-     * Get list of series
-     */
+    public function __construct(
+        private VideoSeriesRepositoryInterface $seriesRepo
+    ) {}
+
     public function index(Request $request): JsonResponse
     {
-        $query = VideoSeries::with(['creator'])
-            ->published();
+        $query = $this->seriesRepo->query();
+        $query->with(['creator'])->published();
 
-        // Filter by type
         if ($request->has('type')) {
             $query->byType($request->type);
         }
 
-        // Search
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -31,7 +30,6 @@ class SeriesController extends Controller
             });
         }
 
-        // Sort
         $sortBy = $request->get('sort_by', 'published_at');
         $sortOrder = $request->get('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
@@ -50,19 +48,21 @@ class SeriesController extends Controller
         ]);
     }
 
-    /**
-     * Get single series details with episodes
-     */
-    public function show(VideoSeries $series): JsonResponse
+    public function show(string $slug): JsonResponse
     {
+        $series = $this->seriesRepo->findBySlug($slug);
+
+        if (!$series) {
+            return response()->json(['success' => false, 'error' => 'Series not found'], 404);
+        }
+
         $series->load(['creator', 'videos' => function ($query) {
             $query->published()->ready();
         }]);
 
-        // Group episodes by season
         $seasons = $series->getSeasons();
         $episodesBySeason = [];
-        
+
         foreach ($seasons as $seasonNumber) {
             $episodesBySeason[$seasonNumber] = $series->getEpisodesBySeason($seasonNumber);
         }

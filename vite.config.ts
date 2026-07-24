@@ -9,7 +9,7 @@ import { defineConfig } from 'vite';
 const MODULE = process.env.MODULE;
 const isDev = process.argv.includes('dev') || process.argv[1]?.includes('vite') && !process.argv.includes('build');
 
-const knownBuildModules = ['stockflow', 'bizboost', 'bizdocs', 'grownet', 'growbuilder', 'growmart', 'zamstay', 'cms', 'primeedge', 'venture', 'growfinance', 'marketplace', 'admin', 'growbiz', 'lifephus', 'employee'];
+const knownBuildModules = ['stockflow', 'bizboost', 'bizdocs', 'grownet', 'growbuilder', 'growmart', 'zamstay', 'cms', 'primeedge', 'venture', 'growfinance', 'marketplace', 'admin', 'lifephus', 'employee'];
 const buildSubdir = MODULE && knownBuildModules.includes(MODULE) ? MODULE : null;
 const buildDir = buildSubdir ? `build/${buildSubdir}` : 'build';
 const basePath = buildSubdir ? `/build/${buildSubdir}/` : '/build/';
@@ -40,7 +40,6 @@ const ALL_INPUTS: Record<string, string[]> = {
         'resources/js/app-growfinance.ts',
         'resources/js/app-marketplace.ts',
         'resources/js/app-admin.ts',
-        'resources/js/app-growbiz.ts',
         'resources/js/app-lifephus.ts',
         'resources/js/app-employee.ts',
     ],
@@ -58,7 +57,6 @@ const ALL_INPUTS: Record<string, string[]> = {
     growfinance: ['resources/js/app-growfinance.ts'],
     marketplace: ['resources/js/app-marketplace.ts'],
     admin: ['resources/js/app-admin.ts'],
-    growbiz: ['resources/js/app-growbiz.ts'],
     lifephus: ['resources/js/app-lifephus.ts'],
     employee: ['resources/js/app-employee.ts'],
 };

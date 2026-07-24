@@ -4,7 +4,7 @@ namespace App\Http\Controllers\GrowMart;
 
 use App\Http\Controllers\Controller;
 use App\Domain\GrowMart\Services\CartService;
-use App\Models\GrowMart\GrowMartProduct;
+use App\Domain\GrowMart\Repositories\ProductRepositoryInterface;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -12,6 +12,7 @@ class CartController extends Controller
 {
     public function __construct(
         private readonly CartService $cartService,
+        private readonly ProductRepositoryInterface $productRepository,
     ) {}
 
     public function index()
@@ -31,8 +32,8 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1|max:99',
         ]);
 
-        $product = GrowMartProduct::findOrFail($validated['product_id']);
-        if ($product->status !== 'active') {
+        $product = $this->productRepository->findById($validated['product_id']);
+        if (!$product || ($product['status'] ?? '') !== 'active') {
             return back()->with('error', 'This product is not available.');
         }
 

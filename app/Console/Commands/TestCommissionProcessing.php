@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\User;
-use App\Services\MLMCommissionService;
+use App\Domain\GrowNet\Services\MLMCommissionService;
 
 class TestCommissionProcessing extends Command
 {

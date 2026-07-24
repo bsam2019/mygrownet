@@ -9,7 +9,7 @@ use App\Infrastructure\Persistence\Eloquent\Support\SupportTicketModel;
 use App\Infrastructure\Persistence\Eloquent\Support\TicketCommentModel;
 use App\Models\BGF\BgfApplication;
 use App\Models\DelegationApprovalRequest;
-use App\Models\Employee\Employee;
+use App\Infrastructure\Persistence\Eloquent\EmployeeModel;
 use App\Models\Employee\EmployeeDelegationLog;
 use App\Models\Investor\InvestorAccount;
 use App\Models\PaymentTransaction;
@@ -684,7 +684,7 @@ class DelegatedFunctionsController extends Controller
         // Get approvals this employee needs to review (if they're a manager)
         $toReview = [];
         if ($employee->is_manager) {
-            $subordinateIds = Employee::where('manager_id', $employee->id)->pluck('id');
+            $subordinateIds = EmployeeModel::where('manager_id', $employee->id)->pluck('id');
             $toReview = DelegationApprovalRequest::with(['employee:id,first_name,last_name'])
                 ->whereIn('employee_id', $subordinateIds)
                 ->where('status', 'pending')
@@ -722,7 +722,7 @@ class DelegatedFunctionsController extends Controller
         ]);
         
         // Log the action
-        EmployeeDelegationLog::create([
+EmployeeDelegationLog::create([
             'delegation_id' => $approval->delegation_id,
             'employee_id' => $approval->employee_id,
             'permission_key' => $approval->delegation->permission_key ?? 'unknown',
@@ -731,7 +731,7 @@ class DelegatedFunctionsController extends Controller
             'metadata' => ['approval_id' => $approval->id, 'notes' => $validated['notes']],
             'ip_address' => $request->ip(),
         ]);
-        
+
         // If approved, execute the original action
         if ($validated['action'] === 'approve') {
             $this->executeApprovedAction($approval);
@@ -744,12 +744,12 @@ class DelegatedFunctionsController extends Controller
     // HELPER METHODS
     // ============================================
 
-    protected function getEmployee(Request $request): Employee
+    protected function getEmployee(Request $request): EmployeeModel
     {
         $employee = $request->attributes->get('employee');
         
         if (!$employee) {
-            $employee = Employee::where('user_id', $request->user()->id)
+            $employee = EmployeeModel::where('user_id', $request->user()->id)
                 ->where('employment_status', 'active')
                 ->firstOrFail();
         }
@@ -757,7 +757,7 @@ class DelegatedFunctionsController extends Controller
         return $employee;
     }
 
-    protected function createApprovalRequest(Request $request, Employee $employee, $delegation, string $actionType, string $resourceType, int $resourceId, array $actionData)
+    protected function createApprovalRequest(Request $request, EmployeeModel $employee, $delegation, string $actionType, string $resourceType, int $resourceId, array $actionData)
     {
         $approval = DelegationApprovalRequest::create([
             'delegation_id' => $delegation->id,

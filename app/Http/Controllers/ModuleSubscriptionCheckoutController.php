@@ -6,7 +6,7 @@ use App\Domain\Module\Services\ModuleSubscriptionService;
 use App\Domain\Module\ValueObjects\ModuleId;
 use App\Domain\Module\ValueObjects\SubscriptionTier;
 use App\Domain\Module\ValueObjects\Money;
-use App\Domain\Wallet\Services\WalletService;
+use App\Domain\GrowNet\Wallet\Services\WalletService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -241,7 +241,7 @@ class ModuleSubscriptionCheckoutController extends Controller
             'id' => \Illuminate\Support\Str::uuid()->toString(),
             'notifiable_type' => \App\Models\User::class,
             'notifiable_id' => $userId,
-            'type' => 'App\\Notifications\\SubscriptionActivated',
+            'type' => 'App\Notifications\SubscriptionActivated',
             'module' => 'core',
             'category' => 'success',
             'title' => 'Subscription Activated',
@@ -260,7 +260,7 @@ class ModuleSubscriptionCheckoutController extends Controller
             'id' => \Illuminate\Support\Str::uuid()->toString(),
             'notifiable_type' => \App\Models\User::class,
             'notifiable_id' => $userId,
-            'type' => 'App\\Notifications\\TrialStarted',
+            'type' => 'App\Notifications\TrialStarted',
             'module' => 'core',
             'category' => 'info',
             'title' => 'Free Trial Started',
@@ -279,7 +279,7 @@ class ModuleSubscriptionCheckoutController extends Controller
             'id' => \Illuminate\Support\Str::uuid()->toString(),
             'notifiable_type' => \App\Models\User::class,
             'notifiable_id' => $userId,
-            'type' => 'App\\Notifications\\SubscriptionUpgraded',
+            'type' => 'App\Notifications\SubscriptionUpgraded',
             'module' => 'core',
             'category' => 'success',
             'title' => 'Subscription Upgraded',

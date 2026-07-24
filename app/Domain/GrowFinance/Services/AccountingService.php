@@ -4,23 +4,40 @@ declare(strict_types=1);
 
 namespace App\Domain\GrowFinance\Services;
 
+use App\Domain\GrowFinance\Entities\Account;
+use App\Domain\GrowFinance\Entities\JournalEntry;
+use App\Domain\GrowFinance\Entities\JournalLine;
+use App\Domain\GrowFinance\Repositories\AccountRepositoryInterface;
+use App\Domain\GrowFinance\Repositories\JournalEntryRepositoryInterface;
+use App\Domain\GrowFinance\Repositories\JournalLineRepositoryInterface;
 use App\Domain\GrowFinance\ValueObjects\AccountType;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceAccountModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceJournalEntryModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceJournalLineModel;
 use Illuminate\Support\Facades\DB;
 
 class AccountingService
 {
+    public function __construct(
+        private AccountRepositoryInterface $accountRepo,
+        private JournalEntryRepositoryInterface $journalEntryRepo,
+        private JournalLineRepositoryInterface $journalLineRepo,
+    ) {}
+
     public function initializeChartOfAccounts(int $businessId): void
     {
         $defaultAccounts = $this->getDefaultAccounts();
 
         foreach ($defaultAccounts as $account) {
-            GrowFinanceAccountModel::firstOrCreate(
-                ['business_id' => $businessId, 'code' => $account['code']],
-                array_merge($account, ['business_id' => $businessId, 'is_system' => true])
-            );
+            $existing = $this->accountRepo->findByCode($businessId, $account['code']);
+            if ($existing === null) {
+                $this->accountRepo->save(new Account(
+                    id: null,
+                    businessId: $businessId,
+                    code: $account['code'],
+                    name: $account['name'],
+                    type: $account['type'],
+                    category: $account['category'] ?? null,
+                    isSystem: true,
+                ));
+            }
         }
     }
 
@@ -30,37 +47,48 @@ class AccountingService
         array $lines,
         ?string $reference = null,
         ?int $createdBy = null
-    ): GrowFinanceJournalEntryModel {
+    ): array {
         return DB::transaction(function () use ($businessId, $description, $lines, $reference, $createdBy) {
             $entryNumber = $this->generateEntryNumber($businessId);
 
-            $entry = GrowFinanceJournalEntryModel::create([
-                'business_id' => $businessId,
-                'entry_number' => $entryNumber,
-                'entry_date' => now(),
-                'description' => $description,
-                'reference' => $reference,
-                'is_posted' => false,
-                'created_by' => $createdBy,
-            ]);
+            $entry = $this->journalEntryRepo->save(new JournalEntry(
+                id: null,
+                businessId: $businessId,
+                entryNumber: $entryNumber,
+                entryDate: new \DateTimeImmutable(),
+                description: $description,
+                reference: $reference,
+                isPosted: false,
+                createdBy: $createdBy,
+                createdAt: null,
+                updatedAt: null,
+            ));
 
             foreach ($lines as $line) {
-                GrowFinanceJournalLineModel::create([
-                    'journal_entry_id' => $entry->id,
-                    'account_id' => $line['account_id'],
-                    'debit_amount' => $line['debit_amount'] ?? 0,
-                    'credit_amount' => $line['credit_amount'] ?? 0,
-                    'description' => $line['description'] ?? null,
-                ]);
+                $this->journalLineRepo->save(new JournalLine(
+                    id: null,
+                    journalEntryId: $entry->id,
+                    accountId: $line['account_id'],
+                    debitAmount: (float) ($line['debit_amount'] ?? 0),
+                    creditAmount: (float) ($line['credit_amount'] ?? 0),
+                    description: $line['description'] ?? null,
+                    createdAt: null,
+                    updatedAt: null,
+                ));
             }
 
-            return $entry->load('lines.account');
+            return $entry->toArray();
         });
     }
 
-    public function postJournalEntry(GrowFinanceJournalEntryModel $entry): bool
+    public function postJournalEntry(int $entryId): bool
     {
-        if ($entry->is_posted) {
+        $entry = $this->journalEntryRepo->findById($entryId);
+        if (!$entry) {
+            return false;
+        }
+
+        if ($entry->isPosted) {
             return false;
         }
 
@@ -69,21 +97,51 @@ class AccountingService
         }
 
         return DB::transaction(function () use ($entry) {
-            foreach ($entry->lines as $line) {
-                $account = $line->account;
-                $netAmount = $line->debit_amount - $line->credit_amount;
+            $lines = $this->journalLineRepo->findByJournalEntry($entry->id);
 
-                if ($account->type->isDebitNormal()) {
-                    $account->current_balance += $netAmount;
-                } else {
-                    $account->current_balance -= $netAmount;
+            foreach ($lines as $line) {
+                $accountEntity = $this->accountRepo->findById($line->accountId);
+                if (!$accountEntity) {
+                    continue;
                 }
 
-                $account->save();
+                $netAmount = $line->debitAmount - $line->creditAmount;
+
+                if ($accountEntity->type->isDebitNormal()) {
+                    $newBalance = $accountEntity->currentBalance + $netAmount;
+                } else {
+                    $newBalance = $accountEntity->currentBalance - $netAmount;
+                }
+
+                $this->accountRepo->save(new Account(
+                    id: $accountEntity->id,
+                    businessId: $accountEntity->businessId,
+                    code: $accountEntity->code,
+                    name: $accountEntity->name,
+                    type: $accountEntity->type,
+                    category: $accountEntity->category,
+                    description: $accountEntity->description,
+                    isSystem: $accountEntity->isSystem,
+                    isActive: $accountEntity->isActive,
+                    openingBalance: $accountEntity->openingBalance,
+                    currentBalance: $newBalance,
+                    createdAt: $accountEntity->createdAt,
+                    updatedAt: null,
+                ));
             }
 
-            $entry->is_posted = true;
-            $entry->save();
+            $this->journalEntryRepo->save(new JournalEntry(
+                id: $entry->id,
+                businessId: $entry->businessId,
+                entryNumber: $entry->entryNumber,
+                entryDate: $entry->entryDate,
+                description: $entry->description,
+                reference: $entry->reference,
+                isPosted: true,
+                createdBy: $entry->createdBy,
+                createdAt: $entry->createdAt,
+                updatedAt: null,
+            ));
 
             return true;
         });
@@ -91,39 +149,41 @@ class AccountingService
 
     public function getAccountBalance(int $accountId): float
     {
-        $account = GrowFinanceAccountModel::findOrFail($accountId);
-        return (float) $account->current_balance;
+        $account = $this->accountRepo->findById($accountId);
+        if (!$account) {
+            throw new \RuntimeException('Account not found');
+        }
+        return $account->currentBalance;
     }
 
     public function getTrialBalance(int $businessId): array
     {
-        $accounts = GrowFinanceAccountModel::forBusiness($businessId)
-            ->active()
-            ->orderBy('code')
-            ->get();
+        $accounts = $this->accountRepo->findActive($businessId);
+
+        usort($accounts, fn(Account $a, Account $b) => strcmp($a->code, $b->code));
 
         $totalDebits = 0;
         $totalCredits = 0;
         $balances = [];
 
         foreach ($accounts as $account) {
-            $balance = (float) $account->current_balance;
+            $balance = $account->currentBalance;
 
             if ($account->type->isDebitNormal()) {
                 if ($balance >= 0) {
                     $totalDebits += $balance;
-                    $balances[] = ['account' => $account, 'debit' => $balance, 'credit' => 0];
+                    $balances[] = ['account' => $account->toArray(), 'debit' => $balance, 'credit' => 0];
                 } else {
                     $totalCredits += abs($balance);
-                    $balances[] = ['account' => $account, 'debit' => 0, 'credit' => abs($balance)];
+                    $balances[] = ['account' => $account->toArray(), 'debit' => 0, 'credit' => abs($balance)];
                 }
             } else {
                 if ($balance >= 0) {
                     $totalCredits += $balance;
-                    $balances[] = ['account' => $account, 'debit' => 0, 'credit' => $balance];
+                    $balances[] = ['account' => $account->toArray(), 'debit' => 0, 'credit' => $balance];
                 } else {
                     $totalDebits += abs($balance);
-                    $balances[] = ['account' => $account, 'debit' => abs($balance), 'credit' => 0];
+                    $balances[] = ['account' => $account->toArray(), 'debit' => abs($balance), 'credit' => 0];
                 }
             }
         }
@@ -138,7 +198,8 @@ class AccountingService
 
     private function generateEntryNumber(int $businessId): string
     {
-        $lastEntry = GrowFinanceJournalEntryModel::forBusiness($businessId)
+        $lastEntry = DB::table('growfinance_journal_entries')
+            ->where('business_id', $businessId)
             ->orderBy('id', 'desc')
             ->first();
 
@@ -150,32 +211,23 @@ class AccountingService
     private function getDefaultAccounts(): array
     {
         return [
-            // Assets (1000-1999)
             ['code' => '1000', 'name' => 'Cash on Hand', 'type' => AccountType::ASSET, 'category' => 'Cash'],
             ['code' => '1010', 'name' => 'Bank Account', 'type' => AccountType::ASSET, 'category' => 'Cash'],
             ['code' => '1020', 'name' => 'Mobile Money', 'type' => AccountType::ASSET, 'category' => 'Cash'],
             ['code' => '1100', 'name' => 'Accounts Receivable', 'type' => AccountType::ASSET, 'category' => 'Receivables'],
             ['code' => '1200', 'name' => 'Inventory', 'type' => AccountType::ASSET, 'category' => 'Inventory'],
             ['code' => '1300', 'name' => 'Prepaid Expenses', 'type' => AccountType::ASSET, 'category' => 'Prepaid'],
-
-            // Liabilities (2000-2999)
             ['code' => '2000', 'name' => 'Accounts Payable', 'type' => AccountType::LIABILITY, 'category' => 'Payables'],
             ['code' => '2100', 'name' => 'Accrued Expenses', 'type' => AccountType::LIABILITY, 'category' => 'Accrued'],
             ['code' => '2200', 'name' => 'Short-term Loans', 'type' => AccountType::LIABILITY, 'category' => 'Loans'],
             ['code' => '2300', 'name' => 'VAT Payable', 'type' => AccountType::LIABILITY, 'category' => 'Tax'],
-
-            // Equity (3000-3999)
             ['code' => '3000', 'name' => "Owner's Capital", 'type' => AccountType::EQUITY, 'category' => 'Capital'],
             ['code' => '3100', 'name' => 'Retained Earnings', 'type' => AccountType::EQUITY, 'category' => 'Earnings'],
             ['code' => '3200', 'name' => "Owner's Drawings", 'type' => AccountType::EQUITY, 'category' => 'Drawings'],
-
-            // Income (4000-4999)
             ['code' => '4000', 'name' => 'Sales Revenue', 'type' => AccountType::INCOME, 'category' => 'Sales'],
             ['code' => '4100', 'name' => 'Service Revenue', 'type' => AccountType::INCOME, 'category' => 'Services'],
             ['code' => '4200', 'name' => 'Other Income', 'type' => AccountType::INCOME, 'category' => 'Other'],
             ['code' => '4300', 'name' => 'Interest Income', 'type' => AccountType::INCOME, 'category' => 'Interest'],
-
-            // Expenses (5000-5999)
             ['code' => '5000', 'name' => 'Cost of Goods Sold', 'type' => AccountType::EXPENSE, 'category' => 'COGS'],
             ['code' => '5100', 'name' => 'Salaries & Wages', 'type' => AccountType::EXPENSE, 'category' => 'Payroll'],
             ['code' => '5200', 'name' => 'Rent Expense', 'type' => AccountType::EXPENSE, 'category' => 'Rent'],

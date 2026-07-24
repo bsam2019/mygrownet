@@ -4,8 +4,11 @@ namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
 use App\Domain\BMS\Core\Services\JobService;
+use App\Domain\BMS\Repositories\JobRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
 use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\BranchModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -13,7 +16,8 @@ use Inertia\Response;
 class JobController extends Controller
 {
     public function __construct(
-        private JobService $jobService
+        private JobService $jobService,
+        private JobRepositoryInterface $jobRepo
     ) {}
 
     public function index(Request $request): Response
@@ -32,7 +36,7 @@ class JobController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        $branches = \App\Infrastructure\Persistence\Eloquent\BMS\BranchModel::where('company_id', $companyId)
+        $branches = BranchModel::where('company_id', $companyId)
             ->where('is_active', true)
             ->get(['id', 'branch_name']);
 
@@ -98,8 +102,7 @@ class JobController extends Controller
             'statusHistory.changedBy.user',
         ]);
 
-        // Get available workers for assignment
-        $workers = \App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel::where('company_id', $companyId)
+        $workers = CmsUserModel::where('company_id', $companyId)
             ->with('user')
             ->get()
             ->map(fn($cmsUser) => [
@@ -122,7 +125,10 @@ class JobController extends Controller
 
         $assignedBy = $request->user()->cmsUser->id;
 
-        $this->jobService->assignJob($job, $validated['assigned_to'], $assignedBy);
+        $entity = $this->jobRepo->findById($job->id);
+        if ($entity) {
+            $this->jobService->assignJob($entity, $validated['assigned_to'], $assignedBy);
+        }
 
         return back()->with('success', 'Job assigned successfully');
     }
@@ -138,7 +144,10 @@ class JobController extends Controller
 
         $completedBy = $request->user()->cmsUser->id;
 
-        $this->jobService->completeJob($job, $validated, $completedBy);
+        $entity = $this->jobRepo->findById($job->id);
+        if ($entity) {
+            $this->jobService->completeJob($entity, $validated, $completedBy);
+        }
 
         return back()->with('success', 'Job completed successfully');
     }
@@ -153,12 +162,10 @@ class JobController extends Controller
             'notes'  => 'nullable|string|max:500',
         ]);
 
-        $this->jobService->updateJobStatus(
-            $job,
-            $validated['status'],
-            $request->user()->cmsUser->id,
-            $validated['notes'] ?? null
-        );
+        $entity = $this->jobRepo->findById($job->id);
+        if ($entity) {
+            $this->jobService->updateJobStatus($entity, $validated['status'], $request->user()->cmsUser->id, $validated['notes'] ?? null);
+        }
 
         return back()->with('success', 'Job status updated.');
     }
@@ -179,20 +186,18 @@ class JobController extends Controller
     public function uploadAttachment(Request $request, JobModel $job)
     {
         $request->validate([
-            'file' => 'required|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120', // 5MB max
+            'file' => 'required|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
             'description' => 'nullable|string|max:255',
         ]);
 
         $file = $request->file('file');
         $companyId = $request->user()->cmsUser->company_id;
-        
-        // Generate S3 key following the same pattern as GrowStorage
+
         $filename = $file->getClientOriginalName();
         $sanitizedFilename = preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($filename));
         $uuid = \Illuminate\Support\Str::uuid();
         $s3Key = "cms/companies/{$companyId}/jobs/{$job->id}/attachments/{$uuid}_{$sanitizedFilename}";
-        
-        // Store file to S3 (DigitalOcean Spaces)
+
         \Illuminate\Support\Facades\Storage::disk('s3')->put(
             $s3Key,
             file_get_contents($file->getRealPath()),
@@ -201,18 +206,11 @@ class JobController extends Controller
                 'visibility' => 'private',
             ]
         );
-        
-        // Generate presigned URL for access (valid for 1 hour)
-        $fileUrl = \Illuminate\Support\Facades\Storage::disk('s3')->temporaryUrl(
-            $s3Key,
-            now()->addHours(1)
-        );
-        
-        // Create attachment record
+
         $job->attachments()->create([
             'company_id' => $companyId,
             'file_name' => $file->getClientOriginalName(),
-            'file_path' => $s3Key, // Store S3 key instead of public path
+            'file_path' => $s3Key,
             'file_type' => $file->getClientMimeType(),
             'file_size' => $file->getSize(),
             'description' => $request->description,

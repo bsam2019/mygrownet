@@ -48,38 +48,6 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            // GrowBiz - Task & Staff Management - Emerald
-            [
-                'id' => 'growbiz',
-                'name' => 'GrowBiz',
-                'slug' => 'growbiz',
-                'category' => 'sme',
-                'description' => 'Task management and team collaboration for SMEs',
-                'icon' => '📋',
-                'color' => '#10B981', // Emerald
-                'thumbnail' => null,
-                'account_types' => json_encode(['business', 'member', 'client']),
-                'required_roles' => null,
-                'min_user_level' => null,
-                'routes' => json_encode([
-                    'integrated' => '/growbiz/dashboard',
-                    'standalone' => '/growbiz/dashboard',
-                    'setup' => '/growbiz/setup',
-                    'welcome' => '/growbiz',  // Public landing page (no auth required)
-                ]),
-                'pwa_config' => json_encode(['enabled' => true, 'installable' => true]),
-                'features' => json_encode(['offline' => true, 'notifications' => true, 'requires_setup' => true]),
-                'subscription_tiers' => json_encode([
-                    'free' => ['name' => 'Free', 'price' => 0, 'billing_cycle' => 'monthly', 'employees' => 3, 'tasks' => 50],
-                    'basic' => ['name' => 'Basic', 'price' => 50, 'billing_cycle' => 'monthly', 'employees' => 10, 'tasks' => 'unlimited'],
-                    'pro' => ['name' => 'Pro', 'price' => 100, 'billing_cycle' => 'monthly', 'employees' => 'unlimited', 'tasks' => 'unlimited'],
-                ]),
-                'requires_subscription' => false,
-                'version' => '1.0.0',
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
             // Smart Accounting - Green
             [
                 'id' => 'smart-accounting',
@@ -308,7 +276,7 @@ class ModuleSeeder extends Seeder
                     'multiUser' => true, 
                     'barcode' => true,
                     'integratable' => true, // Can be embedded in other modules
-                    'integrates_with' => ['growbiz', 'bizboost', 'ecommerce', 'pos'],
+                    'integrates_with' => ['bizboost', 'ecommerce', 'pos'],
                 ]),
                 'subscription_tiers' => json_encode([
                     'free' => ['name' => 'Free', 'price' => 0, 'billing_cycle' => 'monthly', 'products' => 50],
@@ -347,7 +315,7 @@ class ModuleSeeder extends Seeder
                     'dataSync' => true, 
                     'notifications' => true,
                     'integratable' => true, // Can be embedded in other modules
-                    'integrates_with' => ['growbiz', 'bizboost', 'ecommerce'],
+                    'integrates_with' => ['bizboost', 'ecommerce'],
                     'requires_inventory' => false, // Can work without inventory
                     'optional_inventory' => true, // But integrates with inventory if available
                 ]),

@@ -3,9 +3,9 @@
 namespace App\Console\Commands\GrowFinance;
 
 use App\Domain\GrowFinance\Services\NotificationService;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceInvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceExpenseModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceJournalEntryModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceInvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceExpenseModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceJournalEntryModel;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Console\Command;

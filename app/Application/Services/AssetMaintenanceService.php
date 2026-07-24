@@ -2,8 +2,8 @@
 
 namespace App\Application\Services;
 
-use App\Application\UseCases\Asset\ProcessAssetMaintenanceUseCase;
-use App\Models\PhysicalRewardAllocation;
+use App\Domain\GrowNet\Application\UseCases\Asset\ProcessAssetMaintenanceUseCase;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalRewardAllocation;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;

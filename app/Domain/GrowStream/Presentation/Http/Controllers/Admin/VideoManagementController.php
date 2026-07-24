@@ -3,11 +3,11 @@
 namespace App\Domain\GrowStream\Presentation\Http\Controllers\Admin;
 
 use App\Domain\GrowStream\Infrastructure\Events\VideoUploaded;
-use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\Video;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoCategory;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoSeries;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoTag;
 use App\Domain\GrowStream\Infrastructure\Providers\VideoProviderFactory;
+use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,24 +17,23 @@ use Illuminate\Support\Str;
 
 class VideoManagementController extends Controller
 {
-    /**
-     * Get all videos for admin
-     */
+    public function __construct(
+        private VideoRepositoryInterface $videoRepo
+    ) {}
+
     public function index(Request $request): JsonResponse
     {
-        $query = Video::with(['creator', 'categories', 'series']);
+        $query = $this->videoRepo->query();
+        $query->with(['creator', 'categories', 'series']);
 
-        // Filter by status
         if ($request->has('status')) {
             $query->where('upload_status', $request->status);
         }
 
-        // Filter by published
         if ($request->has('is_published')) {
             $query->where('is_published', $request->boolean('is_published'));
         }
 
-        // Search
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -43,7 +42,6 @@ class VideoManagementController extends Controller
             });
         }
 
-        // Sort
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
@@ -62,9 +60,6 @@ class VideoManagementController extends Controller
         ]);
     }
 
-    /**
-     * Upload video
-     */
     public function upload(Request $request): JsonResponse
     {
         $request->validate([
@@ -78,8 +73,7 @@ class VideoManagementController extends Controller
         try {
             DB::beginTransaction();
 
-            // Create video record
-            $video = Video::create([
+            $video = $this->videoRepo->save([
                 'title' => $request->title,
                 'slug' => Str::slug($request->title),
                 'description' => $request->description,
@@ -94,15 +88,13 @@ class VideoManagementController extends Controller
                 'upload_status' => 'uploading',
             ]);
 
-            // Upload to provider
             $provider = VideoProviderFactory::make();
             $response = $provider->upload($request->file('video'), [
                 'title' => $request->title,
                 'video_id' => $video->id,
             ]);
 
-            // Update video with provider details
-            $video->update([
+            $this->videoRepo->update($video, [
                 'provider_video_id' => $response->providerVideoId,
                 'playback_url' => $response->playbackUrl,
                 'thumbnail_url' => $response->thumbnailUrl,
@@ -114,7 +106,6 @@ class VideoManagementController extends Controller
 
             DB::commit();
 
-            // Dispatch event for async processing
             event(new VideoUploaded($video));
 
             return response()->json([
@@ -133,11 +124,13 @@ class VideoManagementController extends Controller
         }
     }
 
-    /**
-     * Get video details for editing
-     */
-    public function show(Video $video): JsonResponse
+    public function show(int $id): JsonResponse
     {
+        $video = $this->videoRepo->findById($id);
+        if (!$video) {
+            return response()->json(['success' => false, 'error' => 'Video not found'], 404);
+        }
+
         $video->load(['creator', 'categories', 'tags', 'series']);
 
         return response()->json([
@@ -146,11 +139,13 @@ class VideoManagementController extends Controller
         ]);
     }
 
-    /**
-     * Update video
-     */
-    public function update(Request $request, Video $video): JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
+        $video = $this->videoRepo->findById($id);
+        if (!$video) {
+            return response()->json(['success' => false, 'error' => 'Video not found'], 404);
+        }
+
         $request->validate([
             'title' => 'sometimes|string|max:255',
             'description' => 'sometimes|string',
@@ -180,25 +175,20 @@ class VideoManagementController extends Controller
                 'meta_description',
             ]);
 
-            // Handle featured_at timestamp
             if ($request->has('is_featured')) {
                 if ($request->is_featured && !$video->is_featured) {
-                    // Being featured for the first time or re-featured
                     $updateData['featured_at'] = now();
                 } elseif (!$request->is_featured && $video->is_featured) {
-                    // Being unfeatured
                     $updateData['featured_at'] = null;
                 }
             }
 
-            $video->update($updateData);
+            $this->videoRepo->update($video, $updateData);
 
-            // Update categories
             if ($request->has('category_ids')) {
                 $video->categories()->sync($request->category_ids);
             }
 
-            // Update tags
             if ($request->has('tags')) {
                 $this->syncTags($video, $request->tags);
             }
@@ -221,11 +211,13 @@ class VideoManagementController extends Controller
         }
     }
 
-    /**
-     * Publish video
-     */
-    public function publish(Video $video): JsonResponse
+    public function publish(int $id): JsonResponse
     {
+        $video = $this->videoRepo->findById($id);
+        if (!$video) {
+            return response()->json(['success' => false, 'error' => 'Video not found'], 404);
+        }
+
         if (!$video->isReady()) {
             return response()->json([
                 'success' => false,
@@ -233,47 +225,50 @@ class VideoManagementController extends Controller
             ], 400);
         }
 
-        $video->update([
+        $this->videoRepo->update($video, [
             'is_published' => true,
             'published_at' => now(),
         ]);
 
         return response()->json([
             'success' => true,
-            'data' => $video,
+            'data' => $video->fresh(),
             'message' => 'Video published successfully',
         ]);
     }
 
-    /**
-     * Unpublish video
-     */
-    public function unpublish(Video $video): JsonResponse
+    public function unpublish(int $id): JsonResponse
     {
-        $video->update([
+        $video = $this->videoRepo->findById($id);
+        if (!$video) {
+            return response()->json(['success' => false, 'error' => 'Video not found'], 404);
+        }
+
+        $this->videoRepo->update($video, [
             'is_published' => false,
         ]);
 
         return response()->json([
             'success' => true,
-            'data' => $video,
+            'data' => $video->fresh(),
             'message' => 'Video unpublished successfully',
         ]);
     }
 
-    /**
-     * Delete video
-     */
-    public function destroy(Video $video): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
+        $video = $this->videoRepo->findById($id);
+        if (!$video) {
+            return response()->json(['success' => false, 'error' => 'Video not found'], 404);
+        }
+
         try {
-            // Delete from provider
             if ($video->provider_video_id) {
                 $provider = VideoProviderFactory::make($video->video_provider);
                 $provider->delete($video->provider_video_id);
             }
 
-            $video->delete();
+            $this->videoRepo->delete($video);
 
             return response()->json([
                 'success' => true,
@@ -288,9 +283,6 @@ class VideoManagementController extends Controller
         }
     }
 
-    /**
-     * Bulk actions
-     */
     public function bulkAction(Request $request): JsonResponse
     {
         $request->validate([
@@ -299,15 +291,15 @@ class VideoManagementController extends Controller
             'video_ids.*' => 'exists:growstream_videos,id',
         ]);
 
-        $videos = Video::whereIn('id', $request->video_ids)->get();
+        $videos = $this->videoRepo->query()->whereIn('id', $request->video_ids)->get();
 
         foreach ($videos as $video) {
             match ($request->action) {
-                'publish' => $video->update(['is_published' => true, 'published_at' => now()]),
-                'unpublish' => $video->update(['is_published' => false]),
-                'delete' => $video->delete(),
-                'feature' => $video->update(['is_featured' => true, 'featured_at' => now()]),
-                'unfeature' => $video->update(['is_featured' => false, 'featured_at' => null]),
+                'publish' => $this->videoRepo->update($video, ['is_published' => true, 'published_at' => now()]),
+                'unpublish' => $this->videoRepo->update($video, ['is_published' => false]),
+                'delete' => $this->videoRepo->delete($video),
+                'feature' => $this->videoRepo->update($video, ['is_featured' => true, 'featured_at' => now()]),
+                'unfeature' => $this->videoRepo->update($video, ['is_featured' => false, 'featured_at' => null]),
             };
         }
 
@@ -317,9 +309,6 @@ class VideoManagementController extends Controller
         ]);
     }
 
-    /**
-     * Get form data (categories, series, etc.)
-     */
     public function formData(): JsonResponse
     {
         return response()->json([
@@ -335,10 +324,7 @@ class VideoManagementController extends Controller
         ]);
     }
 
-    /**
-     * Sync tags for video
-     */
-    protected function syncTags(Video $video, array $tags): void
+    protected function syncTags($video, array $tags): void
     {
         $tagIds = [];
 

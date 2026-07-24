@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Repositories;
 
-use App\Domain\Reward\Repositories\PhysicalRewardAllocationRepository;
-use App\Domain\Reward\Entities\PhysicalRewardAllocation;
-use App\Domain\Reward\ValueObjects\RewardAllocationId;
-use App\Domain\Reward\ValueObjects\RewardId;
-use App\Domain\Reward\ValueObjects\AllocationStatus;
-use App\Domain\Reward\ValueObjects\MaintenanceStatus;
-use App\Domain\MLM\ValueObjects\UserId;
-use App\Domain\MLM\ValueObjects\TeamVolumeAmount;
-use App\Models\PhysicalRewardAllocation as PhysicalRewardAllocationModel;
+use App\Domain\GrowNet\Reward\Repositories\PhysicalRewardAllocationRepository;
+use App\Domain\GrowNet\Reward\Entities\PhysicalRewardAllocation;
+use App\Domain\GrowNet\Reward\ValueObjects\RewardAllocationId;
+use App\Domain\GrowNet\Reward\ValueObjects\RewardId;
+use App\Domain\GrowNet\Reward\ValueObjects\AllocationStatus;
+use App\Domain\GrowNet\Reward\ValueObjects\MaintenanceStatus;
+use App\Domain\GrowNet\MLM\ValueObjects\UserId;
+use App\Domain\GrowNet\MLM\ValueObjects\TeamVolumeAmount;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalRewardAllocation as PhysicalRewardAllocationModel;
 use DateTimeImmutable;
 
 class EloquentPhysicalRewardAllocationRepository implements PhysicalRewardAllocationRepository

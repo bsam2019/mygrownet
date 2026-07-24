@@ -7,7 +7,7 @@ use App\Domain\Reward\Services\ReferralMatrixService;
 use App\Models\Investment;
 use App\Models\User;
 use App\Models\WithdrawalRequest;
-use App\Models\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use App\Notifications\ReferralCommissionNotification;
 use Carbon\Carbon;
 use Exception;

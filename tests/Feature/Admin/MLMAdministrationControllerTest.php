@@ -3,8 +3,8 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\User;
-use App\Models\ReferralCommission;
-use App\Models\TeamVolume;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TeamVolume;
 use App\Models\InvestmentTier;
 use App\Services\MLMAdministrationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;

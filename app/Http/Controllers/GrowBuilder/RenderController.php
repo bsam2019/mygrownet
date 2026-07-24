@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\GrowBuilder;
 
 use App\Domain\GrowBuilder\Repositories\PageRepositoryInterface;
+use App\Domain\GrowBuilder\Repositories\ProductRepositoryInterface;
 use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
+use App\Domain\GrowBuilder\ValueObjects\SiteId;
 use App\Domain\GrowBuilder\ValueObjects\Subdomain;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderPaymentSettings;
-use App\Infrastructure\GrowBuilder\Models\GrowBuilderProduct;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,6 +19,7 @@ class RenderController extends Controller
     public function __construct(
         private SiteRepositoryInterface $siteRepository,
         private PageRepositoryInterface $pageRepository,
+        private ProductRepositoryInterface $productRepository,
     ) {}
 
     public function render(Request $request, string $subdomain, ?string $slug = null)
@@ -73,26 +75,23 @@ class RenderController extends Controller
             ?? $siteModel->pages()->where('is_homepage', true)->first();
 
         // Get products if e-commerce is enabled
-        $products = GrowBuilderProduct::where('site_id', $site->getId()->value())
-            ->where('is_active', true)
-            ->get()
-            ->map(fn($p) => [
-                'id' => $p->id,
-                'name' => $p->name,
-                'slug' => $p->slug,
-                'price' => $p->price,
-                'priceFormatted' => $p->formatted_price,
-                'comparePrice' => $p->compare_price,
-                'comparePriceFormatted' => $p->compare_price ? 'K' . number_format($p->compare_price / 100, 2) : null,
-                'image' => $p->main_image,
-                'images' => $p->images,
-                'shortDescription' => $p->short_description,
-                'category' => $p->category,
-                'inStock' => $p->isInStock(),
-                'isFeatured' => $p->is_featured,
-                'hasDiscount' => $p->hasDiscount(),
-                'discountPercentage' => $p->discount_percentage,
-            ]);
+        $products = array_map(fn($p) => [
+            'id' => $p->getId()->value(),
+            'name' => $p->getName(),
+            'slug' => $p->getSlug(),
+            'price' => $p->getPrice()->getAmountInNgwee(),
+            'priceFormatted' => 'K' . number_format($p->getPrice()->getAmountInNgwee() / 100, 2),
+            'comparePrice' => $p->getComparePrice()?->getAmountInNgwee(),
+            'comparePriceFormatted' => $p->getComparePrice() ? 'K' . number_format($p->getComparePrice()->getAmountInNgwee() / 100, 2) : null,
+            'image' => $p->getMainImage(),
+            'images' => $p->getImages(),
+            'shortDescription' => $p->getShortDescription(),
+            'category' => $p->getCategory(),
+            'inStock' => $p->isInStock(),
+            'isFeatured' => $p->isFeatured(),
+            'hasDiscount' => $p->hasDiscount(),
+            'discountPercentage' => $p->getDiscountPercentage(),
+        ], $this->productRepository->getActiveForSite(SiteId::fromInt($site->getId()->value())));
 
         // Use Inertia to render the same Vue component as preview
         return Inertia::render('GrowBuilder/Preview/Site', [
@@ -235,14 +234,12 @@ class RenderController extends Controller
         }
 
         // Add products if any
-        $products = \App\Infrastructure\GrowBuilder\Models\GrowBuilderProduct::where('site_id', $site->getId()->value())
-            ->where('is_active', true)
-            ->get();
+        $products = $this->productRepository->getActiveForSite(SiteId::fromInt($site->getId()->value()));
 
         foreach ($products as $product) {
             $xml .= "  <url>\n";
-            $xml .= "    <loc>{$baseUrl}/product/{$product->slug}</loc>\n";
-            $xml .= "    <lastmod>{$product->updated_at->format('Y-m-d')}</lastmod>\n";
+            $xml .= "    <loc>{$baseUrl}/product/{$product->getSlug()}</loc>\n";
+            $xml .= "    <lastmod>{$product->getUpdatedAt()->format('Y-m-d')}</lastmod>\n";
             $xml .= "    <changefreq>weekly</changefreq>\n";
             $xml .= "    <priority>0.7</priority>\n";
             $xml .= "  </url>\n";

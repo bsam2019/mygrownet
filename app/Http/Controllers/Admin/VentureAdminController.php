@@ -12,12 +12,12 @@ use App\Infrastructure\Persistence\Eloquent\VentureBuilder\VentureUpdateModel;
 use App\Infrastructure\Persistence\Eloquent\VentureBuilder\VentureDividendModel;
 use App\Infrastructure\Persistence\Eloquent\VentureBuilder\VentureShareTransferModel;
 use App\Infrastructure\Persistence\Eloquent\VentureBuilder\VentureResolutionModel;
-use App\Services\VentureBuilder\VentureService;
-use App\Services\VentureBuilder\VentureInvestmentService;
-use App\Services\VentureBuilder\VentureDividendService;
-use App\Services\VentureBuilder\VentureCacheService;
-use App\Services\VentureBuilder\VentureShareTransferService;
-use App\Services\VentureBuilder\VentureVoteService;
+use App\Domain\VentureBuilder\Services\VentureService;
+use App\Domain\VentureBuilder\Services\VentureInvestmentService;
+use App\Domain\VentureBuilder\Services\VentureDividendService;
+use App\Domain\VentureBuilder\Services\VentureCacheService;
+use App\Domain\VentureBuilder\Services\VentureShareTransferService;
+use App\Domain\VentureBuilder\Services\VentureVoteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -207,7 +207,7 @@ class VentureAdminController extends Controller
     public function approve(VentureModel $venture)
     {
         try {
-            $this->ventureService->transitionStatus($venture, 'approved');
+            $this->ventureService->transitionStatus($venture->id, 'approved');
             $venture->update([
                 'approved_by' => auth()->id(),
                 'approved_at' => now(),
@@ -224,7 +224,7 @@ class VentureAdminController extends Controller
     public function launchFunding(VentureModel $venture)
     {
         try {
-            $this->ventureService->transitionStatus($venture, 'funding');
+            $this->ventureService->transitionStatus($venture->id, 'funding');
             $venture->update(['funding_start_date' => $venture->funding_start_date ?? now()]);
             return back()->with('success', 'Funding launched successfully.');
         } catch (\InvalidArgumentException $e) {
@@ -238,7 +238,7 @@ class VentureAdminController extends Controller
     public function closeFunding(VentureModel $venture)
     {
         try {
-            $this->ventureService->transitionStatus($venture, 'funded');
+            $this->ventureService->transitionStatus($venture->id, 'funded');
             $venture->update(['funding_end_date' => now()]);
             return back()->with('success', 'Funding closed successfully.');
         } catch (\InvalidArgumentException $e) {
@@ -252,7 +252,7 @@ class VentureAdminController extends Controller
     public function activate(VentureModel $venture)
     {
         try {
-            $this->ventureService->transitionStatus($venture, 'active');
+            $this->ventureService->transitionStatus($venture->id, 'active');
             return back()->with('success', 'Venture activated successfully.');
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
@@ -272,7 +272,7 @@ class VentureAdminController extends Controller
 
         try {
             $this->ventureService->registerCompany(
-                $venture,
+                $venture->id,
                 $validated['company_name'],
                 $validated['company_registration_number'],
                 $validated['mygrownet_equity_percentage']
@@ -337,7 +337,7 @@ class VentureAdminController extends Controller
     public function confirmInvestment(VentureInvestmentModel $investment)
     {
         try {
-            $this->investmentService->confirmInvestment($investment);
+            $this->investmentService->confirmInvestment($investment->id);
             return back()->with('success', 'Investment confirmed successfully.');
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
@@ -350,7 +350,7 @@ class VentureAdminController extends Controller
     public function refundInvestment(VentureInvestmentModel $investment)
     {
         try {
-            $this->investmentService->refundInvestment($investment);
+            $this->investmentService->refundInvestment($investment->id);
             return back()->with('success', 'Investment refunded successfully.');
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
@@ -391,7 +391,7 @@ class VentureAdminController extends Controller
             }
 
             try {
-                $this->investmentService->registerShareholder($investment);
+                $this->investmentService->registerShareholder($investment->id);
                 $investment->update(['is_shareholder' => true, 'shareholder_registered_at' => now()]);
                 $count++;
             } catch (\Exception $e) {
@@ -563,7 +563,7 @@ class VentureAdminController extends Controller
 
         try {
             $this->dividendService->declareDividend(
-                $venture,
+                $venture->id,
                 $validated['dividend_period'],
                 $validated['total_amount'],
                 $validated['notes'] ?? null
@@ -581,7 +581,7 @@ class VentureAdminController extends Controller
     public function processDividend(VentureDividendModel $dividend)
     {
         try {
-            $this->dividendService->processDividend($dividend);
+            $this->dividendService->processDividend($dividend->id);
             return back()->with('success', 'Dividend processed successfully.');
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
@@ -624,7 +624,7 @@ class VentureAdminController extends Controller
     public function approveTransfer(VentureShareTransferModel $transfer)
     {
         try {
-            $this->shareTransferService->approveTransfer($transfer);
+            $this->shareTransferService->approveTransfer($transfer->id);
 
             return back()->with('success', 'Share transfer approved and processed successfully.');
         } catch (\InvalidArgumentException $e) {
@@ -644,7 +644,7 @@ class VentureAdminController extends Controller
         ]);
 
         try {
-            $this->shareTransferService->rejectTransfer($transfer, $validated['admin_notes'] ?? null);
+            $this->shareTransferService->rejectTransfer($transfer->id, $validated['admin_notes'] ?? null);
 
             return back()->with('success', 'Share transfer rejected.');
         } catch (\InvalidArgumentException $e) {
@@ -683,7 +683,7 @@ class VentureAdminController extends Controller
 
         try {
             $this->voteService->createResolution(
-                $venture,
+                $venture->id,
                 $validated['title'],
                 $validated['description'],
                 $validated['type'],
@@ -703,7 +703,7 @@ class VentureAdminController extends Controller
     public function openVoting(VentureResolutionModel $resolution)
     {
         try {
-            $this->voteService->openVoting($resolution);
+            $this->voteService->openVoting($resolution->id);
 
             return back()->with('success', 'Voting is now open for this resolution.');
         } catch (\InvalidArgumentException $e) {
@@ -717,7 +717,7 @@ class VentureAdminController extends Controller
     public function tallyResults(VentureResolutionModel $resolution)
     {
         try {
-            $this->voteService->tallyResults($resolution);
+            $this->voteService->tallyResults($resolution->id);
 
             return back()->with('success', 'Voting results have been tallied.');
         } catch (\InvalidArgumentException $e) {

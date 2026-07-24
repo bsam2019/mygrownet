@@ -6,120 +6,80 @@ namespace App\Domain\BMS\Core\Services;
 
 use App\Domain\BMS\Core\ValueObjects\InvoiceNumber;
 use App\Domain\BMS\Core\ValueObjects\InvoiceStatus;
-use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
-use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceItemModel;
-use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
+use App\Domain\BMS\Entities\Invoice;
+use App\Domain\BMS\Entities\InvoiceItem;
+use App\Domain\BMS\Repositories\InvoiceRepositoryInterface;
+use App\Domain\BMS\Repositories\InvoiceItemRepositoryInterface;
+use App\Domain\BMS\Repositories\JobRepositoryInterface;
+use App\Domain\BMS\Repositories\CustomerRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class InvoiceService
 {
     public function __construct(
+        private readonly InvoiceRepositoryInterface $invoiceRepo,
+        private readonly InvoiceItemRepositoryInterface $invoiceItemRepo,
+        private readonly JobRepositoryInterface $jobRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
         private readonly AuditTrailService $auditTrail
     ) {}
 
-    /**
-     * Auto-generate invoice from completed job
-     */
-    public function generateFromJob(int $jobId, int $createdBy): InvoiceModel
+    public function generateFromJob(int $jobId, int $createdBy): Invoice
     {
         return DB::transaction(function () use ($jobId, $createdBy) {
-            $job = JobModel::with('customer')->findOrFail($jobId);
+            $job = $this->jobRepo->findById($jobId);
+            if (!$job) throw new \InvalidArgumentException('Job not found');
+            if ($job->status !== 'completed') throw new \InvalidArgumentException('Only completed jobs can be invoiced');
 
-            // Validate job is completed
-            if ($job->status !== 'completed') {
-                throw new \InvalidArgumentException('Only completed jobs can be invoiced');
-            }
+            $invoiceNumber = $this->generateInvoiceNumber($job->companyId);
 
-            // Check if invoice already exists
-            if ($job->invoice_id) {
-                throw new \InvalidArgumentException('Invoice already exists for this job');
-            }
-
-            // Generate invoice number
-            $invoiceNumber = $this->generateInvoiceNumber($job->company_id);
-
-            // Create invoice
-            $invoice = InvoiceModel::create([
-                'company_id' => $job->company_id,
-                'customer_id' => $job->customer_id,
+            $invoice = Invoice::reconstitute([
+                'company_id' => $job->companyId,
+                'customer_id' => $job->customerId,
                 'invoice_number' => $invoiceNumber,
-                'invoice_date' => now(),
-                'due_date' => now()->addDays(30), // Default 30 days
+                'invoice_date' => now()->format('Y-m-d'),
+                'due_date' => now()->addDays(30)->format('Y-m-d'),
                 'status' => InvoiceStatus::DRAFT->value,
-                'subtotal' => $job->actual_value ?? $job->estimated_value,
-                'total_amount' => $job->actual_value ?? $job->estimated_value,
+                'subtotal' => $job->actualValue ?? $job->quotedValue ?? 0,
+                'tax_amount' => 0,
+                'discount_amount' => 0,
+                'total_amount' => $job->actualValue ?? $job->quotedValue ?? 0,
                 'amount_paid' => 0,
-                'notes' => "Invoice for Job: {$job->job_number} - {$job->title}",
+                'notes' => "Invoice for Job: {$job->jobNumber} - {$job->jobType}",
                 'created_by' => $createdBy,
             ]);
+            $invoice = $this->invoiceRepo->save($invoice);
 
-            // Create invoice item
-            InvoiceItemModel::create([
+            $item = InvoiceItem::reconstitute([
                 'invoice_id' => $invoice->id,
-                'description' => $job->title . ($job->description ? "\n" . $job->description : ''),
+                'description' => $job->jobType . ($job->description ? "\n" . $job->description : ''),
                 'quantity' => 1,
-                'unit_price' => $job->actual_value ?? $job->estimated_value,
-                'line_total' => $job->actual_value ?? $job->estimated_value,
+                'unit_price' => $job->actualValue ?? $job->quotedValue ?? 0,
+                'line_total' => $job->actualValue ?? $job->quotedValue ?? 0,
             ]);
+            $this->invoiceItemRepo->save($item);
 
-            // Link invoice to job
-            $job->invoice_id = $invoice->id;
-            $job->save();
+            $this->auditTrail->log($job->companyId, $createdBy, 'invoice', $invoice->id, 'created', null, $invoice->toArray());
+            Log::info('Invoice generated from job', ['invoice_id' => $invoice->id, 'job_id' => $jobId]);
 
-            // Audit trail
-            $this->auditTrail->log(
-                companyId: $job->company_id,
-                entityType: 'invoice',
-                entityId: $invoice->id,
-                action: 'created',
-                userId: $createdBy,
-                newValues: $invoice->toArray()
-            );
-
-            Log::info('Invoice generated from job', [
-                'invoice_id' => $invoice->id,
-                'job_id' => $jobId,
-                'invoice_number' => $invoiceNumber,
-            ]);
-
-            return $invoice->fresh(['items', 'customer']);
+            return $invoice;
         });
     }
 
-    /**
-     * Create manual invoice
-     */
     public function createInvoice(
-        int $companyId,
-        int $customerId,
-        array $items,
-        ?string $dueDate,
-        ?string $notes,
-        int $createdBy
-    ): InvoiceModel {
-        return DB::transaction(function () use (
-            $companyId,
-            $customerId,
-            $items,
-            $dueDate,
-            $notes,
-            $createdBy
-        ) {
-            // Generate invoice number
+        int $companyId, int $customerId, array $items, ?string $dueDate, ?string $notes, int $createdBy
+    ): Invoice {
+        return DB::transaction(function () use ($companyId, $customerId, $items, $dueDate, $notes, $createdBy) {
             $invoiceNumber = $this->generateInvoiceNumber($companyId);
-
-            // Calculate totals
             $subtotal = collect($items)->sum(fn($item) => $item['quantity'] * $item['unit_price']);
 
-            // Create invoice
-            $invoice = InvoiceModel::create([
+            $invoice = Invoice::reconstitute([
                 'company_id' => $companyId,
                 'customer_id' => $customerId,
                 'invoice_number' => $invoiceNumber,
-                'invoice_date' => now(),
-                'due_date' => $dueDate ?? now()->addDays(30),
+                'invoice_date' => now()->format('Y-m-d'),
+                'due_date' => $dueDate ?? now()->addDays(30)->format('Y-m-d'),
                 'status' => InvoiceStatus::DRAFT->value,
                 'subtotal' => $subtotal,
                 'total_amount' => $subtotal,
@@ -127,263 +87,157 @@ class InvoiceService
                 'notes' => $notes,
                 'created_by' => $createdBy,
             ]);
+            $invoice = $this->invoiceRepo->save($invoice);
 
-            // Create invoice items
             foreach ($items as $item) {
                 $lineTotal = $item['quantity'] * $item['unit_price'];
-                InvoiceItemModel::create([
-                    'invoice_id'       => $invoice->id,
-                    'description'      => $item['description'],
-                    'quantity'         => $item['quantity'],
-                    'unit_price'       => $item['unit_price'],
-                    'amount'           => $lineTotal,
-                    'line_total'       => $lineTotal,
-                    'dimensions'       => $item['dimensions'] ?? null,
+                $invoiceItem = InvoiceItem::reconstitute([
+                    'invoice_id' => $invoice->id,
+                    'description' => $item['description'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'amount' => $lineTotal,
+                    'line_total' => $lineTotal,
+                    'dimensions' => $item['dimensions'] ?? null,
                     'dimensions_value' => $item['dimensions_value'] ?? 1,
                 ]);
+                $this->invoiceItemRepo->save($invoiceItem);
             }
 
-            // Audit trail
-            $this->auditTrail->log(
-                companyId: $companyId,
-                entityType: 'invoice',
-                entityId: $invoice->id,
-                action: 'created',
-                userId: $createdBy,
-                newValues: $invoice->toArray()
-            );
+            $this->auditTrail->log($companyId, $createdBy, 'invoice', $invoice->id, 'created', null, $invoice->toArray());
+            Log::info('Manual invoice created', ['invoice_id' => $invoice->id, 'invoice_number' => $invoiceNumber]);
 
-            Log::info('Manual invoice created', [
-                'invoice_id' => $invoice->id,
-                'invoice_number' => $invoiceNumber,
-            ]);
-
-            return $invoice->fresh(['items', 'customer']);
+            return $invoice;
         });
     }
 
-    /**
-     * Update invoice
-     */
-    public function updateInvoice(
-        int $invoiceId,
-        array $items,
-        ?string $dueDate,
-        ?string $notes,
-        int $userId
-    ): InvoiceModel {
+    public function updateInvoice(int $invoiceId, array $items, ?string $dueDate, ?string $notes, int $userId): Invoice
+    {
         return DB::transaction(function () use ($invoiceId, $items, $dueDate, $notes, $userId) {
-            $invoice = InvoiceModel::findOrFail($invoiceId);
-
-            // Only draft invoices can be edited
-            if ($invoice->status !== InvoiceStatus::DRAFT->value) {
-                throw new \InvalidArgumentException('Only draft invoices can be edited');
-            }
+            $invoice = $this->invoiceRepo->findById($invoiceId);
+            if (!$invoice) throw new \InvalidArgumentException('Invoice not found');
+            if ($invoice->status !== InvoiceStatus::DRAFT->value) throw new \InvalidArgumentException('Only draft invoices can be edited');
 
             $oldValues = $invoice->toArray();
-
-            // Calculate new totals
             $subtotal = collect($items)->sum(fn($item) => $item['quantity'] * $item['unit_price']);
 
-            // Update invoice
-            $invoice->update([
-                'due_date' => $dueDate ?? $invoice->due_date,
+            $updated = Invoice::reconstitute(array_merge($invoice->toArray(), [
+                'due_date' => $dueDate ?? $invoice->dueDate?->format('Y-m-d'),
                 'subtotal' => $subtotal,
                 'total_amount' => $subtotal,
                 'notes' => $notes,
-            ]);
+            ]));
+            $this->invoiceRepo->save($updated);
+            $this->invoiceItemRepo->deleteByInvoice($invoiceId);
 
-            // Delete old items and create new ones
-            $invoice->items()->delete();
             foreach ($items as $item) {
                 $lineTotal = $item['quantity'] * $item['unit_price'];
-                InvoiceItemModel::create([
-                    'invoice_id'       => $invoice->id,
-                    'description'      => $item['description'],
-                    'quantity'         => $item['quantity'],
-                    'unit_price'       => $item['unit_price'],
-                    'amount'           => $lineTotal,
-                    'line_total'       => $lineTotal,
-                    'dimensions'       => $item['dimensions'] ?? null,
+                $invoiceItem = InvoiceItem::reconstitute([
+                    'invoice_id' => $invoiceId,
+                    'description' => $item['description'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'amount' => $lineTotal,
+                    'line_total' => $lineTotal,
+                    'dimensions' => $item['dimensions'] ?? null,
                     'dimensions_value' => $item['dimensions_value'] ?? 1,
                 ]);
+                $this->invoiceItemRepo->save($invoiceItem);
             }
 
-            // Audit trail
-            $this->auditTrail->log(
-                companyId: $invoice->company_id,
-                entityType: 'invoice',
-                entityId: $invoice->id,
-                action: 'updated',
-                userId: $userId,
-                oldValues: $oldValues,
-                newValues: $invoice->fresh()->toArray()
-            );
-
+            $this->auditTrail->log($invoice->companyId, $userId, 'invoice', $invoiceId, 'updated', $oldValues, $updated->toArray());
             Log::info('Invoice updated', ['invoice_id' => $invoiceId]);
 
-            return $invoice->fresh(['items', 'customer']);
+            return $this->invoiceRepo->findById($invoiceId);
         });
     }
 
-    /**
-     * Send invoice (mark as sent)
-     */
-    public function sendInvoice(int $invoiceId, int $userId): InvoiceModel
+    public function sendInvoice(int $invoiceId, int $userId): Invoice
     {
-        $invoice = InvoiceModel::findOrFail($invoiceId);
+        $invoice = $this->invoiceRepo->findById($invoiceId);
+        if (!$invoice) throw new \InvalidArgumentException('Invoice not found');
 
         $oldStatus = $invoice->status;
-        $invoice->status = InvoiceStatus::SENT->value;
-        $invoice->save();
+        $updated = Invoice::reconstitute(array_merge($invoice->toArray(), ['status' => InvoiceStatus::SENT->value]));
+        $this->invoiceRepo->save($updated);
 
-        // Audit trail
-        $this->auditTrail->log(
-            companyId: $invoice->company_id,
-            entityType: 'invoice',
-            entityId: $invoice->id,
-            action: 'sent',
-            userId: $userId,
-            oldValues: ['status' => $oldStatus],
-            newValues: ['status' => InvoiceStatus::SENT->value]
-        );
-
+        $this->auditTrail->log($invoice->companyId, $userId, 'invoice', $invoiceId, 'sent', ['status' => $oldStatus], ['status' => InvoiceStatus::SENT->value]);
         Log::info('Invoice sent', ['invoice_id' => $invoiceId]);
 
-        return $invoice->fresh(['items', 'customer']);
+        return $this->invoiceRepo->findById($invoiceId);
     }
 
-    /**
-     * Cancel invoice
-     */
-    public function cancelInvoice(int $invoiceId, string $reason, int $userId): InvoiceModel
+    public function cancelInvoice(int $invoiceId, string $reason, int $userId): Invoice
     {
         return DB::transaction(function () use ($invoiceId, $reason, $userId) {
-            $invoice = InvoiceModel::findOrFail($invoiceId);
-
-            // Cannot cancel paid invoices
-            if ($invoice->status === InvoiceStatus::PAID->value) {
-                throw new \InvalidArgumentException('Cannot cancel paid invoices. Use void instead.');
-            }
+            $invoice = $this->invoiceRepo->findById($invoiceId);
+            if (!$invoice) throw new \InvalidArgumentException('Invoice not found');
+            if ($invoice->status === InvoiceStatus::PAID->value) throw new \InvalidArgumentException('Cannot cancel paid invoices. Use void instead.');
 
             $oldStatus = $invoice->status;
-            $invoice->status = InvoiceStatus::CANCELLED->value;
-            $invoice->notes = ($invoice->notes ? $invoice->notes . "\n\n" : '') . "Cancelled: {$reason}";
-            $invoice->save();
+            $newNotes = ($invoice->notes ? $invoice->notes . "\n\n" : '') . "Cancelled: {$reason}";
+            $updated = Invoice::reconstitute(array_merge($invoice->toArray(), ['status' => InvoiceStatus::CANCELLED->value, 'notes' => $newNotes]));
+            $this->invoiceRepo->save($updated);
+            $this->updateCustomerBalance($invoice->customerId);
 
-            // Update customer balance
-            $this->updateCustomerBalance($invoice->customer_id);
-
-            // Audit trail
-            $this->auditTrail->log(
-                companyId: $invoice->company_id,
-                entityType: 'invoice',
-                entityId: $invoice->id,
-                action: 'cancelled',
-                userId: $userId,
-                oldValues: ['status' => $oldStatus],
-                newValues: ['status' => InvoiceStatus::CANCELLED->value, 'reason' => $reason]
-            );
-
+            $this->auditTrail->log($invoice->companyId, $userId, 'invoice', $invoiceId, 'cancelled', ['status' => $oldStatus], ['status' => InvoiceStatus::CANCELLED->value, 'reason' => $reason]);
             Log::info('Invoice cancelled', ['invoice_id' => $invoiceId, 'reason' => $reason]);
 
-            return $invoice->fresh(['items', 'customer']);
+            return $this->invoiceRepo->findById($invoiceId);
         });
     }
 
-    /**
-     * Void invoice (for paid invoices)
-     */
-    public function voidInvoice(int $invoiceId, string $reason, int $userId): InvoiceModel
+    public function voidInvoice(int $invoiceId, string $reason, int $userId): Invoice
     {
         return DB::transaction(function () use ($invoiceId, $reason, $userId) {
-            $invoice = InvoiceModel::findOrFail($invoiceId);
-
-            // Only paid invoices can be voided
-            if ($invoice->status !== InvoiceStatus::PAID->value) {
-                throw new \InvalidArgumentException('Only paid invoices can be voided');
-            }
+            $invoice = $this->invoiceRepo->findById($invoiceId);
+            if (!$invoice) throw new \InvalidArgumentException('Invoice not found');
+            if ($invoice->status !== InvoiceStatus::PAID->value) throw new \InvalidArgumentException('Only paid invoices can be voided');
 
             $oldStatus = $invoice->status;
-            $invoice->status = InvoiceStatus::VOID->value;
-            $invoice->notes = ($invoice->notes ? $invoice->notes . "\n\n" : '') . "Voided: {$reason}";
-            $invoice->save();
+            $newNotes = ($invoice->notes ? $invoice->notes . "\n\n" : '') . "Voided: {$reason}";
+            $updated = Invoice::reconstitute(array_merge($invoice->toArray(), ['status' => InvoiceStatus::VOID->value, 'notes' => $newNotes]));
+            $this->invoiceRepo->save($updated);
+            $this->updateCustomerBalance($invoice->customerId);
 
-            // Update customer balance
-            $this->updateCustomerBalance($invoice->customer_id);
-
-            // Audit trail
-            $this->auditTrail->log(
-                companyId: $invoice->company_id,
-                entityType: 'invoice',
-                entityId: $invoice->id,
-                action: 'voided',
-                userId: $userId,
-                oldValues: ['status' => $oldStatus],
-                newValues: ['status' => InvoiceStatus::VOID->value, 'reason' => $reason]
-            );
-
+            $this->auditTrail->log($invoice->companyId, $userId, 'invoice', $invoiceId, 'voided', ['status' => $oldStatus], ['status' => InvoiceStatus::VOID->value, 'reason' => $reason]);
             Log::info('Invoice voided', ['invoice_id' => $invoiceId, 'reason' => $reason]);
 
-            return $invoice->fresh(['items', 'customer']);
+            return $this->invoiceRepo->findById($invoiceId);
         });
     }
 
-    /**
-     * Get invoice summary for dashboard
-     */
     public function getInvoiceSummary(int $companyId): array
     {
-        $invoices = InvoiceModel::where('company_id', $companyId)->get();
-
-        return [
-            'total_invoices' => $invoices->count(),
-            'draft_count' => $invoices->where('status', InvoiceStatus::DRAFT->value)->count(),
-            'sent_count' => $invoices->where('status', InvoiceStatus::SENT->value)->count(),
-            'partial_count' => $invoices->where('status', InvoiceStatus::PARTIAL->value)->count(),
-            'paid_count' => $invoices->where('status', InvoiceStatus::PAID->value)->count(),
-            'total_value' => $invoices->sum('total_amount'),
-            'total_paid' => $invoices->sum('amount_paid'),
-            'total_outstanding' => $invoices->sum(fn($inv) => $inv->total_amount - $inv->amount_paid),
-        ];
+        return $this->invoiceRepo->getSummary($companyId);
     }
 
-    /**
-     * Generate next invoice number for company
-     */
     private function generateInvoiceNumber(int $companyId): string
     {
         $year = date('Y');
-        $lastInvoice = InvoiceModel::where('company_id', $companyId)
-            ->where('invoice_number', 'like', "INV-{$year}-%")
-            ->orderBy('id', 'desc')
-            ->first();
-
-        if ($lastInvoice) {
-            // Extract sequence number from last invoice
-            $parts = explode('-', $lastInvoice->invoice_number);
-            $sequence = (int) end($parts) + 1;
-        } else {
-            $sequence = 1;
+        $invoices = $this->invoiceRepo->findByCompany($companyId);
+        $lastInvoice = null;
+        foreach ($invoices as $inv) {
+            if (str_starts_with($inv->invoiceNumber, "INV-{$year}-")) {
+                $lastInvoice = $inv;
+            }
         }
-
+        $sequence = $lastInvoice ? (int) substr($lastInvoice->invoiceNumber, -4) + 1 : 1;
         return InvoiceNumber::generate($year, $sequence);
     }
 
-    /**
-     * Update customer outstanding balance
-     */
     private function updateCustomerBalance(int $customerId): void
     {
-        $customer = CustomerModel::findOrFail($customerId);
+        $customer = $this->customerRepo->findById($customerId);
+        if (!$customer) return;
 
-        // Calculate total outstanding from all invoices
-        $outstanding = InvoiceModel::where('customer_id', $customerId)
-            ->whereNotIn('status', [InvoiceStatus::CANCELLED->value, InvoiceStatus::VOID->value])
-            ->get()
-            ->sum(fn($invoice) => $invoice->total_amount - $invoice->amount_paid);
+        $invoices = $this->invoiceRepo->findByCustomer($customerId);
+        $outstanding = collect($invoices)->filter(fn($inv) => !in_array($inv->status, [InvoiceStatus::CANCELLED->value, InvoiceStatus::VOID->value]))
+            ->sum(fn($inv) => $inv->totalAmount - $inv->amountPaid);
 
-        $customer->outstanding_balance = max(0, $outstanding);
-        $customer->save();
+        $updated = Customer::reconstitute(array_merge($customer->toArray(), [
+            'outstanding_balance' => max(0, $outstanding),
+        ]));
+        $this->customerRepo->save($updated);
     }
 }

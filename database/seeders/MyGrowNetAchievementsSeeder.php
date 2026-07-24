@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Achievement;
-use App\Models\Leaderboard;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\Achievement;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\Leaderboard;
 use Illuminate\Database\Seeder;
 
 class MyGrowNetAchievementsSeeder extends Seeder

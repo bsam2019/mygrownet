@@ -1,8 +1,8 @@
 <?php
 
 use App\Infrastructure\Persistence\Repositories\EloquentReferralRepository;
-use App\Models\MatrixPosition;
-use App\Models\Referral;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\MatrixPosition;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\Referral;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 

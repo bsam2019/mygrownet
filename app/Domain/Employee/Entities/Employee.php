@@ -28,7 +28,7 @@ final class Employee
     private Department $department;
     private Position $position;
     private ?Employee $manager;
-    private ?int $userId; // Reference by ID instead of object
+    private ?int $userId;
     private Salary $baseSalary;
     private float $commissionRate;
     private ?PerformanceMetrics $lastPerformanceMetrics;
@@ -37,7 +37,7 @@ final class Employee
     private DateTimeImmutable $createdAt;
     private DateTimeImmutable $updatedAt;
 
-    public function __construct(
+    private function __construct(
         EmployeeId $id,
         string $employeeNumber,
         string $firstName,
@@ -51,7 +51,7 @@ final class Employee
         ?Phone $phone = null,
         ?string $address = null,
         ?Employee $manager = null,
-        ?User $user = null,
+        ?int $userId = null,
         float $commissionRate = 0.0,
         ?string $notes = null
     ) {
@@ -73,7 +73,7 @@ final class Employee
         $this->department = $department;
         $this->position = $position;
         $this->manager = $manager;
-        $this->user = $user;
+        $this->userId = $userId;
         $this->baseSalary = $baseSalary;
         $this->commissionRate = $commissionRate;
         $this->lastPerformanceMetrics = null;
@@ -111,6 +111,62 @@ final class Employee
             $address,
             $manager
         );
+    }
+
+    public static function reconstitute(array $data): self
+    {
+        $instance = new self(
+            $data['id'],
+            $data['employee_number'],
+            $data['first_name'],
+            $data['last_name'],
+            $data['email'],
+            $data['hire_date'],
+            $data['status'],
+            $data['department'],
+            $data['position'],
+            $data['base_salary'],
+            $data['phone'] ?? null,
+            $data['address'] ?? null,
+            $data['manager'] ?? null,
+            $data['user_id'] ?? null,
+            $data['commission_rate'] ?? 0.0,
+            $data['notes'] ?? null
+        );
+        $instance->terminationDate = $data['termination_date'] ?? null;
+        $instance->lastPerformanceMetrics = $data['last_performance_metrics'] ?? null;
+        $instance->lastPerformanceReview = $data['last_performance_review'] ?? null;
+        $instance->createdAt = $data['created_at'] ?? new DateTimeImmutable();
+        $instance->updatedAt = $data['updated_at'] ?? new DateTimeImmutable();
+        return $instance;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'employee_number' => $this->employeeNumber,
+            'first_name' => $this->firstName,
+            'last_name' => $this->lastName,
+            'full_name' => $this->getFullName(),
+            'email' => $this->email,
+            'phone' => $this->phone,
+            'address' => $this->address,
+            'hire_date' => $this->hireDate,
+            'termination_date' => $this->terminationDate,
+            'status' => $this->status,
+            'department' => $this->department,
+            'position' => $this->position,
+            'manager' => $this->manager,
+            'user_id' => $this->userId,
+            'base_salary' => $this->baseSalary,
+            'commission_rate' => $this->commissionRate,
+            'last_performance_metrics' => $this->lastPerformanceMetrics,
+            'last_performance_review' => $this->lastPerformanceReview,
+            'notes' => $this->notes,
+            'created_at' => $this->createdAt,
+            'updated_at' => $this->updatedAt,
+        ];
     }
 
     public function assignToUser(int $userId): void
@@ -263,7 +319,7 @@ final class Employee
 
     public function hasUser(): bool
     {
-        return $this->user !== null;
+        return $this->userId !== null;
     }
 
     public function hasPerformanceMetrics(): bool
@@ -354,9 +410,9 @@ final class Employee
         return $this->manager;
     }
 
-    public function getUser(): ?User
+    public function getUserId(): ?int
     {
-        return $this->user;
+        return $this->userId;
     }
 
     public function getBaseSalary(): Salary

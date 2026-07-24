@@ -2,11 +2,11 @@
 
 namespace App\Infrastructure\Persistence\Eloquent\LoyaltyReward;
 
-use App\Domain\LoyaltyReward\Entities\LoyaltyGrowthCycle;
-use App\Domain\LoyaltyReward\Repositories\LoyaltyGrowthCycleRepository;
-use App\Domain\LoyaltyReward\ValueObjects\CycleId;
-use App\Domain\LoyaltyReward\ValueObjects\CycleStatus;
-use App\Domain\LoyaltyReward\ValueObjects\LoyaltyAmount;
+use App\Domain\GrowNet\LoyaltyReward\Entities\LoyaltyGrowthCycle;
+use App\Domain\GrowNet\LoyaltyReward\Repositories\LoyaltyGrowthCycleRepository;
+use App\Domain\GrowNet\LoyaltyReward\ValueObjects\CycleId;
+use App\Domain\GrowNet\LoyaltyReward\ValueObjects\CycleStatus;
+use App\Domain\GrowNet\LoyaltyReward\ValueObjects\LoyaltyAmount;
 use DateTimeImmutable;
 
 class EloquentLoyaltyGrowthCycleRepository implements LoyaltyGrowthCycleRepository

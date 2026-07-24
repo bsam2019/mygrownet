@@ -11,9 +11,10 @@ use App\Http\Requests\Employee\StoreGoalRequest;
 use App\Domain\Employee\Services\PerformanceTrackingService;
 use App\Domain\Employee\Services\PerformanceReviewData;
 use App\Domain\Employee\Repositories\EmployeeRepositoryInterface;
+use App\Domain\Employee\Repositories\DepartmentRepositoryInterface;
+use App\Domain\Employee\Repositories\EmployeePerformanceRepositoryInterface;
 use App\Domain\Employee\ValueObjects\EmployeeId;
 use App\Infrastructure\Persistence\Eloquent\EmployeePerformanceModel;
-use App\Infrastructure\Persistence\Eloquent\EmployeeModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -22,15 +23,28 @@ use DateTimeImmutable;
 
 class PerformanceController extends Controller
 {
-    /**
-     * Display a listing of performance reviews.
-     */
+    private EmployeeRepositoryInterface $employeeRepository;
+    private DepartmentRepositoryInterface $departmentRepo;
+    private EmployeePerformanceRepositoryInterface $performanceRepo;
+    private PerformanceTrackingService $performanceTrackingService;
+
+    public function __construct(
+        EmployeeRepositoryInterface $employeeRepository,
+        DepartmentRepositoryInterface $departmentRepo,
+        EmployeePerformanceRepositoryInterface $performanceRepo,
+        PerformanceTrackingService $performanceTrackingService
+    ) {
+        $this->employeeRepository = $employeeRepository;
+        $this->departmentRepo = $departmentRepo;
+        $this->performanceRepo = $performanceRepo;
+        $this->performanceTrackingService = $performanceTrackingService;
+    }
+
     public function index(Request $request)
     {
         $filters = $request->only(['search', 'department_id', 'status', 'period']);
 
-        // Load performance reviews from database
-        $query = EmployeePerformanceModel::with(['employee.department', 'employee.position']);
+        $query = $this->performanceRepo->query()->with(['employee.department', 'employee.position']);
 
         if (!empty($filters['search'])) {
             $query->whereHas('employee', function ($q) use ($filters) {
@@ -51,10 +65,7 @@ class PerformanceController extends Controller
 
         $performance = $query->orderBy('evaluation_period_end', 'desc')->paginate(15);
 
-        // Get departments for filter dropdown
-        $departments = \App\Infrastructure\Persistence\Eloquent\DepartmentModel::active()
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $departments = $this->departmentRepo->getAllActive();
 
         return Inertia::render('Employee/Performance/Index', [
             'performance' => $performance,
@@ -63,12 +74,10 @@ class PerformanceController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new performance review.
-     */
-    public function create(Request $request): Response
+    public function create(Request $request): \Inertia\Response
     {
-        $employees = EmployeeModel::select('id', 'first_name', 'last_name', 'department_id', 'position_id')
+        $employees = $this->employeeRepository->query()
+            ->select('id', 'first_name', 'last_name', 'department_id', 'position_id')
             ->with(['department', 'position'])
             ->where('employment_status', 'active')
             ->orderBy('first_name')
@@ -88,15 +97,11 @@ class PerformanceController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created performance review.
-     */
     public function store(StorePerformanceReviewRequest $request): RedirectResponse
     {
         $validated = $request->validated();
 
         try {
-            // Get employee and reviewer entities
             $employee = $this->employeeRepository->findById(EmployeeId::fromString((string) $validated['employee_id']));
             $reviewer = $this->employeeRepository->findById(EmployeeId::fromString((string) $validated['reviewer_id']));
 
@@ -104,7 +109,6 @@ class PerformanceController extends Controller
                 return back()->withErrors(['error' => 'Employee or reviewer not found.']);
             }
 
-            // Create performance review data
             $reviewData = PerformanceReviewData::create(
                 $employee,
                 new DateTimeImmutable($validated['evaluation_period_start']),
@@ -119,11 +123,9 @@ class PerformanceController extends Controller
                 $validated['goals_next_period'] ?? []
             );
 
-            // Create the performance review
             $performance = $this->performanceTrackingService->createPerformanceReview($reviewData);
 
-            // Store in database
-            EmployeePerformanceModel::create([
+            $this->performanceRepo->save([
                 'employee_id' => $employee->getId()->toInt(),
                 'reviewer_id' => $reviewer->getId()->toInt(),
                 'evaluation_period' => $validated['evaluation_period_start'] . ' to ' . $validated['evaluation_period_end'],
@@ -157,14 +159,10 @@ class PerformanceController extends Controller
         }
     }
 
-    /**
-     * Display the specified performance review.
-     */
-    public function show(EmployeePerformanceModel $performance): Response
+    public function show(EmployeePerformanceModel $performance): \Inertia\Response
     {
         $performance->load(['employee', 'reviewer']);
 
-        // Get performance trends for this employee
         $employee = $this->employeeRepository->findById(EmployeeId::fromString((string) $performance->employee_id));
         $trends = [];
         $recommendations = [];
@@ -208,14 +206,12 @@ class PerformanceController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified performance review.
-     */
-    public function edit(EmployeePerformanceModel $performance): Response
+    public function edit(EmployeePerformanceModel $performance): \Inertia\Response
     {
         $performance->load(['employee', 'reviewer']);
 
-        $employees = EmployeeModel::select('id', 'first_name', 'last_name')
+        $employees = $this->employeeRepository->query()
+            ->select('id', 'first_name', 'last_name')
             ->where('employment_status', 'active')
             ->orderBy('first_name')
             ->get()
@@ -245,15 +241,11 @@ class PerformanceController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified performance review.
-     */
     public function update(UpdatePerformanceReviewRequest $request, EmployeePerformanceModel $performance): RedirectResponse
     {
         $validated = $request->validated();
 
         try {
-            // Update the performance review
             $performance->update([
                 'period_start' => $validated['evaluation_period_start'],
                 'period_end' => $validated['evaluation_period_end'],
@@ -270,7 +262,6 @@ class PerformanceController extends Controller
                 'goals_next_period' => $validated['goals_next_period'] ?? []
             ]);
 
-            // Recalculate overall score
             $employee = $this->employeeRepository->findById(EmployeeId::fromString((string) $performance->employee_id));
             if ($employee) {
                 $reviewer = $this->employeeRepository->findById(EmployeeId::fromString((string) $performance->reviewer_id));
@@ -290,7 +281,7 @@ class PerformanceController extends Controller
                     );
 
                     $performanceEntity = $this->performanceTrackingService->createPerformanceReview($reviewData);
-                    
+
                     $performance->update([
                         'overall_score' => $performanceEntity->getMetrics()->calculateOverallScore(),
                         'rating' => $performanceEntity->getPerformanceRating()
@@ -306,9 +297,6 @@ class PerformanceController extends Controller
         }
     }
 
-    /**
-     * Remove the specified performance review.
-     */
     public function destroy(EmployeePerformanceModel $performance): RedirectResponse
     {
         try {
@@ -322,21 +310,17 @@ class PerformanceController extends Controller
         }
     }
 
-    /**
-     * Display performance analytics and reports.
-     */
-    public function analytics(Request $request): Response
+    public function analytics(Request $request): \Inertia\Response
     {
-        // Get department performance averages
         $departmentStats = [];
-        $employees = EmployeeModel::with(['department', 'lastPerformanceReview'])->get();
-        
+        $employees = $this->employeeRepository->query()->with(['department', 'lastPerformanceReview'])->get();
+
         $employeesByDepartment = $employees->groupBy('department.name');
-        
+
         foreach ($employeesByDepartment as $departmentName => $deptEmployees) {
             $performanceData = $deptEmployees->filter(fn($emp) => $emp->lastPerformanceReview)
                 ->map(fn($emp) => $emp->lastPerformanceReview);
-            
+
             if ($performanceData->isNotEmpty()) {
                 $avgScore = $performanceData->avg('overall_score');
                 $departmentStats[] = [
@@ -350,10 +334,9 @@ class PerformanceController extends Controller
             }
         }
 
-        // Get top performers
-        $topPerformers = EmployeePerformanceModel::with('employee')
-            ->recent(6)
-            ->orderByScore()
+        $topPerformers = $this->performanceRepo->query()
+            ->with('employee')
+            ->orderBy('overall_score', 'desc')
             ->limit(10)
             ->get()
             ->map(fn($perf) => [
@@ -364,9 +347,8 @@ class PerformanceController extends Controller
                 'period' => $perf->evaluation_period
             ]);
 
-        // Get underperformers
-        $underperformers = EmployeePerformanceModel::with('employee')
-            ->recent(6)
+        $underperformers = $this->performanceRepo->query()
+            ->with('employee')
             ->where('overall_score', '<', 6.0)
             ->orderBy('overall_score')
             ->limit(10)
@@ -379,8 +361,8 @@ class PerformanceController extends Controller
                 'period' => $perf->evaluation_period
             ]);
 
-        // Performance trends over time
-        $performanceTrends = EmployeePerformanceModel::selectRaw(DB::connection()->getDriverName() === 'sqlite' ? "
+        $performanceTrends = $this->performanceRepo->query()
+            ->selectRaw(DB::connection()->getDriverName() === 'sqlite' ? "
                 strftime('%Y-%m', period_end) as month,
                 AVG(overall_score) as avg_score,
                 COUNT(*) as review_count
@@ -402,16 +384,13 @@ class PerformanceController extends Controller
         ]);
     }
 
-    /**
-     * Set goals for an employee.
-     */
     public function setGoals(StoreGoalRequest $request): RedirectResponse
     {
         $validated = $request->validated();
 
         try {
             $employee = $this->employeeRepository->findById(EmployeeId::fromString((string) $validated['employee_id']));
-            
+
             if (!$employee) {
                 return back()->withErrors(['error' => 'Employee not found.']);
             }
@@ -429,13 +408,10 @@ class PerformanceController extends Controller
         }
     }
 
-    /**
-     * Track goal progress for an employee.
-     */
-    public function trackGoals(Request $request, int $employeeId): Response
+    public function trackGoals(Request $request, int $employeeId): \Inertia\Response
     {
         $employee = $this->employeeRepository->findById(EmployeeId::fromString((string) $employeeId));
-        
+
         if (!$employee) {
             abort(404, 'Employee not found');
         }

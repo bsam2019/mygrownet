@@ -8,7 +8,7 @@ use App\Domain\Community\Repositories\ProjectRepository;
 use App\Domain\Community\ValueObjects\ProjectId;
 use App\Domain\Community\ValueObjects\ProjectStatus;
 use App\Domain\Community\ValueObjects\ContributionAmount;
-use App\Domain\MLM\ValueObjects\UserId;
+use App\Domain\GrowNet\MLM\ValueObjects\UserId;
 use App\Models\Community\CommunityProject;
 use App\Models\ProjectContribution;
 use App\Models\User;

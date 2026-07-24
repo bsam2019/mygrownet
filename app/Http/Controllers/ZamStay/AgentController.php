@@ -2,63 +2,46 @@
 
 namespace App\Http\Controllers\ZamStay;
 
+use App\Domain\ZamStay\Services\AgentService;
 use App\Http\Controllers\Controller;
-use App\Models\ZamStay\ZamStayAgent;
-use App\Models\ZamStay\ZamStayBooking;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class AgentController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(
+        private readonly AgentService $agentService,
+    ) {}
+
+    public function index()
     {
-        $agents = ZamStayAgent::approved()->with('user')->paginate(20);
+        $agents = $this->agentService->findAllApproved();
 
         return Inertia::render('ZamStay/Agent/Index', [
             'agents' => $agents,
         ]);
     }
 
-    public function show(ZamStayAgent $agent)
+    public function show(int $id)
     {
-        $agent->load('user');
+        $agent = $this->agentService->findById($id);
 
         return Inertia::render('ZamStay/Agent/Show', [
-            'agent' => $agent,
+            'agent' => $agent?->toArray(),
         ]);
     }
 
     public function dashboard(Request $request)
     {
-        $agent = ZamStayAgent::where('user_id', $request->user()->id)->firstOrFail();
-        $agent->load('user');
+        $agent = $this->agentService->findOrFailByUser($request->user()->id);
+        $data = $this->agentService->getDashboard($agent->id);
 
-        $bookings = ZamStayBooking::where('agent_id', $agent->id)
-            ->with(['property', 'user'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
-        $stats = [
-            'total_bookings' => ZamStayBooking::where('agent_id', $agent->id)->count(),
-            'confirmed_bookings' => ZamStayBooking::where('agent_id', $agent->id)->where('status', 'confirmed')->count(),
-            'pending_bookings' => ZamStayBooking::where('agent_id', $agent->id)->where('status', 'pending')->count(),
-            'commission_rate' => $agent->commission_rate,
-        ];
-
-        return Inertia::render('ZamStay/Agent/Dashboard', [
-            'agent' => $agent,
-            'bookings' => $bookings,
-            'stats' => $stats,
-        ]);
+        return Inertia::render('ZamStay/Agent/Dashboard', $data);
     }
 
     public function registerForm()
     {
-        $existing = ZamStayAgent::where('user_id', request()->user()->id)->first();
-
-        return Inertia::render('ZamStay/Agent/Register', [
-            'existing' => $existing,
-        ]);
+        return Inertia::render('ZamStay/Agent/Register');
     }
 
     public function register(Request $request)
@@ -70,19 +53,7 @@ class AgentController extends Controller
             'bio' => 'nullable|string|max:2000',
         ]);
 
-        $existing = ZamStayAgent::where('user_id', $request->user()->id)->first();
-
-        if ($existing) {
-            return back()->withErrors(['business_name' => 'You are already registered as an agent.']);
-        }
-
-        ZamStayAgent::create([
-            'user_id' => $request->user()->id,
-            'business_name' => $validated['business_name'],
-            'license_number' => $validated['license_number'] ?? null,
-            'phone' => $validated['phone'] ?? null,
-            'bio' => $validated['bio'] ?? null,
-        ]);
+        $this->agentService->register($request->user()->id, $validated);
 
         return redirect()->route('zamstay.agent.dashboard')
             ->with('success', 'Agent registration submitted. Awaiting approval.');

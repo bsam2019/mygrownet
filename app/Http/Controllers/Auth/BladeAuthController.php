@@ -67,11 +67,6 @@ class BladeAuthController extends Controller
         // Persist session before redirect so auth middleware on next request finds it
         $request->session()->save();
 
-        // Check for pending GrowBiz invitation
-        if ($request->session()->has('pending_invitation_token') || $request->session()->has('pending_invitation_code')) {
-            return redirect()->route('growbiz.invitation.pending');
-        }
-
         return redirect()->intended($this->getDefaultRouteForUser($user));
     }
 
@@ -199,11 +194,7 @@ class BladeAuthController extends Controller
             $request->session()->regenerate();
             $request->session()->save();
 
-            // Check for pending GrowBiz invitation
-            if ($request->session()->has('pending_invitation_token') || $request->session()->has('pending_invitation_code')) {
-                return to_route('growbiz.invitation.pending');
-            }
-
+            
             return redirect()->route('workspace');
 
         } catch (\Illuminate\Database\QueryException $e) {

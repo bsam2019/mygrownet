@@ -2,7 +2,7 @@
 
 namespace App\Listeners;
 
-use App\Services\PointService;
+use App\Domain\GrowNet\Services\PointService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 

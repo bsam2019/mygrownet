@@ -158,6 +158,16 @@ class EloquentTimeOffRepository implements TimeOffRepositoryInterface
         return $query->exists();
     }
 
+    public function findByDepartmentAndDate(int $departmentId, \DateTimeImmutable $date): Collection
+    {
+        return TimeOffModel::whereHas('employee', fn($q) => $q->where('department_id', $departmentId))
+            ->where('status', 'approved')
+            ->where('start_date', '<=', $date)
+            ->where('end_date', '>=', $date)
+            ->with('employee')
+            ->get();
+    }
+
     private function toDomainEntity(TimeOffModel $model): TimeOffRequest
     {
         $request = TimeOffRequest::create(

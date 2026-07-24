@@ -6,7 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
-use App\Services\PointService;
+use App\Domain\GrowNet\Services\PointService;
 use Illuminate\Support\Facades\DB;
 
 class ShopService

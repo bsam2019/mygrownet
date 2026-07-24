@@ -2,23 +2,23 @@
 
 namespace App\Domain\GrowStream\Presentation\Http\Controllers\Admin;
 
+use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
+use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Http\Controllers\Controller;
-use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\CreatorProfile;
-use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\Video;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\DB;
 
 class CreatorAdminController extends Controller
 {
-    /**
-     * Display a listing of creators
-     */
+    public function __construct(
+        private CreatorProfileRepositoryInterface $creatorRepo,
+        private VideoRepositoryInterface $videoRepo
+    ) {}
+
     public function index(Request $request)
     {
-        $query = CreatorProfile::with('user');
+        $query = $this->creatorRepo->query()->with('user');
 
-        // Search
         if ($request->search) {
             $query->whereHas('user', function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
@@ -26,22 +26,21 @@ class CreatorAdminController extends Controller
             });
         }
 
-        // Filter by status
         if ($request->status) {
             $query->where('status', $request->status);
         }
 
-        // Sort
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
 
         $creators = $query->paginate(20)->through(function ($creator) {
-            $videoCount = Video::where('creator_id', $creator->id)->count();
-            $publishedVideoCount = Video::where('creator_id', $creator->id)
+            $query = $this->videoRepo->query();
+            $videoCount = (clone $query)->where('creator_id', $creator->id)->count();
+            $publishedVideoCount = (clone $query)->where('creator_id', $creator->id)
                 ->where('is_published', true)
                 ->count();
-            $totalViews = Video::where('creator_id', $creator->id)->sum('view_count');
+            $totalViews = (clone $query)->where('creator_id', $creator->id)->sum('view_count');
 
             return [
                 'id' => $creator->id,
@@ -69,15 +68,17 @@ class CreatorAdminController extends Controller
         ]);
     }
 
-    /**
-     * Display the specified creator
-     */
-    public function show(CreatorProfile $creator)
+    public function show(int $id)
     {
+        $creator = $this->creatorRepo->findById($id);
+        if (!$creator) {
+            return back()->with('error', 'Creator not found.');
+        }
+
         $creator->load('user');
 
-        // Get creator's videos
-        $videos = Video::where('creator_id', $creator->id)
+        $query = $this->videoRepo->query();
+        $videos = (clone $query)->where('creator_id', $creator->id)
             ->with('categories')
             ->orderBy('created_at', 'desc')
             ->take(10)
@@ -91,15 +92,14 @@ class CreatorAdminController extends Controller
                 'created_at' => $video->created_at->format('Y-m-d H:i'),
             ]);
 
-        // Get statistics
         $stats = [
-            'total_videos' => Video::where('creator_id', $creator->id)->count(),
-            'published_videos' => Video::where('creator_id', $creator->id)
+            'total_videos' => (clone $query)->where('creator_id', $creator->id)->count(),
+            'published_videos' => (clone $query)->where('creator_id', $creator->id)
                 ->where('is_published', true)
                 ->count(),
-            'total_views' => Video::where('creator_id', $creator->id)->sum('view_count'),
-            'total_likes' => Video::where('creator_id', $creator->id)->sum('like_count'),
-            'avg_views_per_video' => Video::where('creator_id', $creator->id)
+            'total_views' => (clone $query)->where('creator_id', $creator->id)->sum('view_count'),
+            'total_likes' => (clone $query)->where('creator_id', $creator->id)->sum('like_count'),
+            'avg_views_per_video' => (clone $query)->where('creator_id', $creator->id)
                 ->avg('view_count'),
         ];
 
@@ -124,48 +124,42 @@ class CreatorAdminController extends Controller
         ]);
     }
 
-    /**
-     * Approve a creator application
-     */
-    public function approve(CreatorProfile $creator)
+    public function approve(int $id)
     {
-        $creator->status = 'approved';
-        $creator->save();
+        $creator = $this->creatorRepo->findById($id);
+        if (!$creator) {
+            return back()->with('error', 'Creator not found.');
+        }
 
-        // TODO: Send approval notification to creator
-        // Notification::send($creator->user, new CreatorApprovedNotification());
+        $this->creatorRepo->update($creator, ['status' => 'approved']);
 
         return back()->with('success', 'Creator approved successfully.');
     }
 
-    /**
-     * Suspend a creator account
-     */
-    public function suspend(CreatorProfile $creator)
+    public function suspend(int $id)
     {
-        $creator->status = 'suspended';
-        $creator->save();
+        $creator = $this->creatorRepo->findById($id);
+        if (!$creator) {
+            return back()->with('error', 'Creator not found.');
+        }
 
-        // Unpublish all creator's videos
-        Video::where('creator_id', $creator->id)
+        $this->creatorRepo->update($creator, ['status' => 'suspended']);
+
+        $this->videoRepo->query()
+            ->where('creator_id', $creator->id)
             ->update(['is_published' => false]);
-
-        // TODO: Send suspension notification to creator
-        // Notification::send($creator->user, new CreatorSuspendedNotification());
 
         return back()->with('success', 'Creator suspended successfully.');
     }
 
-    /**
-     * Activate a creator account
-     */
-    public function activate(CreatorProfile $creator)
+    public function activate(int $id)
     {
-        $creator->status = 'approved';
-        $creator->save();
+        $creator = $this->creatorRepo->findById($id);
+        if (!$creator) {
+            return back()->with('error', 'Creator not found.');
+        }
 
-        // TODO: Send activation notification to creator
-        // Notification::send($creator->user, new CreatorActivatedNotification());
+        $this->creatorRepo->update($creator, ['status' => 'approved']);
 
         return back()->with('success', 'Creator activated successfully.');
     }

@@ -2,9 +2,8 @@
 
 namespace App\Domain\GrowStream\Presentation\Http\Controllers\Admin;
 
-use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\Video;
-use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoCategory;
-use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoSeries;
+use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
+use App\Domain\GrowStream\Repositories\VideoSeriesRepositoryInterface;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,20 +13,21 @@ use Illuminate\Support\Str;
 
 class SeriesManagementController extends Controller
 {
-    /**
-     * Get all series for admin
-     */
+    public function __construct(
+        private VideoSeriesRepositoryInterface $seriesRepo,
+        private VideoRepositoryInterface $videoRepo
+    ) {}
+
     public function index(Request $request): JsonResponse
     {
-        $query = VideoSeries::with(['creator', 'categories'])
+        $query = $this->seriesRepo->query();
+        $query->with(['creator', 'categories'])
             ->withCount(['videos', 'publishedVideos']);
 
-        // Filter by published
         if ($request->has('is_published')) {
             $query->where('is_published', $request->boolean('is_published'));
         }
 
-        // Search
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -36,7 +36,6 @@ class SeriesManagementController extends Controller
             });
         }
 
-        // Sort
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
@@ -55,9 +54,6 @@ class SeriesManagementController extends Controller
         ]);
     }
 
-    /**
-     * Create new series
-     */
     public function store(Request $request): JsonResponse
     {
         $request->validate([
@@ -71,7 +67,7 @@ class SeriesManagementController extends Controller
         try {
             DB::beginTransaction();
 
-            $series = VideoSeries::create([
+            $series = $this->seriesRepo->save([
                 'title' => $request->title,
                 'slug' => Str::slug($request->title),
                 'description' => $request->description,
@@ -87,7 +83,6 @@ class SeriesManagementController extends Controller
                 'content_rating' => $request->get('content_rating', 'NR'),
             ]);
 
-            // Attach categories
             if ($request->has('category_ids')) {
                 $series->categories()->attach($request->category_ids);
             }
@@ -110,11 +105,13 @@ class SeriesManagementController extends Controller
         }
     }
 
-    /**
-     * Get series details with episodes
-     */
-    public function show(VideoSeries $series): JsonResponse
+    public function show(int $id): JsonResponse
     {
+        $series = $this->seriesRepo->findById($id);
+        if (!$series) {
+            return response()->json(['success' => false, 'error' => 'Series not found'], 404);
+        }
+
         $series->load([
             'creator',
             'categories',
@@ -130,11 +127,13 @@ class SeriesManagementController extends Controller
         ]);
     }
 
-    /**
-     * Update series
-     */
-    public function update(Request $request, VideoSeries $series): JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
+        $series = $this->seriesRepo->findById($id);
+        if (!$series) {
+            return response()->json(['success' => false, 'error' => 'Series not found'], 404);
+        }
+
         $request->validate([
             'title' => 'sometimes|string|max:255',
             'description' => 'sometimes|string',
@@ -145,7 +144,7 @@ class SeriesManagementController extends Controller
         try {
             DB::beginTransaction();
 
-            $series->update($request->only([
+            $this->seriesRepo->update($series, $request->only([
                 'title',
                 'slug',
                 'description',
@@ -161,7 +160,6 @@ class SeriesManagementController extends Controller
                 'is_featured',
             ]));
 
-            // Update categories
             if ($request->has('category_ids')) {
                 $series->categories()->sync($request->category_ids);
             }
@@ -184,46 +182,51 @@ class SeriesManagementController extends Controller
         }
     }
 
-    /**
-     * Publish series
-     */
-    public function publish(VideoSeries $series): JsonResponse
+    public function publish(int $id): JsonResponse
     {
-        $series->update([
+        $series = $this->seriesRepo->findById($id);
+        if (!$series) {
+            return response()->json(['success' => false, 'error' => 'Series not found'], 404);
+        }
+
+        $this->seriesRepo->update($series, [
             'is_published' => true,
             'published_at' => now(),
         ]);
 
         return response()->json([
             'success' => true,
-            'data' => $series,
+            'data' => $series->fresh(),
             'message' => 'Series published successfully',
         ]);
     }
 
-    /**
-     * Unpublish series
-     */
-    public function unpublish(VideoSeries $series): JsonResponse
+    public function unpublish(int $id): JsonResponse
     {
-        $series->update([
+        $series = $this->seriesRepo->findById($id);
+        if (!$series) {
+            return response()->json(['success' => false, 'error' => 'Series not found'], 404);
+        }
+
+        $this->seriesRepo->update($series, [
             'is_published' => false,
         ]);
 
         return response()->json([
             'success' => true,
-            'data' => $series,
+            'data' => $series->fresh(),
             'message' => 'Series unpublished successfully',
         ]);
     }
 
-    /**
-     * Delete series
-     */
-    public function destroy(VideoSeries $series): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
+        $series = $this->seriesRepo->findById($id);
+        if (!$series) {
+            return response()->json(['success' => false, 'error' => 'Series not found'], 404);
+        }
+
         try {
-            // Check if series has videos
             if ($series->videos()->count() > 0) {
                 return response()->json([
                     'success' => false,
@@ -231,7 +234,7 @@ class SeriesManagementController extends Controller
                 ], 400);
             }
 
-            $series->delete();
+            $this->seriesRepo->delete($series);
 
             return response()->json([
                 'success' => true,
@@ -246,11 +249,13 @@ class SeriesManagementController extends Controller
         }
     }
 
-    /**
-     * Reorder episodes in a series
-     */
-    public function reorderEpisodes(Request $request, VideoSeries $series): JsonResponse
+    public function reorderEpisodes(Request $request, int $id): JsonResponse
     {
+        $series = $this->seriesRepo->findById($id);
+        if (!$series) {
+            return response()->json(['success' => false, 'error' => 'Series not found'], 404);
+        }
+
         $request->validate([
             'episodes' => 'required|array',
             'episodes.*.video_id' => 'required|exists:growstream_videos,id',
@@ -262,7 +267,8 @@ class SeriesManagementController extends Controller
             DB::beginTransaction();
 
             foreach ($request->episodes as $episode) {
-                Video::where('id', $episode['video_id'])
+                $this->videoRepo->query()
+                    ->where('id', $episode['video_id'])
                     ->where('series_id', $series->id)
                     ->update([
                         'season_number' => $episode['season_number'],

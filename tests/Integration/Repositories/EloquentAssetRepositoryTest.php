@@ -10,10 +10,10 @@ use App\Domain\Reward\ValueObjects\AssetValue;
 use App\Domain\MLM\ValueObjects\UserId;
 use App\Domain\MLM\ValueObjects\TeamVolumeAmount;
 use App\Models\User;
-use App\Models\PhysicalReward;
-use App\Models\PhysicalRewardAllocation;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalReward;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalRewardAllocation;
 use App\Models\InvestmentTier;
-use App\Models\TeamVolume;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TeamVolume;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class EloquentAssetRepositoryTest extends TestCase

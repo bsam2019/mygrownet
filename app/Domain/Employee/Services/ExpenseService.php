@@ -3,36 +3,23 @@
 namespace App\Domain\Employee\Services;
 
 use App\Domain\Employee\ValueObjects\EmployeeId;
-use App\Models\Employee\EmployeeExpense;
+use App\Domain\Employee\Repositories\ExpenseRepositoryInterface;
 use Illuminate\Support\Collection;
 
 class ExpenseService
 {
+    public function __construct(
+        private ExpenseRepositoryInterface $expenseRepo
+    ) {}
+
     public function getExpensesForEmployee(EmployeeId $employeeId, array $filters = []): Collection
     {
-        $query = EmployeeExpense::forEmployee($employeeId->value())
-            ->with('approver');
-
-        if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
-
-        if (!empty($filters['category'])) {
-            $query->byCategory($filters['category']);
-        }
-
-        if (!empty($filters['year'])) {
-            $query->forYear((int) $filters['year']);
-        }
-
-        return $query->orderBy('expense_date', 'desc')->get();
+        return $this->expenseRepo->findByEmployee($employeeId, $filters);
     }
 
     public function getExpenseStats(EmployeeId $employeeId, int $year): array
     {
-        $expenses = EmployeeExpense::forEmployee($employeeId->value())
-            ->forYear($year)
-            ->get();
+        $expenses = $this->expenseRepo->findForYear($employeeId, $year);
 
         return [
             'total_submitted' => $expenses->sum('amount'),
@@ -47,9 +34,9 @@ class ExpenseService
         ];
     }
 
-    public function createExpense(EmployeeId $employeeId, array $data): EmployeeExpense
+    public function createExpense(EmployeeId $employeeId, array $data): object
     {
-        return EmployeeExpense::create([
+        return $this->expenseRepo->create([
             'employee_id' => $employeeId->value(),
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
@@ -62,29 +49,31 @@ class ExpenseService
         ]);
     }
 
-    public function submitExpense(int $expenseId, EmployeeId $employeeId): EmployeeExpense
+    public function submitExpense(int $expenseId, EmployeeId $employeeId): object
     {
-        $expense = EmployeeExpense::where('id', $expenseId)
-            ->where('employee_id', $employeeId->value())
-            ->where('status', 'draft')
-            ->firstOrFail();
+        $expense = $this->expenseRepo->findById($expenseId);
 
-        $expense->update([
+        if (!$expense || $expense->employee_id !== $employeeId->value() || $expense->status !== 'draft') {
+            throw new \RuntimeException('Expense not found or cannot be submitted');
+        }
+
+        $this->expenseRepo->update($expenseId, [
             'status' => 'submitted',
             'submitted_at' => now(),
         ]);
 
-        return $expense;
+        return $this->expenseRepo->findById($expenseId);
     }
 
     public function cancelExpense(int $expenseId, EmployeeId $employeeId): void
     {
-        $expense = EmployeeExpense::where('id', $expenseId)
-            ->where('employee_id', $employeeId->value())
-            ->whereIn('status', ['draft', 'submitted'])
-            ->firstOrFail();
+        $expense = $this->expenseRepo->findById($expenseId);
 
-        $expense->delete();
+        if (!$expense || $expense->employee_id !== $employeeId->value() || !in_array($expense->status, ['draft', 'submitted'])) {
+            throw new \RuntimeException('Expense not found or cannot be cancelled');
+        }
+
+        $this->expenseRepo->delete($expenseId);
     }
 
     public function getExpenseCategories(): array

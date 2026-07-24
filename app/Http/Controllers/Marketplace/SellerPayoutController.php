@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Domain\Marketplace\Services\SellerService;
 use App\Domain\Marketplace\Services\PayoutService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class SellerPayoutController extends Controller
@@ -15,9 +16,6 @@ class SellerPayoutController extends Controller
         private PayoutService $payoutService,
     ) {}
 
-    /**
-     * Display payout history
-     */
     public function index(Request $request)
     {
         $seller = $this->sellerService->getByUserId($request->user()->id);
@@ -26,10 +24,10 @@ class SellerPayoutController extends Controller
             return redirect()->route('marketplace.seller.register');
         }
 
-        $payouts = $this->payoutService->getSellerPayouts($seller->id, 20);
-        $availableBalance = $this->payoutService->getAvailableBalance($seller->id);
+        $payouts = $this->payoutService->getSellerPayouts($seller['id'], 20);
+        $availableBalance = $this->payoutService->getAvailableBalance($seller['id']);
         $minimumPayout = $this->payoutService->getMinimumPayoutAmount();
-        $canRequest = $this->payoutService->canRequestPayout($seller->id);
+        $canRequest = $this->payoutService->canRequestPayout($seller['id']);
 
         return Inertia::render('Marketplace/Seller/Payouts/Index', [
             'payouts' => $payouts,
@@ -40,9 +38,6 @@ class SellerPayoutController extends Controller
         ]);
     }
 
-    /**
-     * Show payout request form
-     */
     public function create(Request $request)
     {
         $seller = $this->sellerService->getByUserId($request->user()->id);
@@ -51,9 +46,9 @@ class SellerPayoutController extends Controller
             return redirect()->route('marketplace.seller.register');
         }
 
-        $availableBalance = $this->payoutService->getAvailableBalance($seller->id);
+        $availableBalance = $this->payoutService->getAvailableBalance($seller['id']);
         $minimumPayout = $this->payoutService->getMinimumPayoutAmount();
-        $canRequest = $this->payoutService->canRequestPayout($seller->id);
+        $canRequest = $this->payoutService->canRequestPayout($seller['id']);
 
         if (!$canRequest['can_request']) {
             return redirect()->route('marketplace.seller.payouts.index')
@@ -68,9 +63,6 @@ class SellerPayoutController extends Controller
         ]);
     }
 
-    /**
-     * Store payout request
-     */
     public function store(Request $request)
     {
         $seller = $this->sellerService->getByUserId($request->user()->id);
@@ -89,18 +81,15 @@ class SellerPayoutController extends Controller
         ]);
 
         try {
-            $payout = $this->payoutService->createPayoutRequest($seller->id, $validated);
+            $payout = $this->payoutService->createPayoutRequest($seller['id'], $validated);
 
             return redirect()->route('marketplace.seller.payouts.index')
-                ->with('success', 'Payout request submitted successfully. Reference: ' . $payout->reference);
+                ->with('success', 'Payout request submitted successfully. Reference: ' . $payout['reference']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
     }
 
-    /**
-     * Show payout details
-     */
     public function show(Request $request, int $id)
     {
         $seller = $this->sellerService->getByUserId($request->user()->id);
@@ -109,7 +98,23 @@ class SellerPayoutController extends Controller
             abort(403);
         }
 
-        $payout = $seller->payouts()->with(['approvedBy', 'processedBy'])->findOrFail($id);
+        $payout = DB::table('marketplace_payouts')
+            ->leftJoin('users as approved_by', 'marketplace_payouts.approved_by', '=', 'approved_by.id')
+            ->leftJoin('users as processed_by', 'marketplace_payouts.processed_by', '=', 'processed_by.id')
+            ->where('marketplace_payouts.id', $id)
+            ->where('marketplace_payouts.seller_id', $seller['id'])
+            ->select(
+                'marketplace_payouts.*',
+                'approved_by.name as approved_by_name',
+                'processed_by.name as processed_by_name'
+            )
+            ->first();
+
+        if (!$payout) {
+            abort(404);
+        }
+
+        $payout = (array) $payout;
 
         return Inertia::render('Marketplace/Seller/Payouts/Show', [
             'payout' => $payout,

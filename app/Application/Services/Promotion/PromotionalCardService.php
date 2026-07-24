@@ -4,8 +4,8 @@ namespace App\Application\Services\Promotion;
 
 use App\Infrastructure\Persistence\Eloquent\Promotion\PromotionalCardModel;
 use App\Infrastructure\Persistence\Eloquent\Promotion\PromotionalCardShareModel;
-use App\Services\LgrActivityTrackingService;
-use App\Services\SocialShareTrackingService;
+use App\Domain\GrowNet\Services\LgrActivityTrackingService;
+use App\Domain\GrowNet\Services\SocialShareTrackingService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;

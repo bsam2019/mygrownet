@@ -2,33 +2,32 @@
 
 namespace App\Domain\GrowStream\Presentation\Http\Controllers\Api;
 
-use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\Video;
+use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class VideoController extends Controller
 {
-    /**
-     * Get list of videos
-     */
+    public function __construct(
+        private VideoRepositoryInterface $videoRepo
+    ) {}
+
     public function index(Request $request): JsonResponse
     {
-        $query = Video::with(['creator', 'categories', 'series'])
+        $query = $this->videoRepo->query();
+        $query->with(['creator', 'categories', 'series'])
             ->published()
             ->ready();
 
-        // Filter by content type
         if ($request->has('type')) {
             $query->byContentType($request->type);
         }
 
-        // Filter by access level
         if ($request->has('access_level')) {
             $query->where('access_level', $request->access_level);
         }
 
-        // Search
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -37,7 +36,6 @@ class VideoController extends Controller
             });
         }
 
-        // Sort
         $sortBy = $request->get('sort_by', 'published_at');
         $sortOrder = $request->get('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
@@ -62,18 +60,9 @@ class VideoController extends Controller
         ]);
     }
 
-    /**
-     * Get featured videos
-     */
     public function featured(): JsonResponse
     {
-        $videos = Video::with(['creator', 'categories'])
-            ->published()
-            ->ready()
-            ->featured()
-            ->orderBy('published_at', 'desc')
-            ->limit(10)
-            ->get();
+        $videos = $this->videoRepo->featured(10, ['creator', 'categories']);
 
         return response()->json([
             'success' => true,
@@ -81,19 +70,10 @@ class VideoController extends Controller
         ]);
     }
 
-    /**
-     * Get trending videos
-     */
     public function trending(Request $request): JsonResponse
     {
         $days = $request->get('days', 7);
-        
-        $videos = Video::with(['creator', 'categories'])
-            ->published()
-            ->ready()
-            ->trending($days)
-            ->limit(20)
-            ->get();
+        $videos = $this->videoRepo->trending($days, 20, ['creator', 'categories']);
 
         return response()->json([
             'success' => true,
@@ -101,12 +81,11 @@ class VideoController extends Controller
         ]);
     }
 
-    /**
-     * Get single video details
-     */
-    public function show(Video $video): JsonResponse
+    public function show($slug): JsonResponse
     {
-        if (!$video->isPublished() || !$video->isReady()) {
+        $video = $this->videoRepo->findBySlug($slug);
+
+        if (!$video || !$video->isPublished() || !$video->isReady()) {
             return response()->json([
                 'success' => false,
                 'error' => 'Video not available',
@@ -115,7 +94,6 @@ class VideoController extends Controller
 
         $video->load(['creator', 'categories', 'tags', 'series']);
 
-        // Get next and previous episodes if part of series
         $nextEpisode = $video->getNextEpisode();
         $previousEpisode = $video->getPreviousEpisode();
 

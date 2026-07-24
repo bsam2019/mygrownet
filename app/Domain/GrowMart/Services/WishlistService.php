@@ -2,57 +2,44 @@
 
 namespace App\Domain\GrowMart\Services;
 
-use App\Models\GrowMart\GrowMartWishlistItem;
-use App\Models\GrowMart\GrowMartProduct;
-use Illuminate\Support\Facades\Auth;
+use App\Domain\GrowMart\Repositories\WishlistRepositoryInterface;
 
 class WishlistService
 {
-    public function getWishlist(int $userId, int $perPage = 20)
+    public function __construct(
+        private readonly WishlistRepositoryInterface $wishlistRepository,
+    ) {}
+
+    public function getWishlist(int $userId, int $perPage = 20): array
     {
-        return GrowMartWishlistItem::with('product.images', 'product.category')
-            ->where('user_id', $userId)
-            ->latest()
-            ->paginate($perPage);
+        return $this->wishlistRepository->findByUser($userId, $perPage);
     }
 
     public function isWishlisted(int $userId, int $productId): bool
     {
-        return GrowMartWishlistItem::where('user_id', $userId)
-            ->where('product_id', $productId)
-            ->exists();
+        return $this->wishlistRepository->isWishlisted($userId, $productId);
     }
 
     public function getWishlistProductIds(int $userId): array
     {
-        return GrowMartWishlistItem::where('user_id', $userId)
-            ->pluck('product_id')
-            ->toArray();
+        return $this->wishlistRepository->findProductIdsByUser($userId);
     }
 
     public function toggle(int $userId, int $productId): array
     {
-        $existing = GrowMartWishlistItem::where('user_id', $userId)
-            ->where('product_id', $productId)
-            ->first();
+        $existing = $this->wishlistRepository->findByUserAndProduct($userId, $productId);
 
         if ($existing) {
-            $existing->delete();
+            $this->wishlistRepository->remove($userId, $productId);
             return ['wishlisted' => false, 'message' => 'Removed from wishlist'];
         }
 
-        GrowMartWishlistItem::create([
-            'user_id' => $userId,
-            'product_id' => $productId,
-        ]);
-
+        $this->wishlistRepository->add($userId, $productId);
         return ['wishlisted' => true, 'message' => 'Added to wishlist'];
     }
 
     public function remove(int $userId, int $productId): void
     {
-        GrowMartWishlistItem::where('user_id', $userId)
-            ->where('product_id', $productId)
-            ->delete();
+        $this->wishlistRepository->remove($userId, $productId);
     }
 }

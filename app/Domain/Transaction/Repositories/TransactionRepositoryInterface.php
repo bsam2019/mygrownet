@@ -5,7 +5,7 @@ namespace App\Domain\Transaction\Repositories;
 use App\Domain\Transaction\Enums\TransactionStatus;
 use App\Domain\Transaction\Enums\TransactionType;
 use App\Domain\Transaction\ValueObjects\TransactionSource;
-use App\Domain\Wallet\ValueObjects\Money;
+use App\Domain\GrowNet\Wallet\ValueObjects\Money;
 use App\Models\User;
 
 /**

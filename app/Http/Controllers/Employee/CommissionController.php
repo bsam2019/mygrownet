@@ -11,9 +11,8 @@ use App\Http\Requests\Employee\ApproveCommissionRequest;
 use App\Http\Requests\Employee\MarkCommissionPaidRequest;
 use App\Domain\Employee\Services\CommissionCalculationService;
 use App\Domain\Employee\Repositories\EmployeeRepositoryInterface;
+use App\Domain\Employee\Repositories\EmployeeCommissionRepositoryInterface;
 use App\Domain\Employee\ValueObjects\EmployeeId;
-use App\Infrastructure\Persistence\Eloquent\EmployeeCommissionModel;
-use App\Infrastructure\Persistence\Eloquent\EmployeeModel;
 use App\Models\Investment;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -25,15 +24,24 @@ use Exception;
 
 class CommissionController extends Controller
 {
-    /**
-     * Display commission dashboard for field agents
-     */
+    private EmployeeRepositoryInterface $employeeRepository;
+    private EmployeeCommissionRepositoryInterface $commissionRepo;
+    private CommissionCalculationService $commissionCalculationService;
+
+    public function __construct(
+        EmployeeRepositoryInterface $employeeRepository,
+        EmployeeCommissionRepositoryInterface $commissionRepo,
+        CommissionCalculationService $commissionCalculationService
+    ) {
+        $this->employeeRepository = $employeeRepository;
+        $this->commissionRepo = $commissionRepo;
+        $this->commissionCalculationService = $commissionCalculationService;
+    }
+
     public function index(Request $request)
     {
-        // Simple implementation without complex domain logic
         $filters = $request->only(['search', 'status', 'period', 'type']);
 
-        // Mock commission data for now
         $commissions = collect([
             [
                 'id' => 1,
@@ -63,20 +71,14 @@ class CommissionController extends Controller
         ]);
     }
 
-    /**
-     * Calculate commission for a specific investment
-     */
     public function calculate(CalculateCommissionRequest $request): JsonResponse
     {
-
         try {
             $employee = $this->employeeRepository->findById(new EmployeeId($request->employee_id));
             $investment = Investment::findOrFail($request->investment_id);
 
             if (!$employee) {
-                return response()->json([
-                    'error' => 'Employee not found'
-                ], 404);
+                return response()->json(['error' => 'Employee not found'], 404);
             }
 
             $result = match ($request->commission_type) {
@@ -104,22 +106,16 @@ class CommissionController extends Controller
                 'error' => $e->getMessage()
             ]);
 
-            return response()->json([
-                'error' => 'Commission calculation failed: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['error' => 'Commission calculation failed: ' . $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Store a calculated commission record
-     */
     public function store(StoreCommissionRequest $request): JsonResponse
     {
-
         try {
             DB::beginTransaction();
 
-            $commission = EmployeeCommissionModel::create([
+            $commission = $this->commissionRepo->save([
                 'employee_id' => $request->employee_id,
                 'investment_id' => $request->investment_id,
                 'user_id' => $request->user_id,
@@ -147,35 +143,31 @@ class CommissionController extends Controller
                 'error' => $e->getMessage()
             ]);
 
-            return response()->json([
-                'error' => 'Failed to store commission record: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['error' => 'Failed to store commission record: ' . $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Approve a commission for payment
-     */
     public function approve(ApproveCommissionRequest $request, int $commissionId): JsonResponse
     {
-
         try {
-            $commission = EmployeeCommissionModel::findOrFail($commissionId);
+            $commission = $this->commissionRepo->findById($commissionId);
 
-            if ($commission->status !== 'pending') {
-                return response()->json([
-                    'error' => 'Commission is not in pending status'
-                ], 400);
+            if (!$commission) {
+                return response()->json(['error' => 'Commission not found'], 404);
             }
 
-            $commission->update([
+            if ($commission->status !== 'pending') {
+                return response()->json(['error' => 'Commission is not in pending status'], 400);
+            }
+
+            $this->commissionRepo->update($commissionId, [
                 'status' => 'approved',
                 'notes' => $request->notes ? $commission->notes . "\n" . $request->notes : $commission->notes,
             ]);
 
             return response()->json([
                 'success' => true,
-                'commission' => $commission,
+                'commission' => $commission->fresh(),
                 'message' => 'Commission approved successfully'
             ]);
 
@@ -185,28 +177,24 @@ class CommissionController extends Controller
                 'error' => $e->getMessage()
             ]);
 
-            return response()->json([
-                'error' => 'Failed to approve commission: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['error' => 'Failed to approve commission: ' . $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Mark commission as paid
-     */
     public function markPaid(MarkCommissionPaidRequest $request, int $commissionId): JsonResponse
     {
-
         try {
-            $commission = EmployeeCommissionModel::findOrFail($commissionId);
+            $commission = $this->commissionRepo->findById($commissionId);
 
-            if ($commission->status !== 'approved') {
-                return response()->json([
-                    'error' => 'Commission must be approved before marking as paid'
-                ], 400);
+            if (!$commission) {
+                return response()->json(['error' => 'Commission not found'], 404);
             }
 
-            $commission->update([
+            if ($commission->status !== 'approved') {
+                return response()->json(['error' => 'Commission must be approved before marking as paid'], 400);
+            }
+
+            $this->commissionRepo->update($commissionId, [
                 'status' => 'paid',
                 'payment_date' => $request->payment_date,
                 'notes' => $request->notes ? $commission->notes . "\n" . $request->notes : $commission->notes,
@@ -214,7 +202,7 @@ class CommissionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'commission' => $commission,
+                'commission' => $commission->fresh(),
                 'message' => 'Commission marked as paid successfully'
             ]);
 
@@ -224,15 +212,10 @@ class CommissionController extends Controller
                 'error' => $e->getMessage()
             ]);
 
-            return response()->json([
-                'error' => 'Failed to mark commission as paid: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['error' => 'Failed to mark commission as paid: ' . $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Get monthly commission report
-     */
     public function monthlyReport(Request $request): JsonResponse
     {
         $request->validate([
@@ -243,7 +226,7 @@ class CommissionController extends Controller
 
         try {
             $employee = $this->employeeRepository->findById(new EmployeeId($request->employee_id));
-            
+
             if (!$employee) {
                 return response()->json(['error' => 'Employee not found'], 404);
             }
@@ -282,15 +265,10 @@ class CommissionController extends Controller
                 'error' => $e->getMessage()
             ]);
 
-            return response()->json([
-                'error' => 'Failed to generate monthly report: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['error' => 'Failed to generate monthly report: ' . $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Get quarterly commission report
-     */
     public function quarterlyReport(Request $request): JsonResponse
     {
         $request->validate([
@@ -301,14 +279,14 @@ class CommissionController extends Controller
 
         try {
             $employee = $this->employeeRepository->findById(new EmployeeId($request->employee_id));
-            
+
             if (!$employee) {
                 return response()->json(['error' => 'Employee not found'], 404);
             }
 
             $quarterlyCommissions = $this->commissionCalculationService->calculateQuarterlyCommissions(
-                $employee, 
-                $request->year, 
+                $employee,
+                $request->year,
                 $request->quarter
             );
 
@@ -351,25 +329,18 @@ class CommissionController extends Controller
                 'error' => $e->getMessage()
             ]);
 
-            return response()->json([
-                'error' => 'Failed to generate quarterly report: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['error' => 'Failed to generate quarterly report: ' . $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Get commission analytics for management
-     */
-    public function analytics(Request $request): Response
+    public function analytics(Request $request): \Inertia\Response
     {
-        // Only allow managers and admins to access analytics
         $this->authorize('viewCommissionAnalytics');
 
         $filters = $request->only(['department_id', 'position_id', 'date_from', 'date_to', 'status']);
 
-        $query = EmployeeCommissionModel::with(['employee.department', 'employee.position', 'investment', 'user']);
+        $query = $this->commissionRepo->query()->with(['employee.department', 'employee.position', 'investment', 'user']);
 
-        // Apply filters
         if ($filters['department_id']) {
             $query->whereHas('employee', function ($q) use ($filters) {
                 $q->where('department_id', $filters['department_id']);
@@ -396,10 +367,9 @@ class CommissionController extends Controller
 
         $commissions = $query->orderBy('calculation_date', 'desc')->paginate(50);
 
-        // Calculate summary statistics
-        $totalCommissions = $query->sum('commission_amount');
-        $pendingCommissions = $query->where('status', 'pending')->sum('commission_amount');
-        $paidCommissions = $query->where('status', 'paid')->sum('commission_amount');
+        $totalCommissions = $this->commissionRepo->query()->sum('commission_amount');
+        $pendingCommissions = $this->commissionRepo->query()->where('status', 'pending')->sum('commission_amount');
+        $paidCommissions = $this->commissionRepo->query()->where('status', 'paid')->sum('commission_amount');
 
         return Inertia::render('Employee/Commission/Analytics', [
             'commissions' => $commissions,
@@ -413,40 +383,43 @@ class CommissionController extends Controller
         ]);
     }
 
-    /**
-     * Get commission statistics for an employee
-     */
     private function getCommissionStatistics(int $employeeId): array
     {
         $currentYear = date('Y');
         $currentMonth = date('m');
 
         return [
-            'total_earned_this_year' => EmployeeCommissionModel::where('employee_id', $employeeId)
+            'total_earned_this_year' => $this->commissionRepo->query()
+                ->where('employee_id', $employeeId)
                 ->whereYear('calculation_date', $currentYear)
                 ->where('status', 'paid')
                 ->sum('commission_amount'),
-            
-            'total_earned_this_month' => EmployeeCommissionModel::where('employee_id', $employeeId)
+
+            'total_earned_this_month' => $this->commissionRepo->query()
+                ->where('employee_id', $employeeId)
                 ->whereYear('calculation_date', $currentYear)
                 ->whereMonth('calculation_date', $currentMonth)
                 ->where('status', 'paid')
                 ->sum('commission_amount'),
-            
-            'pending_commissions' => EmployeeCommissionModel::where('employee_id', $employeeId)
+
+            'pending_commissions' => $this->commissionRepo->query()
+                ->where('employee_id', $employeeId)
                 ->where('status', 'pending')
                 ->sum('commission_amount'),
-            
-            'approved_commissions' => EmployeeCommissionModel::where('employee_id', $employeeId)
+
+            'approved_commissions' => $this->commissionRepo->query()
+                ->where('employee_id', $employeeId)
                 ->where('status', 'approved')
                 ->sum('commission_amount'),
-            
-            'total_investments_facilitated' => EmployeeCommissionModel::where('employee_id', $employeeId)
+
+            'total_investments_facilitated' => $this->commissionRepo->query()
+                ->where('employee_id', $employeeId)
                 ->where('commission_type', 'investment_facilitation')
                 ->whereYear('calculation_date', $currentYear)
                 ->count(),
-            
-            'average_commission_per_investment' => EmployeeCommissionModel::where('employee_id', $employeeId)
+
+            'average_commission_per_investment' => $this->commissionRepo->query()
+                ->where('employee_id', $employeeId)
                 ->where('commission_type', 'investment_facilitation')
                 ->whereYear('calculation_date', $currentYear)
                 ->avg('commission_amount') ?? 0,

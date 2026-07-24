@@ -29,7 +29,9 @@ class EloquentWeddingEventRepository implements WeddingEventRepositoryInterface
             'guest_count' => $weddingEvent->getGuestCount(),
             'status' => $weddingEvent->getStatus()->getValue(),
             'notes' => $weddingEvent->getNotes(),
-            'preferences' => $weddingEvent->getPreferences()
+            'preferences' => $weddingEvent->getPreferences(),
+            'slug' => $weddingEvent->getSlug(),
+            'access_code' => $weddingEvent->getAccessCode()
         ]);
 
         $model->save();
@@ -91,15 +93,9 @@ class EloquentWeddingEventRepository implements WeddingEventRepositoryInterface
 
     public function findBySlug(string $slug): ?WeddingEvent
     {
-        // For now, we'll treat slug as ID since we don't have slug field yet
-        // In future, we can add a slug field to the wedding_events table
-        if (is_numeric($slug)) {
-            return $this->findById((int)$slug);
-        }
-        
-        // Try to find by a generated slug pattern (e.g., "john-jane-2025")
-        // This is a placeholder implementation
-        return null;
+        $model = WeddingEventModel::where('slug', $slug)->first();
+
+        return $model ? $this->toDomainEntity($model) : null;
     }
 
     public function delete(int $id): bool
@@ -137,6 +133,8 @@ class EloquentWeddingEventRepository implements WeddingEventRepositoryInterface
             status: WeddingStatus::fromString($model->status),
             notes: $model->notes,
             preferences: $model->preferences,
+            slug: $model->slug,
+            accessCode: $model->access_code,
             createdAt: $model->created_at,
             updatedAt: $model->updated_at
         );

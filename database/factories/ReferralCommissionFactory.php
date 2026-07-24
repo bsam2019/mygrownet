@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use App\Models\User;
 use App\Models\Investment;
 use Illuminate\Database\Eloquent\Factories\Factory;

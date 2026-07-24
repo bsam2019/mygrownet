@@ -5,7 +5,7 @@ namespace App\Application\Workshop\UseCases;
 use App\Domain\Workshop\Repositories\WorkshopRepository;
 use App\Domain\Workshop\Repositories\WorkshopRegistrationRepository;
 use App\Models\User;
-use App\Services\PointsService;
+use App\Domain\GrowNet\Services\PointsService;
 use Illuminate\Support\Facades\DB;
 
 class CompleteWorkshopUseCase

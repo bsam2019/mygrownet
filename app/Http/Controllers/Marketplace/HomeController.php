@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Marketplace;
 use App\Http\Controllers\Controller;
 use App\Domain\Marketplace\Services\ProductService;
 use App\Domain\Marketplace\Services\SellerService;
-use App\Models\Marketplace\MarketplaceCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class HomeController extends Controller
@@ -18,12 +18,16 @@ class HomeController extends Controller
 
     public function index(Request $request)
     {
-        $featuredProducts = $this->productService->getFeaturedProducts(8);
+        $featuredProducts = $this->addComputedFields(
+            $this->productService->getFeaturedProducts(8)
+        );
         $categories = $this->productService->getCategories();
-        
-        $latestProducts = $this->productService->getActiveProducts(
-            ['sort' => 'newest'],
-            12
+
+        $latestProducts = $this->addComputedFields(
+            $this->productService->getActiveProducts(
+                ['sort' => 'newest'],
+                12
+            )
         );
 
         return Inertia::render('Marketplace/Home', [
@@ -36,16 +40,14 @@ class HomeController extends Controller
 
     public function search(Request $request)
     {
-        // Determine which category IDs to filter by
         $categoryIds = null;
-        
+
         if ($request->subcategory) {
-            // If subcategory is selected, filter by that specific subcategory
             $categoryIds = [(int) $request->subcategory];
         } elseif ($request->category) {
-            // If only parent category is selected, include parent and all its children
             $parentId = (int) $request->category;
-            $childIds = MarketplaceCategory::where('parent_id', $parentId)
+            $childIds = DB::table('marketplace_categories')
+                ->where('parent_id', $parentId)
                 ->pluck('id')
                 ->toArray();
             $categoryIds = array_merge([$parentId], $childIds);
@@ -60,7 +62,9 @@ class HomeController extends Controller
             'sort' => $request->sort ?? 'newest',
         ];
 
-        $products = $this->productService->getActiveProducts($filters, 24);
+        $products = $this->addComputedFields(
+            $this->productService->getActiveProducts($filters, 24)
+        );
         $categories = $this->productService->getCategories();
 
         return Inertia::render('Marketplace/Search', [
@@ -81,35 +85,40 @@ class HomeController extends Controller
 
     public function category(Request $request, string $slug)
     {
-        $category = MarketplaceCategory::where('slug', $slug)->firstOrFail();
-        
-        // If this is a parent category, also include products from subcategories
+        $category = DB::table('marketplace_categories')->where('slug', $slug)->first();
+
+        if (!$category) {
+            abort(404);
+        }
+
         $categoryIds = [$category->id];
         $subcategories = [];
-        
+
         if (is_null($category->parent_id)) {
-            // This is a parent category - get subcategories
-            $subcategories = MarketplaceCategory::where('parent_id', $category->id)
+            $subcategories = DB::table('marketplace_categories')
+                ->where('parent_id', $category->id)
                 ->where('is_active', true)
                 ->orderBy('sort_order')
-                ->get();
-            
-            // Check if filtering by specific subcategory
+                ->get()
+                ->map(fn($c) => (array) $c)
+                ->toArray();
+
             if ($request->subcategory) {
                 $categoryIds = [(int) $request->subcategory];
             } else {
-                // Include all subcategory IDs for product filtering
-                $categoryIds = array_merge($categoryIds, $subcategories->pluck('id')->toArray());
+                $categoryIds = array_merge($categoryIds, array_column($subcategories, 'id'));
             }
         }
-        
+
         $filters = [
             'category_ids' => $categoryIds,
             'province' => $request->province,
             'sort' => $request->sort ?? 'newest',
         ];
 
-        $products = $this->productService->getActiveProducts($filters, 24);
+        $products = $this->addComputedFields(
+            $this->productService->getActiveProducts($filters, 24)
+        );
         $categories = $this->productService->getCategories();
 
         return Inertia::render('Marketplace/Category', [
@@ -129,31 +138,30 @@ class HomeController extends Controller
     public function product(string $slug)
     {
         $product = $this->productService->getBySlug($slug);
-        
-        if (!$product || $product->status !== 'active') {
+
+        if (!$product || $product['status'] !== 'active') {
             abort(404);
         }
 
-        // Increment views
-        $this->productService->incrementViews($product->id);
+        $this->productService->incrementViews($product['id']);
 
-        // Get related products
-        $relatedProducts = $this->productService->getActiveProducts(
-            ['category_id' => $product->category_id],
-            4
-        )->items();
+        $relatedProducts = $this->addComputedFields(
+            $this->productService->getActiveProducts(
+                ['category_id' => $product['category_id']],
+                4
+            )
+        );
 
-        // Prepare Open Graph meta tags for social sharing
-        $ogImage = $product->primary_image_url ?: asset('images/marketplace-default-product.jpg');
-        $ogTitle = $product->name . ' - MyGrowNet Marketplace';
-        $ogDescription = \Str::limit(strip_tags($product->description), 150);
-        $ogUrl = route('marketplace.product', $product->slug);
-        $ogPrice = 'K' . number_format($product->price / 100, 2);
+        $ogImage = $this->computePrimaryImageUrl($product['images'] ?? [])
+            ?: asset('images/marketplace-default-product.jpg');
+        $ogTitle = $product['name'] . ' - MyGrowNet Marketplace';
+        $ogDescription = \Str::limit(strip_tags($product['description']), 150);
+        $ogUrl = route('marketplace.product', $product['slug']);
+        $ogPrice = 'K' . number_format($product['price'] / 100, 2);
 
         return Inertia::render('Marketplace/Product', [
-            'product' => $product,
-            'relatedProducts' => collect($relatedProducts)->filter(fn($p) => $p->id !== $product->id)->values(),
-            // Open Graph meta tags
+            'product' => $this->addComputedFieldsToProduct($product),
+            'relatedProducts' => collect($relatedProducts)->filter(fn($p) => $p['id'] !== $product['id'])->values(),
             'meta' => [
                 'title' => $ogTitle,
                 'description' => $ogDescription,
@@ -169,34 +177,39 @@ class HomeController extends Controller
     public function seller(Request $request, string $id)
     {
         $seller = $this->sellerService->getById((int) $id);
-        
-        if (!$seller || !$seller->is_active) {
+
+        if (!$seller || !$seller['is_active']) {
             abort(404);
         }
 
-        $products = $this->productService->getActiveProducts(
-            ['seller_id' => $seller->id],
-            24
+        $products = $this->addComputedFields(
+            $this->productService->getActiveProducts(
+                ['seller_id' => $seller['id']],
+                24
+            )
         );
 
-        // Get follower count
-        $followersCount = $seller->followers()->count();
-        
-        // Check if current user is following
+        $followersCount = DB::table('marketplace_seller_followers')
+            ->where('seller_id', $seller['id'])
+            ->count();
+
         $isFollowing = false;
         if ($request->user()) {
-            $isFollowing = $seller->followers()
+            $isFollowing = DB::table('marketplace_seller_followers')
+                ->where('seller_id', $seller['id'])
                 ->where('user_id', $request->user()->id)
                 ->exists();
         }
 
-        // Get review stats
-        $reviewCount = $seller->reviews()->where('is_approved', true)->count();
-        
-        // Get rating breakdown
-        $ratingBreakdown = $seller->reviews()
+        $reviewCount = DB::table('marketplace_reviews')
+            ->where('seller_id', $seller['id'])
             ->where('is_approved', true)
-            ->selectRaw('rating, count(*) as count')
+            ->count();
+
+        $ratingBreakdown = DB::table('marketplace_reviews')
+            ->where('seller_id', $seller['id'])
+            ->where('is_approved', true)
+            ->select('rating', DB::raw('count(*) as count'))
             ->groupBy('rating')
             ->pluck('count', 'rating')
             ->toArray();
@@ -210,44 +223,61 @@ class HomeController extends Controller
             ];
         }
 
-        // Get recent reviews
-        $reviews = $seller->reviews()
-            ->with(['buyer:id,name', 'product:id,name,slug'])
-            ->where('is_approved', true)
-            ->orderByDesc('created_at')
+        $reviews = DB::table('marketplace_reviews')
+            ->leftJoin('users', 'marketplace_reviews.buyer_id', '=', 'users.id')
+            ->leftJoin('marketplace_products', 'marketplace_reviews.product_id', '=', 'marketplace_products.id')
+            ->where('marketplace_reviews.seller_id', $seller['id'])
+            ->where('marketplace_reviews.is_approved', true)
+            ->select(
+                'marketplace_reviews.*',
+                'users.id as buyer_user_id',
+                'users.name as buyer_name',
+                'marketplace_products.id as product_id',
+                'marketplace_products.name as product_name',
+                'marketplace_products.slug as product_slug'
+            )
+            ->orderByDesc('marketplace_reviews.created_at')
             ->limit(10)
-            ->get();
-
-        // Get product categories for this seller
-        $categories = $seller->products()
-            ->where('status', 'active')
-            ->with('category:id,name,slug')
             ->get()
-            ->pluck('category')
-            ->unique('id')
-            ->map(function ($cat) use ($seller) {
-                return [
-                    'id' => $cat->id,
-                    'name' => $cat->name,
-                    'slug' => $cat->slug,
-                    'count' => $seller->products()
-                        ->where('status', 'active')
-                        ->where('category_id', $cat->id)
-                        ->count(),
-                ];
-            })
-            ->values();
+            ->toArray();
 
-        // Prepare Open Graph meta tags for social sharing
-        $ogImage = $seller->cover_image_url ?: $seller->logo_url ?: asset('images/marketplace-default-shop.jpg');
-        $ogTitle = $seller->business_name . ' - MyGrowNet Marketplace';
-        $ogDescription = $seller->description 
-            ? \Str::limit($seller->description, 150) 
-            : "Shop from {$seller->business_name} on MyGrowNet Marketplace. {$products->total()} products available.";
-        $ogUrl = route('marketplace.seller.show', $seller->id);
+        $categoryData = DB::table('marketplace_products')
+            ->where('seller_id', $seller['id'])
+            ->where('status', 'active')
+            ->join('marketplace_categories', 'marketplace_products.category_id', '=', 'marketplace_categories.id')
+            ->select('marketplace_categories.id', 'marketplace_categories.name', 'marketplace_categories.slug')
+            ->distinct()
+            ->get()
+            ->toArray();
+
+        $categories = array_map(function ($cat) use ($seller) {
+            $count = DB::table('marketplace_products')
+                ->where('seller_id', $seller['id'])
+                ->where('status', 'active')
+                ->where('category_id', $cat->id)
+                ->count();
+            return [
+                'id' => (int) $cat->id,
+                'name' => $cat->name,
+                'slug' => $cat->slug,
+                'count' => $count,
+            ];
+        }, $categoryData);
+
+        $logoUrl = $seller['logo_path'] ? asset('storage/' . $seller['logo_path']) : null;
+        $coverImageUrl = $seller['cover_image_path'] ? asset('storage/' . $seller['cover_image_path']) : null;
+
+        $ogImage = $coverImageUrl ?: $logoUrl ?: asset('images/marketplace-default-shop.jpg');
+        $ogTitle = $seller['business_name'] . ' - MyGrowNet Marketplace';
+        $ogDescription = $seller['description']
+            ? \Str::limit($seller['description'], 150)
+            : "Shop from {$seller['business_name']} on MyGrowNet Marketplace. " . (is_array($products) ? count($products) : 0) . " products available.";
+        $ogUrl = route('marketplace.seller.show', $seller['id']);
 
         return Inertia::render('Marketplace/Seller', [
-            'seller' => array_merge($seller->toArray(), [
+            'seller' => array_merge($seller, [
+                'logo_url' => $logoUrl,
+                'cover_image_url' => $coverImageUrl,
                 'followers_count' => $followersCount,
                 'review_count' => $reviewCount,
             ]),
@@ -256,7 +286,6 @@ class HomeController extends Controller
             'ratingBreakdown' => $breakdown,
             'reviews' => $reviews,
             'categories' => $categories,
-            // Open Graph meta tags
             'meta' => [
                 'title' => $ogTitle,
                 'description' => $ogDescription,
@@ -295,5 +324,65 @@ class HomeController extends Controller
     public function privacy()
     {
         return Inertia::render('Marketplace/Privacy');
+    }
+
+    private function addComputedFields(array $products): array
+    {
+        return array_map(fn(array $p) => $this->addComputedFieldsToProduct($p), $products);
+    }
+
+    private function addComputedFieldsToProduct(array $product): array
+    {
+        $product['primary_image_url'] = $this->computePrimaryImageUrl($product['images'] ?? []);
+        $product['image_urls'] = $this->computeImageUrls($product['images'] ?? []);
+        $product['formatted_price'] = 'K' . number_format($product['price'] / 100, 2);
+        $product['formatted_compare_price'] = isset($product['compare_price']) && $product['compare_price']
+            ? 'K' . number_format($product['compare_price'] / 100, 2) : null;
+        $product['discount_percentage'] = $this->computeDiscountPercentage(
+            $product['price'] ?? 0,
+            $product['compare_price'] ?? null
+        );
+        return $product;
+    }
+
+    private function computePrimaryImageUrl(array $images): ?string
+    {
+        if (empty($images[0])) {
+            return null;
+        }
+
+        $img = $images[0];
+
+        if (is_array($img)) {
+            return null;
+        }
+
+        if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+            return $img;
+        }
+
+        if (is_string($img) && str_starts_with($img, 'marketplace/')) {
+            return \Storage::url($img);
+        }
+
+        return asset('storage/' . $img);
+    }
+
+    private function computeImageUrls(array $images): array
+    {
+        return collect($images)->map(function ($img) {
+            if (is_array($img)) return null;
+            if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) return $img;
+            if (is_string($img) && str_starts_with($img, 'marketplace/')) return \Storage::url($img);
+            return asset('storage/' . $img);
+        })->filter()->values()->toArray();
+    }
+
+    private function computeDiscountPercentage(int $price, ?int $comparePrice): int
+    {
+        if (!$comparePrice || $comparePrice <= $price) {
+            return 0;
+        }
+        return (int) round((($comparePrice - $price) / $comparePrice) * 100);
     }
 }

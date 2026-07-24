@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\GrowMart\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\GrowMart\GrowMartProduct;
-use App\Models\GrowMart\GrowMartCategory;
-use App\Models\GrowMart\GrowMartWarehouse;
+use App\Domain\GrowMart\Repositories\ProductRepositoryInterface;
+use App\Domain\GrowMart\Repositories\CategoryRepositoryInterface;
+use App\Domain\GrowMart\Repositories\WarehouseRepositoryInterface;
+use App\Models\GrowMart\GrowMartProductImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -13,12 +14,15 @@ use Inertia\Inertia;
 
 class ProductController extends Controller
 {
+    public function __construct(
+        private readonly ProductRepositoryInterface $productRepository,
+        private readonly CategoryRepositoryInterface $categoryRepository,
+        private readonly WarehouseRepositoryInterface $warehouseRepository,
+    ) {}
+
     public function index()
     {
-        $products = GrowMartProduct::with(['category', 'images'])
-            ->withSum('inventory', 'quantity')
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        $products = $this->productRepository->findAll(['per_page' => 20]);
 
         return Inertia::render('GrowMart/Admin/Products/Index', [
             'products' => $products,
@@ -28,8 +32,8 @@ class ProductController extends Controller
     public function create()
     {
         return Inertia::render('GrowMart/Admin/Products/Create', [
-            'categories' => GrowMartCategory::where('is_active', true)->orderBy('name')->get(),
-            'warehouses' => GrowMartWarehouse::where('is_active', true)->orderBy('name')->get(),
+            'categories' => $this->categoryRepository->findParentCategories(),
+            'warehouses' => $this->warehouseRepository->findActive(),
         ]);
     }
 
@@ -50,7 +54,7 @@ class ProductController extends Controller
             'initial_stock' => 'nullable|integer|min:0',
         ]);
 
-        $product = GrowMartProduct::create([
+        $product = $this->productRepository->save([
             'name' => $validated['name'],
             'slug' => $validated['slug'] ?? null,
             'description' => $validated['description'] ?? '',
@@ -65,7 +69,8 @@ class ProductController extends Controller
             foreach ($validated['images'] as $index => $imagePath) {
                 $storedPath = $this->storeImage($imagePath);
                 if ($storedPath) {
-                    $product->images()->create([
+                    GrowMartProductImage::create([
+                        'product_id' => $product['id'],
                         'path' => $storedPath,
                         'sort_order' => $index,
                     ]);
@@ -74,7 +79,8 @@ class ProductController extends Controller
         }
 
         if (!empty($validated['warehouse_id']) && $validated['initial_stock'] > 0) {
-            $product->inventory()->create([
+            \App\Models\GrowMart\GrowMartInventory::create([
+                'product_id' => $product['id'],
                 'warehouse_id' => $validated['warehouse_id'],
                 'quantity' => $validated['initial_stock'],
             ]);
@@ -84,22 +90,22 @@ class ProductController extends Controller
             ->with('success', 'Product created successfully.');
     }
 
-    public function edit(GrowMartProduct $product)
+    public function edit(int $id)
     {
-        $product->load(['images', 'inventory', 'category']);
+        $product = $this->productRepository->findById($id);
 
         return Inertia::render('GrowMart/Admin/Products/Edit', [
             'product' => $product,
-            'categories' => GrowMartCategory::where('is_active', true)->orderBy('name')->get(),
-            'warehouses' => GrowMartWarehouse::where('is_active', true)->orderBy('name')->get(),
+            'categories' => $this->categoryRepository->findParentCategories(),
+            'warehouses' => $this->warehouseRepository->findActive(),
         ]);
     }
 
-    public function update(Request $request, GrowMartProduct $product)
+    public function update(Request $request, int $id)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:growmart_products,slug,' . $product->id,
+            'slug' => 'nullable|string|max:255|unique:growmart_products,slug,' . $id,
             'description' => 'nullable|string',
             'unit' => 'required|string|max:50',
             'price' => 'required|numeric|min:0',
@@ -110,7 +116,7 @@ class ProductController extends Controller
             'images.*' => 'string',
         ]);
 
-        $product->update([
+        $this->productRepository->update($id, [
             'name' => $validated['name'],
             'slug' => $validated['slug'] ?? null,
             'description' => $validated['description'] ?? '',
@@ -122,14 +128,16 @@ class ProductController extends Controller
         ]);
 
         if ($request->has('images')) {
-            foreach ($product->images as $img) {
-                Storage::disk('public')->delete($img->path);
+            $product = $this->productRepository->findById($id);
+            foreach ($product['images'] ?? [] as $img) {
+                Storage::disk('public')->delete($img['path']);
             }
-            $product->images()->delete();
+            GrowMartProductImage::where('product_id', $id)->delete();
             foreach ($validated['images'] as $index => $imagePath) {
                 $storedPath = $this->storeImage($imagePath);
                 if ($storedPath) {
-                    $product->images()->create([
+                    GrowMartProductImage::create([
+                        'product_id' => $id,
                         'path' => $storedPath,
                         'sort_order' => $index,
                     ]);
@@ -161,14 +169,15 @@ class ProductController extends Controller
         return $image;
     }
 
-    public function destroy(GrowMartProduct $product)
+    public function destroy(int $id)
     {
-        foreach ($product->images as $image) {
-            Storage::disk('public')->delete($image->path);
+        $product = $this->productRepository->findById($id);
+        foreach ($product['images'] ?? [] as $image) {
+            Storage::disk('public')->delete($image['path']);
         }
-        $product->images()->delete();
-        $product->inventory()->delete();
-        $product->delete();
+        GrowMartProductImage::where('product_id', $id)->delete();
+        \App\Models\GrowMart\GrowMartInventory::where('product_id', $id)->delete();
+        $this->productRepository->delete($id);
 
         return redirect()->route('admin.growmart.products.index')
             ->with('success', 'Product deleted successfully.');

@@ -92,7 +92,7 @@ class ExpenseSyncHandler
                 ];
 
                 // 4. Create journal entry in GrowFinance
-                $journalEntry = $this->accountingService->createJournalEntry(
+                $journalEntryData = $this->accountingService->createJournalEntry(
                     businessId: $expense->company_id,
                     description: "CMS Expense #{$expense->id} - {$expense->category}",
                     lines: $lines,
@@ -101,14 +101,14 @@ class ExpenseSyncHandler
                 );
 
                 // 5. Post the entry
-                $this->accountingService->postJournalEntry($journalEntry);
+                $this->accountingService->postJournalEntry($journalEntryData['id']);
 
                 // 6. Log success
-                $this->statusService->logSuccess($expense, $journalEntry->id);
+                $this->statusService->logSuccess($expense, $journalEntryData['id']);
 
                 Log::info("Successfully synced expense #{$expense->id} to GrowFinance", [
                     'expense_id' => $expense->id,
-                    'journal_entry_id' => $journalEntry->id,
+                    'journal_entry_id' => $journalEntryData['id'],
                 ]);
             });
         } catch (\Exception $e) {

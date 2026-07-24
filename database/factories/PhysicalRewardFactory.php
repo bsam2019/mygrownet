@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\PhysicalReward;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalReward;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class PhysicalRewardFactory extends Factory

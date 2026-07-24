@@ -48,7 +48,7 @@ const closeLauncher = () => {
 const getModuleIcon = (slug: string) => {
     const iconMap: Record<string, any> = {
         'grownet': UsersIcon,
-        'growbiz': ClipboardDocumentCheckIcon,
+
         'growfinance': BanknotesIcon,
         'bizboost': SparklesIcon,
         'bizdocs': DocumentTextIcon,

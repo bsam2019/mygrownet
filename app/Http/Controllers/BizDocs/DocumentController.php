@@ -11,6 +11,7 @@ use App\Application\BizDocs\UseCases\Document\FinalizeDocumentUseCase;
 use App\Domain\BizDocs\BusinessIdentity\Repositories\BusinessProfileRepositoryInterface;
 use App\Domain\BizDocs\CustomerManagement\Repositories\CustomerRepositoryInterface;
 use App\Domain\BizDocs\DocumentManagement\Repositories\DocumentRepositoryInterface;
+use App\Domain\BizDocs\DocumentManagement\Repositories\DocumentTemplateRepositoryInterface;
 use App\Domain\BizDocs\DocumentManagement\ValueObjects\DocumentType;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -30,6 +31,7 @@ class DocumentController extends Controller
         private readonly \App\Application\BizDocs\UseCases\ConvertQuotationToInvoiceUseCase $convertQuotationUseCase,
         private readonly \App\Application\BizDocs\UseCases\DuplicateDocumentUseCase $duplicateDocumentUseCase,
         private readonly \App\Application\BizDocs\Services\DocumentStatusHistoryService $statusHistoryService,
+        private readonly DocumentTemplateRepositoryInterface $templateRepository,
         private readonly PdfGenerationService $pdfGenerationService,
         private readonly WhatsAppSharingService $whatsAppSharingService,
         private readonly \App\Application\BizDocs\Services\FileStorageService $fileStorageService
@@ -97,25 +99,9 @@ class DocumentController extends Controller
             'email' => $customer->email(),
         ], $customers);
 
-        // Get all templates (templates are generic and work for any document type)
-        $templates = \App\Infrastructure\BizDocs\Persistence\Eloquent\DocumentTemplateModel::where(function($query) use ($businessProfile) {
-                $query->where('visibility', 'industry')
-                      ->orWhere(function($q) use ($businessProfile) {
-                          $q->where('visibility', 'business')
-                            ->where('owner_id', $businessProfile->id());
-                      });
-            })
-            ->orderBy('is_default', 'desc')
-            ->orderBy('visibility', 'asc')
-            ->orderBy('name', 'asc')
-            ->get()
-            ->toArray();
+        $templates = $this->templateRepository->getAvailableForBusiness($businessProfile->id());
 
-        // Get user's preferred template (not document-type specific anymore)
-        $preference = \DB::table('bizdocs_user_template_preferences')
-            ->where('business_id', $businessProfile->id())
-            ->where('document_type', $type)
-            ->first();
+        $preference = $this->templateRepository->getUserTemplatePreference($businessProfile->id(), $type);
 
         $defaultTemplateId = $preference?->template_id;
 
@@ -349,15 +335,13 @@ class DocumentController extends Controller
                 'items' => $items,
                 'logoPath' => $logoPath,
                 'signaturePath' => $signaturePath,
-                'isPdf' => true, // Flag to use PDF-compatible CSS
+                'isPdf' => true,
             ];
 
-            // Determine which template to use
             $viewPath = 'bizdocs.pdf.document';
-            
-            // If document has a template with layout_file, use it
+
             if ($document->templateId()) {
-                $template = \App\Infrastructure\BizDocs\Persistence\Eloquent\DocumentTemplateModel::find($document->templateId());
+                $template = $this->templateRepository->findById($document->templateId());
                 if ($template && !empty($template->layout_file)) {
                     $specificView = 'bizdocs.pdf.templates.' . $template->layout_file;
                     if (view()->exists($specificView)) {
@@ -469,15 +453,13 @@ class DocumentController extends Controller
                 'items' => $items,
                 'logoPath' => $logoPath,
                 'signaturePath' => $signaturePath,
-                'isPdf' => false, // Flag for HTML preview (supports modern CSS)
+                'isPdf' => false,
             ];
 
-            // Determine which template to use
             $viewPath = 'bizdocs.pdf.document';
-            
-            // If document has a template with layout_file, use it
+
             if ($document->templateId()) {
-                $template = \App\Infrastructure\BizDocs\Persistence\Eloquent\DocumentTemplateModel::find($document->templateId());
+                $template = $this->templateRepository->findById($document->templateId());
                 if ($template && !empty($template->layout_file)) {
                     $specificView = 'bizdocs.pdf.templates.' . $template->layout_file;
                     if (view()->exists($specificView)) {
@@ -955,25 +937,9 @@ class DocumentController extends Controller
 
         $documentType = $request->query('type', 'invoice');
 
-        // Get ALL templates - they can be used for any document type
-        $templates = \App\Infrastructure\BizDocs\Persistence\Eloquent\DocumentTemplateModel::where(function($query) use ($businessProfile) {
-                $query->where('visibility', 'industry')
-                      ->orWhere(function($q) use ($businessProfile) {
-                          $q->where('visibility', 'business')
-                            ->where('owner_id', $businessProfile->id());
-                      });
-            })
-            ->orderBy('is_default', 'desc')
-            ->orderBy('visibility', 'asc')
-            ->orderBy('name', 'asc')
-            ->get()
-            ->toArray();
+        $templates = $this->templateRepository->getAvailableForBusiness($businessProfile->id());
 
-        // Get user's current template preference for this document type
-        $preference = \DB::table('bizdocs_user_template_preferences')
-            ->where('business_id', $businessProfile->id())
-            ->where('document_type', $documentType)
-            ->first();
+        $preference = $this->templateRepository->getUserTemplatePreference($businessProfile->id(), $documentType);
 
         return Inertia::render('BizDocs/Templates/Gallery', [
             'templates' => $templates,
@@ -995,32 +961,20 @@ class DocumentController extends Controller
             'document_type' => 'required|string|in:invoice,receipt,quotation,delivery_note,proforma_invoice,credit_note,debit_note,purchase_order',
         ]);
 
-        // Verify template exists
-        $template = \App\Infrastructure\BizDocs\Persistence\Eloquent\DocumentTemplateModel::find($id);
+        $template = $this->templateRepository->findById($id);
         if (!$template) {
             return response()->json(['error' => 'Template not found'], 404);
         }
 
-        // Upsert preference
-        \DB::table('bizdocs_user_template_preferences')->updateOrInsert(
-            [
-                'business_id' => $businessProfile->id(),
-                'document_type' => $validated['document_type'],
-            ],
-            [
-                'template_id' => $id,
-                'updated_at' => now(),
-                'created_at' => now(),
-            ]
-        );
+        $this->templateRepository->setUserTemplatePreference($businessProfile->id(), $validated['document_type'], $id);
 
         return redirect()->back()->with('success', 'Template set as default');
     }
 
     public function templatePreview(Request $request, int $id)
     {
-        $template = \App\Infrastructure\BizDocs\Persistence\Eloquent\DocumentTemplateModel::find($id);
-        
+        $template = $this->templateRepository->findById($id);
+
         if (!$template) {
             abort(404);
         }

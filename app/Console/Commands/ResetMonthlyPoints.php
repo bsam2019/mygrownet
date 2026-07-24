@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\PointService;
+use App\Domain\GrowNet\Services\PointService;
 use Illuminate\Console\Command;
 
 class ResetMonthlyPoints extends Command

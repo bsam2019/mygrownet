@@ -2,130 +2,123 @@
 
 namespace App\Domain\Marketplace\Services;
 
-use App\Models\Marketplace\MarketplaceOrder;
-use App\Models\Marketplace\MarketplaceEscrow;
+use App\Domain\Marketplace\Repositories\EscrowRepositoryInterface;
+use App\Domain\Marketplace\Repositories\SellerRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 
 class EscrowService
 {
-    public function holdFunds(MarketplaceOrder $order): MarketplaceEscrow
+    public function __construct(
+        private EscrowRepositoryInterface $escrowRepository,
+        private SellerRepositoryInterface $sellerRepository,
+    ) {}
+
+    public function holdFunds(int $orderId, int $amount): array
     {
-        return MarketplaceEscrow::create([
-            'order_id' => $order->id,
-            'amount' => $order->total,
+        return $this->escrowRepository->create([
+            'order_id' => $orderId,
+            'amount' => $amount,
             'status' => 'held',
             'held_at' => now(),
         ]);
     }
 
-    public function releaseFunds(MarketplaceOrder $order, string $reason): void
+    public function releaseFunds(int $orderId, string $reason): void
     {
-        $escrow = MarketplaceEscrow::where('order_id', $order->id)->firstOrFail();
-        
-        if ($escrow->status !== 'held') {
+        $escrow = $this->escrowRepository->findByOrderId($orderId);
+        if (!$escrow || $escrow['status'] !== 'held') {
             throw new \Exception('Escrow funds are not in held status.');
         }
 
-        DB::transaction(function () use ($escrow, $reason, $order) {
-            $escrow->update([
+        DB::transaction(function () use ($orderId, $reason, $escrow) {
+            $this->escrowRepository->updateByOrderId($orderId, [
                 'status' => 'released',
                 'released_at' => now(),
                 'release_reason' => $reason,
             ]);
 
-            // Credit seller's wallet (simplified for MVP)
-            // In production, this would integrate with the wallet system
-            $this->creditSellerWallet($order->seller_id, $escrow->amount);
+            // Credit seller's wallet via seller balance
+            $this->sellerRepository->incrementBalance(
+                $this->getSellerIdForOrder($orderId),
+                $escrow['amount']
+            );
         });
     }
 
-    public function refundFunds(MarketplaceOrder $order, string $reason): void
+    public function refundFunds(int $orderId, string $reason): void
     {
-        $escrow = MarketplaceEscrow::where('order_id', $order->id)->first();
-        
-        if (!$escrow || $escrow->status !== 'held') {
-            return; // No escrow to refund
+        $escrow = $this->escrowRepository->findByOrderId($orderId);
+        if (!$escrow || $escrow['status'] !== 'held') {
+            return;
         }
 
-        DB::transaction(function () use ($escrow, $reason, $order) {
-            $escrow->update([
-                'status' => 'refunded',
-                'released_at' => now(),
-                'release_reason' => $reason,
-            ]);
-
-            // Credit buyer's wallet (simplified for MVP)
-            $this->creditBuyerWallet($order->buyer_id, $escrow->amount);
-        });
+        $this->escrowRepository->updateByOrderId($orderId, [
+            'status' => 'refunded',
+            'released_at' => now(),
+            'release_reason' => $reason,
+        ]);
     }
 
-    public function markAsDisputed(MarketplaceOrder $order): void
+    public function markAsDisputed(int $orderId): void
     {
-        MarketplaceEscrow::where('order_id', $order->id)
-            ->update(['status' => 'disputed']);
+        $this->escrowRepository->updateByOrderId($orderId, ['status' => 'disputed']);
     }
 
     public function resolveDispute(int $orderId, string $resolution, int $sellerAmount, int $buyerAmount): void
     {
-        $escrow = MarketplaceEscrow::where('order_id', $orderId)->firstOrFail();
-        $order = MarketplaceOrder::findOrFail($orderId);
-
-        DB::transaction(function () use ($escrow, $order, $resolution, $sellerAmount, $buyerAmount) {
+        DB::transaction(function () use ($orderId, $resolution, $sellerAmount, $buyerAmount) {
             if ($sellerAmount > 0) {
-                $this->creditSellerWallet($order->seller_id, $sellerAmount);
+                $this->sellerRepository->incrementBalance(
+                    $this->getSellerIdForOrder($orderId),
+                    $sellerAmount
+                );
             }
 
             if ($buyerAmount > 0) {
-                $this->creditBuyerWallet($order->buyer_id, $buyerAmount);
+                DB::table('marketplace_buyer_refunds')->insert([
+                    'buyer_id' => $this->getBuyerIdForOrder($orderId),
+                    'amount' => $buyerAmount,
+                    'status' => 'pending',
+                    'created_at' => now(),
+                ]);
             }
 
-            $escrow->update([
+            $this->escrowRepository->updateByOrderId($orderId, [
                 'status' => 'released',
                 'released_at' => now(),
                 'release_reason' => "Dispute resolved: {$resolution}",
             ]);
 
-            $order->update([
-                'status' => 'completed',
-                'dispute_resolution' => $resolution,
-            ]);
+            DB::table('marketplace_orders')
+                ->where('id', $orderId)
+                ->update([
+                    'status' => 'completed',
+                    'dispute_resolution' => $resolution,
+                ]);
         });
     }
 
     public function getEscrowBalance(): int
     {
-        return MarketplaceEscrow::where('status', 'held')->sum('amount');
+        return $this->escrowRepository->getTotalHeldBalance();
     }
 
     public function getSellerPendingBalance(int $sellerId): int
     {
-        return MarketplaceEscrow::whereHas('order', fn($q) => $q->where('seller_id', $sellerId))
-            ->where('status', 'held')
-            ->sum('amount');
+        return $this->escrowRepository->getSellerPendingBalance($sellerId);
     }
 
-    private function creditSellerWallet(int $sellerId, int $amount): void
+    private function getSellerIdForOrder(int $orderId): int
     {
-        // Simplified wallet credit for MVP
-        // In production, integrate with the actual wallet system
-        DB::table('marketplace_seller_balances')->updateOrInsert(
-            ['seller_id' => $sellerId],
-            [
-                'available_balance' => DB::raw("COALESCE(available_balance, 0) + {$amount}"),
-                'updated_at' => now(),
-            ]
-        );
+        return (int) DB::table('marketplace_orders')
+            ->where('id', $orderId)
+            ->value('seller_id');
     }
 
-    private function creditBuyerWallet(int $buyerId, int $amount): void
+    private function getBuyerIdForOrder(int $orderId): int
     {
-        // Simplified wallet credit for MVP
-        // In production, integrate with the actual wallet system
-        DB::table('marketplace_buyer_refunds')->insert([
-            'buyer_id' => $buyerId,
-            'amount' => $amount,
-            'status' => 'pending',
-            'created_at' => now(),
-        ]);
+        return (int) DB::table('marketplace_orders')
+            ->where('id', $orderId)
+            ->value('buyer_id');
     }
 }

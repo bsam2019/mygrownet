@@ -3,20 +3,20 @@
 namespace App\Http\Controllers\GrowMart\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\GrowMart\GrowMartCategory;
+use App\Domain\GrowMart\Repositories\CategoryRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class CategoryController extends Controller
 {
+    public function __construct(
+        private readonly CategoryRepositoryInterface $categoryRepository,
+    ) {}
+
     public function index()
     {
-        $categories = GrowMartCategory::with('parent')
-            ->withCount('products')
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->paginate(20);
+        $categories = $this->categoryRepository->findAll(['per_page' => 20]);
 
         return Inertia::render('GrowMart/Admin/Categories/Index', [
             'categories' => $categories,
@@ -25,7 +25,7 @@ class CategoryController extends Controller
 
     public function create()
     {
-        $parentCategories = GrowMartCategory::whereNull('parent_id')->orderBy('name')->get();
+        $parentCategories = $this->categoryRepository->findParentCategories();
 
         return Inertia::render('GrowMart/Admin/Categories/Create', [
             'parentCategories' => $parentCategories,
@@ -55,30 +55,32 @@ class CategoryController extends Controller
 
         unset($validated['image_url']);
 
-        GrowMartCategory::create($validated);
+        $this->categoryRepository->save($validated);
 
         return redirect()->route('admin.growmart.categories.index')
             ->with('success', 'Category created successfully.');
     }
 
-    public function edit(GrowMartCategory $category)
+    public function edit(int $id)
     {
-        $parentCategories = GrowMartCategory::whereNull('parent_id')
-            ->where('id', '!=', $category->id)
-            ->orderBy('name')
-            ->get();
+        $category = $this->categoryRepository->findById($id);
+
+        $parentCategories = array_values(array_filter(
+            $this->categoryRepository->findParentCategories(),
+            fn($c) => $c['id'] !== $id
+        ));
 
         return Inertia::render('GrowMart/Admin/Categories/Edit', [
-            'category' => $category->load('parent'),
+            'category' => $category,
             'parentCategories' => $parentCategories,
         ]);
     }
 
-    public function update(Request $request, GrowMartCategory $category)
+    public function update(Request $request, int $id)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:growmart_categories,slug,' . $category->id,
+            'slug' => 'nullable|string|max:255|unique:growmart_categories,slug,' . $id,
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'image_url' => 'nullable|string|max:255',
@@ -87,9 +89,11 @@ class CategoryController extends Controller
             'is_active' => 'boolean',
         ]);
 
+        $category = $this->categoryRepository->findById($id);
+
         if ($request->hasFile('image')) {
-            if ($category->image && !str_starts_with($category->image, 'http')) {
-                Storage::disk('public')->delete($category->image);
+            if ($category['image'] && !str_starts_with($category['image'], 'http')) {
+                Storage::disk('public')->delete($category['image']);
             }
             $validated['image'] = $request->file('image')->store('growmart/categories', 'public');
         } elseif ($request->filled('image_url')) {
@@ -100,23 +104,24 @@ class CategoryController extends Controller
 
         unset($validated['image_url']);
 
-        $category->update($validated);
+        $this->categoryRepository->update($id, $validated);
 
         return redirect()->route('admin.growmart.categories.index')
             ->with('success', 'Category updated successfully.');
     }
 
-    public function destroy(GrowMartCategory $category)
+    public function destroy(int $id)
     {
-        if ($category->products()->count() > 0) {
+        if ($this->categoryRepository->productCount($id) > 0) {
             return back()->with('error', 'Cannot delete category with existing products.');
         }
 
-        if ($category->image && !str_starts_with($category->image, 'http')) {
-            Storage::disk('public')->delete($category->image);
+        $category = $this->categoryRepository->findById($id);
+        if ($category['image'] && !str_starts_with($category['image'], 'http')) {
+            Storage::disk('public')->delete($category['image']);
         }
 
-        $category->delete();
+        $this->categoryRepository->delete($id);
 
         return redirect()->route('admin.growmart.categories.index')
             ->with('success', 'Category deleted successfully.');

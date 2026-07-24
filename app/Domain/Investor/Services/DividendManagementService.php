@@ -2,58 +2,88 @@
 
 namespace App\Domain\Investor\Services;
 
-use App\Models\Investor\InvestorAccount;
-use App\Models\Investor\InvestorDividend;
-use App\Models\Investor\InvestorPaymentMethod;
-use Illuminate\Support\Collection;
+use App\Domain\Investor\Entities\InvestorDividend;
+use App\Domain\Investor\Entities\InvestorPaymentMethod;
+use App\Domain\Investor\Repositories\InvestorDividendRepositoryInterface;
+use App\Domain\Investor\Repositories\InvestorPaymentMethodRepositoryInterface;
+use App\Domain\Investor\Repositories\InvestorAccountRepositoryInterface;
+use DateTimeImmutable;
 
 class DividendManagementService
 {
-    /**
-     * Get dividend history for an investor
-     */
-    public function getDividendHistory(int $investorId): Collection
+    public function __construct(
+        private readonly InvestorDividendRepositoryInterface $dividendRepository,
+        private readonly InvestorPaymentMethodRepositoryInterface $paymentMethodRepository,
+        private readonly InvestorAccountRepositoryInterface $accountRepository
+    ) {}
+
+    public function getInvestorDividends(int $investorId): array
     {
-        return InvestorDividend::where('investor_account_id', $investorId)
-            ->orderBy('payment_date', 'desc')
-            ->get()
-            ->map(fn($dividend) => [
-                'id' => $dividend->id,
-                'period' => $dividend->dividend_period,
-                'gross_amount' => $dividend->gross_amount,
-                'tax_withheld' => $dividend->tax_withheld,
-                'net_amount' => $dividend->net_amount,
-                'declaration_date' => $dividend->declaration_date->format('Y-m-d'),
-                'declaration_date_formatted' => $dividend->declaration_date->format('M j, Y'),
-                'payment_date' => $dividend->payment_date?->format('Y-m-d'),
-                'payment_date_formatted' => $dividend->payment_date?->format('M j, Y'),
-                'status' => $dividend->status,
-                'status_label' => $this->getStatusLabel($dividend->status),
-                'payment_method' => $dividend->payment_method,
-                'payment_reference' => $dividend->payment_reference,
-            ]);
+        return $this->dividendRepository->findByInvestor($investorId);
     }
 
-    /**
-     * Get dividend summary for an investor
-     */
+    public function getUpcomingDistributions(int $investorId): array
+    {
+        return [];
+    }
+
+    public function getTotalDividendsEarned(int $investorId): float
+    {
+        $dividends = $this->dividendRepository->findByInvestor($investorId);
+        return array_sum(array_map(fn($d) => $d->getNetAmount(), $dividends));
+    }
+
+    public function getDividendHistory(int $investorId, ?string $year = null): array
+    {
+        $dividends = $this->dividendRepository->findByInvestor($investorId);
+
+        if ($year) {
+            $dividends = array_filter($dividends, function ($d) use ($year) {
+                $pd = $d->getPaymentDate();
+                return $pd && $pd->format('Y') === $year;
+            });
+        }
+
+        return array_map(function ($dividend) {
+            return [
+                'id' => $dividend->getId(),
+                'period' => $dividend->getDividendPeriod(),
+                'gross_amount' => $dividend->getGrossAmount(),
+                'tax_withheld' => $dividend->getTaxWithheld(),
+                'net_amount' => $dividend->getNetAmount(),
+                'declaration_date' => $dividend->getDeclarationDate()?->format('Y-m-d'),
+                'declaration_date_formatted' => $dividend->getDeclarationDate()?->format('M j, Y'),
+                'payment_date' => $dividend->getPaymentDate()?->format('Y-m-d'),
+                'payment_date_formatted' => $dividend->getPaymentDate()?->format('M j, Y'),
+                'status' => $dividend->getStatus(),
+                'status_label' => $this->getStatusLabel($dividend->getStatus()),
+                'payment_method' => $dividend->getPaymentMethod(),
+                'payment_reference' => $dividend->getPaymentReference(),
+            ];
+        }, array_values($dividends));
+    }
+
     public function getDividendSummary(int $investorId): array
     {
-        $dividends = InvestorDividend::where('investor_account_id', $investorId)->get();
-        
-        $totalGross = $dividends->sum('gross_amount');
-        $totalTax = $dividends->sum('tax_withheld');
-        $totalNet = $dividends->sum('net_amount');
-        $totalPaid = $dividends->where('status', 'paid')->sum('net_amount');
-        $totalPending = $dividends->whereIn('status', ['declared', 'pending'])->sum('net_amount');
-        
-        $lastDividend = $dividends->where('status', 'paid')
-            ->sortByDesc('payment_date')
-            ->first();
-            
-        $nextDividend = $dividends->whereIn('status', ['declared', 'pending'])
-            ->sortBy('payment_date')
-            ->first();
+        $dividends = $this->dividendRepository->findByInvestor($investorId);
+
+        $totalGross = array_sum(array_map(fn($d) => $d->getGrossAmount(), $dividends));
+        $totalTax = array_sum(array_map(fn($d) => $d->getTaxWithheld(), $dividends));
+        $totalNet = array_sum(array_map(fn($d) => $d->getNetAmount(), $dividends));
+
+        $paidDividends = array_filter($dividends, fn($d) => $d->getStatus() === 'paid');
+        $pendingDividends = array_filter($dividends, fn($d) => in_array($d->getStatus(), ['declared', 'pending']));
+
+        $totalPaid = array_sum(array_map(fn($d) => $d->getNetAmount(), $paidDividends));
+        $totalPending = array_sum(array_map(fn($d) => $d->getNetAmount(), $pendingDividends));
+
+        $lastDividend = !empty($paidDividends)
+            ? array_values(array_slice($paidDividends, 0, 1))[0]
+            : null;
+
+        $nextDividend = !empty($pendingDividends)
+            ? array_values(array_slice($pendingDividends, 0, 1))[0]
+            : null;
 
         return [
             'total_gross' => $totalGross,
@@ -61,100 +91,85 @@ class DividendManagementService
             'total_net' => $totalNet,
             'total_paid' => $totalPaid,
             'total_pending' => $totalPending,
-            'dividend_count' => $dividends->count(),
+            'dividend_count' => count($dividends),
             'last_dividend' => $lastDividend ? [
-                'amount' => $lastDividend->net_amount,
-                'period' => $lastDividend->dividend_period,
-                'date' => $lastDividend->payment_date->format('M j, Y'),
+                'amount' => $lastDividend->getNetAmount(),
+                'period' => $lastDividend->getDividendPeriod(),
+                'date' => $lastDividend->getPaymentDate()?->format('M j, Y'),
             ] : null,
             'next_dividend' => $nextDividend ? [
-                'amount' => $nextDividend->net_amount,
-                'period' => $nextDividend->dividend_period,
-                'expected_date' => $nextDividend->payment_date?->format('M j, Y'),
+                'amount' => $nextDividend->getNetAmount(),
+                'period' => $nextDividend->getDividendPeriod(),
+                'expected_date' => $nextDividend->getPaymentDate()?->format('M j, Y'),
             ] : null,
         ];
     }
 
-    /**
-     * Declare dividend for all investors
-     */
     public function declareDividend(
         string $period,
         float $totalDividendPool,
         \DateTime $declarationDate,
         ?\DateTime $paymentDate = null
     ): int {
-        $investors = InvestorAccount::where('status', 'shareholder')->get();
-        $totalEquity = $investors->sum('equity_percentage');
-        
+        $investors = $this->accountRepository->all();
+        $investors = array_filter($investors, fn($i) => $i->getStatus()->value() === 'shareholder');
+        $totalEquity = array_sum(array_map(fn($i) => $i->getEquityPercentage(), $investors));
+
         $dividendsCreated = 0;
-        
+
         foreach ($investors as $investor) {
-            $investorShare = ($investor->equity_percentage / $totalEquity) * $totalDividendPool;
-            $taxRate = 0.15; // 15% withholding tax (Zambia standard)
+            $investorShare = $totalEquity > 0
+                ? ($investor->getEquityPercentage() / $totalEquity) * $totalDividendPool
+                : 0;
+            $taxRate = 0.15;
             $taxWithheld = $investorShare * $taxRate;
             $netAmount = $investorShare - $taxWithheld;
-            
-            InvestorDividend::create([
-                'investor_account_id' => $investor->id,
-                'dividend_period' => $period,
-                'gross_amount' => $investorShare,
-                'tax_withheld' => $taxWithheld,
-                'net_amount' => $netAmount,
-                'declaration_date' => $declarationDate,
-                'payment_date' => $paymentDate,
-                'status' => 'declared',
-            ]);
-            
+
+            $dividend = InvestorDividend::create(
+                investorAccountId: $investor->getId(),
+                dividendPeriod: $period,
+                grossAmount: $investorShare,
+                taxWithheld: $taxWithheld,
+                netAmount: $netAmount,
+                declarationDate: new DateTimeImmutable($declarationDate->format('Y-m-d')),
+                paymentDate: $paymentDate ? new DateTimeImmutable($paymentDate->format('Y-m-d')) : null
+            );
+
+            $this->dividendRepository->save($dividend);
             $dividendsCreated++;
         }
-        
+
         return $dividendsCreated;
     }
 
-    /**
-     * Mark dividend as paid
-     */
     public function markDividendAsPaid(
         int $dividendId,
         string $paymentMethod,
         string $paymentReference
     ): bool {
-        $dividend = InvestorDividend::findOrFail($dividendId);
-        
-        return $dividend->update([
-            'status' => 'paid',
-            'payment_date' => now(),
-            'payment_method' => $paymentMethod,
-            'payment_reference' => $paymentReference,
-        ]);
+        $dividend = $this->dividendRepository->findById($dividendId);
+
+        if (!$dividend) {
+            return false;
+        }
+
+        $dividend->markAsPaid($paymentMethod, $paymentReference);
+        $this->dividendRepository->save($dividend);
+        return true;
     }
 
-    /**
-     * Get or create payment method for investor
-     */
     public function getPaymentMethod(int $investorId): ?InvestorPaymentMethod
     {
-        return InvestorPaymentMethod::where('investor_account_id', $investorId)
-            ->where('is_primary', true)
-            ->first();
+        return $this->paymentMethodRepository->findPrimaryByInvestor($investorId);
     }
 
-    /**
-     * Update payment method
-     */
     public function updatePaymentMethod(int $investorId, array $data): InvestorPaymentMethod
     {
-        // Set all existing methods to non-primary
-        InvestorPaymentMethod::where('investor_account_id', $investorId)
-            ->update(['is_primary' => false]);
-        
-        // Create or update primary method
-        return InvestorPaymentMethod::updateOrCreate(
-            [
-                'investor_account_id' => $investorId,
-                'method_type' => $data['method_type'],
-            ],
+        $this->paymentMethodRepository->setAllNonPrimary($investorId);
+
+        return $this->paymentMethodRepository->updateOrCreate(
+            $investorId,
+            $data['method_type'],
             [
                 'bank_name' => $data['bank_name'] ?? null,
                 'account_number' => $data['account_number'] ?? null,
@@ -163,20 +178,17 @@ class DividendManagementService
                 'mobile_provider' => $data['mobile_provider'] ?? null,
                 'mobile_number' => $data['mobile_number'] ?? null,
                 'is_primary' => true,
-                'is_verified' => false, // Requires verification
+                'is_verified' => false,
             ]
         );
     }
 
-    /**
-     * Calculate tax withholding
-     */
     public function calculateTaxWithholding(float $grossAmount): array
     {
-        $taxRate = 0.15; // 15% standard rate in Zambia
+        $taxRate = 0.15;
         $taxWithheld = $grossAmount * $taxRate;
         $netAmount = $grossAmount - $taxWithheld;
-        
+
         return [
             'gross_amount' => $grossAmount,
             'tax_rate' => $taxRate * 100,
@@ -185,9 +197,6 @@ class DividendManagementService
         ];
     }
 
-    /**
-     * Get status label
-     */
     private function getStatusLabel(string $status): string
     {
         return match($status) {

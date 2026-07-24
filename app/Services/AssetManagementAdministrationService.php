@@ -3,10 +3,10 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\PhysicalReward;
-use App\Models\PhysicalRewardAllocation;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalReward;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalRewardAllocation;
 use App\Models\InvestmentTier;
-use App\Models\TeamVolume;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TeamVolume;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Collection;

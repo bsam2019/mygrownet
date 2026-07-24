@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\GrowFinance;
 
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceCustomerModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceCustomerModel;
 use Inertia\Testing\AssertableInertia as Assert;
 
 class SalesTest extends GrowFinanceTestCase

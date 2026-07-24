@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\QuickInvoice;
 
+use App\Domain\QuickInvoice\Services\DocumentService;
+use App\Domain\QuickInvoice\Services\ProfileService;
+use App\Domain\QuickInvoice\Services\SubscriptionService;
+use App\Domain\QuickInvoice\Repositories\UsageTrackingRepositoryInterface;
 use App\Http\Controllers\Controller;
-use App\Models\QuickInvoice\UserSubscription;
-use App\Models\QuickInvoice\UsageTracking;
-use App\Models\QuickInvoice\QuickInvoiceDocument;
-use App\Models\QuickInvoice\QuickInvoiceProfile;
 use App\Services\QuickInvoice\TemplateService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,64 +14,43 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        private readonly DocumentService $documentService,
+        private readonly ProfileService $profileService,
+        private readonly SubscriptionService $subscriptionService,
+        private readonly UsageTrackingRepositoryInterface $usageTracking,
+    ) {}
+
     public function index(Request $request): Response
     {
         $user = $request->user();
         $isAuthenticated = !!$user;
-        
-        // Get user subscription and usage stats
+
         $subscription = null;
         $monthlyUsage = 0;
-        $recentDocuments = collect();
+        $recentDocuments = [];
         $profile = null;
-        
+
         if ($isAuthenticated) {
-            $subscription = UserSubscription::getOrCreateFreeSubscription($user->id);
-            $monthlyUsage = UsageTracking::getUserMonthlyUsage($user->id);
-            
-            // Get recent documents
-            $recentDocuments = QuickInvoiceDocument::where('user_id', $user->id)
-                ->with('items')
-                ->orderBy('created_at', 'desc')
-                ->limit(5)
-                ->get()
-                ->map(function ($doc) {
-                    return [
-                        'id' => $doc->id,
-                        'document_number' => $doc->document_number,
-                        'type' => $doc->document_type,
-                        'type_label' => $doc->getTypeLabel(),
-                        'client_name' => $doc->client_name,
-                        'total' => $doc->total,
-                        'currency' => $doc->currency,
-                        'currency_symbol' => $doc->getCurrencySymbol(),
-                        'formatted_total' => $doc->getFormattedTotal(),
-                        'created_at' => $doc->created_at->format('M j, Y'),
-                        'created_at_human' => $doc->created_at->diffForHumans(),
-                    ];
-                });
-            
-            // Get user profile
-            $profile = QuickInvoiceProfile::where('user_id', $user->id)->first();
+            $subscriptionData = $this->subscriptionService->getSubscriptionForDashboard($user->id);
+            $monthlyUsage = $this->usageTracking->getUserMonthlyUsage($user->id);
+
+            $recentDocuments = $this->documentService->getRecentDocumentsByUser($user->id, 5);
+
+            $profileEntity = $this->profileService->getProfile($user->id);
+            $profile = $this->profileService->profileToArray($profileEntity);
         }
-        
-        // Get overall stats (for guest users too)
+
+        $totalDocuments = $this->documentService->getTotalDocumentCount();
+        $activeUsers = $this->usageTracking->getStats(now()->startOfMonth()->format('Y-m-d'), now()->format('Y-m-d'));
+        $popularTemplates = $this->usageTracking->getStats(now()->subMonth()->format('Y-m-d'), now()->format('Y-m-d'));
+
         $overallStats = [
-            'total_documents_created' => QuickInvoiceDocument::count(),
-            'active_users_this_month' => UsageTracking::where('created_at', '>=', now()->startOfMonth())
-                ->whereNotNull('user_id')
-                ->distinct('user_id')
-                ->count(),
-            'popular_templates' => UsageTracking::where('created_at', '>=', now()->subMonth())
-                ->groupBy('template_used')
-                ->selectRaw('template_used, COUNT(*) as count')
-                ->orderByDesc('count')
-                ->limit(3)
-                ->pluck('count', 'template_used')
-                ->toArray(),
+            'total_documents_created' => $totalDocuments,
+            'active_users_this_month' => $activeUsers['unique_users'] ?? 0,
+            'popular_templates' => $popularTemplates['by_template'] ?? [],
         ];
-        
-        // Quick action templates
+
         $quickActions = [
             [
                 'type' => 'invoice',
@@ -106,13 +85,12 @@ class DashboardController extends Controller
                 'route' => route('quick-invoice.create', ['type' => 'delivery_note']),
             ],
         ];
-        
-        // Get templates available for user's tier
-        $userTier = $subscription ? $subscription->tier->name : 'Free';
+
+        $userTier = $subscription ? $subscription['tier_name'] : 'Free';
         $availableTemplates = TemplateService::getTemplatesForTier($userTier);
-        
-        // Template gallery with usage stats
-        $templates = array_map(function ($template) use ($overallStats) {
+
+        $popularKeys = $overallStats['popular_templates'];
+        $templates = array_map(function ($template) use ($popularKeys) {
             return [
                 'id' => $template['id'],
                 'name' => $template['name'],
@@ -120,55 +98,24 @@ class DashboardController extends Controller
                 'preview_image' => $template['preview_image'],
                 'tier_required' => $template['tier_required'],
                 'category' => $template['category'],
-                'usage_count' => $overallStats['popular_templates'][$template['id']] ?? 0,
+                'usage_count' => $popularKeys[$template['id']] ?? 0,
                 'features' => $template['features'],
             ];
         }, $availableTemplates);
-        
-        // Sort templates by usage count
+
         usort($templates, function ($a, $b) {
             return $b['usage_count'] <=> $a['usage_count'];
         });
-        
+
         return Inertia::render('QuickInvoice/Dashboard', [
             'isAuthenticated' => $isAuthenticated,
-            'subscription' => $subscription ? [
-                'tier_name' => $subscription->tier->name,
-                'tier_price' => $subscription->tier->formatted_price,
-                'documents_per_month' => $subscription->tier->documents_per_month == -1 ? 'Unlimited' : $subscription->tier->documents_per_month,
-                'documents_used' => $monthlyUsage,
-                'remaining_documents' => $subscription->tier->documents_per_month == -1 ? 'Unlimited' : $subscription->getRemainingDocuments(),
-                'usage_percentage' => $subscription->getUsagePercentage(),
-                'features' => $subscription->tier->features,
-                'expires_at' => $subscription->expires_at?->format('M j, Y'),
-            ] : null,
+            'subscription' => $subscription,
             'recentDocuments' => $recentDocuments,
-            'profile' => $profile ? [
-                'name' => $profile->name,
-                'email' => $profile->email,
-                'logo' => $profile->logo,
-                'completion_percentage' => $this->calculateProfileCompletion($profile),
-            ] : null,
+            'profile' => $profile,
             'overallStats' => $overallStats,
             'quickActions' => $quickActions,
             'templates' => $templates,
             'monthlyUsage' => $monthlyUsage,
         ]);
-    }
-    
-    private function calculateProfileCompletion($profile): int
-    {
-        if (!$profile) return 0;
-        
-        $fields = ['name', 'address', 'phone', 'email', 'logo'];
-        $completed = 0;
-        
-        foreach ($fields as $field) {
-            if (!empty($profile->$field)) {
-                $completed++;
-            }
-        }
-        
-        return (int) (($completed / count($fields)) * 100);
     }
 }

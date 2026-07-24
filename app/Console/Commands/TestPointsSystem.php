@@ -6,7 +6,7 @@ use App\Events\CourseCompleted;
 use App\Events\ProductSold;
 use App\Events\UserReferred;
 use App\Models\User;
-use App\Services\PointService;
+use App\Domain\GrowNet\Services\PointService;
 use Illuminate\Console\Command;
 
 class TestPointsSystem extends Command

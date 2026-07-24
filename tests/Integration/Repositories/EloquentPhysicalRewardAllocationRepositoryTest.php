@@ -11,8 +11,8 @@ use App\Domain\Reward\ValueObjects\AllocationStatus;
 use App\Domain\MLM\ValueObjects\UserId;
 use App\Domain\MLM\ValueObjects\TeamVolumeAmount;
 use App\Models\User;
-use App\Models\PhysicalReward;
-use App\Models\PhysicalRewardAllocation as PhysicalRewardAllocationModel;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalReward;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalRewardAllocation as PhysicalRewardAllocationModel;
 use App\Models\InvestmentTier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 

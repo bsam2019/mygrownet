@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Admin\GrowNet;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use App\Models\ProfitShare;
-use App\Models\TeamVolume;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TeamVolume;
 use App\Models\LGR\LgrSetting;
-use App\Services\MLMAdministrationService;
+use App\Domain\GrowNet\Services\MLMAdministrationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;

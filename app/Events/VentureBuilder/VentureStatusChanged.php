@@ -2,18 +2,18 @@
 
 namespace App\Events\VentureBuilder;
 
-use App\Infrastructure\Persistence\Eloquent\VentureBuilder\VentureModel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 
 class VentureStatusChanged
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets;
 
     public function __construct(
-        public VentureModel $venture,
+        public int $ventureId,
         public string $oldStatus,
         public string $newStatus,
+        public string $ventureTitle,
+        public string $ventureSlug,
     ) {}
 }

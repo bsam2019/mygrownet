@@ -1,4 +1,4 @@
-import "./chunk-DC5AMYBS.js";
+import "./chunk-2TUXWMP5.js";
 
 // vendor/tightenco/ziggy/dist/index.js
 function t() {

@@ -3,42 +3,36 @@
 namespace App\Domain\Employee\Services;
 
 use App\Domain\Employee\ValueObjects\EmployeeId;
-use App\Models\Employee\EmployeeCalendarEvent;
-use App\Models\Employee\EmployeeTimeOffRequest;
+use App\Domain\Employee\Repositories\CalendarEventRepositoryInterface;
+use App\Domain\Employee\Repositories\TimeOffRepositoryInterface;
 use Illuminate\Support\Collection;
 use DateTimeImmutable;
 
 class CalendarService
 {
+    public function __construct(
+        private CalendarEventRepositoryInterface $calendarEventRepo,
+        private TimeOffRepositoryInterface $timeOffRepo
+    ) {}
+
     public function getEventsForEmployee(EmployeeId $employeeId, DateTimeImmutable $start, DateTimeImmutable $end): Collection
     {
-        return EmployeeCalendarEvent::forEmployee($employeeId->value())
-            ->forDateRange($start, $end)
-            ->where('status', 'scheduled')
-            ->orderBy('start_time')
-            ->get();
+        return $this->calendarEventRepo->findByEmployee($employeeId, $start, $end);
     }
 
     public function getUpcomingEvents(EmployeeId $employeeId, int $limit = 5): Collection
     {
-        return EmployeeCalendarEvent::forEmployee($employeeId->value())
-            ->upcoming()
-            ->limit($limit)
-            ->get();
+        return $this->calendarEventRepo->findUpcoming($employeeId, $limit);
     }
 
     public function getTodayEvents(EmployeeId $employeeId): Collection
     {
-        return EmployeeCalendarEvent::forEmployee($employeeId->value())
-            ->today()
-            ->where('status', 'scheduled')
-            ->orderBy('start_time')
-            ->get();
+        return $this->calendarEventRepo->findToday($employeeId);
     }
 
-    public function createEvent(EmployeeId $employeeId, array $data): EmployeeCalendarEvent
+    public function createEvent(EmployeeId $employeeId, array $data): object
     {
-        return EmployeeCalendarEvent::create([
+        return $this->calendarEventRepo->create([
             'employee_id' => $employeeId->value(),
             'created_by' => $employeeId->value(),
             'title' => $data['title'],
@@ -55,41 +49,31 @@ class CalendarService
         ]);
     }
 
-    public function updateEvent(int $eventId, EmployeeId $employeeId, array $data): EmployeeCalendarEvent
+    public function updateEvent(int $eventId, EmployeeId $employeeId, array $data): object
     {
-        $event = EmployeeCalendarEvent::where('id', $eventId)
-            ->where('employee_id', $employeeId->value())
-            ->firstOrFail();
+        $event = $this->calendarEventRepo->update($eventId, $employeeId, $data);
 
-        $event->update($data);
+        if (!$event) {
+            throw new \RuntimeException('Event not found');
+        }
 
         return $event;
     }
 
     public function cancelEvent(int $eventId, EmployeeId $employeeId): void
     {
-        $event = EmployeeCalendarEvent::where('id', $eventId)
-            ->where('employee_id', $employeeId->value())
-            ->firstOrFail();
-
-        $event->update(['status' => 'cancelled']);
+        $this->calendarEventRepo->cancel($eventId, $employeeId);
     }
 
     public function getTeamAvailability(int $departmentId, DateTimeImmutable $date): array
     {
-        // Get all time off requests for the department on this date
-        $timeOff = EmployeeTimeOffRequest::whereHas('employee', fn($q) => $q->where('department_id', $departmentId))
-            ->where('status', 'approved')
-            ->where('start_date', '<=', $date)
-            ->where('end_date', '>=', $date)
-            ->with('employee')
-            ->get();
+        $timeOff = $this->timeOffRepo->findByDepartmentAndDate($departmentId, $date);
 
         return [
             'date' => $date->format('Y-m-d'),
             'unavailable' => $timeOff->map(fn($request) => [
                 'employee_id' => $request->employee_id,
-                'employee_name' => $request->employee->full_name,
+                'employee_name' => $request->employee->full_name ?? 'Unknown',
                 'type' => $request->type,
             ])->toArray(),
         ];
@@ -97,20 +81,9 @@ class CalendarService
 
     public function getCalendarSummary(EmployeeId $employeeId): array
     {
-        $today = EmployeeCalendarEvent::forEmployee($employeeId->value())
-            ->today()
-            ->where('status', 'scheduled')
-            ->count();
-
-        $thisWeek = EmployeeCalendarEvent::forEmployee($employeeId->value())
-            ->thisWeek()
-            ->where('status', 'scheduled')
-            ->count();
-
-        $upcoming = EmployeeCalendarEvent::forEmployee($employeeId->value())
-            ->upcoming()
-            ->limit(3)
-            ->get();
+        $today = $this->calendarEventRepo->countToday($employeeId);
+        $thisWeek = $this->calendarEventRepo->countThisWeek($employeeId);
+        $upcoming = $this->calendarEventRepo->findUpcoming($employeeId, 3);
 
         return [
             'today_count' => $today,

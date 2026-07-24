@@ -15,6 +15,10 @@ interface DocumentRepositoryInterface
     
     public function findByUserId(int $userId): array;
     
+    public function findRecentByUser(int $userId, int $limit = 5): array;
+    
+    public function countAll(): int;
+    
     public function save(Document $document): Document;
     
     public function delete(DocumentId $id): bool;

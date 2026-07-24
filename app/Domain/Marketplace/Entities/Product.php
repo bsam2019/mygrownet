@@ -49,4 +49,23 @@ class Product
     {
         return $this->isAvailable() && $this->stockQuantity >= $quantity;
     }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'seller_id' => $this->sellerId,
+            'category_id' => $this->categoryId,
+            'name' => $this->name,
+            'slug' => $this->slug,
+            'description' => $this->description,
+            'price' => $this->price->amount(),
+            'compare_price' => $this->comparePrice?->amount(),
+            'stock_quantity' => $this->stockQuantity,
+            'images' => $this->images,
+            'status' => $this->status->value(),
+            'is_featured' => $this->isFeatured,
+            'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),
+        ];
+    }
 }

@@ -31,7 +31,7 @@ const appIcons: Record<string, any> = {
     growstorage: CloudIcon,
     zamstay: HomeModernIcon,
     primeedge: CommandLineIcon,
-    growbiz: BuildingOfficeIcon,
+
     lifeplus: BookOpenIcon,
     'quick-invoice': DocumentTextIcon,
 };
@@ -48,7 +48,7 @@ const appColors: Record<string, string> = {
     growstorage: 'from-sky-500 to-sky-600',
     zamstay: 'from-emerald-500 to-emerald-600',
     primeedge: 'from-violet-500 to-violet-600',
-    growbiz: 'from-amber-500 to-amber-600',
+
     lifeplus: 'from-yellow-500 to-amber-600',
     'quick-invoice': 'from-blue-500 to-blue-600',
 };

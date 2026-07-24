@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\GrowBuilder;
 
+use App\Domain\GrowBuilder\Repositories\OrderRepositoryInterface;
 use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
+use App\Domain\GrowBuilder\ValueObjects\OrderId;
 use App\Domain\GrowBuilder\ValueObjects\SiteId;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderOrder;
@@ -13,6 +15,7 @@ class OrderController extends Controller
 {
     public function __construct(
         private SiteRepositoryInterface $siteRepository,
+        private OrderRepositoryInterface $orderRepository,
     ) {}
 
     public function index(Request $request, int $siteId)
@@ -23,22 +26,16 @@ class OrderController extends Controller
             abort(404);
         }
 
+        $siteVo = SiteId::fromInt($siteId);
         $status = $request->get('status');
-        
-        $query = GrowBuilderOrder::where('site_id', $siteId)
-            ->orderBy('created_at', 'desc');
 
-        if ($status) {
-            $query->where('status', $status);
-        }
-
-        $orders = $query->paginate(20);
+        $orders = $this->orderRepository->findBySiteIdPaginated($siteVo, 20, $status);
 
         $stats = [
-            'pending' => GrowBuilderOrder::where('site_id', $siteId)->pending()->count(),
-            'processing' => GrowBuilderOrder::where('site_id', $siteId)->where('status', 'processing')->count(),
-            'completed' => GrowBuilderOrder::where('site_id', $siteId)->where('status', 'completed')->count(),
-            'total_revenue' => GrowBuilderOrder::where('site_id', $siteId)->paid()->sum('total'),
+            'pending' => $this->orderRepository->countByStatus($siteVo, 'pending'),
+            'processing' => $this->orderRepository->countByStatus($siteVo, 'processing'),
+            'completed' => $this->orderRepository->countByStatus($siteVo, 'completed'),
+            'total_revenue' => $this->orderRepository->sumTotalBySiteId($siteVo),
         ];
 
         return Inertia::render('GrowBuilder/Orders/Index', [
@@ -88,7 +85,6 @@ class OrderController extends Controller
             $updateData['admin_notes'] = $validated['admin_notes'];
         }
 
-        // Set timestamps based on status
         switch ($validated['status']) {
             case 'shipped':
                 $updateData['shipped_at'] = now();

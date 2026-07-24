@@ -144,7 +144,7 @@ class VerifyPaymentUseCase
     private function completeStarterKitPurchase(\App\Models\User $user, $payment): void
     {
         try {
-            $starterKitService = app(\App\Services\StarterKitService::class);
+            $starterKitService = app(\App\Domain\GrowNet\Services\StarterKitService::class);
             
             // Determine tier based on payment amount
             $amount = $payment->amount()->value();
@@ -196,7 +196,7 @@ class VerifyPaymentUseCase
         
         if (!$sponsor) {
             // Create root position for users without referrer
-            \App\Models\MatrixPosition::create([
+            \App\Infrastructure\Persistence\Eloquent\GrowNet\MatrixPosition::create([
                 'user_id' => $user->id,
                 'sponsor_id' => null,
                 'level' => 0, // Root level
@@ -211,11 +211,11 @@ class VerifyPaymentUseCase
         $sponsor->incrementReferralCount();
         
         // Use matrix service to find next available position
-        $matrixService = app(\App\Domain\Reward\Services\ReferralMatrixService::class);
+        $matrixService = app(\App\Domain\GrowNet\Reward\Services\ReferralMatrixService::class);
         $availablePosition = $matrixService->findNextAvailablePosition($sponsor);
         
         if ($availablePosition) {
-            \App\Models\MatrixPosition::create([
+            \App\Infrastructure\Persistence\Eloquent\GrowNet\MatrixPosition::create([
                 'user_id' => $user->id,
                 'sponsor_id' => $availablePosition['sponsor_id'],
                 'level' => $availablePosition['level'],
@@ -225,11 +225,11 @@ class VerifyPaymentUseCase
             ]);
         } else {
             // Fallback: create direct position under sponsor
-            $directChildren = \App\Models\MatrixPosition::where('sponsor_id', $sponsor->id)
+            $directChildren = \App\Infrastructure\Persistence\Eloquent\GrowNet\MatrixPosition::where('sponsor_id', $sponsor->id)
                 ->where('level', 1)
                 ->count();
                 
-            \App\Models\MatrixPosition::create([
+            \App\Infrastructure\Persistence\Eloquent\GrowNet\MatrixPosition::create([
                 'user_id' => $user->id,
                 'sponsor_id' => $sponsor->id,
                 'level' => 1,

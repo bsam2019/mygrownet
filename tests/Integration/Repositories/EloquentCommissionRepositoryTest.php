@@ -12,8 +12,8 @@ use App\Domain\MLM\ValueObjects\CommissionAmount;
 use App\Domain\MLM\ValueObjects\CommissionType;
 use App\Domain\MLM\ValueObjects\CommissionStatus;
 use App\Models\User;
-use App\Models\ReferralCommission;
-use App\Models\UserNetwork;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\UserNetwork;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use DateTimeImmutable;
 

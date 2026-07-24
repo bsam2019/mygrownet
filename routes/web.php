@@ -30,7 +30,7 @@ Route::prefix('platform')->name('platform.')->group(function () {
     Route::post('/logout', [\App\Http\Controllers\Platform\UnifiedAuthController::class, 'logout'])->name('logout');
 });
 use App\Http\Controllers\Settings\PasswordController;
-use App\Http\Controllers\Referral\ReferralController;
+use App\Http\Controllers\GrowNet\ReferralGroupController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\Investment\InvestmentController;
 use App\Http\Controllers\DashboardStatsController;
@@ -102,13 +102,6 @@ Route::get('/apps', [\App\Presentation\Http\Controllers\HomeHubController::class
 Route::get('/growfinance', function () {
     return Inertia::render('GrowFinance/Welcome');
 })->name('growfinance.welcome');
-
-Route::get('/growbiz', function () {
-    if (auth()->check()) {
-        return redirect()->route('growbiz.dashboard');
-    }
-    return Inertia::render('GrowBiz/Welcome');
-})->name('growbiz.welcome');
 
 Route::prefix('solutions')->name('solutions.')->group(function () {
     Route::get('/', function () { return Inertia::render('Solutions'); })->name('index');
@@ -464,13 +457,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Points System Routes
     Route::prefix('points')->name('points.')->group(function () {
-        Route::get('/', [App\Http\Controllers\PointsController::class, 'index'])->name('index');
-        Route::get('/transactions', [App\Http\Controllers\PointsController::class, 'transactions'])->name('transactions');
-        Route::get('/level-progress', [App\Http\Controllers\PointsController::class, 'levelProgress'])->name('level-progress');
-        Route::get('/qualification', [App\Http\Controllers\PointsController::class, 'qualificationStatus'])->name('qualification');
-        Route::post('/daily-login', [App\Http\Controllers\PointsController::class, 'dailyLogin'])->name('daily-login');
-        Route::get('/leaderboard', [App\Http\Controllers\PointsController::class, 'leaderboard'])->name('leaderboard');
-        Route::get('/badges', [App\Http\Controllers\PointsController::class, 'badges'])->name('badges');
+        Route::get('/', [App\Http\Controllers\GrowNet\PointsController::class, 'index'])->name('index');
+        Route::get('/transactions', [App\Http\Controllers\GrowNet\PointsController::class, 'transactions'])->name('transactions');
+        Route::get('/level-progress', [App\Http\Controllers\GrowNet\PointsController::class, 'levelProgress'])->name('level-progress');
+        Route::get('/qualification', [App\Http\Controllers\GrowNet\PointsController::class, 'qualificationStatus'])->name('qualification');
+        Route::post('/daily-login', [App\Http\Controllers\GrowNet\PointsController::class, 'dailyLogin'])->name('daily-login');
+        Route::get('/leaderboard', [App\Http\Controllers\GrowNet\PointsController::class, 'leaderboard'])->name('leaderboard');
+        Route::get('/badges', [App\Http\Controllers\GrowNet\PointsController::class, 'badges'])->name('badges');
     });
 
     // Learning System Routes (LGR Activity)
@@ -539,7 +532,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Member Profit Sharing Routes
     Route::middleware(['auth'])->prefix('mygrownet')->name('mygrownet.')->group(function () {
-        Route::get('/profit-shares', [App\Http\Controllers\MyGrowNet\ProfitShareController::class, 'index'])->name('profit-shares');
+        Route::get('/profit-shares', [App\Http\Controllers\GrowNet\ProfitShareController::class, 'index'])->name('profit-shares');
     });
 
     // Admin Investment Rounds Management
@@ -852,7 +845,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Leave impersonation - no admin middleware needed (user is impersonated)
     Route::post('/admin/leave-impersonation', [App\Http\Controllers\Admin\ImpersonateController::class, 'leave'])->name('admin.leave-impersonation');
-    Route::get('/dashboard/stats', [DashboardStatsController::class, 'index'])->name('dashboard.stats');
+    Route::get('/dashboard/stats', DashboardStatsController::class)->name('dashboard.stats');
     
     // Dashboard API Endpoints (MyGrowNet)
     Route::prefix('dashboard')->name('dashboard.')->group(function () {
@@ -947,7 +940,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('appearance');
 
     // Compensation Plan Route
-    Route::get('/compensation-plan', [App\Http\Controllers\CompensationPlanController::class, 'show'])->name('compensation-plan.show');
+    Route::get('/compensation-plan', [App\Http\Controllers\GrowNet\CompensationPlanController::class, 'show'])->name('compensation-plan.show');
 
     // Debug route to check member payments
     Route::get('/debug/check-member-status/{userId}', function($userId) {
@@ -1134,7 +1127,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Users can access the GrowNet dashboard directly via /grownet
     
     // GrowNet - Primary route (clean URL)
-    Route::get('/grownet', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'mobileIndex'])
+    Route::get('/grownet', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'mobileIndex'])
         ->middleware(['auth'])
         ->name('grownet.dashboard');
     
@@ -1147,21 +1140,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('dashboard');
         
         // Member Membership Routes
-        Route::get('/my-membership', [App\Http\Controllers\MyGrowNet\MembershipController::class, 'show'])->name('membership.show');
-        Route::get('/professional-levels', [App\Http\Controllers\MyGrowNet\MembershipController::class, 'levels'])->name('levels.index');
+        Route::get('/my-membership', [App\Http\Controllers\GrowNet\MembershipController::class, 'show'])->name('membership.show');
+        Route::get('/professional-levels', [App\Http\Controllers\GrowNet\MembershipController::class, 'levels'])->name('levels.index');
         
         // Starter Kit Routes
-        Route::get('/my-starter-kit', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'show'])->name('starter-kit.show');
-        Route::get('/my-starter-kit/purchase', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'purchase'])->name('starter-kit.purchase');
-        Route::post('/my-starter-kit/purchase', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'storePurchase'])->name('starter-kit.store');
-        Route::get('/my-starter-kit/upgrade', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'showUpgrade'])->name('starter-kit.upgrade');
-        Route::post('/my-starter-kit/upgrade', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'processUpgrade'])->name('starter-kit.upgrade.process');
+        Route::get('/my-starter-kit', [App\Http\Controllers\GrowNet\MyGrowNetStarterKitController::class, 'show'])->name('starter-kit.show');
+        Route::get('/my-starter-kit/purchase', [App\Http\Controllers\GrowNet\MyGrowNetStarterKitController::class, 'purchase'])->name('starter-kit.purchase');
+        Route::post('/my-starter-kit/purchase', [App\Http\Controllers\GrowNet\MyGrowNetStarterKitController::class, 'storePurchase'])->name('starter-kit.store');
+        Route::get('/my-starter-kit/upgrade', [App\Http\Controllers\GrowNet\MyGrowNetStarterKitController::class, 'showUpgrade'])->name('starter-kit.upgrade');
+        Route::post('/my-starter-kit/upgrade', [App\Http\Controllers\GrowNet\MyGrowNetStarterKitController::class, 'processUpgrade'])->name('starter-kit.upgrade.process');
         
         // Gift Starter Kit Routes
-        Route::post('/gifts/starter-kit', [App\Http\Controllers\MyGrowNet\GiftController::class, 'giftStarterKit'])->name('gifts.starter-kit');
-        Route::get('/gifts/limits', [App\Http\Controllers\MyGrowNet\GiftController::class, 'getLimits'])->name('gifts.limits');
-        Route::get('/gifts/history', [App\Http\Controllers\MyGrowNet\GiftController::class, 'getHistory'])->name('gifts.history');
-        Route::get('/network/level/{level}/members', [App\Http\Controllers\MyGrowNet\GiftController::class, 'getLevelMembers'])->name('network.level.members');
+        Route::post('/gifts/starter-kit', [App\Http\Controllers\GrowNet\GiftController::class, 'giftStarterKit'])->name('gifts.starter-kit');
+        Route::get('/gifts/limits', [App\Http\Controllers\GrowNet\GiftController::class, 'getLimits'])->name('gifts.limits');
+        Route::get('/gifts/history', [App\Http\Controllers\GrowNet\GiftController::class, 'getHistory'])->name('gifts.history');
+        Route::get('/network/level/{level}/members', [App\Http\Controllers\GrowNet\GiftController::class, 'getLevelMembers'])->name('network.level.members');
         
         // Library Routes (requires starter kit)
         Route::get('/library', [App\Http\Controllers\MyGrowNet\LibraryController::class, 'index'])->name('library.index');
@@ -1172,10 +1165,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/benefits', fn() => inertia('GrowNet/Benefits'))->name('benefits.index');
         
         // Starter Kit Content Routes (NO middleware - check in controller)
-        Route::get('/content', [App\Http\Controllers\MyGrowNet\StarterKitContentController::class, 'index'])->name('content.index');
-        Route::get('/content/{id}', [App\Http\Controllers\MyGrowNet\StarterKitContentController::class, 'show'])->name('content.show');
-        Route::get('/content/{id}/download', [App\Http\Controllers\MyGrowNet\StarterKitContentController::class, 'download'])->name('content.download');
-        Route::get('/content/{id}/stream', [App\Http\Controllers\MyGrowNet\StarterKitContentController::class, 'stream'])->name('content.stream');
+        Route::get('/content', [App\Http\Controllers\GrowNet\StarterKitContentController::class, 'index'])->name('content.index');
+        Route::get('/content/{id}', [App\Http\Controllers\GrowNet\StarterKitContentController::class, 'show'])->name('content.show');
+        Route::get('/content/{id}/download', [App\Http\Controllers\GrowNet\StarterKitContentController::class, 'download'])->name('content.download');
+        Route::get('/content/{id}/stream', [App\Http\Controllers\GrowNet\StarterKitContentController::class, 'stream'])->name('content.stream');
         
         // Web Tools Routes (NO middleware - check in controller)
         Route::prefix('tools')->name('tools.')->group(function () {
@@ -1230,20 +1223,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/support/{id}/rate', [App\Http\Controllers\MyGrowNet\SupportTicketController::class, 'rate'])->name('support.rate');
         
         // Network Routes (for messaging) - uses existing ReferralController
-        Route::get('/network/downlines', [App\Http\Controllers\ReferralController::class, 'getDownlinesForMessaging'])->name('network.downlines');
+        Route::get('/network/downlines', [App\Http\Controllers\GrowNet\ReferralController::class, 'getDownlinesForMessaging'])->name('network.downlines');
         
         // Loyalty Growth Reward (LGR) Routes
         Route::prefix('loyalty-reward')->name('loyalty-reward.')->group(function () {
-            Route::get('/', [App\Http\Controllers\MyGrowNet\LoyaltyRewardController::class, 'index'])->name('index');
-            Route::get('/qualification', [App\Http\Controllers\MyGrowNet\LoyaltyRewardController::class, 'qualification'])->name('qualification');
-            Route::get('/activities', [App\Http\Controllers\MyGrowNet\LoyaltyRewardController::class, 'activities'])->name('activities');
-            Route::post('/start-cycle', [App\Http\Controllers\MyGrowNet\LoyaltyRewardController::class, 'startCycle'])->name('start-cycle');
-            Route::post('/record-activity', [App\Http\Controllers\MyGrowNet\LoyaltyRewardController::class, 'recordActivity'])->name('record-activity');
+            Route::get('/', [App\Http\Controllers\GrowNet\LoyaltyRewardController::class, 'index'])->name('index');
+            Route::get('/qualification', [App\Http\Controllers\GrowNet\LoyaltyRewardController::class, 'qualification'])->name('qualification');
+            Route::get('/activities', [App\Http\Controllers\GrowNet\LoyaltyRewardController::class, 'activities'])->name('activities');
+            Route::post('/start-cycle', [App\Http\Controllers\GrowNet\LoyaltyRewardController::class, 'startCycle'])->name('start-cycle');
+            Route::post('/record-activity', [App\Http\Controllers\GrowNet\LoyaltyRewardController::class, 'recordActivity'])->name('record-activity');
             
             // Package Management
-            Route::get('/packages', [App\Http\Controllers\MyGrowNet\LgrPackageController::class, 'index'])->name('packages');
-            Route::get('/packages/{package}', [App\Http\Controllers\MyGrowNet\LgrPackageController::class, 'show'])->name('packages.show');
-            Route::post('/packages/{package}/purchase', [App\Http\Controllers\MyGrowNet\LgrPackageController::class, 'purchase'])->name('packages.purchase');
+            Route::get('/packages', [App\Http\Controllers\GrowNet\LgrPackageController::class, 'index'])->name('packages');
+            Route::get('/packages/{package}', [App\Http\Controllers\GrowNet\LgrPackageController::class, 'show'])->name('packages.show');
+            Route::post('/packages/{package}/purchase', [App\Http\Controllers\GrowNet\LgrPackageController::class, 'purchase'])->name('packages.purchase');
         });
         
         // Analytics Routes
@@ -1258,24 +1251,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
         
         // Finance Routes
-        Route::get('/wallet', [App\Http\Controllers\MyGrowNet\WalletController::class, 'index'])->name('wallet.index');
-        Route::post('/wallet/accept-policy', [App\Http\Controllers\MyGrowNet\WalletController::class, 'acceptPolicy'])->name('wallet.accept-policy');
-        Route::post('/wallet/check-withdrawal-limit', [App\Http\Controllers\MyGrowNet\WalletController::class, 'checkWithdrawalLimit'])->name('wallet.check-withdrawal-limit');
-        Route::post('/wallet/lgr-transfer', [App\Http\Controllers\MyGrowNet\LgrTransferController::class, 'store'])->name('wallet.lgr-transfer');
+        Route::get('/wallet', [App\Http\Controllers\GrowNet\MyGrowNetWalletController::class, 'index'])->name('wallet.index');
+        Route::post('/wallet/accept-policy', [App\Http\Controllers\GrowNet\MyGrowNetWalletController::class, 'acceptPolicy'])->name('wallet.accept-policy');
+        Route::post('/wallet/check-withdrawal-limit', [App\Http\Controllers\GrowNet\MyGrowNetWalletController::class, 'checkWithdrawalLimit'])->name('wallet.check-withdrawal-limit');
+        Route::post('/wallet/lgr-transfer', [App\Http\Controllers\GrowNet\LgrTransferController::class, 'store'])->name('wallet.lgr-transfer');
         
         // Loan Application Routes
         Route::get('/loans', [App\Http\Controllers\MyGrowNet\LoanApplicationController::class, 'index'])->name('loans.index');
         Route::post('/loans/apply', [App\Http\Controllers\MyGrowNet\LoanApplicationController::class, 'store'])->name('loans.apply');
         
         // Earnings Hub - Central page for all earnings
-        Route::get('/my-earnings', [App\Http\Controllers\MyGrowNet\EarningsController::class, 'hub'])->name('earnings.hub');
-        Route::get('/earnings', [App\Http\Controllers\MyGrowNet\EarningsController::class, 'index'])->name('earnings.index');
+        Route::get('/my-earnings', [App\Http\Controllers\GrowNet\EarningsController::class, 'hub'])->name('earnings.hub');
+        Route::get('/earnings', [App\Http\Controllers\GrowNet\EarningsController::class, 'index'])->name('earnings.index');
         Route::get('/profit-sharing', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('profit-sharing'))->name('profit-sharing.index');
         
         // Member Payment Routes (subscriptions, workshops, products, coaching)
-        Route::get('/payments', [App\Http\Controllers\MyGrowNet\MemberPaymentController::class, 'index'])->name('payments.index');
-        Route::get('/payments/create', [App\Http\Controllers\MyGrowNet\MemberPaymentController::class, 'create'])->name('payments.create');
-        Route::post('/payments', [App\Http\Controllers\MyGrowNet\MemberPaymentController::class, 'store'])->name('payments.store');
+        Route::get('/payments', [App\Http\Controllers\GrowNet\MemberPaymentController::class, 'index'])->name('payments.index');
+        Route::get('/payments/create', [App\Http\Controllers\GrowNet\MemberPaymentController::class, 'create'])->name('payments.create');
+        Route::post('/payments', [App\Http\Controllers\GrowNet\MemberPaymentController::class, 'store'])->name('payments.store');
         
         // Workshop Routes
         Route::get('/workshops', [App\Http\Controllers\MyGrowNet\WorkshopController::class, 'index'])->name('workshops.index');
@@ -1284,11 +1277,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/workshops/{id}/register', [App\Http\Controllers\MyGrowNet\WorkshopController::class, 'register'])->name('workshops.register');
         
         // Profit Sharing Routes
-        Route::get('/profit-shares', [App\Http\Controllers\MyGrowNet\ProfitShareController::class, 'index'])->name('profit-shares');
+        Route::get('/profit-shares', [App\Http\Controllers\GrowNet\ProfitShareController::class, 'index'])->name('profit-shares');
         
         // Network & Analytics Routes
         Route::get('/network', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('network'))->name('network.index');
-        Route::get('/network/analytics', [App\Http\Controllers\MyGrowNet\NetworkAnalyticsController::class, 'index'])->name('network.analytics');
+        Route::get('/network/analytics', [App\Http\Controllers\GrowNet\NetworkAnalyticsController::class, 'index'])->name('network.analytics');
         Route::get('/commissions', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('commissions'))->name('commissions.index');
         Route::get('/membership/upgrade', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('membership-upgrade'))->name('membership.upgrade');
         Route::get('/projects', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('projects'))->name('projects.index');
@@ -1303,31 +1296,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/user/dashboard-preference', [App\Http\Controllers\Settings\ProfileController::class, 'updateDashboardPreference'])->name('user.dashboard-preference');
             
             // Announcements
-            Route::get('/announcements', [App\Http\Controllers\MyGrowNet\AnnouncementController::class, 'index'])->name('announcements.index');
-            Route::get('/announcements/unread-count', [App\Http\Controllers\MyGrowNet\AnnouncementController::class, 'unreadCount'])->name('announcements.unread-count');
-            Route::post('/announcements/{id}/read', [App\Http\Controllers\MyGrowNet\AnnouncementController::class, 'markAsRead'])->name('announcements.mark-read');
+            Route::get('/announcements', [App\Http\Controllers\GrowNet\AnnouncementController::class, 'index'])->name('announcements.index');
+            Route::get('/announcements/unread-count', [App\Http\Controllers\GrowNet\AnnouncementController::class, 'unreadCount'])->name('announcements.unread-count');
+            Route::post('/announcements/{id}/read', [App\Http\Controllers\GrowNet\AnnouncementController::class, 'markAsRead'])->name('announcements.mark-read');
             
-            Route::get('/dashboard-stats', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getDashboardStats'])->name('dashboard-stats');
-            Route::get('/network-data', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getNetworkData'])->name('network-data');
-            Route::get('/commission-summary', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getCommissionSummary'])->name('commission-summary');
-            Route::get('/team-volume-data', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getTeamVolumeData'])->name('team-volume-data');
-            Route::get('/five-level-commission-data', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getFiveLevelCommissionData'])->name('five-level-commission-data');
-            Route::get('/network-structure', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getNetworkStructure'])->name('network-structure');
-            Route::get('/asset-tracking-data', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getAssetTrackingDataApi'])->name('asset-tracking-data');
-            Route::get('/asset-performance/{allocation}', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getAssetPerformanceAnalytics'])->name('asset-performance');
-            Route::post('/asset-income/{allocation}', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'recordAssetIncome'])->name('record-asset-income');
-            Route::patch('/asset-maintenance/{allocation}', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'updateAssetMaintenance'])->name('update-asset-maintenance');
-            Route::get('/community-project-data', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getCommunityProjectDataApi'])->name('community-project-data');
-            Route::post('/project-contribute/{project}', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'contributeToProject'])->name('project-contribute');
-            Route::post('/project-vote/{project}', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'castProjectVote'])->name('project-vote');
-            Route::get('/project-analytics/{project}', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getProjectAnalytics'])->name('project-analytics');
+            Route::get('/dashboard-stats', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'getDashboardStats'])->name('dashboard-stats');
+            Route::get('/network-data', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'getNetworkData'])->name('network-data');
+            Route::get('/commission-summary', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'getCommissionSummary'])->name('commission-summary');
+            Route::get('/team-volume-data', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'getTeamVolumeData'])->name('team-volume-data');
+            Route::get('/five-level-commission-data', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'getFiveLevelCommissionData'])->name('five-level-commission-data');
+            Route::get('/network-structure', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'getNetworkStructure'])->name('network-structure');
+            Route::get('/asset-tracking-data', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'getAssetTrackingDataApi'])->name('asset-tracking-data');
+            Route::get('/asset-performance/{allocation}', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'getAssetPerformanceAnalytics'])->name('asset-performance');
+            Route::post('/asset-income/{allocation}', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'recordAssetIncome'])->name('record-asset-income');
+            Route::patch('/asset-maintenance/{allocation}', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'updateAssetMaintenance'])->name('update-asset-maintenance');
+            Route::get('/community-project-data', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'getCommunityProjectDataApi'])->name('community-project-data');
+            Route::post('/project-contribute/{project}', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'contributeToProject'])->name('project-contribute');
+            Route::post('/project-vote/{project}', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'castProjectVote'])->name('project-vote');
+            Route::get('/project-analytics/{project}', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'getProjectAnalytics'])->name('project-analytics');
             
             // Mobile Dashboard Enhancement APIs
-            Route::get('/network-growth', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getNetworkGrowth'])->name('network-growth');
-            Route::get('/earnings-trend', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getEarningsTrend'])->name('earnings-trend');
-            Route::get('/team-data', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getTeamData'])->name('team-data');
-            Route::get('/wallet-data', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getWalletData'])->name('wallet-data');
-            Route::get('/learn-data', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getLearnData'])->name('learn-data');
+            Route::get('/network-growth', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'getNetworkGrowth'])->name('network-growth');
+            Route::get('/earnings-trend', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'getEarningsTrend'])->name('earnings-trend');
+            Route::get('/team-data', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'getTeamData'])->name('team-data');
+            Route::get('/wallet-data', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'getWalletData'])->name('wallet-data');
+            Route::get('/learn-data', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'getLearnData'])->name('learn-data');
 
             // Module Usage & Feature Access APIs
             Route::prefix('modules/{moduleId}')->name('modules.')->group(function () {
@@ -1481,20 +1474,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // General Wallet Routes (for all user types: client, business)
 // MLM members are redirected to the full MyGrowNet wallet
 Route::middleware(['auth', 'verified'])->prefix('wallet')->name('wallet.')->group(function () {
-    Route::get('/', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'index'])->name('index');
-    Route::post('/accept-policy', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'acceptPolicy'])->name('accept-policy');
-    Route::post('/check-withdrawal-limit', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'checkWithdrawalLimit'])->name('check-limit');
+    Route::get('/', [App\Http\Controllers\GrowNet\WalletController::class, 'index'])->name('index');
+    Route::post('/accept-policy', [App\Http\Controllers\GrowNet\WalletController::class, 'acceptPolicy'])->name('accept-policy');
+    Route::post('/check-withdrawal-limit', [App\Http\Controllers\GrowNet\WalletController::class, 'checkWithdrawalLimit'])->name('check-limit');
     
     // Top-up routes
-    Route::get('/topup', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'showTopUp'])->name('topup');
-    Route::post('/topup', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'processTopUp'])->name('topup.process');
+    Route::get('/topup', [App\Http\Controllers\GrowNet\WalletController::class, 'showTopUp'])->name('topup');
+    Route::post('/topup', [App\Http\Controllers\GrowNet\WalletController::class, 'processTopUp'])->name('topup.process');
     
     // Withdraw routes
-    Route::get('/withdraw', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'showWithdraw'])->name('withdraw');
-    Route::post('/withdraw', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'processWithdraw'])->name('withdraw.process');
+    Route::get('/withdraw', [App\Http\Controllers\GrowNet\WalletController::class, 'showWithdraw'])->name('withdraw');
+    Route::post('/withdraw', [App\Http\Controllers\GrowNet\WalletController::class, 'processWithdraw'])->name('withdraw.process');
     
     // Transaction history
-    Route::get('/history', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'history'])->name('history');
+    Route::get('/history', [App\Http\Controllers\GrowNet\WalletController::class, 'history'])->name('history');
 });
 
 // Currency System Test Page
@@ -1502,9 +1495,9 @@ Route::middleware(['auth'])->get('/test-currency', fn() => Inertia::render('Test
 
 // Social Share Tracking Routes (for LGR activity tracking)
 Route::middleware(['auth', 'verified'])->prefix('social-shares')->name('social-shares.')->group(function () {
-    Route::post('/record', [App\Http\Controllers\SocialShareController::class, 'recordShare'])->name('record');
-    Route::get('/stats', [App\Http\Controllers\SocialShareController::class, 'getStats'])->name('stats');
-    Route::get('/recent', [App\Http\Controllers\SocialShareController::class, 'getRecentShares'])->name('recent');
+    Route::post('/record', [App\Http\Controllers\GrowNet\SocialShareController::class, 'recordShare'])->name('record');
+    Route::get('/stats', [App\Http\Controllers\GrowNet\SocialShareController::class, 'getStats'])->name('stats');
+    Route::get('/recent', [App\Http\Controllers\GrowNet\SocialShareController::class, 'getRecentShares'])->name('recent');
 });
 
 // Promotional Cards Routes (for LGR activity - social sharing)
@@ -1550,13 +1543,13 @@ Route::get('/admin/marketplace-test', function() {
 
     // Starter Kit Routes
     Route::prefix('starter-kit')->name('starter-kit.')->middleware(['auth'])->group(function () {
-        Route::get('/', [App\Http\Controllers\StarterKitController::class, 'index'])->name('index');
-        Route::get('/purchase', [App\Http\Controllers\StarterKitController::class, 'purchase'])->name('purchase');
-        Route::post('/purchase', [App\Http\Controllers\StarterKitController::class, 'store'])->name('store');
-        Route::get('/dashboard', [App\Http\Controllers\StarterKitController::class, 'dashboard'])->name('dashboard');
-        Route::get('/library', [App\Http\Controllers\StarterKitController::class, 'library'])->name('library');
-        Route::post('/track-access', [App\Http\Controllers\StarterKitController::class, 'trackAccess'])->name('track-access');
-        Route::post('/update-progress', [App\Http\Controllers\StarterKitController::class, 'updateProgress'])->name('update-progress');
+        Route::get('/', [App\Http\Controllers\GrowNet\GeneralStarterKitController::class, 'index'])->name('index');
+        Route::get('/purchase', [App\Http\Controllers\GrowNet\GeneralStarterKitController::class, 'purchase'])->name('purchase');
+        Route::post('/purchase', [App\Http\Controllers\GrowNet\GeneralStarterKitController::class, 'store'])->name('store');
+        Route::get('/dashboard', [App\Http\Controllers\GrowNet\GeneralStarterKitController::class, 'dashboard'])->name('dashboard');
+        Route::get('/library', [App\Http\Controllers\GrowNet\GeneralStarterKitController::class, 'library'])->name('library');
+        Route::post('/track-access', [App\Http\Controllers\GrowNet\GeneralStarterKitController::class, 'trackAccess'])->name('track-access');
+        Route::post('/update-progress', [App\Http\Controllers\GrowNet\GeneralStarterKitController::class, 'updateProgress'])->name('update-progress');
     });
 
 // Wedding Platform Routes - Member Dashboard (auth required)
@@ -1648,7 +1641,7 @@ Route::get('/{path}', function ($path) {
     }
     // If it doesn't look like a username, let it fall through to 404
     abort(404);
-})->where('path', '^(?!growbuilder|quick-invoice|growfinance|growbiz|bizboost|marketplace|bms|lifeplus|pos|inventory|growmart|zamstay|grownet|bizdocs|growbackup|services|products|solutions)[a-zA-Z0-9\/_-]+$');
+})->where('path', '^(?!growbuilder|quick-invoice|growfinance|bizboost|marketplace|bms|lifeplus|pos|inventory|growmart|zamstay|grownet|bizdocs|growbackup|services|products|solutions)[a-zA-Z0-9\/_-]+$');
 
 // Fallback route for GrowBuilder custom domains
 // This catches any unmatched routes and checks if they should be handled by GrowBuilder

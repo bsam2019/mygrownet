@@ -7,8 +7,12 @@ use App\Application\Ubumi\UseCases\AddPerson\AddPersonCommand;
 use App\Application\Ubumi\UseCases\AddPerson\AddPersonHandler;
 use App\Domain\Ubumi\Repositories\PersonRepositoryInterface;
 use App\Domain\Ubumi\Repositories\FamilyRepositoryInterface;
+use App\Domain\Ubumi\Services\SlugGeneratorService;
 use App\Domain\Ubumi\ValueObjects\FamilyId;
 use App\Domain\Ubumi\ValueObjects\PersonId;
+use App\Domain\Ubumi\ValueObjects\PersonName;
+use App\Domain\Ubumi\ValueObjects\ApproximateAge;
+use App\Domain\Ubumi\ValueObjects\Slug;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -21,7 +25,8 @@ class PersonController extends Controller
         private \App\Domain\Ubumi\Repositories\RelationshipRepositoryInterface $relationshipRepository,
         private \App\Domain\Ubumi\Repositories\CheckInRepositoryInterface $checkInRepository,
         private \App\Services\MediaUploadService $mediaUploadService,
-        private \App\Domain\Ubumi\Services\DuplicateDetectionService $duplicateDetectionService
+        private \App\Domain\Ubumi\Services\DuplicateDetectionService $duplicateDetectionService,
+        private SlugGeneratorService $slugGenerator
     ) {}
 
     /**
@@ -332,11 +337,16 @@ class PersonController extends Controller
             'gender' => 'nullable|in:male,female,other,prefer_not_to_say',
         ]);
 
+        $newSlug = $person->getName()->toString() !== $validated['name']
+            ? $this->slugGenerator->generatePersonSlug($family->getId()->toString(), $validated['name'], $person->getId())
+            : $person->getSlug();
+
         $person->updateProfile(
-            \App\Domain\Ubumi\ValueObjects\PersonName::fromString($validated['name']),
+            PersonName::fromString($validated['name']),
+            $newSlug,
             $validated['photo_url'] ?? null,
             isset($validated['date_of_birth']) ? new \DateTimeImmutable($validated['date_of_birth']) : null,
-            isset($validated['approximate_age']) ? \App\Domain\Ubumi\ValueObjects\ApproximateAge::fromInt($validated['approximate_age']) : null,
+            isset($validated['approximate_age']) ? ApproximateAge::fromInt($validated['approximate_age']) : null,
             $validated['gender'] ?? null
         );
 
@@ -430,15 +440,16 @@ class PersonController extends Controller
         $existingPersons = $this->personRepository->findByFamilyId($family->getId()->toString());
 
         // Create a temporary person for comparison
+        $tempSlug = Slug::fromString($validated['name'] . '-temp');
         $tempPerson = \App\Domain\Ubumi\Entities\Person::create(
-            \App\Domain\Ubumi\ValueObjects\PersonId::generate(),
             $family->getId()->toString(),
             \App\Domain\Ubumi\ValueObjects\PersonName::fromString($validated['name']),
+            $tempSlug,
             auth()->id(),
-            null, // photo
+            null,
             isset($validated['date_of_birth']) ? new \DateTimeImmutable($validated['date_of_birth']) : null,
             isset($validated['approximate_age']) ? \App\Domain\Ubumi\ValueObjects\ApproximateAge::fromInt($validated['approximate_age']) : null,
-            null // gender
+            null
         );
 
         // Find potential duplicates

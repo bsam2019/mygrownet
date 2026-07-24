@@ -35,12 +35,11 @@ if (echoInstance) {
     configureEcho(echoInstance);
 }
 
-const PWA_CACHE_PREFIXES = ['bizboost-', 'growbiz-', 'growfinance-', 'mygrownet-'];
+const PWA_CACHE_PREFIXES = ['bizboost-', 'growfinance-', 'mygrownet-'];
 
 function isPWAModule(): string | null {
     const path = window.location.pathname;
     if (path.startsWith('/bizboost')) return 'bizboost';
-    if (path.startsWith('/growbiz')) return 'growbiz';
     if (path.startsWith('/growfinance')) return 'growfinance';
     if (path === '/' || path.startsWith('/workspace') || path.startsWith('/member')) return 'mygrownet';
     return null;

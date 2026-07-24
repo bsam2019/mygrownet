@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Employee\StoreDepartmentRequest;
-use App\Http\Requests\Employee\UpdateDepartmentRequest;
+use App\Domain\Employee\Repositories\DepartmentRepositoryInterface;
+use App\Domain\Employee\Repositories\EmployeeRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\DepartmentModel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,18 +15,21 @@ use Inertia\Response;
 
 class DepartmentController extends Controller
 {
+    public function __construct(
+        private DepartmentRepositoryInterface $departmentRepo,
+        private EmployeeRepositoryInterface $employeeRepo,
+    ) {}
+
     public function index(Request $request): Response|JsonResponse
     {
-        $query = DepartmentModel::query()
+        $query = $this->departmentRepo->query()
             ->with(['headEmployee', 'parentDepartment', 'childDepartments'])
             ->withCount(['employees', 'positions']);
 
-        // Filter by active status
         if ($request->boolean('active_only', true)) {
             $query->active();
         }
 
-        // Search functionality
         if ($request->filled('search')) {
             $search = $request->string('search');
             $query->where(function ($q) use ($search) {
@@ -35,24 +38,24 @@ class DepartmentController extends Controller
             });
         }
 
-        // Filter by parent department
         if ($request->filled('parent_id')) {
             $query->where('parent_department_id', $request->integer('parent_id'));
         }
 
-        // Get hierarchical structure if requested
         if ($request->boolean('hierarchical', false)) {
             $departments = $this->buildHierarchicalStructure($query->get());
         } else {
             $departments = $query->orderBy('name')->paginate(15);
         }
 
+        $allDepartments = $this->departmentRepo->getAllActive();
+
         if ($request->wantsJson()) {
             return response()->json([
                 'departments' => $departments,
                 'meta' => [
-                    'total_count' => DepartmentModel::count(),
-                    'active_count' => DepartmentModel::active()->count(),
+                    'total_count' => $allDepartments->count(),
+                    'active_count' => $allDepartments->count(),
                 ]
             ]);
         }
@@ -61,8 +64,8 @@ class DepartmentController extends Controller
             'departments' => $departments,
             'filters' => $request->only(['search', 'active_only', 'parent_id', 'hierarchical']),
             'meta' => [
-                'total_count' => DepartmentModel::count(),
-                'active_count' => DepartmentModel::active()->count(),
+                'total_count' => $allDepartments->count(),
+                'active_count' => $allDepartments->count(),
             ]
         ]);
     }
@@ -96,20 +99,19 @@ class DepartmentController extends Controller
         return Inertia::render('Employee/Departments/Show', $data);
     }
 
-    /**
-     * Show the form for creating a new department
-     */
     public function create()
     {
+        $activeEmployees = $this->employeeRepo->query()
+            ->where('employment_status', 'active')
+            ->orderBy('first_name')
+            ->get(['id', 'first_name', 'last_name']);
+
         return Inertia::render('Employee/Departments/Create', [
-            'parent_departments' => DepartmentModel::active()->orderBy('name')->get(['id', 'name']),
-            'employees' => \App\Infrastructure\Persistence\Eloquent\EmployeeModel::where('employment_status', 'active')->orderBy('first_name')->get(['id', 'first_name', 'last_name'])
+            'parent_departments' => $this->departmentRepo->getAllActive(),
+            'employees' => $activeEmployees,
         ]);
     }
 
-    /**
-     * Store a newly created department
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -119,7 +121,7 @@ class DepartmentController extends Controller
             'head_employee_id' => 'nullable|integer|exists:employees,id'
         ]);
 
-        $department = DepartmentModel::create([
+        $this->departmentRepo->save([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'parent_department_id' => $validated['parent_department_id'] ?? null,
@@ -134,16 +136,20 @@ class DepartmentController extends Controller
     public function edit(DepartmentModel $department)
     {
         $department->load(['headEmployee', 'parentDepartment']);
-        
+
+        $activeEmployees = $this->employeeRepo->query()
+            ->where('employment_status', 'active')
+            ->orderBy('first_name')
+            ->get(['id', 'first_name', 'last_name']);
+
         return Inertia::render('Employee/Departments/Edit', [
             'department' => $department,
-            'parent_departments' => DepartmentModel::active()
+            'parent_departments' => $this->departmentRepo->query()
                 ->where('id', '!=', $department->id)
+                ->active()
                 ->orderBy('name')
                 ->get(['id', 'name']),
-            'employees' => \App\Infrastructure\Persistence\Eloquent\EmployeeModel::where('employment_status', 'active')
-                ->orderBy('first_name')
-                ->get(['id', 'first_name', 'last_name'])
+            'employees' => $activeEmployees,
         ]);
     }
 
@@ -169,14 +175,12 @@ class DepartmentController extends Controller
 
     public function destroy(DepartmentModel $department): JsonResponse
     {
-        // Check if department has employees
         if ($department->employees()->exists()) {
             return response()->json([
                 'message' => 'Cannot delete department with active employees. Please reassign employees first.'
             ], 422);
         }
 
-        // Check if department has child departments
         if ($department->childDepartments()->exists()) {
             return response()->json([
                 'message' => 'Cannot delete department with child departments. Please reassign or delete child departments first.'
@@ -192,7 +196,8 @@ class DepartmentController extends Controller
 
     public function hierarchy(): JsonResponse
     {
-        $departments = DepartmentModel::with(['headEmployee', 'childDepartments'])
+        $departments = $this->departmentRepo->query()
+            ->with(['headEmployee', 'childDepartments'])
             ->withCount(['employees', 'positions'])
             ->active()
             ->get();
@@ -235,13 +240,11 @@ class DepartmentController extends Controller
         $departmentMap = [];
         $rootDepartments = [];
 
-        // Create a map of departments by ID
         foreach ($departments as $department) {
             $departmentMap[$department->id] = $department;
             $department->children = collect();
         }
 
-        // Build the hierarchy
         foreach ($departments as $department) {
             if ($department->parent_department_id) {
                 if (isset($departmentMap[$department->parent_department_id])) {
@@ -260,7 +263,6 @@ class DepartmentController extends Controller
         $hierarchy = [];
         $current = $department;
 
-        // Build breadcrumb trail to root
         while ($current) {
             array_unshift($hierarchy, [
                 'id' => $current->id,
@@ -271,19 +273,5 @@ class DepartmentController extends Controller
         }
 
         return $hierarchy;
-    }
-
-    private function isDepartmentDescendant(DepartmentModel $ancestor, DepartmentModel $potential_descendant): bool
-    {
-        $current = $potential_descendant;
-        
-        while ($current && $current->parent_department_id) {
-            if ($current->parent_department_id === $ancestor->id) {
-                return true;
-            }
-            $current = $current->parentDepartment;
-        }
-        
-        return false;
     }
 }

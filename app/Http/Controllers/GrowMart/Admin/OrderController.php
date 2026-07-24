@@ -4,7 +4,7 @@ namespace App\Http\Controllers\GrowMart\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Domain\GrowMart\Services\OrderService;
-use App\Models\GrowMart\GrowMartOrder;
+use App\Domain\GrowMart\Repositories\OrderRepositoryInterface;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -12,53 +12,31 @@ class OrderController extends Controller
 {
     public function __construct(
         private readonly OrderService $orderService,
+        private readonly OrderRepositoryInterface $orderRepository,
     ) {}
 
     public function index(Request $request)
     {
-        $query = GrowMartOrder::with(['user', 'items'])
-            ->withCount('items');
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('payment_status')) {
-            $query->where('payment_status', $request->payment_status);
-        }
-
-        if ($request->filled('q')) {
-            $q = $request->q;
-            $query->where(function ($query) use ($q) {
-                $query->where('order_number', 'like', "%{$q}%")
-                    ->orWhereHas('user', function ($query) use ($q) {
-                        $query->where('name', 'like', "%{$q}%");
-                    });
-            });
-        }
-
-        $sortField = match ($request->sort) {
-            'total' => 'total',
-            'oldest' => 'created_at',
-            default => 'created_at',
-        };
-        $sortDir = $request->sort === 'oldest' ? 'asc' : 'desc';
-
-        $orders = $query->orderBy($sortField, $sortDir)->paginate(20)->withQueryString();
-
-        $formatted = $orders->through(fn($o) => [
-            'id' => $o->id,
-            'order_number' => $o->order_number,
-            'customer' => $o->user?->name ?? 'Unknown',
-            'status' => $o->status,
-            'payment_status' => $o->payment_status,
-            'delivery_method' => $o->delivery_method,
-            'item_count' => $o->items_count,
-            'total' => $o->total,
-            'total_formatted' => 'K' . number_format($o->total / 100, 2),
-            'created_at' => $o->created_at->format('M d, Y g:i A'),
-            'created_at_diff' => $o->created_at->diffForHumans(),
+        $orders = $this->orderRepository->findAll([
+            'search' => $request->q,
+            'status' => $request->status,
+            'payment_status' => $request->payment_status,
+            'sort' => $request->sort,
         ]);
+
+        $formatted = array_map(fn($o) => [
+            'id' => $o['id'],
+            'order_number' => $o['order_number'],
+            'customer' => $o['user']['name'] ?? 'Unknown',
+            'status' => $o['status'],
+            'payment_status' => $o['payment_status'],
+            'delivery_method' => $o['delivery_method'] ?? '',
+            'item_count' => count($o['items'] ?? []),
+            'total' => $o['total'],
+            'total_formatted' => 'K' . number_format($o['total'] / 100, 2),
+            'created_at' => \Carbon\Carbon::parse($o['created_at'])->format('M d, Y g:i A'),
+            'created_at_diff' => \Carbon\Carbon::parse($o['created_at'])->diffForHumans(),
+        ], $orders['data'] ?? []);
 
         return Inertia::render('GrowMart/Admin/Orders/Index', [
             'orders' => $formatted,
@@ -68,55 +46,61 @@ class OrderController extends Controller
 
     public function show(int $id)
     {
-        $order = GrowMartOrder::with(['user', 'items', 'coupon'])->findOrFail($id);
+        $order = $this->orderRepository->findById($id);
+
+        if (!$order) {
+            abort(404);
+        }
+
+        $items = array_map(fn($i) => [
+            'id' => $i['id'],
+            'product_name' => $i['product_name'],
+            'quantity' => $i['quantity'],
+            'unit_price' => $i['unit_price'],
+            'unit_price_formatted' => 'K' . number_format($i['unit_price'] / 100, 2),
+            'subtotal' => $i['subtotal'],
+            'subtotal_formatted' => 'K' . number_format($i['subtotal'] / 100, 2),
+        ], $order['items'] ?? []);
 
         return Inertia::render('GrowMart/Admin/Orders/Show', [
             'order' => [
-                'id' => $order->id,
-                'order_number' => $order->order_number,
+                'id' => $order['id'],
+                'order_number' => $order['order_number'],
                 'customer' => [
-                    'id' => $order->user?->id,
-                    'name' => $order->user?->name ?? 'Unknown',
-                    'email' => $order->user?->email ?? '',
+                    'id' => $order['user']['id'] ?? null,
+                    'name' => $order['user']['name'] ?? 'Unknown',
+                    'email' => $order['user']['email'] ?? '',
                 ],
-                'status' => $order->status,
-                'payment_status' => $order->payment_status,
-                'payment_method' => $order->payment_method,
-                'payment_reference' => $order->payment_reference,
-                'payment_phone' => $order->payment_phone,
-                'payment_notes' => $order->payment_notes,
-                'payment_submitted_at' => $order->payment_submitted_at?->format('M d, Y g:i A'),
-                'delivery_method' => $order->delivery_method,
-                'delivery_zone' => $order->delivery_zone,
-                'delivery_address' => $order->delivery_address,
-                'contact_phone' => $order->contact_phone,
-                'special_instructions' => $order->special_instructions,
-                'tracking_number' => $order->tracking_number,
-                'tracking_url' => $order->tracking_url,
-                'estimated_delivery_at' => $order->estimated_delivery_at?->format('M d, Y'),
-                'tracking_updates' => $order->tracking_updates ?? [],
-                'subtotal' => $order->subtotal,
-                'subtotal_formatted' => 'K' . number_format($order->subtotal / 100, 2),
-                'delivery_fee' => $order->delivery_fee,
-                'delivery_fee_formatted' => 'K' . number_format($order->delivery_fee / 100, 2),
-                'discount' => $order->discount,
-                'discount_formatted' => 'K' . number_format($order->discount / 100, 2),
-                'total' => $order->total,
-                'total_formatted' => 'K' . number_format($order->total / 100, 2),
-                'coupon' => $order->coupon ? ['code' => $order->coupon->code, 'type' => $order->coupon->type] : null,
-                'items' => $order->items->map(fn($i) => [
-                    'id' => $i->id,
-                    'product_name' => $i->product_name,
-                    'quantity' => $i->quantity,
-                    'unit_price' => $i->unit_price,
-                    'unit_price_formatted' => 'K' . number_format($i->unit_price / 100, 2),
-                    'subtotal' => $i->subtotal,
-                    'subtotal_formatted' => 'K' . number_format($i->subtotal / 100, 2),
-                ]),
-                'created_at' => $order->created_at->format('M d, Y g:i A'),
-                'paid_at' => $order->paid_at?->format('M d, Y g:i A'),
-                'delivered_at' => $order->delivered_at?->format('M d, Y g:i A'),
-                'cancelled_at' => $order->cancelled_at?->format('M d, Y g:i A'),
+                'status' => $order['status'],
+                'payment_status' => $order['payment_status'],
+                'payment_method' => $order['payment_method'] ?? '',
+                'payment_reference' => $order['payment_reference'] ?? null,
+                'payment_phone' => $order['payment_phone'] ?? null,
+                'payment_notes' => $order['payment_notes'] ?? null,
+                'payment_submitted_at' => isset($order['payment_submitted_at']) ? \Carbon\Carbon::parse($order['payment_submitted_at'])->format('M d, Y g:i A') : null,
+                'delivery_method' => $order['delivery_method'] ?? '',
+                'delivery_zone' => $order['delivery_zone'] ?? null,
+                'delivery_address' => $order['delivery_address'] ?? null,
+                'contact_phone' => $order['contact_phone'] ?? null,
+                'special_instructions' => $order['special_instructions'] ?? null,
+                'tracking_number' => $order['tracking_number'] ?? null,
+                'tracking_url' => $order['tracking_url'] ?? null,
+                'estimated_delivery_at' => isset($order['estimated_delivery_at']) ? \Carbon\Carbon::parse($order['estimated_delivery_at'])->format('M d, Y') : null,
+                'tracking_updates' => $order['tracking_updates'] ?? [],
+                'subtotal' => $order['subtotal'],
+                'subtotal_formatted' => 'K' . number_format($order['subtotal'] / 100, 2),
+                'delivery_fee' => $order['delivery_fee'] ?? 0,
+                'delivery_fee_formatted' => 'K' . number_format(($order['delivery_fee'] ?? 0) / 100, 2),
+                'discount' => $order['discount'] ?? 0,
+                'discount_formatted' => 'K' . number_format(($order['discount'] ?? 0) / 100, 2),
+                'total' => $order['total'],
+                'total_formatted' => 'K' . number_format($order['total'] / 100, 2),
+                'coupon' => isset($order['coupon']) ? ['code' => $order['coupon']['code'], 'type' => $order['coupon']['type']] : null,
+                'items' => $items,
+                'created_at' => \Carbon\Carbon::parse($order['created_at'])->format('M d, Y g:i A'),
+                'paid_at' => isset($order['paid_at']) ? \Carbon\Carbon::parse($order['paid_at'])->format('M d, Y g:i A') : null,
+                'delivered_at' => isset($order['delivered_at']) ? \Carbon\Carbon::parse($order['delivered_at'])->format('M d, Y g:i A') : null,
+                'cancelled_at' => isset($order['cancelled_at']) ? \Carbon\Carbon::parse($order['cancelled_at'])->format('M d, Y g:i A') : null,
             ],
         ]);
     }
@@ -127,7 +111,7 @@ class OrderController extends Controller
             'status' => 'required|in:pending,confirmed,processing,out_for_delivery,delivered,cancelled',
         ]);
 
-        $order = $this->orderService->updateStatus($id, $validated['status']);
+        $this->orderService->updateStatus($id, $validated['status']);
 
         return back()->with('success', "Order status updated to {$validated['status']}.");
     }
@@ -138,7 +122,7 @@ class OrderController extends Controller
             'payment_status' => 'required|in:pending,pending_verification,paid,failed,refunded',
         ]);
 
-        $order = $this->orderService->updatePayment($id, $validated['payment_status']);
+        $this->orderService->updatePayment($id, $validated['payment_status']);
 
         return back()->with('success', "Payment status updated to {$validated['payment_status']}.");
     }
@@ -153,7 +137,7 @@ class OrderController extends Controller
             'tracking_message' => 'nullable|string|max:500',
         ]);
 
-        $order = $this->orderService->updateTracking($id, $validated);
+        $this->orderService->updateTracking($id, $validated);
 
         return back()->with('success', 'Tracking information updated.');
     }

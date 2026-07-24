@@ -71,7 +71,7 @@ class PaymentSyncHandler
                     $description .= " for Invoice #{$payment->invoice->invoice_number}";
                 }
 
-                $journalEntry = $this->accountingService->createJournalEntry(
+                $journalEntryData = $this->accountingService->createJournalEntry(
                     businessId: $payment->company_id,
                     description: $description,
                     lines: $lines,
@@ -80,14 +80,14 @@ class PaymentSyncHandler
                 );
 
                 // 5. Post the entry
-                $this->accountingService->postJournalEntry($journalEntry);
+                $this->accountingService->postJournalEntry($journalEntryData['id']);
 
                 // 6. Log success
-                $this->statusService->logSuccess($payment, $journalEntry->id);
+                $this->statusService->logSuccess($payment, $journalEntryData['id']);
 
                 Log::info("Successfully synced payment #{$payment->id} to GrowFinance", [
                     'payment_id' => $payment->id,
-                    'journal_entry_id' => $journalEntry->id,
+                    'journal_entry_id' => $journalEntryData['id'],
                 ]);
             });
         } catch (\Exception $e) {

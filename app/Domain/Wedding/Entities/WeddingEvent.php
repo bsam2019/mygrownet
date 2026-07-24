@@ -22,6 +22,8 @@ class WeddingEvent
         private WeddingStatus $status,
         private ?string $notes,
         private ?array $preferences,
+        private ?string $slug = null,
+        private ?string $accessCode = null,
         private ?Carbon $createdAt = null,
         private ?Carbon $updatedAt = null
     ) {}
@@ -31,7 +33,9 @@ class WeddingEvent
         string $partnerName,
         Carbon $weddingDate,
         WeddingBudget $budget,
-        int $guestCount = 0
+        int $guestCount = 0,
+        ?string $slug = null,
+        ?string $accessCode = null
     ): self {
         return new self(
             id: null,
@@ -47,6 +51,8 @@ class WeddingEvent
             status: WeddingStatus::planning(),
             notes: null,
             preferences: null,
+            slug: $slug,
+            accessCode: $accessCode,
             createdAt: Carbon::now(),
             updatedAt: Carbon::now()
         );
@@ -137,6 +143,14 @@ class WeddingEvent
     public function getStatus(): WeddingStatus { return $this->status; }
     public function getNotes(): ?string { return $this->notes; }
     public function getPreferences(): ?array { return $this->preferences; }
+    public function getSlug(): ?string { return $this->slug; }
+    public function getAccessCode(): ?string { return $this->accessCode; }
     public function getCreatedAt(): ?Carbon { return $this->createdAt; }
     public function getUpdatedAt(): ?Carbon { return $this->updatedAt; }
+
+    public function regenerateAccessCode(string $newCode): void
+    {
+        $this->accessCode = $newCode;
+        $this->updatedAt = Carbon::now();
+    }
 }

@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\BizDocs;
 
+use App\Application\BizDocs\Services\FileStorageService;
 use App\Domain\BizDocs\BusinessIdentity\Entities\BusinessProfile;
 use App\Domain\BizDocs\BusinessIdentity\Repositories\BusinessProfileRepositoryInterface;
-use App\Application\BizDocs\Services\FileStorageService;
+use App\Domain\BizDocs\DocumentManagement\Repositories\DocumentTemplateRepositoryInterface;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,6 +14,7 @@ class BusinessProfileController extends Controller
 {
     public function __construct(
         private readonly BusinessProfileRepositoryInterface $businessProfileRepository,
+        private readonly DocumentTemplateRepositoryInterface $templateRepository,
         private readonly FileStorageService $fileStorageService
     ) {
     }
@@ -25,7 +27,6 @@ class BusinessProfileController extends Controller
         $profileData = null;
         if ($businessProfile) {
             $profileData = $businessProfile->toArray();
-            // Add full URLs for images
             if ($businessProfile->logo()) {
                 $profileData['logoUrl'] = $this->fileStorageService->getUrl($businessProfile->logo());
             }
@@ -47,7 +48,6 @@ class BusinessProfileController extends Controller
         $profileData = null;
         if ($businessProfile) {
             $profileData = $businessProfile->toArray();
-            // Add full URLs for images
             if ($businessProfile->logo()) {
                 $profileData['logoUrl'] = $this->fileStorageService->getUrl($businessProfile->logo());
             }
@@ -81,11 +81,10 @@ class BusinessProfileController extends Controller
             'default_notes' => 'nullable|string',
             'default_payment_instructions' => 'nullable|string',
             'prepared_by' => 'nullable|string|max:255',
-            'logo' => 'nullable|image|max:2048', // 2MB max
-            'signature' => 'nullable|image|max:1024', // 1MB max
+            'logo' => 'nullable|image|max:2048',
+            'signature' => 'nullable|image|max:1024',
         ]);
 
-        // Auto-prepend https:// to website if no protocol specified
         if (!empty($validated['website'])) {
             $website = $validated['website'];
             if (!preg_match('/^https?:\/\//i', $website)) {
@@ -94,13 +93,10 @@ class BusinessProfileController extends Controller
         }
 
         try {
-            // Check if profile already exists
             $existingProfile = $this->businessProfileRepository->findByUserId($user->id);
 
-            // Handle logo upload
             $logoPath = $existingProfile?->logo();
             if ($request->hasFile('logo')) {
-                // Delete old logo if exists
                 if ($logoPath) {
                     $this->fileStorageService->deleteFile($logoPath);
                 }
@@ -111,10 +107,8 @@ class BusinessProfileController extends Controller
                 );
             }
 
-            // Handle signature upload
             $signaturePath = $existingProfile?->signatureImage();
             if ($request->hasFile('signature')) {
-                // Delete old signature if exists
                 if ($signaturePath) {
                     $this->fileStorageService->deleteFile($signaturePath);
                 }
@@ -126,7 +120,6 @@ class BusinessProfileController extends Controller
             }
 
             if ($existingProfile) {
-                // Update existing profile
                 $businessProfile = BusinessProfile::fromPersistence(
                     $existingProfile->id(),
                     $user->id,
@@ -150,7 +143,6 @@ class BusinessProfileController extends Controller
                     $validated['prepared_by'] ?? null
                 );
             } else {
-                // Create new profile with all fields
                 $businessProfile = BusinessProfile::fromPersistence(
                     null,
                     $user->id,
@@ -170,21 +162,16 @@ class BusinessProfileController extends Controller
                     $validated['default_notes'] ?? null,
                     $validated['default_payment_instructions'] ?? null,
                     $signaturePath,
-                    null,  // stampImage
+                    null,
                     $validated['prepared_by'] ?? null
                 );
             }
 
             $savedProfile = $this->businessProfileRepository->save($businessProfile);
-            
-            // Clear template preview cache when business profile is updated
-            // This ensures previews reflect the new logo/signature
-            \Cache::forget("template_preview_*_{$savedProfile->id()}");
-            
-            // Clear all template previews for this business (wildcard pattern)
-            $templates = \App\Infrastructure\BizDocs\Persistence\Eloquent\DocumentTemplateModel::all();
+
+            $templates = $this->templateRepository->findAll();
             foreach ($templates as $template) {
-                \Cache::forget("template_preview_{$template->id}_{$savedProfile->id()}");
+                \Cache::forget("template_preview_{$template['id']}_{$savedProfile->id()}");
             }
 
             $message = $existingProfile ? 'Business profile updated successfully' : 'Business profile created successfully';
@@ -220,7 +207,6 @@ class BusinessProfileController extends Controller
         }
 
         $profileData = $businessProfile->toArray();
-        // Add full URLs for images
         if ($businessProfile->logo()) {
             $profileData['logoUrl'] = $this->fileStorageService->getUrl($businessProfile->logo());
         }

@@ -3,112 +3,90 @@
 namespace App\Http\Controllers\BizBoost;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
-use App\Infrastructure\Persistence\Eloquent\BizBoostAnalyticsEventModel;
-use App\Infrastructure\Persistence\Eloquent\BizBoostQrCodeModel;
+use App\Domain\BizBoost\Services\BusinessService;
+use App\Domain\BizBoost\Services\QrCodeService;
+use App\Domain\BizBoost\Repositories\ProductRepositoryInterface;
+use App\Domain\BizBoost\Repositories\AnalyticsEventRepositoryInterface;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class MiniWebsiteController extends Controller
 {
-    public function show(Request $request, string $slug): Response
-    {
-        $business = BizBoostBusinessModel::where('slug', $slug)
-            ->where('is_active', true)
-            ->with(['profile', 'products' => function ($q) {
-                $q->where('is_active', true)
-                    ->with('primaryImage')
-                    ->orderBy('is_featured', 'desc')
-                    ->orderBy('sort_order')
-                    ->take(12);
-            }])
-            ->firstOrFail();
+    public function __construct(
+        private BusinessService $businessService,
+        private ProductRepositoryInterface $productRepo,
+        private AnalyticsEventRepositoryInterface $analyticsEventRepo,
+        private QrCodeService $qrCodeService,
+    ) {}
 
-        // Check if mini-website is published
-        if (!$business->profile?->is_published) {
+    public function show(Request $request, string $slug)
+    {
+        $business = $this->businessService->findBusinessBySlug($slug);
+        if (!$business || !$business->isActive) {
             abort(404);
         }
 
-        // Track page view
-        $this->trackEvent($business, 'page_view', $request);
+        $profile = $this->businessService->getProfile($business->id);
+        if (!$profile || !$profile->isPublished) {
+            abort(404);
+        }
+
+        $this->trackEvent($business->id, 'page_view', $request);
 
         return Inertia::render('BizBoost/Public/BusinessPage', [
-            'business' => $business,
-            'profile' => $business->profile,
-            'products' => $business->products,
+            'business' => $business->toArray(),
+            'profile' => $profile->toArray(),
+            'products' => $this->productRepo->findActiveByBusiness($business->id),
         ]);
     }
 
-    public function products(Request $request, string $slug): Response
+    public function products(Request $request, string $slug)
     {
-        $business = BizBoostBusinessModel::where('slug', $slug)
-            ->where('is_active', true)
-            ->with('profile')
-            ->firstOrFail();
-
-        if (!$business->profile?->is_published || !$business->profile?->show_products) {
+        $business = $this->businessService->findBusinessBySlug($slug);
+        if (!$business || !$business->isActive) {
             abort(404);
         }
 
-        $products = $business->products()
-            ->where('is_active', true)
-            ->with('primaryImage')
-            ->when($request->category, fn($q, $cat) => $q->where('category', $cat))
-            ->orderBy('is_featured', 'desc')
-            ->orderBy('sort_order')
-            ->paginate(20)
-            ->withQueryString();
+        $profile = $this->businessService->getProfile($business->id);
+        if (!$profile || !$profile->isPublished || !$profile->showProducts) {
+            abort(404);
+        }
 
-        $categories = $business->products()
-            ->where('is_active', true)
-            ->whereNotNull('category')
-            ->distinct()
-            ->pluck('category');
+        $products = $this->productRepo->findActiveByBusiness($business->id, $request->only(['category']));
 
-        // Track page view
-        $this->trackEvent($business, 'products_view', $request);
+        $this->trackEvent($business->id, 'products_view', $request);
 
         return Inertia::render('BizBoost/Public/Products', [
-            'business' => $business,
+            'business' => $business->toArray(),
             'products' => $products,
-            'categories' => $categories,
+            'categories' => $this->productRepo->getCategories($business->id),
             'filters' => $request->only(['category']),
         ]);
     }
 
-    public function product(Request $request, string $slug, int $productId): Response
+    public function product(Request $request, string $slug, int $productId)
     {
-        $business = BizBoostBusinessModel::where('slug', $slug)
-            ->where('is_active', true)
-            ->with('profile')
-            ->firstOrFail();
-
-        if (!$business->profile?->is_published || !$business->profile?->show_products) {
+        $business = $this->businessService->findBusinessBySlug($slug);
+        if (!$business || !$business->isActive) {
             abort(404);
         }
 
-        $product = $business->products()
-            ->where('is_active', true)
-            ->with('images')
-            ->findOrFail($productId);
+        $profile = $this->businessService->getProfile($business->id);
+        if (!$profile || !$profile->isPublished || !$profile->showProducts) {
+            abort(404);
+        }
 
-        // Related products
-        $relatedProducts = $business->products()
-            ->where('is_active', true)
-            ->where('id', '!=', $productId)
-            ->when($product->category, fn($q, $cat) => $q->where('category', $cat))
-            ->with('primaryImage')
-            ->take(4)
-            ->get();
+        $product = $this->productRepo->findById($productId);
+        if (!$product) {
+            abort(404);
+        }
 
-        // Track product view
-        $this->trackEvent($business, 'product_view', $request, ['product_id' => $productId]);
+        $this->trackEvent($business->id, 'product_view', $request, ['product_id' => $productId]);
 
         return Inertia::render('BizBoost/Public/Product', [
-            'business' => $business,
-            'product' => $product,
-            'relatedProducts' => $relatedProducts,
+            'business' => $business->toArray(),
+            'product' => $product->toArray(),
+            'relatedProducts' => $this->productRepo->findActiveByBusiness($business->id, ['exclude' => $productId]),
         ]);
     }
 
@@ -121,70 +99,52 @@ class MiniWebsiteController extends Controller
             'message' => 'required|string|max:1000',
         ]);
 
-        $business = BizBoostBusinessModel::where('slug', $slug)
-            ->where('is_active', true)
-            ->with('profile')
-            ->firstOrFail();
-
-        if (!$business->profile?->is_published || !$business->profile?->show_contact_form) {
+        $business = $this->businessService->findBusinessBySlug($slug);
+        if (!$business || !$business->isActive) {
             abort(404);
         }
 
-        // Track contact form submission
-        $this->trackEvent($business, 'contact_form', $request, [
-            'name' => $validated['name'],
-            'has_email' => !empty($validated['email']),
-            'has_phone' => !empty($validated['phone']),
-        ]);
+        $profile = $this->businessService->getProfile($business->id);
+        if (!$profile || !$profile->showContactForm) {
+            abort(404);
+        }
 
-        // In production, send notification to business owner
-        // Notification::send($business->user, new ContactFormSubmitted($validated));
+        $this->trackEvent($business->id, 'contact_form', $request, [
+            'name' => $validated['name'], 'has_email' => !empty($validated['email']), 'has_phone' => !empty($validated['phone']),
+        ]);
 
         return back()->with('success', 'Thank you for your message! We will get back to you soon.');
     }
 
     public function qrRedirect(Request $request, string $code)
     {
-        $qrCode = BizBoostQrCodeModel::where('short_code', $code)
-            ->where('is_active', true)
-            ->firstOrFail();
+        $qrCode = $this->qrCodeService->findByShortCode($code);
+        if (!$qrCode) {
+            abort(404);
+        }
 
-        // Track QR scan
-        $qrCode->increment('scan_count');
-        
-        // Log scan details
-        \DB::table('bizboost_qr_scans')->insert([
-            'qr_code_id' => $qrCode->id,
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'referrer' => $request->header('referer'),
-            'scanned_at' => now(),
-        ]);
+        $this->qrCodeService->incrementScan($qrCode->id);
 
-        // Track analytics event
-        $this->trackEvent($qrCode->business, 'qr_scan', $request, [
-            'qr_code_id' => $qrCode->id,
-            'qr_type' => $qrCode->type,
-        ]);
+        $this->trackEvent($qrCode->businessId, 'qr_scan', $request, ['qr_code_id' => $qrCode->id, 'qr_type' => $qrCode->type]);
 
-        return redirect($qrCode->target_url);
+        return redirect($qrCode->data);
     }
 
-    private function trackEvent(
-        BizBoostBusinessModel $business, 
-        string $eventType, 
-        Request $request, 
-        array $payload = []
-    ): void {
-        BizBoostAnalyticsEventModel::create([
-            'business_id' => $business->id,
-            'event_type' => $eventType,
-            'source' => 'mini_website',
-            'payload' => $payload,
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'referrer' => $request->header('referer'),
-            'recorded_at' => now(),
-        ]);
+    private function trackEvent(int $businessId, string $eventType, Request $request, array $payload = []): void
+    {
+        $this->analyticsEventRepo->save(new \App\Domain\BizBoost\Entities\AnalyticsEvent(
+            id: null,
+            businessId: $businessId,
+            eventType: $eventType,
+            source: 'mini_website',
+            postId: null,
+            payload: $payload,
+            ipAddress: $request->ip(),
+            userAgent: $request->userAgent(),
+            referrer: $request->header('referer'),
+            recordedAt: now()->toDateTimeString(),
+            createdAt: null,
+            updatedAt: null,
+        ));
     }
 }

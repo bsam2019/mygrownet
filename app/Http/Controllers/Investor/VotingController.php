@@ -4,26 +4,27 @@ namespace App\Http\Controllers\Investor;
 
 use App\Http\Controllers\Controller;
 use App\Domain\Investor\Services\ShareholderVotingService;
+use App\Domain\Investor\Repositories\InvestorAccountRepositoryInterface;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class VotingController extends Controller
 {
     public function __construct(
-        private ShareholderVotingService $votingService
+        private ShareholderVotingService $votingService,
+        private InvestorAccountRepositoryInterface $accountRepository
     ) {}
 
     public function index(Request $request)
     {
         $investorId = session('investor_id');
-        
+
         if (!$investorId) {
             return redirect()->route('investor.login');
         }
 
-        $investorAccount = \App\Models\Investor\InvestorAccount::find($investorId);
-        
+        $investorAccount = $this->accountRepository->findById($investorId);
+
         if (!$investorAccount) {
             abort(403, 'Investor account not found.');
         }
@@ -31,20 +32,19 @@ class VotingController extends Controller
         $activeResolutions = $this->votingService->getActiveResolutions();
         $upcomingResolutions = $this->votingService->getUpcomingResolutions();
         $pastResolutions = $this->votingService->getPastResolutions();
-        $voteHistory = $this->votingService->getInvestorVoteHistory($investorAccount->id);
+        $voteHistory = $this->votingService->getInvestorVoteHistory($investorAccount->getId());
 
-        // Add voting status to active resolutions
         $activeResolutions = $activeResolutions->map(function ($resolution) use ($investorAccount) {
-            $resolution->has_voted = $this->votingService->hasVoted($resolution->id, $investorAccount->id);
+            $resolution->has_voted = $this->votingService->hasVoted($resolution->id, $investorAccount->getId());
             $resolution->results = $resolution->getVoteResults();
             return $resolution;
         });
 
         return Inertia::render('Investor/Voting', [
             'investor' => [
-                'id' => $investorAccount->id,
-                'name' => $investorAccount->name,
-                'email' => $investorAccount->email,
+                'id' => $investorAccount->getId(),
+                'name' => $investorAccount->getName(),
+                'email' => $investorAccount->getEmail(),
             ],
             'activeResolutions' => $activeResolutions,
             'upcomingResolutions' => $upcomingResolutions,
@@ -53,7 +53,7 @@ class VotingController extends Controller
                 'results' => $r->getVoteResults(),
             ]),
             'voteHistory' => $voteHistory,
-            'votingPower' => $investorAccount->equity_percentage ?? 0,
+            'votingPower' => $investorAccount->getEquityPercentage(),
             'activePage' => 'voting',
             'unreadMessages' => 0,
             'unreadAnnouncements' => 0,
@@ -69,12 +69,12 @@ class VotingController extends Controller
         ]);
 
         $investorId = session('investor_id');
-        
+
         if (!$investorId) {
             return redirect()->route('investor.login');
         }
 
-        $investorAccount = \App\Models\Investor\InvestorAccount::find($investorId);
+        $investorAccount = $this->accountRepository->findById($investorId);
 
         if (!$investorAccount) {
             return back()->withErrors(['error' => 'Investor account not found.']);
@@ -83,7 +83,7 @@ class VotingController extends Controller
         try {
             $this->votingService->castVote(
                 $request->resolution_id,
-                $investorAccount->id,
+                $investorAccount->getId(),
                 $request->vote,
                 $request->selected_option
             );
@@ -104,12 +104,12 @@ class VotingController extends Controller
         ]);
 
         $investorId = session('investor_id');
-        
+
         if (!$investorId) {
             return redirect()->route('investor.login');
         }
 
-        $investorAccount = \App\Models\Investor\InvestorAccount::find($investorId);
+        $investorAccount = $this->accountRepository->findById($investorId);
 
         if (!$investorAccount) {
             return back()->withErrors(['error' => 'Investor account not found.']);
@@ -117,7 +117,7 @@ class VotingController extends Controller
 
         try {
             $this->votingService->delegateProxy(
-                $investorAccount->id,
+                $investorAccount->getId(),
                 $request->delegate_id,
                 $request->resolution_id,
                 $request->valid_until,
@@ -133,19 +133,19 @@ class VotingController extends Controller
     public function revokeProxy(Request $request, int $delegationId)
     {
         $investorId = session('investor_id');
-        
+
         if (!$investorId) {
             return redirect()->route('investor.login');
         }
 
-        $investorAccount = \App\Models\Investor\InvestorAccount::find($investorId);
+        $investorAccount = $this->accountRepository->findById($investorId);
 
         if (!$investorAccount) {
             return back()->withErrors(['error' => 'Investor account not found.']);
         }
 
         try {
-            $this->votingService->revokeProxy($delegationId, $investorAccount->id);
+            $this->votingService->revokeProxy($delegationId, $investorAccount->getId());
             return back()->with('success', 'Proxy delegation revoked.');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);

@@ -102,7 +102,7 @@ const showSubscriptionModal = ref(false);
 const selectedModule = ref<Module | null>(null);
 
 // Define primary modules order (business tools first, then community network, then lifestyle)
-const primaryModuleSlugs = ['bizboost', 'growfinance', 'growbiz', 'marketplace', 'grownet', 'lifeplus', 'mlm-dashboard'];
+const primaryModuleSlugs = ['bizboost', 'growfinance', 'marketplace', 'grownet', 'lifeplus', 'mlm-dashboard'];
 
 // Computed properties for module organization
 const primaryModules = computed(() => {
@@ -122,7 +122,6 @@ const getModuleDescription = (slug: string): string => {
   const descriptions: Record<string, string> = {
     'bizboost': 'Complete business management & marketing automation',
     'growfinance': 'Accounting & financial management for SMEs',
-    'growbiz': 'Team & employee management system',
     'marketplace': 'Shop products & services',
     'grownet': 'Community network & referral rewards',
     'mlm-dashboard': 'Community network & referral rewards',
@@ -142,7 +141,6 @@ const getPublicLandingRoute = (slug: string): string | null => {
   const publicRoutes: Record<string, string> = {
     'bizboost': '/bizboost/welcome',
     'growfinance': '/growfinance',
-    'growbiz': '/growbiz',
     'marketplace': '/marketplace',
     'grownet': '/login', // GrowNet requires login
     'mlm-dashboard': '/login', // MLM Dashboard requires login
@@ -174,12 +172,6 @@ const handleModuleClick = (module: Module) => {
     return;
   }
 
-  // GrowBiz is always accessible - it has its own setup flow
-  if (module.slug === 'growbiz') {
-    router.visit(module.primary_route || '/growbiz/dashboard');
-    return;
-  }
-  
   // GrowFinance is always accessible - it has its own setup flow
   if (module.slug === 'growfinance') {
     router.visit(module.primary_route || '/growfinance/dashboard');
@@ -237,7 +229,6 @@ const getModuleIcon = (slug: string) => {
     'grownet': UsersIcon,
     'mygrownet-core': HomeIcon,
     'dashboard': HomeIcon,
-    'growbiz': ClipboardDocumentCheckIcon,
     'task-management': ClipboardDocumentCheckIcon,
     'smart-accounting': ChartBarIcon,
     'sme-accounting': ChartBarIcon,

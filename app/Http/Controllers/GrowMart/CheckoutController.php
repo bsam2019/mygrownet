@@ -4,6 +4,7 @@ namespace App\Http\Controllers\GrowMart;
 
 use App\Http\Controllers\Controller;
 use App\Domain\GrowMart\Services\CartService;
+use App\Domain\GrowMart\Services\CouponService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -11,6 +12,7 @@ class CheckoutController extends Controller
 {
     public function __construct(
         private readonly CartService $cartService,
+        private readonly CouponService $couponService,
     ) {}
 
     public function index()
@@ -63,9 +65,8 @@ class CheckoutController extends Controller
             'subtotal' => 'required|integer|min:0',
         ]);
 
-        $couponService = app(\App\Domain\GrowMart\Services\CouponService::class);
-        $coupon = $couponService->findByCode($request->code);
-        $result = $couponService->validateCoupon($coupon, $request->subtotal);
+        $coupon = $this->couponService->findByCode($request->code);
+        $result = $this->couponService->validateCoupon($coupon, $request->subtotal);
 
         return response()->json($result);
     }

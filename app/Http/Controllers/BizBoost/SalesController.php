@@ -4,63 +4,60 @@ namespace App\Http\Controllers\BizBoost;
 
 use App\Events\BizBoost\SaleRecorded;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
-use App\Infrastructure\Persistence\Eloquent\BizBoostSaleModel;
+use App\Domain\BizBoost\Services\BusinessService;
+use App\Domain\BizBoost\Repositories\SaleRepositoryInterface;
+use App\Domain\BizBoost\Repositories\ProductRepositoryInterface;
+use App\Domain\BizBoost\Repositories\CustomerRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class SalesController extends Controller
 {
-    public function index(Request $request): Response
+    public function __construct(
+        private BusinessService $businessService,
+        private SaleRepositoryInterface $saleRepo,
+        private ProductRepositoryInterface $productRepo,
+        private CustomerRepositoryInterface $customerRepo,
+    ) {}
+
+    public function index(Request $request)
     {
-        $business = $this->getBusiness($request);
-        
-        $sales = $business->sales()
-            ->with(['customer', 'product'])
-            ->when($request->date_from, fn($q, $date) => $q->where('sale_date', '>=', $date))
-            ->when($request->date_to, fn($q, $date) => $q->where('sale_date', '<=', $date))
-            ->when($request->product_id, fn($q, $id) => $q->where('product_id', $id))
-            ->orderByDesc('sale_date')
-            ->orderByDesc('created_at')
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
+
+        $sales = DB::table('bizboost_sales')
+            ->where('business_id', $business->id)
+            ->leftJoin('bizboost_customers', 'bizboost_sales.customer_id', '=', 'bizboost_customers.id')
+            ->select('bizboost_sales.*', 'bizboost_customers.name as customer_name')
+            ->when($request->date_from, fn($q, $date) => $q->where('bizboost_sales.sale_date', '>=', $date))
+            ->when($request->date_to, fn($q, $date) => $q->where('bizboost_sales.sale_date', '<=', $date))
+            ->when($request->product_id, fn($q, $id) => $q->where('bizboost_sales.product_id', $id))
+            ->orderByDesc('bizboost_sales.sale_date')
+            ->orderByDesc('bizboost_sales.created_at')
             ->paginate(20)
             ->withQueryString();
 
-        // Summary stats
         $today = now()->toDateString();
         $startOfWeek = now()->startOfWeek()->toDateString();
         $startOfMonth = now()->startOfMonth();
         $endOfMonth = now()->endOfMonth();
         $startOfLastMonth = now()->subMonth()->startOfMonth();
         $endOfLastMonth = now()->subMonth()->endOfMonth();
-        
-        $thisMonthTotal = $business->sales()
-            ->whereBetween('sale_date', [$startOfMonth, $endOfMonth])
-            ->sum('total_amount');
-            
-        $lastMonthTotal = $business->sales()
-            ->whereBetween('sale_date', [$startOfLastMonth, $endOfLastMonth])
-            ->sum('total_amount');
-        
-        $stats = [
-            'today' => $business->sales()
-                ->where('sale_date', $today)
-                ->sum('total_amount'),
-            'this_week' => $business->sales()
-                ->where('sale_date', '>=', $startOfWeek)
-                ->sum('total_amount'),
-            'this_month' => $thisMonthTotal,
-            'last_month' => $lastMonthTotal,
-            'month_change' => $lastMonthTotal > 0 
-                ? round((($thisMonthTotal - $lastMonthTotal) / $lastMonthTotal) * 100, 1) 
-                : 0,
-        ];
 
-        $products = $business->products()->where('is_active', true)->get(['id', 'name']);
+        $stats = [
+            'today' => DB::table('bizboost_sales')->where('business_id', $business->id)->where('sale_date', $today)->sum('total_amount'),
+            'this_week' => DB::table('bizboost_sales')->where('business_id', $business->id)->where('sale_date', '>=', $startOfWeek)->sum('total_amount'),
+            'this_month' => DB::table('bizboost_sales')->where('business_id', $business->id)->whereBetween('sale_date', [$startOfMonth, $endOfMonth])->sum('total_amount'),
+            'last_month' => DB::table('bizboost_sales')->where('business_id', $business->id)->whereBetween('sale_date', [$startOfLastMonth, $endOfLastMonth])->sum('total_amount'),
+        ];
+        $stats['month_change'] = $stats['last_month'] > 0
+            ? round((($stats['this_month'] - $stats['last_month']) / $stats['last_month']) * 100, 1)
+            : 0;
+
+        $products = $this->productRepo->findActiveByBusiness($business->id);
 
         return Inertia::render('BizBoost/Sales/Index', [
-            'business' => $business->only(['id', 'name', 'currency']),
+            'business' => ['id' => $business->id, 'name' => $business->name, 'currency' => $business->currency],
             'sales' => $sales,
             'stats' => $stats,
             'products' => $products,
@@ -69,19 +66,15 @@ class SalesController extends Controller
         ]);
     }
 
-    public function create(Request $request): Response
+    public function create(Request $request)
     {
-        $business = $this->getBusiness($request);
-        
-        $products = $business->products()
-            ->where('is_active', true)
-            ->get(['id', 'name', 'price', 'sale_price']);
-        $customers = $business->customers()
-            ->where('is_active', true)
-            ->get(['id', 'name', 'phone']);
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
+        $products = $this->productRepo->findActiveByBusiness($business->id);
+
+        $customers = $this->customerRepo->findByBusiness($business->id);
 
         return Inertia::render('BizBoost/Sales/Create', [
-            'business' => $business->only(['id', 'name', 'currency']),
+            'business' => ['id' => $business->id, 'name' => $business->name, 'currency' => $business->currency],
             'products' => $products,
             'customers' => $customers,
         ]);
@@ -100,9 +93,10 @@ class SalesController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $business = $this->getBusiness($request);
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
 
-        $sale = $business->sales()->create([
+        $saleId = DB::table('bizboost_sales')->insertGetId([
+            'business_id' => $business->id,
             'product_id' => $validated['product_id'],
             'product_name' => $validated['product_name'],
             'customer_id' => $validated['customer_id'],
@@ -113,10 +107,15 @@ class SalesController extends Controller
             'payment_method' => $validated['payment_method'],
             'notes' => $validated['notes'],
             'source' => 'manual',
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
-        // Broadcast real-time event
-        $customer = $sale->customer;
+        $sale = DB::table('bizboost_sales')->where('id', $saleId)->first();
+        $customer = $validated['customer_id']
+            ? DB::table('bizboost_customers')->where('id', $validated['customer_id'])->first()
+            : null;
+
         broadcast(new SaleRecorded($business->id, [
             'id' => $sale->id,
             'product_name' => $sale->product_name,
@@ -130,12 +129,12 @@ class SalesController extends Controller
             ->with('success', 'Sale recorded successfully.');
     }
 
-    public function reports(Request $request): Response
+    public function reports(Request $request)
     {
-        $business = $this->getBusiness($request);
-        
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
+
         $period = $request->period ?? 'month';
-        $startDate = match($period) {
+        $startDate = match ($period) {
             'week' => now()->startOfWeek(),
             'month' => now()->startOfMonth(),
             'quarter' => now()->startOfQuarter(),
@@ -143,40 +142,28 @@ class SalesController extends Controller
             default => now()->startOfMonth(),
         };
 
-        // Sales by day
-        $salesByDay = $business->sales()
+        $salesByDay = DB::table('bizboost_sales')
+            ->where('business_id', $business->id)
             ->where('sale_date', '>=', $startDate)
-            ->select(
-                DB::raw('DATE(sale_date) as date'),
-                DB::raw('SUM(total_amount) as total'),
-                DB::raw('COUNT(*) as count')
-            )
+            ->select(DB::raw('DATE(sale_date) as date'), DB::raw('SUM(total_amount) as total'), DB::raw('COUNT(*) as count'))
             ->groupBy('date')
             ->orderBy('date')
             ->get();
 
-        // Top products
-        $topProducts = $business->sales()
+        $topProducts = DB::table('bizboost_sales')
+            ->where('business_id', $business->id)
             ->where('sale_date', '>=', $startDate)
-            ->select(
-                'product_name',
-                DB::raw('SUM(total_amount) as total'),
-                DB::raw('SUM(quantity) as quantity')
-            )
+            ->select('product_name', DB::raw('SUM(total_amount) as total'), DB::raw('SUM(quantity) as quantity'))
             ->groupBy('product_name')
             ->orderByDesc('total')
             ->take(10)
             ->get();
 
-        // Sales by payment method
-        $salesByPayment = $business->sales()
+        $salesByPayment = DB::table('bizboost_sales')
+            ->where('business_id', $business->id)
             ->where('sale_date', '>=', $startDate)
             ->whereNotNull('payment_method')
-            ->select(
-                'payment_method',
-                DB::raw('SUM(total_amount) as total'),
-                DB::raw('COUNT(*) as count')
-            )
+            ->select('payment_method', DB::raw('SUM(total_amount) as total'), DB::raw('COUNT(*) as count'))
             ->groupBy('payment_method')
             ->get();
 
@@ -191,16 +178,8 @@ class SalesController extends Controller
 
     public function destroy(Request $request, int $id)
     {
-        $business = $this->getBusiness($request);
-        $sale = $business->sales()->findOrFail($id);
-        $sale->delete();
-
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
+        DB::table('bizboost_sales')->where('id', $id)->where('business_id', $business->id)->delete();
         return back()->with('success', 'Sale deleted successfully.');
-    }
-
-    private function getBusiness(Request $request): BizBoostBusinessModel
-    {
-        return BizBoostBusinessModel::where('user_id', $request->user()->id)
-            ->firstOrFail();
     }
 }

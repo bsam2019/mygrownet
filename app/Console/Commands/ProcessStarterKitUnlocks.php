@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\StarterKitService;
+use App\Domain\GrowNet\Services\StarterKitService;
 use Illuminate\Console\Command;
 
 class ProcessStarterKitUnlocks extends Command

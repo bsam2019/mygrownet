@@ -2,32 +2,30 @@
 
 namespace App\Domain\Marketplace\Services;
 
-use App\Models\Marketplace\MarketplaceOrder;
-use App\Models\Marketplace\MarketplaceOrderItem;
-use App\Models\Marketplace\MarketplaceProduct;
-use App\Domain\Marketplace\Services\EscrowService;
-use App\Domain\Marketplace\Services\ProductService;
-use App\Domain\Marketplace\Services\SellerService;
+use App\Domain\Marketplace\Entities\Order;
+use App\Domain\Marketplace\Repositories\OrderRepositoryInterface;
+use App\Domain\Marketplace\Repositories\ProductRepositoryInterface;
+use App\Domain\Marketplace\ValueObjects\OrderStatus;
+use App\Domain\Marketplace\ValueObjects\DeliveryMethod;
+use App\Domain\Marketplace\ValueObjects\Money;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class OrderService
 {
     public function __construct(
+        private OrderRepositoryInterface $orderRepository,
+        private ProductRepositoryInterface $productRepository,
         private EscrowService $escrowService,
-        private ProductService $productService,
         private SellerService $sellerService,
-        private \App\Services\LgrActivityTrackingService $lgrTrackingService,
+        private \App\Domain\GrowNet\Services\LgrActivityTrackingService $lgrTrackingService,
     ) {}
 
-    public function createOrder(int $buyerId, array $cartItems, array $deliveryData): MarketplaceOrder
+    public function createOrder(int $buyerId, array $cartItems, array $deliveryData): array
     {
         return DB::transaction(function () use ($buyerId, $cartItems, $deliveryData) {
-            // Group items by seller
             $itemsBySeller = collect($cartItems)->groupBy('seller_id');
-            
-            // For MVP, we only support single-seller orders
+
             if ($itemsBySeller->count() > 1) {
                 throw new \Exception('Multi-seller orders not supported yet. Please checkout separately.');
             }
@@ -35,24 +33,26 @@ class OrderService
             $sellerId = $itemsBySeller->keys()->first();
             $items = $itemsBySeller->first();
 
-            // Calculate totals
             $subtotal = 0;
             $orderItems = [];
 
             foreach ($items as $item) {
-                $product = MarketplaceProduct::findOrFail($item['product_id']);
-                
+                $product = $this->productRepository->findById($item['product_id']);
+                if (!$product) {
+                    throw new \Exception("Product not found.");
+                }
+
                 if (!$product->canBePurchased($item['quantity'])) {
                     throw new \Exception("Product '{$product->name}' is not available in requested quantity.");
                 }
 
-                $itemTotal = $product->price * $item['quantity'];
+                $itemTotal = $product->price->amount() * $item['quantity'];
                 $subtotal += $itemTotal;
 
                 $orderItems[] = [
                     'product_id' => $product->id,
                     'quantity' => $item['quantity'],
-                    'unit_price' => $product->price,
+                    'unit_price' => $product->price->amount(),
                     'total_price' => $itemTotal,
                 ];
             }
@@ -60,219 +60,195 @@ class OrderService
             $deliveryFee = $this->calculateDeliveryFee($deliveryData['method'], $deliveryData['province'] ?? null);
             $total = $subtotal + $deliveryFee;
 
-            // Create order
-            $order = MarketplaceOrder::create([
-                'order_number' => $this->generateOrderNumber(),
-                'buyer_id' => $buyerId,
-                'seller_id' => $sellerId,
-                'status' => 'pending',
-                'subtotal' => $subtotal,
-                'delivery_fee' => $deliveryFee,
-                'total' => $total,
-                'delivery_method' => $deliveryData['method'],
-                'delivery_address' => [
+            $order = new Order(
+                id: null,
+                orderNumber: $this->generateOrderNumber(),
+                buyerId: $buyerId,
+                sellerId: $sellerId,
+                status: OrderStatus::pending(),
+                subtotal: Money::fromNgwee($subtotal),
+                deliveryFee: Money::fromNgwee($deliveryFee),
+                total: Money::fromNgwee($total),
+                deliveryMethod: DeliveryMethod::fromString($deliveryData['method']),
+                deliveryAddress: [
                     'name' => $deliveryData['name'],
                     'phone' => $deliveryData['phone'],
                     'province' => $deliveryData['province'] ?? null,
                     'district' => $deliveryData['district'] ?? null,
                     'address' => $deliveryData['address'] ?? null,
                 ],
-                'delivery_notes' => $deliveryData['notes'] ?? null,
-            ]);
+                deliveryNotes: $deliveryData['notes'] ?? null,
+                items: $orderItems,
+                createdAt: new \DateTimeImmutable(),
+            );
 
-            // Create order items
+            $saved = $this->orderRepository->save($order);
+
             foreach ($orderItems as $item) {
-                $order->items()->create($item);
-                
-                // Reserve stock
-                $this->productService->decrementStock($item['product_id'], $item['quantity']);
+                $this->productRepository->decrementStock($item['product_id'], $item['quantity']);
             }
 
-            return $order->load(['items.product', 'seller', 'buyer']);
+            return $saved->toArray();
         });
     }
 
-    public function markAsPaid(int $orderId, string $paymentReference): MarketplaceOrder
+    public function markAsPaid(int $orderId, string $paymentReference): array
     {
         return DB::transaction(function () use ($orderId, $paymentReference) {
-            $order = MarketplaceOrder::findOrFail($orderId);
-            
-            if ($order->status !== 'pending') {
+            $order = $this->orderRepository->findById($orderId);
+            if (!$order || !$order->status->isPending()) {
                 throw new \Exception('Order cannot be marked as paid.');
             }
 
-            $order->update([
+            $this->orderRepository->updateOrderFields($orderId, [
                 'status' => 'paid',
                 'payment_reference' => $paymentReference,
                 'paid_at' => now(),
             ]);
 
-            // Create escrow hold
-            $this->escrowService->holdFunds($order);
+            $this->escrowService->holdFunds($orderId, $order->total->amount());
 
-            // CRITICAL: Record LGR activity for buyer
             $this->lgrTrackingService->recordMarketplacePurchase(
-                $order->buyer_id,
-                $order->id,
-                $order->total
+                $order->buyerId,
+                $orderId,
+                $order->total->toKwacha()
             );
 
-            return $order->fresh();
+            $updated = $this->orderRepository->findById($orderId);
+            return $updated ? $updated->toArray() : [];
         });
     }
 
-    public function markAsShipped(int $orderId, ?string $trackingInfo = null): MarketplaceOrder
+    public function markAsShipped(int $orderId, ?string $trackingInfo = null): array
     {
-        $order = MarketplaceOrder::findOrFail($orderId);
-        
-        if ($order->status !== 'paid' && $order->status !== 'processing') {
+        $order = $this->orderRepository->findById($orderId);
+        if (!$order || !in_array($order->status->value(), ['paid', 'processing'])) {
             throw new \Exception('Order cannot be marked as shipped.');
         }
 
-        $order->update([
+        $this->orderRepository->updateOrderFields($orderId, [
             'status' => 'shipped',
             'tracking_info' => $trackingInfo,
             'shipped_at' => now(),
         ]);
 
-        return $order->fresh();
+        $updated = $this->orderRepository->findById($orderId);
+        return $updated ? $updated->toArray() : [];
     }
 
-    public function markAsDelivered(int $orderId, ?string $deliveryProof = null): MarketplaceOrder
+    public function markAsDelivered(int $orderId, ?string $deliveryProof = null): array
     {
-        $order = MarketplaceOrder::findOrFail($orderId);
-        
-        if ($order->status !== 'shipped') {
+        $order = $this->orderRepository->findById($orderId);
+        if (!$order || !$order->status->isShipped()) {
             throw new \Exception('Order cannot be marked as delivered.');
         }
 
-        $order->update([
+        $this->orderRepository->updateOrderFields($orderId, [
             'status' => 'delivered',
             'delivery_proof' => $deliveryProof,
             'delivered_at' => now(),
         ]);
 
-        return $order->fresh();
+        $updated = $this->orderRepository->findById($orderId);
+        return $updated ? $updated->toArray() : [];
     }
 
-    public function confirmReceipt(int $orderId): MarketplaceOrder
+    public function confirmReceipt(int $orderId): array
     {
         return DB::transaction(function () use ($orderId) {
-            $order = MarketplaceOrder::findOrFail($orderId);
-            
-            if ($order->status !== 'delivered') {
+            $order = $this->orderRepository->findById($orderId);
+            if (!$order || !$order->status->isDelivered()) {
                 throw new \Exception('Order cannot be confirmed.');
             }
 
-            $order->update([
+            $this->orderRepository->updateOrderFields($orderId, [
                 'status' => 'completed',
                 'confirmed_at' => now(),
             ]);
 
-            // Release escrow funds to seller
-            $this->escrowService->releaseFunds($order, 'buyer_confirmed');
+            $this->escrowService->releaseFunds($orderId, 'buyer_confirmed');
 
-            // Update seller stats
-            $this->sellerService->incrementOrderCount($order->seller_id);
+            $this->sellerService->incrementOrderCount($order->sellerId);
 
-            // CRITICAL: Record LGR activity for seller
             $this->lgrTrackingService->recordMarketplaceSale(
-                $order->seller_id,
-                $order->id,
-                $order->total
+                $order->sellerId,
+                $orderId,
+                $order->total->toKwacha()
             );
 
-            return $order->fresh();
+            $updated = $this->orderRepository->findById($orderId);
+            return $updated ? $updated->toArray() : [];
         });
     }
 
-    public function cancelOrder(int $orderId, string $reason, string $cancelledBy): MarketplaceOrder
+    public function cancelOrder(int $orderId, string $reason, string $cancelledBy): array
     {
         return DB::transaction(function () use ($orderId, $reason, $cancelledBy) {
-            $order = MarketplaceOrder::findOrFail($orderId);
-            
-            if (!in_array($order->status, ['pending', 'paid'])) {
+            $order = $this->orderRepository->findById($orderId);
+            if (!$order || !$order->canBeCancelled()) {
                 throw new \Exception('Order cannot be cancelled at this stage.');
             }
 
-            // Restore stock
             foreach ($order->items as $item) {
-                $this->productService->incrementStock($item->product_id, $item->quantity);
+                $this->productRepository->incrementStock($item['product_id'], $item['quantity']);
             }
 
-            // Refund if paid
-            if ($order->status === 'paid') {
-                $this->escrowService->refundFunds($order, $reason);
+            if ($order->status->isPaid()) {
+                $this->escrowService->refundFunds($orderId, $reason);
             }
 
-            $order->update([
+            $this->orderRepository->updateOrderFields($orderId, [
                 'status' => 'cancelled',
                 'cancellation_reason' => $reason,
                 'cancelled_by' => $cancelledBy,
                 'cancelled_at' => now(),
             ]);
 
-            return $order->fresh();
+            $updated = $this->orderRepository->findById($orderId);
+            return $updated ? $updated->toArray() : [];
         });
     }
 
-    public function openDispute(int $orderId, string $reason): MarketplaceOrder
+    public function openDispute(int $orderId, string $reason): array
     {
-        $order = MarketplaceOrder::findOrFail($orderId);
-        
-        if ($order->status !== 'delivered') {
+        $order = $this->orderRepository->findById($orderId);
+        if (!$order || !$order->canBeDisputed()) {
             throw new \Exception('Disputes can only be opened for delivered orders.');
         }
 
-        $order->update([
+        $this->orderRepository->updateOrderFields($orderId, [
             'status' => 'disputed',
             'dispute_reason' => $reason,
             'disputed_at' => now(),
         ]);
 
-        $this->escrowService->markAsDisputed($order);
+        $this->escrowService->markAsDisputed($orderId);
 
-        return $order->fresh();
+        $updated = $this->orderRepository->findById($orderId);
+        return $updated ? $updated->toArray() : [];
     }
 
-    public function getByBuyer(int $buyerId, array $filters = [], int $perPage = 20): LengthAwarePaginator
+    public function getByBuyer(int $buyerId, array $filters = [], int $perPage = 20): array
     {
-        $query = MarketplaceOrder::with(['items.product', 'seller'])
-            ->where('buyer_id', $buyerId);
-
-        if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
-
-        return $query->orderByDesc('created_at')->paginate($perPage);
+        return $this->orderRepository->findByBuyer($buyerId, $filters, $perPage);
     }
 
-    public function getBySeller(int $sellerId, array $filters = [], int $perPage = 20): LengthAwarePaginator
+    public function getBySeller(int $sellerId, array $filters = [], int $perPage = 20): array
     {
-        $query = MarketplaceOrder::with(['items.product', 'buyer'])
-            ->where('seller_id', $sellerId);
-
-        if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
-
-        return $query->orderByDesc('created_at')->paginate($perPage);
+        return $this->orderRepository->findBySeller($sellerId, $filters, $perPage);
     }
 
-    public function getById(int $id): ?MarketplaceOrder
+    public function getById(int $id): ?array
     {
-        return MarketplaceOrder::with(['items.product', 'seller.user', 'buyer', 'escrow'])
-            ->find($id);
+        $order = $this->orderRepository->findById($id);
+        return $order ? $order->toArray() : null;
     }
 
     public function processAutoReleases(): int
     {
-        $orders = MarketplaceOrder::where('status', 'delivered')
-            ->where('delivered_at', '<=', now()->subDays(7))
-            ->whereNull('confirmed_at')
-            ->get();
-
+        $orders = $this->orderRepository->findPendingAutoRelease();
         $count = 0;
+
         foreach ($orders as $order) {
             try {
                 $this->confirmReceipt($order->id);
@@ -289,18 +265,17 @@ class OrderService
     {
         do {
             $number = 'MKT-' . strtoupper(Str::random(8));
-        } while (MarketplaceOrder::where('order_number', $number)->exists());
+        } while ($this->orderRepository->orderNumberExists($number));
 
         return $number;
     }
 
     private function calculateDeliveryFee(string $method, ?string $province): int
     {
-        // Simple delivery fee calculation for MVP
         return match ($method) {
             'pickup' => 0,
-            'self' => 2500, // K25 flat rate for seller delivery
-            'courier' => 5000, // K50 flat rate for courier
+            'self' => 2500,
+            'courier' => 5000,
             default => 0,
         };
     }

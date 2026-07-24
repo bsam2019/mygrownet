@@ -71,6 +71,8 @@ class ModuleServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->loadMigrationsFrom(database_path('migrations/module'));
+
         // Load module configuration
         $this->mergeConfigFrom(
             __DIR__.'/../../config/modules.php',

@@ -7,7 +7,7 @@ use App\Events\UserReferred;
 use App\Events\CourseCompleted;
 use App\Events\ProductSold;
 use App\Events\UserLevelAdvanced;
-use App\Services\PointService;
+use App\Domain\GrowNet\Services\PointService;
 use Illuminate\Console\Command;
 
 class TestPointsIntegration extends Command

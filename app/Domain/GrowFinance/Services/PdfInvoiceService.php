@@ -2,25 +2,28 @@
 
 namespace App\Domain\GrowFinance\Services;
 
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceInvoiceModel;
-use App\Models\User;
+use App\Domain\GrowFinance\Repositories\InvoiceRepositoryInterface;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 
 class PdfInvoiceService
 {
+    public function __construct(
+        private InvoiceRepositoryInterface $invoiceRepo
+    ) {}
+
     /**
      * Generate PDF for an invoice
      */
-    public function generate(GrowFinanceInvoiceModel $invoice, User $business): string
+    public function generate(int $invoiceId, array $businessData): string
     {
-        $invoice->load(['customer', 'items']);
+        $invoice = $this->invoiceRepo->findById($invoiceId);
 
         $data = [
             'invoice' => $invoice,
-            'business' => $this->getBusinessDetails($business),
-            'items' => $invoice->items,
-            'customer' => $invoice->customer,
+            'business' => $this->getBusinessDetails($businessData),
+            'items' => [],
+            'customer' => null,
             'generated_at' => now()->format('F j, Y'),
         ];
 
@@ -33,11 +36,13 @@ class PdfInvoiceService
     /**
      * Generate and store PDF, return path
      */
-    public function generateAndStore(GrowFinanceInvoiceModel $invoice, User $business): string
+    public function generateAndStore(int $invoiceId, array $businessData): string
     {
-        $pdfContent = $this->generate($invoice, $business);
+        $invoice = $this->invoiceRepo->findById($invoiceId);
 
-        $filename = "invoices/{$business->id}/{$invoice->invoice_number}.pdf";
+        $pdfContent = $this->generate($invoiceId, $businessData);
+
+        $filename = "invoices/{$businessData['id']}/{$invoice->invoiceNumber}.pdf";
         Storage::disk('local')->put($filename, $pdfContent);
 
         return $filename;
@@ -46,39 +51,36 @@ class PdfInvoiceService
     /**
      * Stream PDF for download
      */
-    public function download(GrowFinanceInvoiceModel $invoice, User $business)
+    public function download(int $invoiceId, array $businessData)
     {
-        $invoice->load(['customer', 'items']);
+        $invoice = $this->invoiceRepo->findById($invoiceId);
 
         $data = [
             'invoice' => $invoice,
-            'business' => $this->getBusinessDetails($business),
-            'items' => $invoice->items,
-            'customer' => $invoice->customer,
+            'business' => $this->getBusinessDetails($businessData),
+            'items' => [],
+            'customer' => null,
             'generated_at' => now()->format('F j, Y'),
         ];
 
         $pdf = Pdf::loadView('pdf.growfinance.invoice', $data);
         $pdf->setPaper('a4', 'portrait');
 
-        return $pdf->download("Invoice-{$invoice->invoice_number}.pdf");
+        return $pdf->download("Invoice-{$invoice->invoiceNumber}.pdf");
     }
 
     /**
      * Get business details for invoice header
      */
-    private function getBusinessDetails(User $business): array
+    private function getBusinessDetails(array $businessData): array
     {
-        // Try to get from user's financial profile first
-        $profile = $business->financialProfile;
-
         return [
-            'name' => $profile?->business_name ?? $business->name,
-            'email' => $business->email,
-            'phone' => $profile?->phone ?? $business->phone ?? '',
-            'address' => $profile?->address ?? '',
-            'tax_number' => $profile?->tax_number ?? '',
-            'logo_url' => $profile?->logo_url ?? null,
+            'name' => $businessData['name'] ?? '',
+            'email' => $businessData['email'] ?? '',
+            'phone' => $businessData['phone'] ?? '',
+            'address' => $businessData['address'] ?? '',
+            'tax_number' => $businessData['tax_number'] ?? '',
+            'logo_url' => $businessData['logo_url'] ?? null,
         ];
     }
 }

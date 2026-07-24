@@ -9,12 +9,12 @@ use App\Models\Transaction;
 use App\Models\InvestmentCategory;
 use App\Models\InvestmentOpportunity;
 use App\Models\ActivityLog;
-use App\Models\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use App\Models\ProfitShare;
 use App\Models\WithdrawalRequest;
 use App\Domain\Financial\Services\WithdrawalPolicyService;
 use App\Domain\Investment\Services\InvestmentTierService;
-use App\Domain\Reward\Services\ReferralMatrixService;
+use App\Domain\GrowNet\Reward\Services\ReferralMatrixService;
 use App\Infrastructure\Persistence\Repositories\EloquentReferralRepository;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -71,7 +71,7 @@ class DashboardController extends Controller
         $modules = $this->filterEnabledModules($modules);
         
         // Get wallet data
-        $walletService = app(\App\Domain\Wallet\Services\WalletService::class);
+        $walletService = app(\App\Domain\GrowNet\Wallet\Services\WalletService::class);
         $walletBreakdown = $walletService->getWalletBreakdown($user);
         $recentTransactions = $walletService->getRecentTransactions($user, 5);
         
@@ -135,7 +135,6 @@ class DashboardController extends Controller
             'grownet' => 'grownet.dashboard',
             'bizboost' => 'bizboost.dashboard',
             'growfinance' => 'growfinance.dashboard',
-            'growbiz' => 'growbiz.dashboard',
             'home' => 'home-hub.index',
         ];
         
@@ -165,7 +164,7 @@ class DashboardController extends Controller
         }
         
         // Default: Render the user apps dashboard
-        $walletBalance = app(\App\Services\WalletService::class)->calculateBalance($user);
+        $walletBalance = app(\App\Domain\GrowNet\Services\WalletService::class)->calculateBalance($user);
         $referralCommissions = $user->referralCommissions()
             ->where('status', 'paid')
             ->sum('amount');
@@ -378,7 +377,7 @@ class DashboardController extends Controller
     private function getWalletBalance($user)
     {
         // Use centralized WalletService for consistent calculation
-        $walletService = app(\App\Services\WalletService::class);
+        $walletService = app(\App\Domain\GrowNet\Services\WalletService::class);
         return $walletService->calculateBalance($user);
     }
     

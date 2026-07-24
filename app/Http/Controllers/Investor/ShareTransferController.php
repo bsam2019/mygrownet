@@ -4,31 +4,28 @@ namespace App\Http\Controllers\Investor;
 
 use App\Http\Controllers\Controller;
 use App\Domain\Investor\Services\ShareTransferService;
+use App\Domain\Investor\Repositories\InvestorAccountRepositoryInterface;
 use App\Models\ShareTransferRequest;
-use App\Models\Investor\InvestorAccount;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class ShareTransferController extends Controller
 {
     public function __construct(
-        private ShareTransferService $transferService
+        private ShareTransferService $transferService,
+        private InvestorAccountRepositoryInterface $accountRepository
     ) {}
 
-    /**
-     * Display share transfer requests page
-     */
     public function index(Request $request)
     {
         $investorId = session('investor_id');
-        
+
         if (!$investorId) {
             return redirect()->route('investor.login');
         }
 
-        $investor = InvestorAccount::find($investorId);
-        
+        $investor = $this->accountRepository->findById($investorId);
+
         if (!$investor) {
             return redirect()->route('investor.login');
         }
@@ -37,22 +34,19 @@ class ShareTransferController extends Controller
 
         return Inertia::render('Investor/ShareTransfer', [
             'investor' => [
-                'id' => $investor->id,
-                'name' => $investor->name,
-                'email' => $investor->email,
+                'id' => $investor->getId(),
+                'name' => $investor->getName(),
+                'email' => $investor->getEmail(),
             ],
             'requests' => $requests,
-            'currentShares' => (float) $investor->equity_percentage,
-            'investorId' => $investor->id,
+            'currentShares' => (float) $investor->getEquityPercentage(),
+            'investorId' => $investor->getId(),
             'activePage' => 'share-transfer',
             'unreadMessages' => 0,
             'unreadAnnouncements' => 0,
         ]);
     }
 
-    /**
-     * Create a new transfer request
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -69,10 +63,15 @@ class ShareTransferController extends Controller
         if (!$investorId) {
             return redirect()->route('investor.login');
         }
-        $investor = InvestorAccount::findOrFail($investorId);
+
+        $investor = $this->accountRepository->findById($investorId);
+
+        if (!$investor) {
+            return redirect()->route('investor.login');
+        }
 
         try {
-            $transferRequest = $this->transferService->createTransferRequest(
+            $this->transferService->createTransferRequest(
                 seller: $investor,
                 sharesPercentage: $validated['shares_percentage'],
                 proposedPrice: $validated['proposed_price'],
@@ -89,18 +88,20 @@ class ShareTransferController extends Controller
         }
     }
 
-    /**
-     * Submit request for board review
-     */
     public function submit(Request $request, ShareTransferRequest $transferRequest)
     {
         $investorId = session('investor_id');
         if (!$investorId) {
             return redirect()->route('investor.login');
         }
-        $investor = InvestorAccount::findOrFail($investorId);
 
-        if ($transferRequest->seller_investor_id !== $investor->id) {
+        $investor = $this->accountRepository->findById($investorId);
+
+        if (!$investor) {
+            return redirect()->route('investor.login');
+        }
+
+        if ($transferRequest->seller_investor_id !== $investor->getId()) {
             abort(403);
         }
 
@@ -112,18 +113,20 @@ class ShareTransferController extends Controller
         }
     }
 
-    /**
-     * Cancel a transfer request
-     */
     public function cancel(Request $request, ShareTransferRequest $transferRequest)
     {
         $investorId = session('investor_id');
         if (!$investorId) {
             return redirect()->route('investor.login');
         }
-        $investor = InvestorAccount::findOrFail($investorId);
 
-        if ($transferRequest->seller_investor_id !== $investor->id) {
+        $investor = $this->accountRepository->findById($investorId);
+
+        if (!$investor) {
+            return redirect()->route('investor.login');
+        }
+
+        if ($transferRequest->seller_investor_id !== $investor->getId()) {
             abort(403);
         }
 

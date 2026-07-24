@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\{User, Package, Subscription, ReferralCommission};
-use App\Services\ReferralService;
+use App\Domain\GrowNet\Services\ReferralService;
 use Illuminate\Console\Command;
 
 class TestReferralSystem extends Command

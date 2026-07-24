@@ -7,7 +7,7 @@ namespace App\Infrastructure\Persistence\Repositories;
 use App\Domain\Community\Repositories\ProfitDistributionRepository;
 use App\Domain\Community\ValueObjects\ProjectId;
 use App\Domain\Community\ValueObjects\ContributionAmount;
-use App\Domain\MLM\ValueObjects\UserId;
+use App\Domain\GrowNet\MLM\ValueObjects\UserId;
 use App\Models\ProjectProfitDistribution;
 use App\Models\ProjectContribution;
 use DateTimeImmutable;

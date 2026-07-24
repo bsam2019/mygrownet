@@ -3,7 +3,7 @@
 namespace App\Console\Commands\GrowFinance;
 
 use App\Domain\GrowFinance\Services\NotificationService;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceInvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceInvoiceModel;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Application\Services\LoyaltyReward\LgrCycleService;
+use App\Domain\GrowNet\Application\Services\LgrCycleService;
 use Illuminate\Console\Command;
 
 class LgrCompleteExpiredCycles extends Command

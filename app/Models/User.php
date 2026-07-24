@@ -633,7 +633,7 @@ class User extends Authenticatable
 
     public function growNetData(): HasOne
     {
-        return $this->hasOne(\App\Domain\GrowNet\Models\GrowNetUser::class);
+        return $this->hasOne(\App\Infrastructure\Persistence\Eloquent\GrowNet\MemberModel::class);
     }
 
     public function profile(): HasOne
@@ -2091,7 +2091,7 @@ class User extends Authenticatable
         $this->increment('life_points', $amount);
 
         // Record transaction
-        \App\Models\PointTransaction::create([
+        \App\Infrastructure\Persistence\Eloquent\GrowNet\PointTransaction::create([
             'user_id' => $this->id,
             'point_type' => 'lifetime',
             'lp_amount' => $amount,
@@ -2114,7 +2114,7 @@ class User extends Authenticatable
         $this->increment('bonus_points', $amount);
 
         // Record transaction
-        \App\Models\PointTransaction::create([
+        \App\Infrastructure\Persistence\Eloquent\GrowNet\PointTransaction::create([
             'user_id' => $this->id,
             'point_type' => 'monthly',
             'lp_amount' => 0,
@@ -2130,13 +2130,13 @@ class User extends Authenticatable
     public function awardPointsForActivity(string $activityType, string $description = null): void
     {
         // Get LP value from settings
-        $lpValue = \App\Models\LifePointSetting::getLPValue($activityType);
+        $lpValue = \App\Infrastructure\Persistence\Eloquent\GrowNet\LifePointSetting::getLPValue($activityType);
         if ($lpValue > 0) {
             $this->awardLifePoints($lpValue, $activityType, $description);
         }
 
         // Get BP value from settings
-        $bpValue = \App\Models\BonusPointSetting::getBPValue($activityType);
+        $bpValue = \App\Infrastructure\Persistence\Eloquent\GrowNet\BonusPointSetting::getBPValue($activityType);
         if ($bpValue > 0) {
             $this->awardBonusPoints($bpValue, $activityType, $description);
         }

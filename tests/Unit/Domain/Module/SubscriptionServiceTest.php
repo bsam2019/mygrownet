@@ -90,10 +90,10 @@ class SubscriptionServiceTest extends TestCase
         $user = new User(['id' => 1]);
         
         $this->usageLimitService->shouldReceive('hasFeature')
-            ->with($user, 'growbiz', 'advanced_reports')
+            ->with($user, 'growfinance', 'advanced_reports')
             ->andReturn(false);
 
-        $this->assertFalse($this->service->canPerformAction($user, 'advanced_reports', 'growbiz'));
+        $this->assertFalse($this->service->canPerformAction($user, 'advanced_reports', 'growfinance'));
     }
 
     /** @test */

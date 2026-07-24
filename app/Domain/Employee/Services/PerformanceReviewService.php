@@ -1,17 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Domain\Employee\Services;
 
 use App\Domain\Employee\ValueObjects\EmployeeId;
-use App\Models\Employee\EmployeePerformanceReview;
+use App\Domain\Employee\Repositories\EmployeePerformanceRepositoryInterface;
 use Illuminate\Support\Collection;
 
 class PerformanceReviewService
 {
+    public function __construct(
+        private EmployeePerformanceRepositoryInterface $performanceRepo
+    ) {}
+
     public function getReviewsForEmployee(EmployeeId $employeeId, array $filters = []): Collection
     {
-        $query = EmployeePerformanceReview::forEmployee($employeeId->value())
-            ->with('reviewer');
+        $query = $this->performanceRepo->query()->where('employee_id', $employeeId->value());
 
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -21,13 +26,14 @@ class PerformanceReviewService
             $query->where('review_type', $filters['type']);
         }
 
-        return $query->orderBy('created_at', 'desc')->get();
+        return $query->with('reviewer')->orderBy('created_at', 'desc')->get();
     }
 
     public function getPendingReviews(EmployeeId $employeeId): Collection
     {
-        return EmployeePerformanceReview::forEmployee($employeeId->value())
-            ->pending()
+        return $this->performanceRepo->query()
+            ->where('employee_id', $employeeId->value())
+            ->whereIn('status', ['draft', 'submitted'])
             ->with('reviewer')
             ->orderBy('due_date')
             ->get();
@@ -35,7 +41,9 @@ class PerformanceReviewService
 
     public function getReviewStats(EmployeeId $employeeId): array
     {
-        $reviews = EmployeePerformanceReview::forEmployee($employeeId->value())->get();
+        $reviews = $this->performanceRepo->query()
+            ->where('employee_id', $employeeId->value())
+            ->get();
 
         return [
             'total' => $reviews->count(),
@@ -48,11 +56,11 @@ class PerformanceReviewService
         ];
     }
 
-    public function submitSelfAssessment(int $reviewId, array $data): EmployeePerformanceReview
+    public function submitSelfAssessment(int $reviewId, array $data): object
     {
-        $review = EmployeePerformanceReview::findOrFail($reviewId);
+        $review = $this->performanceRepo->findById($reviewId);
 
-        $review->update([
+        $this->performanceRepo->update($reviewId, [
             'ratings' => $data['ratings'] ?? $review->ratings,
             'strengths' => $data['strengths'] ?? null,
             'improvements' => $data['improvements'] ?? null,
@@ -61,13 +69,14 @@ class PerformanceReviewService
             'submitted_at' => now(),
         ]);
 
-        return $review;
+        return $review->fresh();
     }
 
     public function getRatingTrends(EmployeeId $employeeId, int $limit = 8): array
     {
-        $reviews = EmployeePerformanceReview::forEmployee($employeeId->value())
-            ->completed()
+        $reviews = $this->performanceRepo->query()
+            ->where('employee_id', $employeeId->value())
+            ->where('status', 'completed')
             ->whereNotNull('overall_rating')
             ->orderBy('completed_at', 'desc')
             ->limit($limit)

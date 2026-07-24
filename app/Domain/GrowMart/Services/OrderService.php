@@ -2,25 +2,27 @@
 
 namespace App\Domain\GrowMart\Services;
 
-use App\Models\GrowMart\GrowMartCoupon;
+use App\Domain\GrowMart\Repositories\OrderRepositoryInterface;
+use App\Domain\GrowMart\Repositories\ProductRepositoryInterface;
 use App\Models\GrowMart\GrowMartInventory;
-use App\Models\GrowMart\GrowMartOrder;
 use App\Models\GrowMart\GrowMartProduct;
+use App\Models\User;
 use App\Notifications\GrowMartOrderNotification;
 use App\Notifications\GrowMart\LowStockAlertNotification;
-use App\Domain\GrowMart\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class OrderService
 {
     public function __construct(
+        private readonly OrderRepositoryInterface $orderRepository,
+        private readonly ProductRepositoryInterface $productRepository,
         private readonly CartService $cartService,
         private readonly CouponService $couponService,
         private readonly NotificationService $notificationService,
     ) {}
 
-    public function createOrder(int $userId, array $data): GrowMartOrder
+    public function createOrder(int $userId, array $data): array
     {
         $summary = $this->cartService->getSummary($userId);
 
@@ -30,8 +32,8 @@ class OrderService
 
         $insufficient = [];
         foreach ($summary['items'] as $item) {
-            $product = GrowMartProduct::withSum('inventory', 'quantity')->find($item['product_id']);
-            $available = $product ? (int) $product->inventory_sum_quantity : 0;
+            $product = $this->productRepository->findById($item['product_id']);
+            $available = (int) ($product['inventory_sum_quantity'] ?? 0);
             if ($item['quantity'] > $available) {
                 $insufficient[] = "{$item['name']} (requested {$item['quantity']}, available {$available})";
             }
@@ -52,7 +54,7 @@ class OrderService
                     $result = $this->couponService->validateCoupon($coupon, $summary['subtotal']);
                     if ($result['valid']) {
                         $discount = $result['discount'];
-                        $couponId = $coupon->id;
+                        $couponId = $coupon['id'];
                         $this->couponService->incrementUsage($coupon);
                     }
                 }
@@ -60,7 +62,7 @@ class OrderService
 
             $total = $summary['subtotal'] + $deliveryFee - $discount;
 
-            $order = GrowMartOrder::create([
+            $order = $this->orderRepository->save([
                 'order_number' => 'GM-' . strtoupper(Str::random(8)) . '-' . time(),
                 'user_id' => $userId,
                 'coupon_id' => $couponId,
@@ -79,7 +81,7 @@ class OrderService
             ]);
 
             foreach ($summary['items'] as $item) {
-                $order->items()->create([
+                $this->orderRepository->addItem($order['id'], [
                     'product_id' => $item['product_id'],
                     'product_name' => $item['name'],
                     'quantity' => $item['quantity'],
@@ -105,24 +107,26 @@ class OrderService
 
             $this->cartService->clearCart($userId);
 
-            $order->load('user');
-            $this->notificationService->notify(
-                $order->user,
-                'growmart.order_placed',
-                'Order Placed',
-                "Order {$order->order_number} placed successfully!",
-                route('growmart.orders.show', $order->id),
-                'View Order',
-                'orders',
-                'normal',
-                ['order_number' => $order->order_number, 'order_id' => $order->id, 'total' => $order->total],
-            );
-            $order->user->notify(new GrowMartOrderNotification('order_placed', [
-                'order_number' => $order->order_number,
-                'order_id' => $order->id,
-                'total' => $order->total,
-                'items' => $summary['items'],
-            ]));
+            $user = User::find($userId);
+            if ($user) {
+                $this->notificationService->notify(
+                    $user,
+                    'growmart.order_placed',
+                    'Order Placed',
+                    "Order {$order['order_number']} placed successfully!",
+                    route('growmart.orders.show', $order['id']),
+                    'View Order',
+                    'orders',
+                    'normal',
+                    ['order_number' => $order['order_number'], 'order_id' => $order['id'], 'total' => $order['total']],
+                );
+                $user->notify(new GrowMartOrderNotification('order_placed', [
+                    'order_number' => $order['order_number'],
+                    'order_id' => $order['id'],
+                    'total' => $order['total'],
+                    'items' => $summary['items'],
+                ]));
+            }
 
             $this->notifyAdmins($order);
 
@@ -130,41 +134,41 @@ class OrderService
         });
     }
 
-    public function getOrdersForUser(int $userId, int $perPage = 20)
+    public function getOrdersForUser(int $userId, int $perPage = 20): array
     {
-        return GrowMartOrder::where('user_id', $userId)
-            ->with('items')
-            ->latest()
-            ->paginate($perPage);
+        return $this->orderRepository->findByUser($userId, ['per_page' => $perPage]);
     }
 
-    public function getOrder(int $orderId, ?int $userId = null): GrowMartOrder
+    public function getOrder(int $orderId, ?int $userId = null): array
     {
-        $query = GrowMartOrder::with('items', 'coupon');
-        if ($userId) {
-            $query->where('user_id', $userId);
+        $order = $this->orderRepository->findById($orderId);
+        if (!$order) {
+            throw new \RuntimeException('Order not found.');
         }
-        return $query->findOrFail($orderId);
+        if ($userId && ($order['user_id'] ?? null) !== $userId) {
+            throw new \RuntimeException('Order not found.');
+        }
+        return $order;
     }
 
-    public function cancelOrder(int $orderId, int $userId): GrowMartOrder
+    public function cancelOrder(int $orderId, int $userId): array
     {
         $order = $this->getOrder($orderId, $userId);
 
-        if (!in_array($order->status, ['pending', 'confirmed'])) {
+        if (!in_array($order['status'], ['pending', 'confirmed'])) {
             throw new \RuntimeException('Order cannot be cancelled in its current state.');
         }
 
         DB::transaction(function () use ($order) {
-            $order->update([
+            $this->orderRepository->update($order['id'], [
                 'status' => 'cancelled',
-                'cancelled_at' => now(),
+                'cancelled_at' => now()->toDateTimeString(),
             ]);
 
-            foreach ($order->items as $item) {
-                if (!$item->product_id) continue;
-                $remaining = $item->quantity;
-                $inventoryRows = GrowMartInventory::where('product_id', $item->product_id)
+            foreach ($order['items'] as $item) {
+                if (!$item['product_id']) continue;
+                $remaining = $item['quantity'];
+                $inventoryRows = GrowMartInventory::where('product_id', $item['product_id'])
                     ->orderBy('quantity')
                     ->lockForUpdate()
                     ->get();
@@ -176,95 +180,102 @@ class OrderService
             }
         });
 
-        $order->load('user');
-        $this->notificationService->notify(
-            $order->user,
-            'growmart.order_cancelled',
-            'Order Cancelled',
-            "Order {$order->order_number} has been cancelled.",
-            route('growmart.orders.show', $order->id),
-            'View Order',
-            'orders',
-            'high',
-            ['order_number' => $order->order_number, 'order_id' => $order->id],
-        );
-        $order->user->notify(new GrowMartOrderNotification('order_cancelled', [
-            'order_number' => $order->order_number,
-            'order_id' => $order->id,
-        ]));
+        $user = User::find($userId);
+        if ($user) {
+            $this->notificationService->notify(
+                $user,
+                'growmart.order_cancelled',
+                'Order Cancelled',
+                "Order {$order['order_number']} has been cancelled.",
+                route('growmart.orders.show', $order['id']),
+                'View Order',
+                'orders',
+                'high',
+                ['order_number' => $order['order_number'], 'order_id' => $order['id']],
+            );
+            $user->notify(new GrowMartOrderNotification('order_cancelled', [
+                'order_number' => $order['order_number'],
+                'order_id' => $order['id'],
+            ]));
+        }
 
-        return $order;
+        return $this->orderRepository->findById($order['id']);
     }
 
-    public function updateStatus(int $orderId, string $status): GrowMartOrder
+    public function updateStatus(int $orderId, string $status): array
     {
         $order = $this->getOrder($orderId);
 
         $updates = ['status' => $status];
-
         if ($status === 'delivered') {
-            $updates['delivered_at'] = now();
+            $updates['delivered_at'] = now()->toDateTimeString();
         } elseif ($status === 'cancelled') {
-            $updates['cancelled_at'] = now();
+            $updates['cancelled_at'] = now()->toDateTimeString();
         }
 
-        $order->update($updates);
+        $this->orderRepository->update($orderId, $updates);
+        $order = $this->orderRepository->findById($orderId);
 
-        $order->load('user');
-        $this->notificationService->notify(
-            $order->user,
-            'growmart.order_status',
-            'Order Status Update',
-            "Order {$order->order_number} is now " . str_replace('_', ' ', $status) . ".",
-            route('growmart.orders.show', $order->id),
-            'View Order',
-            'orders',
-            'normal',
-            ['order_number' => $order->order_number, 'order_id' => $order->id, 'status' => $status],
-        );
-        $order->user->notify(new GrowMartOrderNotification('order_status', [
-            'order_number' => $order->order_number,
-            'order_id' => $order->id,
-            'status' => $status,
-        ]));
-
-        return $order;
-    }
-
-    public function updatePayment(int $orderId, string $paymentStatus): GrowMartOrder
-    {
-        $order = $this->getOrder($orderId);
-
-        $updates = ['payment_status' => $paymentStatus];
-        if ($paymentStatus === 'paid') {
-            $updates['paid_at'] = now();
-        }
-
-        $order->update($updates);
-
-        if ($paymentStatus === 'paid') {
-            $order->load('user');
+        $user = User::find($order['user_id']);
+        if ($user) {
             $this->notificationService->notify(
-                $order->user,
-                'growmart.order_paid',
-                'Payment Received',
-                "Payment received for order {$order->order_number}.",
-                route('growmart.orders.show', $order->id),
+                $user,
+                'growmart.order_status',
+                'Order Status Update',
+                "Order {$order['order_number']} is now " . str_replace('_', ' ', $status) . ".",
+                route('growmart.orders.show', $order['id']),
                 'View Order',
-                'payments',
-                'high',
-                ['order_number' => $order->order_number, 'order_id' => $order->id],
+                'orders',
+                'normal',
+                ['order_number' => $order['order_number'], 'order_id' => $order['id'], 'status' => $status],
             );
-            $order->user->notify(new GrowMartOrderNotification('order_paid', [
-                'order_number' => $order->orderNumber,
-                'order_id' => $order->id,
+            $user->notify(new GrowMartOrderNotification('order_status', [
+                'order_number' => $order['order_number'],
+                'order_id' => $order['id'],
+                'status' => $status,
             ]));
         }
 
         return $order;
     }
 
-    public function updateTracking(int $orderId, array $data): GrowMartOrder
+    public function updatePayment(int $orderId, string $paymentStatus): array
+    {
+        $order = $this->getOrder($orderId);
+
+        $updates = ['payment_status' => $paymentStatus];
+        if ($paymentStatus === 'paid') {
+            $updates['paid_at'] = now()->toDateTimeString();
+        }
+
+        $this->orderRepository->update($orderId, $updates);
+        $order = $this->orderRepository->findById($orderId);
+
+        if ($paymentStatus === 'paid') {
+            $user = User::find($order['user_id']);
+            if ($user) {
+                $this->notificationService->notify(
+                    $user,
+                    'growmart.order_paid',
+                    'Payment Received',
+                    "Payment received for order {$order['order_number']}.",
+                    route('growmart.orders.show', $order['id']),
+                    'View Order',
+                    'payments',
+                    'high',
+                    ['order_number' => $order['order_number'], 'order_id' => $order['id']],
+                );
+                $user->notify(new GrowMartOrderNotification('order_paid', [
+                    'order_number' => $order['order_number'],
+                    'order_id' => $order['id'],
+                ]));
+            }
+        }
+
+        return $order;
+    }
+
+    public function updateTracking(int $orderId, array $data): array
     {
         $order = $this->getOrder($orderId);
 
@@ -274,54 +285,34 @@ class OrderService
         if (isset($data['estimated_delivery_at'])) $updates['estimated_delivery_at'] = $data['estimated_delivery_at'];
 
         $entry = [
-            'status' => $data['tracking_status'] ?? $order->status,
+            'status' => $data['tracking_status'] ?? $order['status'],
             'message' => $data['tracking_message'] ?? 'Order updated',
             'timestamp' => now()->toISOString(),
         ];
 
-        $existing = $order->tracking_updates ?? [];
+        $existing = $order['tracking_updates'] ?? [];
         $existing[] = $entry;
         $updates['tracking_updates'] = $existing;
 
-        $order->update($updates);
+        $this->orderRepository->update($orderId, $updates);
 
-        return $order;
+        return $this->orderRepository->findById($orderId);
     }
 
-    public function getAllOrders(array $filters = [], int $perPage = 20)
+    public function getAllOrders(array $filters = [], int $perPage = 20): array
     {
-        $query = GrowMartOrder::with('items', 'user');
-
-        if (!empty($filters['search'])) {
-            $query->where(function ($q) use ($filters) {
-                $q->where('order_number', 'like', '%' . $filters['search'] . '%')
-                  ->orWhereHas('user', fn($u) => $u->where('name', 'like', '%' . $filters['search'] . '%'));
-            });
-        }
-
-        if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
-
-        if (!empty($filters['payment_status'])) {
-            $query->where('payment_status', $filters['payment_status']);
-        }
-
-        $sort = $filters['sort'] ?? 'latest';
-        $query->orderBy($sort === 'oldest' ? 'created_at' : 'created_at', $sort === 'oldest' ? 'asc' : 'desc');
-
-        return $query->paginate($perPage);
+        return $this->orderRepository->findAll($filters, $perPage);
     }
 
-    private function notifyAdmins(GrowMartOrder $order): void
+    private function notifyAdmins(array $order): void
     {
-        $admins = \App\Models\User::role('admin')->get();
+        $admins = User::role('admin')->get();
         foreach ($admins as $admin) {
             $admin->notify(new GrowMartOrderNotification('admin_new_order', [
-                'order_number' => $order->order_number,
-                'order_id' => $order->id,
-                'total' => $order->total,
-                'customer_name' => $order->user?->name ?? 'Unknown',
+                'order_number' => $order['order_number'],
+                'order_id' => $order['id'],
+                'total' => $order['total'],
+                'customer_name' => User::find($order['user_id'])?->name ?? 'Unknown',
             ]));
         }
     }
@@ -340,7 +331,7 @@ class OrderService
 
         if ($lowStockItems->isEmpty()) return;
 
-        $admins = \App\Models\User::role('admin')->get();
+        $admins = User::role('admin')->get();
         foreach ($lowStockItems as $item) {
             foreach ($admins as $admin) {
                 $admin->notify(new LowStockAlertNotification([

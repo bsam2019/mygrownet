@@ -7,7 +7,7 @@ namespace App\Infrastructure\Persistence\Repositories;
 use App\Domain\Community\Repositories\VotingRepository;
 use App\Domain\Community\ValueObjects\ProjectId;
 use App\Domain\Community\ValueObjects\VotingPower;
-use App\Domain\MLM\ValueObjects\UserId;
+use App\Domain\GrowNet\MLM\ValueObjects\UserId;
 use App\Models\ProjectVote;
 use DateTimeImmutable;
 

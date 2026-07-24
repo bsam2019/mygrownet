@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use App\Domain\BizBoost\Services\BizBoostUsageProvider;
-use App\Domain\GrowBiz\Services\GrowBizUsageProvider;
 use App\Domain\GrowFinance\Services\GrowFinanceUsageProvider;
 use App\Domain\Module\Contracts\ModuleUsageProviderInterface;
 use App\Domain\Module\Repositories\ModuleRepositoryInterface;
@@ -47,13 +46,11 @@ class ModuleSubscriptionServiceProvider extends ServiceProvider
 
         // Register usage providers
         $this->app->singleton(GrowFinanceUsageProvider::class);
-        $this->app->singleton(GrowBizUsageProvider::class);
         $this->app->singleton(BizBoostUsageProvider::class);
 
         // Tag all usage providers for easy collection
         $this->app->tag([
             GrowFinanceUsageProvider::class,
-            GrowBizUsageProvider::class,
             BizBoostUsageProvider::class,
         ], 'module.usage.providers');
     }

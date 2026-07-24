@@ -2,12 +2,13 @@
 
 namespace App\Domain\POS\Services;
 
+use App\Domain\Inventory\Entities\InventoryItem;
+use App\Domain\Inventory\Repositories\InventoryItemRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\POSShiftModel;
 use App\Infrastructure\Persistence\Eloquent\POSSaleModel;
 use App\Infrastructure\Persistence\Eloquent\POSSaleItemModel;
 use App\Infrastructure\Persistence\Eloquent\POSSettingsModel;
 use App\Infrastructure\Persistence\Eloquent\POSQuickProductModel;
-use App\Infrastructure\Persistence\Eloquent\InventoryItemModel;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -21,6 +22,10 @@ class POSService
 {
     protected string $moduleContext = 'pos';
     protected ?int $userId = null;
+
+    public function __construct(
+        private InventoryItemRepositoryInterface $itemRepository,
+    ) {}
 
     /**
      * Set the module context for all operations
@@ -366,9 +371,9 @@ class POSService
             ->delete();
 
         // Add new
-        $items = InventoryItemModel::whereIn('id', $productIds)
-            ->where('user_id', $userId)
-            ->get();
+        $items = array_filter(
+            array_map(fn($id) => $this->itemRepository->findByIdForUser((int) $id, $userId), $productIds)
+        );
 
         foreach ($items as $index => $item) {
             POSQuickProductModel::create([
@@ -376,7 +381,7 @@ class POSService
                 'module_context' => $this->moduleContext,
                 'inventory_item_id' => $item->id,
                 'name' => $item->name,
-                'price' => $item->selling_price,
+                'price' => $item->sellingPrice,
                 'sort_order' => $index,
             ]);
         }
@@ -506,18 +511,25 @@ class POSService
 
     protected function decrementStock(int $itemId, float $quantity, int $saleId): void
     {
-        $item = InventoryItemModel::find($itemId);
-        if ($item && $item->track_stock) {
-            $item->decrement('current_stock', $quantity);
-            // Stock movement is handled by inventory service
+        $item = $this->itemRepository->findById($itemId);
+        if ($item && $item->trackStock) {
+            $updated = InventoryItem::reconstitute([
+                ...$item->toArray(),
+                'current_stock' => $item->currentStock - (int) $quantity,
+            ]);
+            $this->itemRepository->save($updated);
         }
     }
 
     protected function incrementStock(int $itemId, float $quantity, int $saleId, string $reason): void
     {
-        $item = InventoryItemModel::find($itemId);
-        if ($item && $item->track_stock) {
-            $item->increment('current_stock', $quantity);
+        $item = $this->itemRepository->findById($itemId);
+        if ($item && $item->trackStock) {
+            $updated = InventoryItem::reconstitute([
+                ...$item->toArray(),
+                'current_stock' => $item->currentStock + (int) $quantity,
+            ]);
+            $this->itemRepository->save($updated);
         }
     }
 }

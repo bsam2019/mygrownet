@@ -53,7 +53,6 @@ class HandleInertiaRequests extends Middleware
             'admin'                             => 'admin',
             'employee'                          => 'employee',
             'employees'                         => 'employee',
-            'growbiz'                           => 'growbiz',
             'lifeplus'                          => 'lifephus',
             'growfinance'                       => 'growfinance',
             'growmarket'                        => 'marketplace',

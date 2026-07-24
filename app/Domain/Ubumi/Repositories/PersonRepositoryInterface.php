@@ -19,7 +19,11 @@ interface PersonRepositoryInterface
 
     public function findBySlug(string $slug): ?Person;
 
+    public function findByFamilyAndSlug(string $familyId, string $slug): ?Person;
+
     public function findByFamilyId(string $familyId): array;
+
+    public function slugExistsInFamily(string $familyId, string $slug, ?PersonId $excludeId = null): bool;
 
     public function findSimilar(string $familyId, PersonName $name, ?int $age = null): array;
 

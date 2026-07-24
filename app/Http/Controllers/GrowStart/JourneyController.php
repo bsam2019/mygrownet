@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Domain\GrowStart\Entities\StartupJourney;
 use App\Domain\GrowStart\Repositories\JourneyRepositoryInterface;
 use App\Domain\GrowStart\Repositories\StageRepositoryInterface;
+use App\Domain\GrowStart\Repositories\IndustryRepositoryInterface;
+use App\Domain\GrowStart\Repositories\CountryRepositoryInterface;
 use App\Domain\GrowStart\Services\JourneyProgressService;
-use App\Models\GrowStart\Industry;
-use App\Models\GrowStart\Country;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
@@ -20,13 +20,15 @@ class JourneyController extends Controller
     public function __construct(
         private JourneyRepositoryInterface $journeyRepository,
         private StageRepositoryInterface $stageRepository,
-        private JourneyProgressService $progressService
+        private JourneyProgressService $progressService,
+        private IndustryRepositoryInterface $industryRepo,
+        private CountryRepositoryInterface $countryRepo
     ) {}
 
     public function onboarding(Request $request): Response
     {
-        $industries = Industry::active()->ordered()->get();
-        $countries = Country::active()->get();
+        $industries = $this->industryRepo->findAllActive();
+        $countries = $this->countryRepo->findAllActive();
 
         return Inertia::render('GrowStart/Onboarding/Index', [
             'industries' => $industries,
@@ -37,8 +39,8 @@ class JourneyController extends Controller
     public function startJourney(Request $request)
     {
         $validated = $request->validate([
-            'industry_id' => 'required|exists:growstart_industries,id',
-            'country_id' => 'required|exists:growstart_countries,id',
+            'industry_id' => 'required|integer',
+            'country_id' => 'required|integer',
             'business_name' => 'required|string|max:255',
             'business_description' => 'nullable|string|max:1000',
             'target_launch_date' => 'nullable|date|after:today',
@@ -48,19 +50,16 @@ class JourneyController extends Controller
 
         $user = $request->user();
 
-        // Check if user already has an active journey
         $existingJourney = $this->journeyRepository->findActiveByUserId($user->id);
         if ($existingJourney) {
             return back()->withErrors(['journey' => 'You already have an active journey.']);
         }
 
-        // Get first stage
         $firstStage = $this->stageRepository->findFirst();
         if (!$firstStage) {
             return back()->withErrors(['stage' => 'No stages configured.']);
         }
 
-        // Create journey
         $journey = StartupJourney::create(
             userId: $user->id,
             industryId: $validated['industry_id'],
@@ -68,14 +67,14 @@ class JourneyController extends Controller
             businessName: $validated['business_name'],
             initialStageId: $firstStage->getId(),
             businessDescription: $validated['business_description'] ?? null,
-            targetLaunchDate: isset($validated['target_launch_date']) 
-                ? new DateTimeImmutable($validated['target_launch_date']) 
+            targetLaunchDate: isset($validated['target_launch_date'])
+                ? new DateTimeImmutable($validated['target_launch_date'])
                 : null,
             province: $validated['province'] ?? null,
             city: $validated['city'] ?? null
         );
 
-        $savedJourney = $this->journeyRepository->save($journey);
+        $this->journeyRepository->save($journey);
 
         return redirect()->route('growstart.dashboard')
             ->with('success', 'Your startup journey has begun!');
@@ -91,9 +90,9 @@ class JourneyController extends Controller
 
         $progress = $this->progressService->calculateProgress($journey);
         $stages = $this->stageRepository->findActive();
-        
-        $industry = Industry::find($journey->getIndustryId());
-        $country = Country::find($journey->getCountryId());
+
+        $industry = $this->industryRepo->findById($journey->getIndustryId());
+        $country = $this->countryRepo->findById($journey->getCountryId());
 
         return Inertia::render('GrowStart/Journey/Show', [
             'journey' => $journey->toArray(),
@@ -181,7 +180,6 @@ class JourneyController extends Controller
         ]);
     }
 
-    // API Methods
     public function apiShow(Request $request): JsonResponse
     {
         $journey = $this->journeyRepository->findActiveByUserId($request->user()->id);
@@ -195,10 +193,9 @@ class JourneyController extends Controller
 
     public function apiStore(Request $request): JsonResponse
     {
-        // Same logic as startJourney but returns JSON
         $validated = $request->validate([
-            'industry_id' => 'required|exists:growstart_industries,id',
-            'country_id' => 'required|exists:growstart_countries,id',
+            'industry_id' => 'required|integer',
+            'country_id' => 'required|integer',
             'business_name' => 'required|string|max:255',
         ]);
 
@@ -225,13 +222,13 @@ class JourneyController extends Controller
 
     public function industries(): JsonResponse
     {
-        $industries = Industry::active()->ordered()->get();
+        $industries = $this->industryRepo->findAllActive();
         return response()->json(['data' => $industries]);
     }
 
     public function countries(): JsonResponse
     {
-        $countries = Country::active()->get();
+        $countries = $this->countryRepo->findAllActive();
         return response()->json(['data' => $countries]);
     }
 }

@@ -3,19 +3,24 @@
 namespace App\Http\Controllers\BizBoost;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
+use App\Domain\BizBoost\Services\BusinessService;
+use App\Domain\BizBoost\Repositories\FollowUpReminderRepositoryInterface;
+use App\Domain\BizBoost\Repositories\CustomerRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class ReminderController extends Controller
 {
-    public function index(Request $request): Response
+    public function __construct(
+        private BusinessService $businessService,
+        private FollowUpReminderRepositoryInterface $reminderRepo,
+        private CustomerRepositoryInterface $customerRepo,
+    ) {}
+
+    public function index(Request $request)
     {
-        $business = $this->getBusiness($request);
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
 
         $reminders = DB::table('bizboost_follow_up_reminders')
             ->leftJoin('bizboost_customers', 'bizboost_follow_up_reminders.customer_id', '=', 'bizboost_customers.id')
@@ -44,7 +49,7 @@ class ReminderController extends Controller
                 ->count(),
         ];
 
-        $customers = $business->customers()->select('id', 'name')->get();
+        $customers = $this->customerRepo->findByBusiness($business->id);
 
         return Inertia::render('BizBoost/Reminders/Index', [
             'reminders' => $reminders,
@@ -53,7 +58,7 @@ class ReminderController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'customer_id' => 'nullable|integer|exists:bizboost_customers,id',
@@ -65,7 +70,7 @@ class ReminderController extends Controller
             'priority' => 'required|string|in:low,medium,high',
         ]);
 
-        $business = $this->getBusiness($request);
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
 
         $dueTime = $validated['due_time'] ?? '09:00';
         $remindAt = "{$validated['due_date']} {$dueTime}:00";
@@ -89,7 +94,7 @@ class ReminderController extends Controller
         return back()->with('success', 'Reminder created successfully!');
     }
 
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(Request $request, int $id)
     {
         $validated = $request->validate([
             'customer_id' => 'nullable|integer|exists:bizboost_customers,id',
@@ -101,7 +106,7 @@ class ReminderController extends Controller
             'priority' => 'required|string|in:low,medium,high',
         ]);
 
-        $business = $this->getBusiness($request);
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
 
         $dueTime = $validated['due_time'] ?? '09:00';
         $remindAt = "{$validated['due_date']} {$dueTime}:00";
@@ -118,7 +123,7 @@ class ReminderController extends Controller
                 'remind_at' => $remindAt,
                 'reminder_type' => $validated['reminder_type'],
                 'priority' => $validated['priority'],
-                'notification_sent' => false, // Reset notification flag when rescheduled
+                'notification_sent' => false,
                 'updated_at' => now(),
             ]);
 
@@ -129,26 +134,20 @@ class ReminderController extends Controller
         return back()->with('success', 'Reminder updated successfully!');
     }
 
-    public function destroy(Request $request, int $id): RedirectResponse
+    public function destroy(Request $request, int $id)
     {
-        $business = $this->getBusiness($request);
-
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
         DB::table('bizboost_follow_up_reminders')
             ->where('id', $id)
             ->where('business_id', $business->id)
             ->delete();
-
         return back()->with('success', 'Reminder deleted.');
     }
 
-    public function complete(Request $request, int $id): RedirectResponse
+    public function complete(Request $request, int $id)
     {
-        $business = $this->getBusiness($request);
-
-        $validated = $request->validate([
-            'notes' => 'nullable|string|max:500',
-        ]);
-
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
+        $validated = $request->validate(['notes' => 'nullable|string|max:500']);
         DB::table('bizboost_follow_up_reminders')
             ->where('id', $id)
             ->where('business_id', $business->id)
@@ -158,30 +157,21 @@ class ReminderController extends Controller
                 'completion_notes' => $validated['notes'] ?? null,
                 'updated_at' => now(),
             ]);
-
         return back()->with('success', 'Reminder marked as complete!');
     }
 
-    public function snooze(Request $request, int $id): RedirectResponse
+    public function snooze(Request $request, int $id)
     {
-        $validated = $request->validate([
-            'snooze_until' => 'required|date|after:today',
-        ]);
-
-        $business = $this->getBusiness($request);
-
-        // Get the existing reminder to preserve the time
+        $validated = $request->validate(['snooze_until' => 'required|date|after:today']);
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
         $existing = DB::table('bizboost_follow_up_reminders')
             ->where('id', $id)
             ->where('business_id', $business->id)
             ->first();
-
         if (!$existing) {
             return back()->with('error', 'Reminder not found.');
         }
-
         $remindAt = "{$validated['snooze_until']} {$existing->due_time}:00";
-
         DB::table('bizboost_follow_up_reminders')
             ->where('id', $id)
             ->where('business_id', $business->id)
@@ -189,15 +179,9 @@ class ReminderController extends Controller
                 'due_date' => $validated['snooze_until'],
                 'remind_at' => $remindAt,
                 'snoozed_count' => DB::raw('snoozed_count + 1'),
-                'notification_sent' => false, // Reset so notification is sent again
+                'notification_sent' => false,
                 'updated_at' => now(),
             ]);
-
         return back()->with('success', 'Reminder snoozed.');
-    }
-
-    private function getBusiness(Request $request): BizBoostBusinessModel
-    {
-        return BizBoostBusinessModel::where('user_id', $request->user()->id)->firstOrFail();
     }
 }

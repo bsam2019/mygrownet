@@ -2,14 +2,14 @@
 
 namespace Database\Factories;
 
-use App\Models\AchievementBonus;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\AchievementBonus;
 use App\Models\User;
-use App\Models\Achievement;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\Achievement;
 use App\Models\PaymentTransaction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\AchievementBonus>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Infrastructure\Persistence\Eloquent\GrowNet\AchievementBonus>
  */
 class AchievementBonusFactory extends Factory
 {

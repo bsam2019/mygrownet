@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
-use App\Services\LevelAdvancementService;
+use App\Domain\GrowNet\Services\LevelAdvancementService;
 use Illuminate\Console\Command;
 
 class CheckLevelAdvancements extends Command

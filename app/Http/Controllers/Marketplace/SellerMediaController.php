@@ -3,42 +3,46 @@
 namespace App\Http\Controllers\Marketplace;
 
 use App\Http\Controllers\Controller;
-use App\Models\Marketplace\MarketplaceSeller;
-use App\Models\Marketplace\MarketplaceSellerMedia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Laravel\Facades\Image;
 
 class SellerMediaController extends Controller
 {
-    /**
-     * Get all media for the authenticated seller
-     */
+    private const MAX_MEDIA_PER_SELLER = 100;
+
     public function index(Request $request)
     {
-        $seller = MarketplaceSeller::where('user_id', $request->user()->id)->first();
+        $seller = DB::table('marketplace_sellers')
+            ->where('user_id', $request->user()->id)
+            ->first();
 
         if (!$seller) {
             return response()->json(['data' => []]);
         }
 
-        $media = MarketplaceSellerMedia::where('seller_id', $seller->id)
+        $media = DB::table('marketplace_seller_media')
+            ->where('seller_id', $seller->id)
             ->orderBy('created_at', 'desc')
             ->paginate(24);
 
         $transformedData = $media->getCollection()->map(function ($item) {
+            $variants = is_string($item->variants) ? json_decode($item->variants, true) : (array) ($item->variants ?? []);
             return [
                 'id' => $item->id,
-                'url' => $item->url,
-                'thumbnailUrl' => $item->thumbnail_url,
+                'url' => $this->getMediaUrl($item->disk, $item->path),
+                'thumbnailUrl' => $this->getThumbnailUrl($item->disk, $item->path, $variants),
                 'filename' => $item->filename,
                 'originalName' => $item->original_name,
-                'size' => $item->human_size,
+                'size' => $this->getHumanSize((int) $item->size),
                 'width' => $item->width,
                 'height' => $item->height,
             ];
         });
+
+        $media->setCollection(collect($transformedData));
 
         return response()->json([
             'data' => $transformedData,
@@ -52,17 +56,11 @@ class SellerMediaController extends Controller
         ]);
     }
 
-    /**
-     * Maximum media files per seller (100 images = ~500MB at 5MB each)
-     */
-    private const MAX_MEDIA_PER_SELLER = 100;
-
-    /**
-     * Upload a new media file
-     */
     public function store(Request $request)
     {
-        $seller = MarketplaceSeller::where('user_id', $request->user()->id)->first();
+        $seller = DB::table('marketplace_sellers')
+            ->where('user_id', $request->user()->id)
+            ->first();
 
         if (!$seller) {
             return response()->json([
@@ -71,8 +69,10 @@ class SellerMediaController extends Controller
             ], 404);
         }
 
-        // Check media limit
-        $currentCount = MarketplaceSellerMedia::where('seller_id', $seller->id)->count();
+        $currentCount = DB::table('marketplace_seller_media')
+            ->where('seller_id', $seller->id)
+            ->count();
+
         if ($currentCount >= self::MAX_MEDIA_PER_SELLER) {
             return response()->json([
                 'success' => false,
@@ -86,7 +86,7 @@ class SellerMediaController extends Controller
 
         $file = $request->file('file');
         $directory = "marketplace/sellers/{$seller->id}";
-        
+
         $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
         $path = "{$directory}/{$filename}";
 
@@ -102,7 +102,6 @@ class SellerMediaController extends Controller
                 $width = $image->width();
                 $height = $image->height();
 
-                // Create thumbnail
                 $thumbPath = "{$directory}/thumbs/{$filename}";
                 $thumb = $image->scale(width: 300);
                 Storage::disk('public')->put($thumbPath, $thumb->toJpeg(80));
@@ -112,7 +111,7 @@ class SellerMediaController extends Controller
             }
         }
 
-        $media = MarketplaceSellerMedia::create([
+        $mediaId = DB::table('marketplace_seller_media')->insertGetId([
             'seller_id' => $seller->id,
             'filename' => $filename,
             'original_name' => $file->getClientOriginalName(),
@@ -122,30 +121,34 @@ class SellerMediaController extends Controller
             'size' => $file->getSize(),
             'width' => $width,
             'height' => $height,
-            'variants' => $variants,
+            'variants' => json_encode($variants),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
+
+        $savedMedia = DB::table('marketplace_seller_media')->find($mediaId);
+        $savedVariants = is_string($savedMedia->variants) ? json_decode($savedMedia->variants, true) : [];
 
         return response()->json([
             'success' => true,
             'media' => [
-                'id' => $media->id,
-                'url' => $media->url,
-                'thumbnailUrl' => $media->thumbnail_url,
-                'filename' => $media->filename,
-                'originalName' => $media->original_name,
-                'size' => $media->human_size,
-                'width' => $media->width,
-                'height' => $media->height,
+                'id' => $savedMedia->id,
+                'url' => $this->getMediaUrl($savedMedia->disk, $savedMedia->path),
+                'thumbnailUrl' => $this->getThumbnailUrl($savedMedia->disk, $savedMedia->path, $savedVariants),
+                'filename' => $savedMedia->filename,
+                'originalName' => $savedMedia->original_name,
+                'size' => $this->getHumanSize((int) $savedMedia->size),
+                'width' => $savedMedia->width,
+                'height' => $savedMedia->height,
             ],
         ]);
     }
 
-    /**
-     * Store a base64 encoded image (for cropped images)
-     */
     public function storeBase64(Request $request)
     {
-        $seller = MarketplaceSeller::where('user_id', $request->user()->id)->first();
+        $seller = DB::table('marketplace_sellers')
+            ->where('user_id', $request->user()->id)
+            ->first();
 
         if (!$seller) {
             return response()->json([
@@ -164,7 +167,6 @@ class SellerMediaController extends Controller
         $directory = "marketplace/sellers/{$seller->id}";
 
         try {
-            // Extract base64 data from data URL
             if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $matches)) {
                 $extension = $matches[1] === 'jpeg' ? 'jpg' : $matches[1];
                 $imageData = substr($imageData, strpos($imageData, ',') + 1);
@@ -201,7 +203,7 @@ class SellerMediaController extends Controller
                 \Log::warning('Failed to process cropped image', ['error' => $e->getMessage()]);
             }
 
-            $media = MarketplaceSellerMedia::create([
+            $mediaId = DB::table('marketplace_seller_media')->insertGetId([
                 'seller_id' => $seller->id,
                 'filename' => $uniqueFilename,
                 'original_name' => $filename,
@@ -211,23 +213,28 @@ class SellerMediaController extends Controller
                 'size' => strlen($decodedImage),
                 'width' => $width,
                 'height' => $height,
-                'variants' => $variants,
-                'metadata' => ['source' => 'cropped'],
+                'variants' => json_encode($variants),
+                'metadata' => json_encode(['source' => 'cropped']),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
+
+            $savedMedia = DB::table('marketplace_seller_media')->find($mediaId);
+            $savedVariants = is_string($savedMedia->variants) ? json_decode($savedMedia->variants, true) : [];
 
             return response()->json([
                 'success' => true,
                 'media' => [
-                    'id' => $media->id,
-                    'url' => $media->url,
-                    'thumbnailUrl' => $media->thumbnail_url,
-                    'filename' => $media->filename,
-                    'originalName' => $media->original_name,
-                    'size' => $media->human_size,
-                    'width' => $media->width,
-                    'height' => $media->height,
+                    'id' => $savedMedia->id,
+                    'url' => $this->getMediaUrl($savedMedia->disk, $savedMedia->path),
+                    'thumbnailUrl' => $this->getThumbnailUrl($savedMedia->disk, $savedMedia->path, $savedVariants),
+                    'filename' => $savedMedia->filename,
+                    'originalName' => $savedMedia->original_name,
+                    'size' => $this->getHumanSize((int) $savedMedia->size),
+                    'width' => $savedMedia->width,
+                    'height' => $savedMedia->height,
                 ],
-                'url' => $media->url,
+                'url' => $this->getMediaUrl($savedMedia->disk, $savedMedia->path),
             ]);
 
         } catch (\Exception $e) {
@@ -240,12 +247,11 @@ class SellerMediaController extends Controller
         }
     }
 
-    /**
-     * Delete a media file
-     */
     public function destroy(Request $request, int $mediaId)
     {
-        $seller = MarketplaceSeller::where('user_id', $request->user()->id)->first();
+        $seller = DB::table('marketplace_sellers')
+            ->where('user_id', $request->user()->id)
+            ->first();
 
         if (!$seller) {
             return response()->json([
@@ -254,7 +260,8 @@ class SellerMediaController extends Controller
             ], 404);
         }
 
-        $media = MarketplaceSellerMedia::where('seller_id', $seller->id)
+        $media = DB::table('marketplace_seller_media')
+            ->where('seller_id', $seller->id)
             ->where('id', $mediaId)
             ->first();
 
@@ -266,13 +273,38 @@ class SellerMediaController extends Controller
         }
 
         Storage::disk($media->disk)->delete($media->path);
-        
-        if (isset($media->variants['thumbnail'])) {
-            Storage::disk($media->disk)->delete($media->variants['thumbnail']);
+
+        $variants = is_string($media->variants) ? json_decode($media->variants, true) : (array) ($media->variants ?? []);
+        if (isset($variants['thumbnail'])) {
+            Storage::disk($media->disk)->delete($variants['thumbnail']);
         }
 
-        $media->delete();
+        DB::table('marketplace_seller_media')
+            ->where('id', $media->id)
+            ->delete();
 
         return response()->json(['success' => true]);
+    }
+
+    private function getMediaUrl(string $disk, string $path): string
+    {
+        return Storage::disk($disk)->url($path);
+    }
+
+    private function getThumbnailUrl(string $disk, string $path, array $variants): ?string
+    {
+        if (isset($variants['thumbnail'])) {
+            return Storage::disk($disk)->url($variants['thumbnail']);
+        }
+        return Storage::disk($disk)->url($path);
+    }
+
+    private function getHumanSize(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
+            $bytes /= 1024;
+        }
+        return round($bytes, 2) . ' ' . $units[$i];
     }
 }

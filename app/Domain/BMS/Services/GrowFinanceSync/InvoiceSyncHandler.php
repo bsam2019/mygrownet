@@ -107,7 +107,7 @@ class InvoiceSyncHandler
                 }
 
                 // 4. Create journal entry in GrowFinance
-                $journalEntry = $this->accountingService->createJournalEntry(
+                $journalEntryData = $this->accountingService->createJournalEntry(
                     businessId: $invoice->company_id,
                     description: "CMS Invoice #{$invoice->invoice_number}" . 
                                 ($invoice->customer ? " - {$invoice->customer->name}" : ''),
@@ -117,14 +117,14 @@ class InvoiceSyncHandler
                 );
 
                 // 5. Post the entry (updates account balances)
-                $this->accountingService->postJournalEntry($journalEntry);
+                $this->accountingService->postJournalEntry($journalEntryData['id']);
 
                 // 6. Log success
-                $this->statusService->logSuccess($invoice, $journalEntry->id);
+                $this->statusService->logSuccess($invoice, $journalEntryData['id']);
 
                 Log::info("Successfully synced invoice #{$invoice->id} to GrowFinance", [
                     'invoice_id' => $invoice->id,
-                    'journal_entry_id' => $journalEntry->id,
+                    'journal_entry_id' => $journalEntryData['id'],
                 ]);
             });
         } catch (\Exception $e) {

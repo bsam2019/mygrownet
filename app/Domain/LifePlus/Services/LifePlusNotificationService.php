@@ -29,7 +29,7 @@ class LifePlusNotificationService
             'id' => Str::uuid()->toString(),
             'notifiable_type' => User::class,
             'notifiable_id' => $userId,
-            'type' => 'App\\Notifications\\LifePlusNotification',
+            'type' => 'App\Notifications\LifePlusNotification',
             'module' => self::MODULE,
             'category' => $category,
             'title' => $title,

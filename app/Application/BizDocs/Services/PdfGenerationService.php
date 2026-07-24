@@ -5,6 +5,7 @@ namespace App\Application\BizDocs\Services;
 use App\Domain\BizDocs\BusinessIdentity\Repositories\BusinessProfileRepositoryInterface;
 use App\Domain\BizDocs\CustomerManagement\Repositories\CustomerRepositoryInterface;
 use App\Domain\BizDocs\DocumentManagement\Entities\Document;
+use App\Domain\BizDocs\DocumentManagement\Repositories\DocumentTemplateRepositoryInterface;
 use App\Domain\BizDocs\DocumentManagement\ValueObjects\Money;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
@@ -14,6 +15,7 @@ class PdfGenerationService
     public function __construct(
         private readonly BusinessProfileRepositoryInterface $businessProfileRepository,
         private readonly CustomerRepositoryInterface $customerRepository,
+        private readonly DocumentTemplateRepositoryInterface $templateRepository,
         private readonly FileStorageService $fileStorageService
     ) {
     }
@@ -54,9 +56,8 @@ class PdfGenerationService
         // Determine which template to use
         $viewPath = 'bizdocs.pdf.document';
         
-        // If document has a template with layout_file, use it
         if ($document->templateId()) {
-            $template = \App\Infrastructure\BizDocs\Persistence\Eloquent\DocumentTemplateModel::find($document->templateId());
+            $template = $this->templateRepository->findById($document->templateId());
             if ($template && !empty($template->layout_file)) {
                 $specificView = 'bizdocs.pdf.templates.' . $template->layout_file;
                 if (view()->exists($specificView)) {
@@ -225,8 +226,8 @@ class PdfGenerationService
         ]);
 
         if ($document->templateId()) {
-            $template = \App\Infrastructure\BizDocs\Persistence\Eloquent\DocumentTemplateModel::find($document->templateId());
-            
+            $template = $this->templateRepository->findById($document->templateId());
+
             \Log::info('PDF Generation - Template Found', [
                 'template_found' => $template !== null,
                 'template_id' => $template?->id,

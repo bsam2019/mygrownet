@@ -5,16 +5,20 @@ namespace App\Http\Controllers\BMS;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\BMS\Concerns\HasBmsAccess;
 use App\Domain\BMS\Core\Services\QuotationService;
+use App\Domain\BMS\Repositories\QuotationRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\BMS\QuotationModel;
 use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\BranchModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class QuotationController extends Controller
 {
     use HasBmsAccess;
+
     public function __construct(
-        private QuotationService $quotationService
+        private QuotationService $quotationService,
+        private QuotationRepositoryInterface $quotationRepo
     ) {}
 
     public function index(Request $request)
@@ -25,7 +29,6 @@ class QuotationController extends Controller
             ->where('company_id', $companyId)
             ->forBranch($request->branch_id);
 
-        // Filters
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -49,26 +52,13 @@ class QuotationController extends Controller
                 'expiry_date' => $quotation->expiry_date,
                 'status' => $quotation->status,
                 'total_amount' => $quotation->total_amount,
-                'customer' => [
-                    'id' => $quotation->customer->id,
-                    'name' => $quotation->customer->name,
-                ],
-                'createdBy' => [
-                    'user' => [
-                        'name' => $quotation->createdBy->user->name,
-                    ],
-                ],
+                'customer' => ['id' => $quotation->customer->id, 'name' => $quotation->customer->name],
+                'createdBy' => ['user' => ['name' => $quotation->createdBy->user->name]],
             ]);
 
-        $summary = [
-            'total_quotations' => QuotationModel::where('company_id', $companyId)->count(),
-            'draft_count' => QuotationModel::where('company_id', $companyId)->where('status', 'draft')->count(),
-            'sent_count' => QuotationModel::where('company_id', $companyId)->where('status', 'sent')->count(),
-            'accepted_count' => QuotationModel::where('company_id', $companyId)->where('status', 'accepted')->count(),
-            'total_value' => QuotationModel::where('company_id', $companyId)->sum('total_amount'),
-        ];
+        $summary = $this->quotationRepo->getSummary($companyId);
 
-        $branches = \App\Infrastructure\Persistence\Eloquent\BMS\BranchModel::where('company_id', $companyId)
+        $branches = BranchModel::where('company_id', $companyId)
             ->where('is_active', true)
             ->get(['id', 'branch_name']);
 
@@ -89,14 +79,13 @@ class QuotationController extends Controller
             ->orderBy('name')
             ->get();
 
-        // Get document defaults from company settings
         $settingsService = app(\App\Domain\BMS\Core\Services\CompanySettingsService::class);
         $defaults = $settingsService->getDocumentDefaults($companyId, 'quotation');
 
         return Inertia::render('BMS/Quotations/Create', [
-            'customers'        => $customers,
-            'defaultNotes'     => $defaults['notes'] ?? '',
-            'defaultTerms'     => $defaults['terms'] ?? '',
+            'customers'    => $customers,
+            'defaultNotes' => $defaults['notes'] ?? '',
+            'defaultTerms' => $defaults['terms'] ?? '',
         ]);
     }
 
@@ -141,7 +130,6 @@ class QuotationController extends Controller
             ->where('company_id', $companyId)
             ->findOrFail($id);
 
-        // Profit summary if linked to a measurement
         $profitSummary = null;
         if ($quotation->measurement) {
             $measurementService = app(\App\Domain\BMS\Core\Services\MeasurementService::class);
@@ -156,16 +144,10 @@ class QuotationController extends Controller
 
     public function send(Request $request, int $id)
     {
-        $userId = $request->user()->cmsUser->id;
-        
-        $quotation = $this->quotationService->sendQuotation($id, $userId);
-
+        $this->quotationService->sendQuotation($id, $request->user()->cmsUser->id);
         return back()->with('success', 'Quotation marked as sent');
     }
 
-    /**
-     * Send quotation via email with PDF attachment — generates PDF on demand.
-     */
     public function sendViaEmail(Request $request, int $id)
     {
         $validated = $request->validate([
@@ -173,14 +155,13 @@ class QuotationController extends Controller
             'message' => 'nullable|string|max:1000',
         ]);
 
-        $cmsUser   = $request->user()->cmsUser;
+        $cmsUser = $request->user()->cmsUser;
         $quotation = QuotationModel::with(['customer', 'items', 'company'])
             ->where('company_id', $cmsUser->company_id)
             ->findOrFail($id);
 
-        // Generate PDF on demand (not stored)
         $pdfContent = $this->generateQuotationPdf($quotation);
-        $tmpPath    = storage_path("app/temp/quotation-{$quotation->quotation_number}.pdf");
+        $tmpPath = storage_path("app/temp/quotation-{$quotation->quotation_number}.pdf");
 
         if (!file_exists(storage_path('app/temp'))) {
             mkdir(storage_path('app/temp'), 0755, true);
@@ -206,10 +187,8 @@ class QuotationController extends Controller
             attachmentPath: $tmpPath
         );
 
-        // Clean up temp file
         if (file_exists($tmpPath)) unlink($tmpPath);
 
-        // Mark as sent
         $this->quotationService->sendQuotation($id, $cmsUser->id);
 
         if ($sent) {
@@ -218,27 +197,17 @@ class QuotationController extends Controller
         return back()->with('warning', 'Quotation marked as sent but email delivery failed');
     }
 
-    /**
-     * Get a WhatsApp share link — PDF is served via the download route (generated on demand).
-     */
     public function whatsappLink(Request $request, int $id): \Illuminate\Http\JsonResponse
     {
-        $cmsUser   = $request->user()->cmsUser;
+        $cmsUser = $request->user()->cmsUser;
         $quotation = QuotationModel::with(['customer', 'company'])
             ->where('company_id', $cmsUser->company_id)
             ->findOrFail($id);
 
-        // Mark as sent
         $this->quotationService->sendQuotation($id, $cmsUser->id);
 
-        // Build a signed download URL valid for 24 hours
-        $downloadUrl = \URL::signedRoute(
-            'cms.quotations.pdf.signed',
-            ['id' => $id],
-            now()->addHours(24)
-        );
-
-        $phone   = preg_replace('/[^0-9]/', '', $quotation->customer->phone ?? '');
+        $downloadUrl = \URL::signedRoute('cms.quotations.pdf.signed', ['id' => $id], now()->addHours(24));
+        $phone = preg_replace('/[^0-9]/', '', $quotation->customer->phone ?? '');
         $message = urlencode(
             "Hello {$quotation->customer->name},\n\n" .
             "Please find your quotation {$quotation->quotation_number} from {$quotation->company->name}.\n\n" .
@@ -253,9 +222,6 @@ class QuotationController extends Controller
         return response()->json(['url' => $whatsappUrl]);
     }
 
-    /**
-     * Signed PDF download (used in WhatsApp links — no auth required).
-     */
     public function downloadPdfSigned(Request $request, int $id)
     {
         if (!$request->hasValidSignature()) abort(403);
@@ -268,9 +234,6 @@ class QuotationController extends Controller
             ->header('Content-Disposition', 'attachment; filename="quotation-' . $quotation->quotation_number . '.pdf"');
     }
 
-    /**
-     * Generate PDF content — centralised so all send paths use the same logic.
-     */
     private function generateQuotationPdf(QuotationModel $quotation): string
     {
         $quotation->loadMissing(['customer', 'items', 'company']);
@@ -291,21 +254,15 @@ class QuotationController extends Controller
 
     public function convertToJob(Request $request, int $id)
     {
-        $userId = $request->user()->cmsUser->id;
-        
-        $job = $this->quotationService->convertToJob($id, $userId);
-
+        $job = $this->quotationService->convertToJob($id, $request->user()->cmsUser->id);
         return redirect()->route('bms.jobs.show', $job->id)
             ->with('success', 'Quotation converted to job successfully');
     }
 
-    /**
-     * Download quotation as PDF (authenticated, on demand — not stored).
-     */
     public function downloadPdf(Request $request, int $id)
     {
-        $companyId  = $this->getCompanyId($request);
-        $quotation  = QuotationModel::with(['customer', 'items', 'company'])
+        $companyId = $this->getCompanyId($request);
+        $quotation = QuotationModel::with(['customer', 'items', 'company'])
             ->where('company_id', $companyId)->findOrFail($id);
         $pdfContent = $this->generateQuotationPdf($quotation);
 
@@ -314,13 +271,10 @@ class QuotationController extends Controller
             ->header('Content-Disposition', 'attachment; filename="quotation-' . $quotation->quotation_number . '.pdf"');
     }
 
-    /**
-     * Preview quotation PDF in browser (authenticated, on demand).
-     */
     public function previewPdf(Request $request, int $id)
     {
-        $companyId  = $this->getCompanyId($request);
-        $quotation  = QuotationModel::with(['customer', 'items', 'company'])
+        $companyId = $this->getCompanyId($request);
+        $quotation = QuotationModel::with(['customer', 'items', 'company'])
             ->where('company_id', $companyId)->findOrFail($id);
         $pdfContent = $this->generateQuotationPdf($quotation);
 

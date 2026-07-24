@@ -6,7 +6,7 @@ use Tests\TestCase;
 use App\Domain\MLM\ValueObjects\CommissionId;
 use App\Domain\MLM\ValueObjects\UserId;
 use App\Models\User;
-use App\Models\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class SimpleCommissionRepositoryTest extends TestCase

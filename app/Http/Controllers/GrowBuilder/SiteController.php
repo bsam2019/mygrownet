@@ -2,7 +2,13 @@
 
 namespace App\Http\Controllers\GrowBuilder;
 
+use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
+use App\Domain\GrowBuilder\Repositories\TemplateRepositoryInterface;
+use App\Domain\GrowBuilder\Services\SiteAnalyticsService;
+use App\Domain\GrowBuilder\Services\SiteDashboardService;
+use App\Domain\GrowBuilder\ValueObjects\SiteId;
 use App\Http\Controllers\Controller;
+use App\Services\GrowBuilder\TierRestrictionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -10,12 +16,14 @@ class SiteController extends Controller
 {
     private const MODULE_ID = 'growbuilder';
 
-    public function __construct()
-    {
-        // Dependencies commented out for now
-    }
+    public function __construct(
+        private SiteRepositoryInterface $siteRepository,
+        private TemplateRepositoryInterface $templateRepository,
+        private SiteDashboardService $dashboardService,
+        private SiteAnalyticsService $analyticsService,
+        private TierRestrictionService $tierRestrictionService,
+    ) {}
 
-    // DEBUG: Simple test method
     public function test(Request $request)
     {
         return Inertia::render('GrowBuilder/Dashboard', [
@@ -28,85 +36,16 @@ class SiteController extends Controller
     
     public function index(Request $request)
     {
-        // DEBUG: Log that we're hitting this method
-        \Log::info('GrowBuilder SiteController@index hit', [
-            'user_id' => $request->user()?->id,
-            'user_email' => $request->user()?->email,
-            'is_admin' => $request->user()?->hasRole(['Administrator', 'admin', 'superadmin']),
-            'url' => $request->url(),
-            'route_name' => $request->route()?->getName(),
-            'middleware' => $request->route()?->middleware(),
-        ]);
-
         $user = $request->user();
         
-        // Get user's sites
-        $sites = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::byUser($user->id)
-            ->with(['pages', 'media', 'client'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $sites = $this->dashboardService->getUserSitesData($user->id);
 
-        // Get basic stats with actual analytics data
-        $totalPageViews = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::whereIn('site_id', $sites->pluck('id'))->count();
-        $totalOrders = 0; // TODO: Add when orders model is available
-        $totalRevenue = 0; // TODO: Add when orders model is available
-        $totalMessages = 0; // TODO: Add when contact messages model is available
-        $unreadMessages = 0; // TODO: Add when contact messages model is available
+        $stats = $this->dashboardService->getDashboardStats($sites);
+        $pageViewsPerSite = $this->dashboardService->getPageViewsPerSite($sites);
+        $messageCounts = $this->dashboardService->getMessageCounts($sites);
+        $rawDailyViews = $this->dashboardService->getDailyPageViews($sites);
 
-        $stats = [
-            'totalSites' => $sites->count(),
-            'publishedSites' => $sites->where('status', 'published')->count(),
-            'totalPageViews' => $totalPageViews,
-            'totalOrders' => $totalOrders,
-            'totalRevenue' => $totalRevenue,
-            'totalMessages' => $totalMessages,
-            'unreadMessages' => $unreadMessages,
-        ];
-
-        // Get page views per site for individual site stats
-        $pageViewsPerSite = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::whereIn('site_id', $sites->pluck('id'))
-            ->selectRaw('site_id, COUNT(*) as views')
-            ->groupBy('site_id')
-            ->pluck('views', 'site_id')
-            ->toArray();
-
-        // Format sites for frontend
-        $sitesData = $sites->map(function ($site) use ($pageViewsPerSite) {
-            return [
-                'id' => $site->id,
-                'name' => $site->name,
-                'subdomain' => $site->subdomain,
-                'customDomain' => $site->custom_domain,
-                'description' => $site->description,
-                'status' => $site->status,
-                'url' => $site->url,
-                'logo' => $site->logo,
-                'favicon' => $site->favicon,
-                'isPublished' => $site->isPublished(),
-                'onboardingCompleted' => $site->onboarding_completed,
-                'createdAt' => $site->created_at->diffForHumans(),
-                'updatedAt' => $site->updated_at->diffForHumans(),
-                'publishedAt' => $site->published_at?->diffForHumans(),
-                'storageUsed' => $site->storage_used ?? 0,
-                'storageLimit' => $site->storage_limit ?? 104857600, // 100MB default
-                'storageUsedFormatted' => $site->storage_used_formatted,
-                'storageLimitFormatted' => $site->storage_limit_formatted,
-                'storagePercentage' => $site->storage_percentage,
-                'pageCount' => $site->pages->count(),
-                'mediaCount' => $site->media->count(),
-                'pageViews' => $pageViewsPerSite[$site->id] ?? 0,
-                'ordersCount' => 0, // TODO: Get actual orders
-                'revenue' => 0, // TODO: Get actual revenue
-                'messagesCount' => 0, // TODO: Get actual messages
-                'unreadMessages' => 0, // TODO: Get unread messages
-                'client' => $site->client ? [
-                    'id' => $site->client->id,
-                    'name' => $site->client->client_name,
-                    'company' => $site->client->company_name,
-                    'type' => $site->client->client_type,
-                ] : null,
-            ];
-        });
+        $sitesData = $sites->map(fn($site) => $this->dashboardService->formatSiteData($site, $pageViewsPerSite, $messageCounts, $rawDailyViews));
 
         // Get user's actual subscription data
         $subscriptionService = app(\App\Domain\Module\Services\SubscriptionService::class);
@@ -170,19 +109,54 @@ class SiteController extends Controller
             })->values()->toArray();
 
         // Get industries for filtering
-        $industries = \App\Models\GrowBuilder\SiteTemplate::select('industry')
-            ->distinct()
-            ->whereNotNull('industry')
-            ->where('is_active', true)
-            ->orderBy('industry')
-            ->pluck('industry')
-            ->map(function ($industry) {
+        $industries = array_map(fn($industry) => [
+            'slug' => \Str::slug($industry),
+            'name' => $industry,
+            'icon' => 'BuildingOfficeIcon',
+        ], $this->templateRepository->getIndustries());
+
+        // Recent unread messages across all user's sites
+        $recentMessages = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::whereIn('site_id', $sites->pluck('id'))
+            ->where('status', 'unread')
+            ->with('site')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function ($msg) {
                 return [
-                    'slug' => \Str::slug($industry),
-                    'name' => $industry,
-                    'icon' => 'BuildingOfficeIcon',
+                    'id' => $msg->id,
+                    'siteId' => $msg->site_id,
+                    'siteName' => $msg->site->name ?? 'Unknown',
+                    'siteSubdomain' => $msg->site->subdomain ?? '',
+                    'name' => $msg->name,
+                    'email' => $msg->email,
+                    'subject' => $msg->subject,
+                    'message' => $msg->message,
+                    'status' => $msg->status,
+                    'createdAt' => $msg->created_at->diffForHumans(),
                 ];
-            })->values()->toArray();
+            })->toArray();
+
+        // Recent activity feed from agency activity logs
+        $recentActivity = [];
+        $agency = $user->ownedAgencies()->first() ?? $user->agencies()->first();
+        if ($agency) {
+            $recentActivity = \App\Models\AgencyActivityLog::where('agency_id', $agency->id)
+                ->with('user')
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get()
+                ->map(function ($log) {
+                    return [
+                        'id' => $log->id,
+                        'actionType' => $log->action_type,
+                        'entityType' => $log->entity_type,
+                        'description' => $log->description,
+                        'userName' => $log->user?->name ?? 'System',
+                        'createdAt' => $log->created_at->diffForHumans(),
+                    ];
+                })->toArray();
+        }
 
         return Inertia::render('GrowBuilder/Dashboard', [
             'sites' => $sitesData,
@@ -193,6 +167,8 @@ class SiteController extends Controller
             'clients' => $this->getClientsForUser($user),
             'siteTemplates' => $siteTemplates,
             'industries' => $industries,
+            'recentMessages' => $recentMessages,
+            'recentActivity' => $recentActivity,
             'modules' => [],
         ]);
     }
@@ -560,54 +536,51 @@ class SiteController extends Controller
     public function show(Request $request, int $id)
     {
         $user = $request->user();
-        
-        // Get the site
-        $site = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::where('id', $id)
-            ->where('user_id', $user->id)
-            ->with(['pages', 'media', 'client'])
-            ->firstOrFail();
 
-        // Get site statistics
+        $site = $this->siteRepository->findByIdForUser(SiteId::fromInt($id), $user->id);
+        if (!$site) {
+            abort(404);
+        }
+
         $pageViews = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::where('site_id', $id)
             ->where('viewed_date', '>=', now()->subDays(30))
             ->count();
 
-        $totalPages = $site->pages->count();
-        $totalMedia = $site->media->count();
+        $eloquentSite = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::find($id);
 
         return Inertia::render('GrowBuilder/Sites/Show', [
             'site' => [
-                'id' => $site->id,
-                'name' => $site->name,
-                'subdomain' => $site->subdomain,
-                'customDomain' => $site->custom_domain,
-                'description' => $site->description,
-                'status' => $site->status,
-                'url' => $site->url,
-                'logo' => $site->logo,
-                'favicon' => $site->favicon,
+                'id' => $site->getId()->value(),
+                'name' => $site->getName(),
+                'subdomain' => $site->getSubdomain()->value(),
+                'customDomain' => $site->getCustomDomain(),
+                'description' => $site->getDescription(),
+                'status' => $site->getStatus()->value(),
+                'url' => $site->getSubdomain()->toUrl(),
+                'logo' => $site->getLogo(),
+                'favicon' => $site->getFavicon(),
                 'isPublished' => $site->isPublished(),
-                'onboardingCompleted' => $site->onboarding_completed,
-                'createdAt' => $site->created_at->format('M d, Y'),
-                'updatedAt' => $site->updated_at->diffForHumans(),
-                'publishedAt' => $site->published_at?->format('M d, Y'),
-                'storageUsed' => $site->storage_used ?? 0,
-                'storageLimit' => $site->storage_limit ?? 104857600,
-                'storageUsedFormatted' => $site->storage_used_formatted,
-                'storageLimitFormatted' => $site->storage_limit_formatted,
-                'storagePercentage' => $site->storage_percentage,
-                'client' => $site->client ? [
-                    'id' => $site->client->id,
-                    'name' => $site->client->client_name,
-                    'company' => $site->client->company_name,
-                    'type' => $site->client->client_type,
+                'onboardingCompleted' => $eloquentSite?->onboarding_completed ?? false,
+                'createdAt' => $site->getCreatedAt()->format('M d, Y'),
+                'updatedAt' => $site->getUpdatedAt()->format('Y-m-d H:i:s'),
+                'publishedAt' => $site->getPublishedAt()?->format('M d, Y'),
+                'storageUsed' => $eloquentSite?->storage_used ?? 0,
+                'storageLimit' => $eloquentSite?->storage_limit ?? 104857600,
+                'storageUsedFormatted' => $eloquentSite?->storage_used_formatted ?? '0 B',
+                'storageLimitFormatted' => $eloquentSite?->storage_limit_formatted ?? '100 MB',
+                'storagePercentage' => $eloquentSite?->storage_percentage ?? 0,
+                'client' => $eloquentSite?->client ? [
+                    'id' => $eloquentSite->client->id,
+                    'name' => $eloquentSite->client->client_name,
+                    'company' => $eloquentSite->client->company_name,
+                    'type' => $eloquentSite->client->client_type,
                 ] : null,
             ],
             'stats' => [
                 'pageViews' => $pageViews,
-                'totalPages' => $totalPages,
-                'totalMedia' => $totalMedia,
-                'visitors' => 0, // TODO: Calculate unique visitors
+                'totalPages' => $eloquentSite?->pages->count() ?? 0,
+                'totalMedia' => $eloquentSite?->media->count() ?? 0,
+                'visitors' => 0,
             ],
         ]);
     }
@@ -624,25 +597,75 @@ class SiteController extends Controller
 
     public function publish(Request $request, int $id)
     {
-        return response()->json(['message' => 'Publish method - under development']);
+        $site = $this->siteRepository->findByIdForUser(SiteId::fromInt($id), $request->user()->id);
+        if (!$site) {
+            abort(404);
+        }
+        $site->publish();
+        $this->siteRepository->save($site);
+        return response()->json(['message' => 'Site published successfully.']);
     }
 
     public function unpublish(Request $request, int $id)
     {
-        return response()->json(['message' => 'Unpublish method - under development']);
+        $site = $this->siteRepository->findByIdForUser(SiteId::fromInt($id), $request->user()->id);
+        if (!$site) {
+            abort(404);
+        }
+        $site->unpublish();
+        $this->siteRepository->save($site);
+        return response()->json(['message' => 'Site unpublished.']);
+    }
+
+    public function batchUpdate(Request $request)
+    {
+        $validated = $request->validate([
+            'site_ids' => 'required|array|min:1',
+            'site_ids.*' => 'integer|exists:growbuilder_sites,id',
+            'action' => 'required|in:publish,unpublish,delete',
+        ]);
+
+        $user = $request->user();
+        $affected = 0;
+
+        foreach ($validated['site_ids'] as $id) {
+            $site = $this->siteRepository->findByIdForUser(SiteId::fromInt($id), $user->id);
+            if (!$site) {
+                continue;
+            }
+
+            match ($validated['action']) {
+                'publish' => $site->publish(),
+                'unpublish' => $site->unpublish(),
+                'delete' => $this->siteRepository->delete(SiteId::fromInt($id)),
+            };
+
+            if ($validated['action'] !== 'delete') {
+                $this->siteRepository->save($site);
+            }
+            $affected++;
+        }
+
+        $verb = match ($validated['action']) {
+            'publish' => 'published',
+            'unpublish' => 'unpublished',
+            'delete' => 'deleted',
+        };
+
+        return response()->json(['message' => "{$affected} site(s) {$verb} successfully.", 'affected' => $affected]);
     }
 
     public function settings(Request $request, int $id)
     {
         $user = $request->user();
 
-        // Get the site with relationships
-        $site = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::where('id', $id)
-            ->where('user_id', $user->id)
-            ->with(['pages', 'client'])
-            ->firstOrFail();
+        $siteEntity = $this->siteRepository->findByIdForUser(SiteId::fromInt($id), $user->id);
+        if (!$siteEntity) {
+            abort(404);
+        }
 
-        // Prepare site data
+        $site = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::with(['pages', 'client'])->findOrFail($id);
+
         $siteData = [
             'id' => $site->id,
             'name' => $site->name,
@@ -650,7 +673,7 @@ class SiteController extends Controller
             'customDomain' => $site->custom_domain,
             'description' => $site->description,
             'status' => $site->is_published ? 'published' : 'draft',
-            'plan' => 'free', // TODO: Get actual plan
+            'plan' => $siteEntity->getPlan()->value(),
             'logo' => $site->logo,
             'favicon' => $site->favicon,
             'theme' => $site->theme ?? null,
@@ -675,198 +698,57 @@ class SiteController extends Controller
     }
 
     public function analytics(Request $request, int $id)
-        {
-            $user = $request->user();
+    {
+        $user = $request->user();
 
-            // Get the site
-            $site = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::where('id', $id)
-                ->where('user_id', $user->id)
-                ->with(['pages'])
-                ->firstOrFail();
-
-            // Get period from request (default 30 days)
-            $period = $request->get('period', '30d');
-            $days = match($period) {
-                '7d' => 7,
-                '30d' => 30,
-                '90d' => 90,
-                default => 30,
-            };
-
-            // Get total views and visitors (only count records with IP addresses for visitors)
-            $totalViews = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::where('site_id', $id)
-                ->where('viewed_date', '>=', now()->subDays($days))
-                ->count();
-
-            $totalVisitors = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::where('site_id', $id)
-                ->where('viewed_date', '>=', now()->subDays($days))
-                ->whereNotNull('ip_address')
-                ->where('ip_address', '!=', '')
-                ->distinct('ip_address')
-                ->count();
-
-            // Calculate change from previous period
-            $previousPeriodViews = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::where('site_id', $id)
-                ->where('viewed_date', '>=', now()->subDays($days * 2))
-                ->where('viewed_date', '<', now()->subDays($days))
-                ->count();
-
-            $viewsChange = $previousPeriodViews > 0 
-                ? round((($totalViews - $previousPeriodViews) / $previousPeriodViews) * 100, 1)
-                : 0;
-
-            // Get daily stats - fill missing dates with zeros for proper trend line
-            $dailyStatsQuery = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::where('site_id', $id)
-                ->where('viewed_date', '>=', now()->subDays($days))
-                ->selectRaw('DATE(viewed_date) as date, COUNT(*) as views, COUNT(DISTINCT CASE WHEN ip_address IS NOT NULL AND ip_address != "" THEN ip_address END) as visitors')
-                ->groupBy('date')
-                ->orderBy('date')
-                ->get()
-                ->keyBy('date');
-
-            // Create complete date range with zeros for missing dates
-            $dailyStats = collect();
-            for ($i = $days - 1; $i >= 0; $i--) {
-                $date = now()->subDays($i)->format('Y-m-d');
-                $stats = $dailyStatsQuery->get($date);
-
-                $dailyStats->push([
-                    'date' => $date,
-                    'views' => $stats ? (int) $stats->views : 0,
-                    'visitors' => $stats ? (int) $stats->visitors : 0,
-                ]);
-            }
-
-            // Get device stats - only real data
-            $deviceStats = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::where('site_id', $id)
-                ->where('viewed_date', '>=', now()->subDays($days))
-                ->selectRaw('COALESCE(NULLIF(device_type, ""), "Unknown") as device, COUNT(*) as count')
-                ->groupBy('device')
-                ->get()
-                ->map(function ($item) use ($totalViews) {
-                    return [
-                        'device' => $item->device,
-                        'count' => (int) $item->count,
-                        'percentage' => $totalViews > 0 ? round(($item->count / $totalViews) * 100, 1) : 0,
-                    ];
-                });
-
-            // Get top pages - only real data
-            $topPages = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::where('site_id', $id)
-                ->where('viewed_date', '>=', now()->subDays($days))
-                ->selectRaw('COALESCE(NULLIF(path, ""), "/") as path, COUNT(*) as views')
-                ->groupBy('path')
-                ->orderByDesc('views')
-                ->limit(10)
-                ->get()
-                ->map(function ($item) {
-                    return [
-                        'path' => $item->path,
-                        'views' => (int) $item->views,
-                        'avgTime' => 0, // We don't track this yet
-                        'bounceRate' => 0, // We don't track this yet
-                    ];
-                });
-
-            // Get traffic sources - only real data
-            $trafficSources = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::where('site_id', $id)
-                ->where('viewed_date', '>=', now()->subDays($days))
-                ->whereNotNull('ip_address')
-                ->where('ip_address', '!=', '')
-                ->selectRaw('
-                    CASE 
-                        WHEN referrer IS NULL OR referrer = "" THEN "Direct"
-                        WHEN referrer LIKE "%google%" THEN "Google"
-                        WHEN referrer LIKE "%facebook%" THEN "Facebook"
-                        WHEN referrer LIKE "%twitter%" THEN "Twitter"
-                        ELSE "Other"
-                    END as source,
-                    COUNT(DISTINCT ip_address) as visitors
-                ')
-                ->groupBy('source')
-                ->get()
-                ->map(function ($item) use ($totalVisitors) {
-                    $type = match(strtolower($item->source)) {
-                        'direct' => 'direct',
-                        'google' => 'search',
-                        'facebook', 'twitter' => 'social',
-                        default => 'referral',
-                    };
-
-                    return [
-                        'source' => $item->source,
-                        'visitors' => (int) $item->visitors,
-                        'percentage' => $totalVisitors > 0 ? round(($item->visitors / $totalVisitors) * 100, 1) : 0,
-                        'type' => $type,
-                    ];
-                });
-
-            // Get geographic data - only real data, only count records with IP addresses
-            $geographicData = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::where('site_id', $id)
-                ->where('viewed_date', '>=', now()->subDays($days))
-                ->whereNotNull('country')
-                ->where('country', '!=', '')
-                ->whereNotNull('ip_address')
-                ->where('ip_address', '!=', '')
-                ->selectRaw('country, COUNT(DISTINCT ip_address) as visitors')
-                ->groupBy('country')
-                ->orderByDesc('visitors')
-                ->limit(10)
-                ->get()
-                ->map(function ($item) use ($totalVisitors) {
-                    // Map country codes to proper names (basic mapping)
-                    $countryNames = [
-                        'US' => 'United States',
-                        'GB' => 'United Kingdom', 
-                        'CA' => 'Canada',
-                        'DE' => 'Germany',
-                        'FR' => 'France',
-                        'AU' => 'Australia',
-                        'NL' => 'Netherlands',
-                        'ZM' => 'Zambia',
-                        'ZA' => 'South Africa',
-                        'KE' => 'Kenya',
-                        'NG' => 'Nigeria',
-                        'GH' => 'Ghana',
-                    ];
-
-                    $countryCode = strtoupper($item->country);
-                    $countryName = $countryNames[$countryCode] ?? ucfirst(strtolower($item->country));
-
-                    return [
-                        'country' => $countryName,
-                        'countryCode' => $countryCode,
-                        'visitors' => (int) $item->visitors,
-                        'percentage' => $totalVisitors > 0 ? round(($item->visitors / $totalVisitors) * 100, 1) : 0,
-                    ];
-                });
-
-            // Calculate session metrics from available data
-            $avgSessionDuration = 0; // We don't track session duration yet
-            $newVisitorsCount = $totalVisitors; // Assume all are new since we don't track returning visitors yet
-            $returningVisitorsCount = 0;
-
-            return Inertia::render('GrowBuilder/Sites/Analytics', [
-                'site' => [
-                    'id' => $site->id,
-                    'name' => $site->name,
-                    'subdomain' => $site->subdomain,
-                ],
-                'totalViews' => $totalViews,
-                'totalVisitors' => $totalVisitors,
-                'viewsChange' => $viewsChange,
-                'avgSessionDuration' => $avgSessionDuration,
-                'newVisitors' => $newVisitorsCount,
-                'returningVisitors' => $returningVisitorsCount,
-                'dailyStats' => $dailyStats,
-                'deviceStats' => $deviceStats,
-                'topPages' => $topPages,
-                'trafficSources' => $trafficSources,
-                'geographicData' => $geographicData,
-                'conversionGoals' => [], // TODO: Add conversion tracking
-                'period' => $period,
-            ]);
+        $site = $this->siteRepository->findByIdForUser(SiteId::fromInt($id), $user->id);
+        if (!$site) {
+            abort(404);
         }
+
+        $period = $request->get('period', '30d');
+        $days = match($period) {
+            '7d' => 7,
+            '30d' => 30,
+            '90d' => 90,
+            default => 30,
+        };
+
+        $totalViews = $this->analyticsService->getTotalViews($id, $days);
+        $totalVisitors = $this->analyticsService->getTotalVisitors($id, $days);
+        $previousPeriodViews = $this->analyticsService->getPreviousPeriodViews($id, $days);
+
+        $viewsChange = $previousPeriodViews > 0
+            ? round((($totalViews - $previousPeriodViews) / $previousPeriodViews) * 100, 1)
+            : 0;
+
+        $dailyStats = $this->analyticsService->getDailyStats($id, $days);
+        $deviceStats = $this->analyticsService->getDeviceStats($id, $days, $totalViews);
+        $topPages = $this->analyticsService->getTopPages($id, $days);
+        $trafficSources = $this->analyticsService->getTrafficSources($id, $days, $totalVisitors);
+        $geographicData = $this->analyticsService->getGeographicData($id, $days, $totalVisitors);
+
+        return Inertia::render('GrowBuilder/Sites/Analytics', [
+            'site' => [
+                'id' => $site->getId()->value(),
+                'name' => $site->getName(),
+                'subdomain' => $site->getSubdomain()->value(),
+            ],
+            'totalViews' => $totalViews,
+            'totalVisitors' => $totalVisitors,
+            'viewsChange' => $viewsChange,
+            'avgSessionDuration' => 0,
+            'newVisitors' => $totalVisitors,
+            'returningVisitors' => 0,
+            'dailyStats' => $dailyStats,
+            'deviceStats' => $deviceStats,
+            'topPages' => $topPages,
+            'trafficSources' => $trafficSources,
+            'geographicData' => $geographicData,
+            'conversionGoals' => [],
+            'period' => $period,
+        ]);
+    }
 
     public function exportAnalytics(Request $request, int $id)
     {
@@ -875,32 +757,120 @@ class SiteController extends Controller
 
     public function messages(Request $request, int $id)
     {
-        return response()->json(['message' => 'Messages method - under development']);
+        $site = $this->siteRepository->findByIdForUser(SiteId::fromInt($id), $request->user()->id);
+        if (!$site) {
+            abort(404);
+        }
+
+        $perPage = $request->input('per_page', 20);
+        $status = $request->input('status');
+        $search = $request->input('search');
+
+        $query = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::forSite($id);
+
+        if ($status && in_array($status, ['unread', 'read', 'replied', 'archived'])) {
+            $query->where('status', $status);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('subject', 'like', "%{$search}%")
+                  ->orWhere('message', 'like', "%{$search}%");
+            });
+        }
+
+        $messages = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+        return response()->json($messages);
     }
 
     public function showMessage(Request $request, int $id, int $messageId)
     {
-        return response()->json(['message' => 'Show message method - under development']);
+        $site = $this->siteRepository->findByIdForUser(SiteId::fromInt($id), $request->user()->id);
+        if (!$site) {
+            abort(404);
+        }
+        $message = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::forSite($id)->findOrFail($messageId);
+        $message->markAsRead();
+        return response()->json($message->load('site'));
+    }
+
+    private function verifySiteOwnership(int $siteId, int $userId): void
+    {
+        $site = $this->siteRepository->findByIdForUser(SiteId::fromInt($siteId), $userId);
+        abort_unless($site, 404);
     }
 
     public function replyMessage(Request $request, int $id, int $messageId)
     {
-        return response()->json(['message' => 'Reply message method - under development']);
+        $validated = $request->validate([
+            'reply' => 'required|string|max:5000',
+        ]);
+
+        $this->verifySiteOwnership($id, $request->user()->id);
+        $message = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::forSite($id)->findOrFail($messageId);
+        $message->update([
+            'reply' => $validated['reply'],
+            'status' => 'replied',
+            'replied_at' => now(),
+            'replied_by' => $request->user()->id,
+        ]);
+
+        return response()->json(['message' => 'Reply sent successfully.', 'data' => $message->fresh()->load('site')]);
     }
 
     public function updateMessageStatus(Request $request, int $id, int $messageId)
     {
-        return response()->json(['message' => 'Update message status method - under development']);
+        $validated = $request->validate([
+            'status' => 'required|in:unread,read,replied,archived',
+        ]);
+
+        $this->verifySiteOwnership($id, $request->user()->id);
+        $message = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::forSite($id)->findOrFail($messageId);
+        $message->update(['status' => $validated['status']]);
+
+        return response()->json(['message' => 'Message status updated.', 'data' => $message->fresh()]);
     }
 
     public function deleteMessage(Request $request, int $id, int $messageId)
     {
-        return response()->json(['message' => 'Delete message method - under development']);
+        $this->verifySiteOwnership($id, $request->user()->id);
+        $message = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::forSite($id)->findOrFail($messageId);
+        $message->delete();
+
+        return response()->json(['message' => 'Message deleted.']);
     }
 
     public function exportMessages(Request $request, int $id)
     {
-        return response()->json(['message' => 'Export messages method - under development']);
+        $this->verifySiteOwnership($id, $request->user()->id);
+
+        $messages = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::forSite($id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $headers = ['Name', 'Email', 'Phone', 'Subject', 'Message', 'Status', 'Reply', 'Date'];
+        $rows = $messages->map(fn($m) => [
+            $m->name, $m->email, $m->phone ?? '', $m->subject ?? '',
+            $m->message, $m->status, $m->reply ?? '', $m->created_at->toDateTimeString(),
+        ]);
+
+        $callback = function () use ($headers, $rows) {
+            $handle = fopen('php://output', 'w');
+            fwrite($handle, "\xEF\xBB\xBF"); // BOM for Excel UTF-8
+            fputcsv($handle, $headers);
+            foreach ($rows as $row) {
+                fputcsv($handle, $row);
+            }
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"messages-{$id}.csv\"",
+        ]);
     }
 
     public function completeOnboarding(Request $request, int $id)

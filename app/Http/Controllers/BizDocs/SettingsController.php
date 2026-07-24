@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\BizDocs;
 
 use App\Domain\BizDocs\BusinessIdentity\Repositories\BusinessProfileRepositoryInterface;
+use App\Domain\BizDocs\DocumentManagement\Repositories\DocumentSequenceRepositoryInterface;
 use App\Domain\BizDocs\DocumentManagement\Services\DocumentNumberingService;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\BizDocs\Persistence\Eloquent\DocumentSequenceModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,6 +13,7 @@ class SettingsController extends Controller
 {
     public function __construct(
         private readonly BusinessProfileRepositoryInterface $businessProfileRepository,
+        private readonly DocumentSequenceRepositoryInterface $sequenceRepository,
         private readonly DocumentNumberingService $numberingService
     ) {
     }
@@ -40,7 +41,6 @@ class SettingsController extends Controller
             return redirect()->route('bizdocs.setup');
         }
 
-        // Get current sequences for all document types
         $documentTypes = [
             'invoice',
             'receipt',
@@ -56,17 +56,14 @@ class SettingsController extends Controller
         $year = now()->year;
 
         foreach ($documentTypes as $type) {
-            $sequence = DocumentSequenceModel::where('business_id', $businessProfile->id())
-                ->where('document_type', $type)
-                ->where('year', $year)
-                ->first();
+            $sequence = $this->sequenceRepository->find($businessProfile->id(), $type, $year);
 
             $sequences[$type] = [
-                'prefix' => $sequence?->prefix ?? strtoupper(substr($type, 0, 3)),
-                'padding' => $sequence?->padding ?? 4,
-                'last_number' => $sequence?->last_number ?? 0,
-                'next_number' => ($sequence?->last_number ?? 0) + 1,
-                'include_year' => $sequence?->include_year ?? false,
+                'prefix' => $sequence['prefix'] ?? strtoupper(substr($type, 0, 3)),
+                'padding' => $sequence['padding'] ?? 4,
+                'last_number' => $sequence['last_number'] ?? 0,
+                'next_number' => ($sequence['last_number'] ?? 0) + 1,
+                'include_year' => $sequence['include_year'] ?? false,
             ];
         }
 
@@ -109,7 +106,7 @@ class SettingsController extends Controller
             $data['last_number'] = $validated['reset_number'];
         }
 
-        DocumentSequenceModel::updateOrCreate(
+        $this->sequenceRepository->updateOrCreate(
             [
                 'business_id' => $businessProfile->id(),
                 'document_type' => $validated['document_type'],

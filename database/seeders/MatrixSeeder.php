@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use App\Models\MatrixPosition;
-use App\Services\MatrixService;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\MatrixPosition;
+use App\Domain\GrowNet\Services\MatrixService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 

@@ -2,16 +2,17 @@
 
 namespace App\Events\VentureBuilder;
 
-use App\Infrastructure\Persistence\Eloquent\VentureBuilder\VentureModel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 
 class VentureFundingCompleted
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets;
 
     public function __construct(
-        public VentureModel $venture,
+        public int $ventureId,
+        public string $ventureTitle,
+        public float $totalRaised,
+        public float $fundingTarget,
     ) {}
 }

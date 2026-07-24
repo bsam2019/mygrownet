@@ -2,9 +2,9 @@
 
 namespace App\Infrastructure\Persistence\Eloquent\LoyaltyReward;
 
-use App\Domain\LoyaltyReward\Entities\LoyaltyActivity;
-use App\Domain\LoyaltyReward\Repositories\LoyaltyActivityRepository;
-use App\Domain\LoyaltyReward\ValueObjects\ActivityType;
+use App\Domain\GrowNet\LoyaltyReward\Entities\LoyaltyActivity;
+use App\Domain\GrowNet\LoyaltyReward\Repositories\LoyaltyActivityRepository;
+use App\Domain\GrowNet\LoyaltyReward\ValueObjects\ActivityType;
 use DateTimeImmutable;
 
 class EloquentLoyaltyActivityRepository implements LoyaltyActivityRepository

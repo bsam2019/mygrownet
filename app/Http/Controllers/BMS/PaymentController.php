@@ -6,10 +6,13 @@ use App\Domain\BMS\Core\Services\PaymentService;
 use App\Domain\BMS\Core\Services\PdfPaymentReceiptService;
 use App\Domain\BMS\Core\Services\CompanySettingsService;
 use App\Domain\BMS\Core\ValueObjects\PaymentMethod;
+use App\Domain\BMS\Repositories\PaymentRepositoryInterface;
+use App\Domain\BMS\Repositories\CustomerRepositoryInterface;
+use App\Domain\BMS\Repositories\InvoiceRepositoryInterface;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
-use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
 use App\Infrastructure\Persistence\Eloquent\BMS\PaymentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
 use App\Notifications\BMS\PaymentReceivedNotification;
 use App\Services\BMS\EmailService;
 use Illuminate\Http\RedirectResponse;
@@ -22,7 +25,10 @@ class PaymentController extends Controller
     public function __construct(
         private readonly PaymentService $paymentService,
         private readonly PdfPaymentReceiptService $receiptService,
-        private readonly EmailService $emailService
+        private readonly EmailService $emailService,
+        private readonly PaymentRepositoryInterface $paymentRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
+        private readonly InvoiceRepositoryInterface $invoiceRepo
     ) {}
 
     public function index(Request $request): Response
@@ -33,12 +39,10 @@ class PaymentController extends Controller
         $query = PaymentModel::where('company_id', $companyId)
             ->with(['customer', 'allocations.invoice']);
 
-        // Filter by customer
         if ($request->has('customer_id')) {
             $query->where('customer_id', $request->customer_id);
         }
 
-        // Search
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -76,22 +80,21 @@ class PaymentController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'phone', 'outstanding_balance']);
 
-        // Get customer invoices if customer_id provided
         $customerInvoices = [];
         if ($request->has('customer_id')) {
-            $customerInvoices = InvoiceModel::where('company_id', $companyId)
+            $invoices = InvoiceModel::where('company_id', $companyId)
                 ->where('customer_id', $request->customer_id)
                 ->whereIn('status', ['sent', 'partial'])
                 ->with('items')
-                ->get()
-                ->map(fn($inv) => [
-                    'id' => $inv->id,
-                    'invoice_number' => $inv->invoice_number,
-                    'invoice_date' => $inv->invoice_date,
-                    'total_amount' => $inv->total_amount,
-                    'amount_paid' => $inv->amount_paid,
-                    'balance_due' => $inv->total_amount - $inv->amount_paid,
-                ]);
+                ->get();
+            $customerInvoices = $invoices->map(fn($inv) => [
+                'id' => $inv->id,
+                'invoice_number' => $inv->invoice_number,
+                'invoice_date' => $inv->invoice_date,
+                'total_amount' => $inv->total_amount,
+                'amount_paid' => $inv->amount_paid,
+                'balance_due' => $inv->total_amount - $inv->amount_paid,
+            ])->toArray();
         }
 
         return Inertia::render('BMS/Payments/Create', [
@@ -102,9 +105,6 @@ class PaymentController extends Controller
         ]);
     }
 
-    /**
-     * JSON endpoint: return unpaid invoices for a customer (used by the Create form)
-     */
     public function customerInvoices(Request $request, int $customerId)
     {
         $companyId = $request->user()->cmsUser->company_id;
@@ -140,79 +140,70 @@ class PaymentController extends Controller
 
         $cmsUser = $request->user()->cmsUser;
 
-        // Build allocations array: ['invoice_id' => amount]
         $allocations = [];
         if (!empty($validated['invoice_id'])) {
             $allocations[$validated['invoice_id']] = $validated['amount'];
         }
 
         try {
-            $payment = $this->paymentService->recordPayment(
+            $result = $this->paymentService->recordPayment(
                 companyId: $cmsUser->company_id,
                 customerId: $validated['customer_id'],
                 amount: $validated['amount'],
                 method: PaymentMethod::from($validated['payment_method']),
                 reference: $validated['reference_number'] ?? null,
-                notes: $validated['notes'] ?? app(\App\Domain\BMS\Core\Services\CompanySettingsService::class)->getDocumentDefaults($cmsUser->company_id, 'receipt')['notes'] ?: null,
+                notes: $validated['notes'] ?? app(CompanySettingsService::class)->getDocumentDefaults($cmsUser->company_id, 'receipt')['notes'] ?: null,
                 allocations: $allocations,
                 createdBy: $cmsUser->id
             );
 
-            // Load relationships
-            $payment->load(['customer', 'company', 'allocations.invoice']);
-            
-            $customer = $payment->customer;
-            
-            // Send email if customer has email
-            if ($customer && $customer->email) {
-                // Generate receipt PDF
-                $pdf = $this->receiptService->generateReceipt($payment);
-                $pdfPath = storage_path("app/temp/receipt-{$payment->receipt_number}.pdf");
-                
-                // Ensure temp directory exists
+            $paymentEloquent = PaymentModel::with(['customer', 'company', 'allocations.invoice'])
+                ->find($result['payment']->id);
+
+            if ($paymentEloquent && $paymentEloquent->customer && $paymentEloquent->customer->email) {
+                $pdf = $this->receiptService->generateReceipt($paymentEloquent);
+                $pdfPath = storage_path("app/temp/receipt-{$paymentEloquent->receipt_number}.pdf");
+
                 if (!file_exists(storage_path('app/temp'))) {
                     mkdir(storage_path('app/temp'), 0755, true);
                 }
-                
+
                 file_put_contents($pdfPath, $pdf->output());
-                
-                // Send email using EmailService
+
                 $emailSent = $this->emailService->sendEmail(
-                    company: $payment->company,
-                    to: $customer->email,
-                    subject: "Payment Received - Receipt #{$payment->receipt_number}",
+                    company: $paymentEloquent->company,
+                    to: $paymentEloquent->customer->email,
+                    subject: "Payment Received - Receipt #{$paymentEloquent->receipt_number}",
                     view: 'emails.cms.payment-received',
                     data: [
-                        'payment' => $payment,
-                        'company' => $payment->company,
-                        'customer' => $customer,
-                        'recipient_name' => $customer->name,
+                        'payment' => $paymentEloquent,
+                        'company' => $paymentEloquent->company,
+                        'customer' => $paymentEloquent->customer,
+                        'recipient_name' => $paymentEloquent->customer->name,
                     ],
                     emailType: 'payment',
                     referenceType: 'payment',
-                    referenceId: $payment->id,
+                    referenceId: $paymentEloquent->id,
                     attachmentPath: $pdfPath
                 );
-                
-                // Clean up temp file
+
                 if (file_exists($pdfPath)) {
                     unlink($pdfPath);
                 }
             }
-            
-            // Send in-app notification
-            if ($customer && $customer->user) {
-                $customer->user->notify(new PaymentReceivedNotification([
-                    'id' => $payment->id,
-                    'reference_number' => $payment->reference_number,
-                    'customer_name' => $customer->name,
-                    'amount' => $payment->amount,
-                    'payment_method' => $payment->payment_method,
+
+            if ($paymentEloquent && $paymentEloquent->customer && $paymentEloquent->customer->user) {
+                $paymentEloquent->customer->user->notify(new PaymentReceivedNotification([
+                    'id' => $paymentEloquent->id,
+                    'reference_number' => $paymentEloquent->reference_number,
+                    'customer_name' => $paymentEloquent->customer->name,
+                    'amount' => $paymentEloquent->amount,
+                    'payment_method' => $paymentEloquent->payment_method,
                 ]));
             }
 
             return redirect()
-                ->route('bms.payments.show', $payment->id)
+                ->route('bms.payments.show', $result['payment']->id)
                 ->with('success', 'Payment recorded and confirmation email sent');
         } catch (\Exception $e) {
             return back()
@@ -237,15 +228,11 @@ class PaymentController extends Controller
 
     public function void(Request $request, int $id): RedirectResponse
     {
-        $validated = $request->validate([
-            'reason' => 'required|string|max:500',
-        ]);
-
+        $validated = $request->validate(['reason' => 'required|string|max:500']);
         $cmsUser = $request->user()->cmsUser;
 
         try {
             $this->paymentService->voidPayment($id, $validated['reason'], $cmsUser->id);
-
             return back()->with('success', 'Payment voided successfully');
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to void payment: ' . $e->getMessage());
@@ -262,22 +249,13 @@ class PaymentController extends Controller
         $cmsUser = $request->user()->cmsUser;
 
         try {
-            $this->paymentService->allocatePayment(
-                paymentId: $id,
-                invoiceId: $validated['invoice_id'],
-                amount: $validated['amount'],
-                userId: $cmsUser->id
-            );
-
+            $this->paymentService->allocatePayment($id, $validated['invoice_id'], $validated['amount'], $cmsUser->id);
             return back()->with('success', 'Payment allocated successfully');
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to allocate payment: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Download payment receipt PDF
-     */
     public function downloadReceipt(Request $request, int $id)
     {
         $cmsUser = $request->user()->cmsUser;
@@ -286,31 +264,21 @@ class PaymentController extends Controller
             ->with(['customer', 'company', 'allocations.invoice'])
             ->findOrFail($id);
 
-        // Check if company has BizDocs module enabled
         if ($payment->company->hasBizDocsModule()) {
             try {
                 $adapter = app(\App\Domain\BMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
                 $pdfContent = $adapter->generateReceiptPdf($payment);
-                
                 return response($pdfContent)
                     ->header('Content-Type', 'application/pdf')
                     ->header('Content-Disposition', 'attachment; filename="receipt-' . $payment->receipt_number . '.pdf"');
             } catch (\Exception $e) {
-                \Log::error('BizDocs receipt PDF generation failed', [
-                    'payment_id' => $id,
-                    'error' => $e->getMessage(),
-                ]);
-                // Fall through to existing PDF service
+                \Log::error('BizDocs receipt PDF generation failed', ['payment_id' => $id, 'error' => $e->getMessage()]);
             }
         }
 
-        // Fallback: Use existing PDF service
         return $this->receiptService->downloadReceipt($id);
     }
 
-    /**
-     * Preview payment receipt PDF
-     */
     public function previewReceipt(Request $request, int $id)
     {
         $cmsUser = $request->user()->cmsUser;
@@ -319,54 +287,33 @@ class PaymentController extends Controller
             ->with(['customer', 'company', 'allocations.invoice'])
             ->findOrFail($id);
 
-        // Check if company has BizDocs module enabled
         if ($payment->company->hasBizDocsModule()) {
             try {
                 $adapter = app(\App\Domain\BMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
                 $pdfContent = $adapter->generateReceiptPdf($payment);
-                
                 return response($pdfContent)
                     ->header('Content-Type', 'application/pdf')
                     ->header('Content-Disposition', 'inline; filename="receipt-' . $payment->receipt_number . '.pdf"');
             } catch (\Exception $e) {
-                \Log::error('BizDocs receipt PDF preview failed', [
-                    'payment_id' => $id,
-                    'error' => $e->getMessage(),
-                ]);
-                // Fall through to existing PDF service
+                \Log::error('BizDocs receipt PDF preview failed', ['payment_id' => $id, 'error' => $e->getMessage()]);
             }
         }
 
-        // Fallback: Use existing PDF service
         return $this->receiptService->streamReceipt($id);
     }
 
-    /**
-     * Get daily cash summary
-     */
     public function dailySummary(Request $request)
     {
         $cmsUser = $request->user()->cmsUser;
         $date = $request->has('date') ? new \DateTime($request->date) : null;
-
-        $summary = $this->paymentService->getDailyCashSummary($cmsUser->company_id, $date);
-
-        return response()->json($summary);
+        return response()->json($this->paymentService->getDailyCashSummary($cmsUser->company_id, $date));
     }
 
-    /**
-     * Get customer credit summary
-     */
     public function customerCredit(Request $request, int $customerId)
     {
-        $summary = $this->paymentService->getCustomerCreditSummary($customerId);
-
-        return response()->json($summary);
+        return response()->json($this->paymentService->getCustomerCreditSummary($customerId));
     }
 
-    /**
-     * Apply customer credit to invoice
-     */
     public function applyCredit(Request $request, int $customerId): RedirectResponse
     {
         $validated = $request->validate([
@@ -377,13 +324,7 @@ class PaymentController extends Controller
         $cmsUser = $request->user()->cmsUser;
 
         try {
-            $this->paymentService->applyCreditToInvoice(
-                customerId: $customerId,
-                invoiceId: $validated['invoice_id'],
-                amount: $validated['amount'],
-                userId: $cmsUser->id
-            );
-
+            $this->paymentService->applyCreditToInvoice($customerId, $validated['invoice_id'], $validated['amount'], $cmsUser->id);
             return back()->with('success', 'Credit applied successfully');
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to apply credit: ' . $e->getMessage());

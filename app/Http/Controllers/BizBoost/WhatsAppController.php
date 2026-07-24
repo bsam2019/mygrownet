@@ -3,27 +3,30 @@
 namespace App\Http\Controllers\BizBoost;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
-use App\Infrastructure\Persistence\Eloquent\BizBoostCustomerModel;
-use Illuminate\Http\RedirectResponse;
+use App\Domain\BizBoost\Services\BusinessService;
+use App\Domain\BizBoost\Repositories\CustomerRepositoryInterface;
+use App\Domain\BizBoost\Repositories\CustomerTagRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
-use Inertia\Response;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class WhatsAppController extends Controller
 {
-    public function broadcasts(Request $request): Response
-    {
-        $business = $this->getBusiness($request);
+    public function __construct(
+        private BusinessService $businessService,
+        private CustomerRepositoryInterface $customerRepo,
+        private CustomerTagRepositoryInterface $tagRepo,
+    ) {}
 
+    public function broadcasts(Request $request)
+    {
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
         $broadcasts = DB::table('bizboost_whatsapp_broadcasts')
             ->where('business_id', $business->id)
             ->orderByDesc('created_at')
             ->paginate(10);
 
-        $customerCount = $business->customers()->whereNotNull('whatsapp')->count();
+        $customerCount = count($this->customerRepo->findByBusiness($business->id));
 
         return Inertia::render('BizBoost/WhatsApp/Broadcasts', [
             'broadcasts' => $broadcasts,
@@ -32,16 +35,11 @@ class WhatsAppController extends Controller
         ]);
     }
 
-    public function createBroadcast(Request $request): Response
+    public function createBroadcast(Request $request)
     {
-        $business = $this->getBusiness($request);
-
-        $customers = $business->customers()
-            ->whereNotNull('whatsapp')
-            ->where('is_active', true)
-            ->get(['id', 'name', 'whatsapp']);
-
-        $tags = $business->customerTags()->get();
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
+        $customers = $this->customerRepo->findByBusiness($business->id);
+        $tags = $this->tagRepo->findByBusiness($business->id);
 
         return Inertia::render('BizBoost/WhatsApp/CreateBroadcast', [
             'customers' => $customers,
@@ -50,7 +48,7 @@ class WhatsAppController extends Controller
         ]);
     }
 
-    public function storeBroadcast(Request $request): RedirectResponse
+    public function storeBroadcast(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -60,13 +58,11 @@ class WhatsAppController extends Controller
             'tag_ids' => 'required_if:recipient_type,tagged|array',
         ]);
 
-        $business = $this->getBusiness($request);
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
 
-        // Get recipient count
-        $recipientCount = $this->getRecipientCount($business, $validated);
+        $recipientCount = $this->getRecipientCount($business->id, $validated);
 
-        // Store broadcast record
-        $broadcastId = DB::table('bizboost_whatsapp_broadcasts')->insertGetId([
+        DB::table('bizboost_whatsapp_broadcasts')->insertGetId([
             'business_id' => $business->id,
             'name' => $validated['name'],
             'message' => $validated['message'],
@@ -85,46 +81,35 @@ class WhatsAppController extends Controller
             ->with('success', "Broadcast created with {$recipientCount} recipients. Ready to send!");
     }
 
-    public function exportCustomers(Request $request): StreamedResponse
+    public function exportCustomers(Request $request)
     {
-        $business = $this->getBusiness($request);
-
-        $customers = $business->customers()
-            ->whereNotNull('whatsapp')
-            ->where('is_active', true)
-            ->get(['name', 'whatsapp', 'email']);
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
+        $customers = $this->customerRepo->findByBusiness($business->id);
 
         $filename = "whatsapp_contacts_{$business->slug}_" . now()->format('Y-m-d') . ".csv";
 
         return response()->streamDownload(function () use ($customers) {
             $handle = fopen('php://output', 'w');
-            
-            // Header row
             fputcsv($handle, ['Name', 'WhatsApp Number', 'Email']);
-            
-            // Data rows
             foreach ($customers as $customer) {
                 fputcsv($handle, [
-                    $customer->name,
-                    $customer->whatsapp,
+                    $customer->name ?? '',
+                    $customer->phone ?? '',
                     $customer->email ?? '',
                 ]);
             }
-            
             fclose($handle);
-        }, $filename, [
-            'Content-Type' => 'text/csv',
-        ]);
+        }, $filename, ['Content-Type' => 'text/csv']);
     }
 
-    public function templates(Request $request): Response
+    public function templates(Request $request)
     {
         return Inertia::render('BizBoost/WhatsApp/Templates', [
             'templates' => $this->getMessageTemplates(),
         ]);
     }
 
-    public function generateMessage(Request $request): \Illuminate\Http\JsonResponse
+    public function generateMessage(Request $request)
     {
         $validated = $request->validate([
             'template_id' => 'required|string',
@@ -139,8 +124,6 @@ class WhatsAppController extends Controller
         }
 
         $message = $template['content'];
-        
-        // Replace variables
         foreach ($validated['variables'] ?? [] as $key => $value) {
             $message = str_replace("{{$key}}", $value, $message);
         }
@@ -148,14 +131,10 @@ class WhatsAppController extends Controller
         return response()->json(['message' => $message]);
     }
 
-    private function getBusiness(Request $request): BizBoostBusinessModel
+    private function getRecipientCount(int $businessId, array $data): int
     {
-        return BizBoostBusinessModel::where('user_id', $request->user()->id)->firstOrFail();
-    }
-
-    private function getRecipientCount(BizBoostBusinessModel $business, array $data): int
-    {
-        $query = $business->customers()
+        $query = DB::table('bizboost_customers')
+            ->where('business_id', $businessId)
             ->whereNotNull('whatsapp')
             ->where('is_active', true);
 
@@ -163,9 +142,14 @@ class WhatsAppController extends Controller
             case 'selected':
                 return $query->whereIn('id', $data['customer_ids'] ?? [])->count();
             case 'tagged':
-                return $query->whereHas('tags', function ($q) use ($data) {
-                    $q->whereIn('bizboost_customer_tags.id', $data['tag_ids'] ?? []);
-                })->count();
+                return DB::table('bizboost_customer_tag_pivot')
+                    ->join('bizboost_customers', 'bizboost_customer_tag_pivot.customer_id', '=', 'bizboost_customers.id')
+                    ->where('bizboost_customers.business_id', $businessId)
+                    ->where('bizboost_customers.is_active', true)
+                    ->whereNotNull('bizboost_customers.whatsapp')
+                    ->whereIn('bizboost_customer_tag_pivot.tag_id', $data['tag_ids'] ?? [])
+                    ->distinct('bizboost_customer_tag_pivot.customer_id')
+                    ->count('bizboost_customer_tag_pivot.customer_id');
             default:
                 return $query->count();
         }
@@ -174,48 +158,12 @@ class WhatsAppController extends Controller
     private function getMessageTemplates(): array
     {
         return [
-            [
-                'id' => 'greeting',
-                'name' => 'Greeting',
-                'category' => 'general',
-                'content' => "Hi {customer_name}! 👋\n\nThank you for being a valued customer of {business_name}. We appreciate your support!\n\nVisit us again soon!",
-                'variables' => ['customer_name', 'business_name'],
-            ],
-            [
-                'id' => 'new_arrival',
-                'name' => 'New Arrival',
-                'category' => 'promotion',
-                'content' => "🆕 NEW ARRIVAL ALERT!\n\nHi {customer_name},\n\nWe have exciting new products just for you!\n\n✨ {product_name}\n💰 Only K{price}\n\nVisit us today or order via WhatsApp!\n\n{business_name}",
-                'variables' => ['customer_name', 'product_name', 'price', 'business_name'],
-            ],
-            [
-                'id' => 'discount',
-                'name' => 'Discount Offer',
-                'category' => 'promotion',
-                'content' => "🔥 SPECIAL OFFER!\n\nHi {customer_name},\n\nGet {discount}% OFF on selected items!\n\n⏰ Valid until {expiry_date}\n\nDon't miss out!\n\n{business_name}",
-                'variables' => ['customer_name', 'discount', 'expiry_date', 'business_name'],
-            ],
-            [
-                'id' => 'thank_you',
-                'name' => 'Thank You',
-                'category' => 'follow_up',
-                'content' => "Thank you for your purchase! 🙏\n\nHi {customer_name},\n\nWe hope you love your {product_name}!\n\nIf you have any questions, feel free to reach out.\n\nSee you again soon!\n{business_name}",
-                'variables' => ['customer_name', 'product_name', 'business_name'],
-            ],
-            [
-                'id' => 'reminder',
-                'name' => 'Visit Reminder',
-                'category' => 'follow_up',
-                'content' => "Hi {customer_name}! 👋\n\nWe miss you at {business_name}!\n\nIt's been a while since your last visit. Come check out what's new!\n\n📍 {address}\n📞 {phone}",
-                'variables' => ['customer_name', 'business_name', 'address', 'phone'],
-            ],
-            [
-                'id' => 'birthday',
-                'name' => 'Birthday Wish',
-                'category' => 'special',
-                'content' => "🎂 HAPPY BIRTHDAY {customer_name}! 🎉\n\nFrom all of us at {business_name}, we wish you a wonderful day!\n\n🎁 As a special gift, enjoy {discount}% OFF on your next purchase!\n\nValid for 7 days. Show this message to redeem.",
-                'variables' => ['customer_name', 'business_name', 'discount'],
-            ],
+            ['id' => 'greeting', 'name' => 'Greeting', 'category' => 'general', 'content' => "Hi {customer_name}! 👋\n\nThank you for being a valued customer of {business_name}. We appreciate your support!\n\nVisit us again soon!", 'variables' => ['customer_name', 'business_name']],
+            ['id' => 'new_arrival', 'name' => 'New Arrival', 'category' => 'promotion', 'content' => "🆕 NEW ARRIVAL ALERT!\n\nHi {customer_name},\n\nWe have exciting new products just for you!\n\n✨ {product_name}\n💰 K{price}\n\nVisit us today or order via WhatsApp!\n\n{business_name}", 'variables' => ['customer_name', 'product_name', 'price', 'business_name']],
+            ['id' => 'discount', 'name' => 'Discount Offer', 'category' => 'promotion', 'content' => "🔥 SPECIAL OFFER!\n\nHi {customer_name},\n\nGet {discount}% OFF on selected items!\n\n⏰ Valid until {expiry_date}\n\nDon't miss out!\n\n{business_name}", 'variables' => ['customer_name', 'discount', 'expiry_date', 'business_name']],
+            ['id' => 'thank_you', 'name' => 'Thank You', 'category' => 'follow_up', 'content' => "Thank you for your purchase! 🙏\n\nHi {customer_name},\n\nWe hope you love your {product_name}!\n\nIf you have any questions, feel free to reach out.\n\nSee you again soon!\n{business_name}", 'variables' => ['customer_name', 'product_name', 'business_name']],
+            ['id' => 'reminder', 'name' => 'Visit Reminder', 'category' => 'follow_up', 'content' => "Hi {customer_name}! 👋\n\nWe miss you at {business_name}!\n\nIt's been a while since your last visit. Come check out what's new!\n\n📍 {address}\n📞 {phone}", 'variables' => ['customer_name', 'business_name', 'address', 'phone']],
+            ['id' => 'birthday', 'name' => 'Birthday Wish', 'category' => 'special', 'content' => "🎂 HAPPY BIRTHDAY {customer_name}! 🎉\n\nFrom all of us at {business_name}, we wish you a wonderful day!\n\n🎁 As a special gift, enjoy {discount}% OFF on your next purchase!\n\nValid for 7 days. Show this message to redeem.", 'variables' => ['customer_name', 'business_name', 'discount']],
         ];
     }
 }

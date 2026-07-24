@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
+use App\Domain\BMS\Repositories\CompanyRepositoryInterface;
+use App\Domain\BMS\Repositories\CmsUserRepositoryInterface;
+use App\Domain\BMS\Repositories\RoleRepositoryInterface;
+use App\Domain\BMS\Core\Services\IndustryPresetService;
 use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
-use App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel;
 use App\Infrastructure\Persistence\Eloquent\BMS\RoleModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel;
 use App\Infrastructure\Persistence\Eloquent\BMS\IndustryPresetModel;
 use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
 use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
 use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
-use App\Domain\BMS\Core\Services\IndustryPresetService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -19,17 +22,15 @@ use Inertia\Response;
 class CompanyController extends Controller
 {
     public function __construct(
+        private CompanyRepositoryInterface $companyRepo,
+        private CmsUserRepositoryInterface $cmsUserRepo,
+        private RoleRepositoryInterface $roleRepo,
         private IndustryPresetService $presetService
     ) {}
 
-    /**
-     * Company Hub — list all companies the user belongs to,
-     * and offer to create a new one or join an existing one.
-     */
     public function hub(Request $request): Response
     {
         $user = $request->user();
-
         $memberships = $user->cmsUsers()
             ->with('company', 'role')
             ->where('status', 'active')
@@ -91,9 +92,6 @@ class CompanyController extends Controller
         ]);
     }
 
-    /**
-     * Show the create company form.
-     */
     public function create(Request $request): Response
     {
         $presets = IndustryPresetModel::active()->ordered()->get([
@@ -105,9 +103,6 @@ class CompanyController extends Controller
         ]);
     }
 
-    /**
-     * Store a new company and link the user as Owner.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -124,7 +119,6 @@ class CompanyController extends Controller
         $user = $request->user();
 
         $companyId = DB::transaction(function () use ($validated, $user) {
-            // Create company
             $company = CompanyModel::create([
                 'name'          => $validated['name'],
                 'industry_type' => $validated['industry_type'] ?? null,
@@ -144,7 +138,6 @@ class CompanyController extends Controller
                 ],
             ]);
 
-            // Create Owner role
             $ownerRole = RoleModel::create([
                 'company_id'     => $company->id,
                 'name'           => 'Owner',
@@ -153,7 +146,6 @@ class CompanyController extends Controller
                 'approval_authority' => ['limit' => 999999999],
             ]);
 
-            // Link user as Owner
             CmsUserModel::create([
                 'company_id' => $company->id,
                 'user_id'    => $user->id,
@@ -161,34 +153,26 @@ class CompanyController extends Controller
                 'status'     => 'active',
             ]);
 
-            // Apply industry preset if chosen
             if (!empty($validated['preset_code'])) {
                 $this->presetService->applyPresetToCompany($company->id, $validated['preset_code']);
             }
 
-            // Set default BizDocs templates
             $this->setDefaultBizDocsTemplates($company);
 
             return $company->id;
         });
 
-        // CRITICAL: Set session AFTER transaction commits and BEFORE redirect
-        // This ensures the cms.access middleware finds the active company
         session([
             'active_cms_company_id' => $companyId,
             'cms_company_id' => $companyId,
         ]);
-        
-        // Save session explicitly
+
         $request->session()->save();
 
         return redirect()->route('bms.dashboard')
             ->with('success', "Welcome to {$validated['name']}! Your company is ready.");
     }
 
-    /**
-     * Enter an existing company (set it as active).
-     */
     public function enter(Request $request, int $companyId)
     {
         $user = $request->user();
@@ -207,9 +191,6 @@ class CompanyController extends Controller
         return redirect()->route('bms.dashboard');
     }
 
-    /**
-     * Set or clear the user's default company preference.
-     */
     public function setDefault(Request $request)
     {
         $validated = $request->validate([
@@ -220,7 +201,6 @@ class CompanyController extends Controller
         $companyId = $validated['company_id'] ?? null;
 
         if ($companyId) {
-            // Verify the user belongs to this company
             $membership = $user->cmsUsers()
                 ->where('company_id', $companyId)
                 ->where('status', 'active')
@@ -238,12 +218,8 @@ class CompanyController extends Controller
         return back()->with('success', $companyId ? 'Default company updated.' : 'Default company cleared.');
     }
 
-    /**
-     * Set default BizDocs templates for a company
-     */
     private function setDefaultBizDocsTemplates(CompanyModel $company): void
     {
-        // Get default templates for each document type
         $defaultTemplates = \App\Infrastructure\BizDocs\Persistence\Eloquent\DocumentTemplateModel::where('is_default', true)
             ->whereIn('document_type', ['invoice', 'quotation', 'receipt'])
             ->get()

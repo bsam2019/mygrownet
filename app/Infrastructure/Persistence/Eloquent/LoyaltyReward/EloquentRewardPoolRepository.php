@@ -2,9 +2,9 @@
 
 namespace App\Infrastructure\Persistence\Eloquent\LoyaltyReward;
 
-use App\Domain\LoyaltyReward\Entities\RewardPool;
-use App\Domain\LoyaltyReward\Repositories\RewardPoolRepository;
-use App\Domain\LoyaltyReward\ValueObjects\LoyaltyAmount;
+use App\Domain\GrowNet\LoyaltyReward\Entities\RewardPool;
+use App\Domain\GrowNet\LoyaltyReward\Repositories\RewardPoolRepository;
+use App\Domain\GrowNet\LoyaltyReward\ValueObjects\LoyaltyAmount;
 
 class EloquentRewardPoolRepository implements RewardPoolRepository
 {

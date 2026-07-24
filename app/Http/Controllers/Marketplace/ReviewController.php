@@ -3,17 +3,11 @@
 namespace App\Http\Controllers\Marketplace;
 
 use App\Http\Controllers\Controller;
-use App\Models\Marketplace\MarketplaceReview;
-use App\Models\Marketplace\MarketplaceReviewVote;
-use App\Models\Marketplace\MarketplaceOrder;
-use App\Models\Marketplace\MarketplaceProduct;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ReviewController extends Controller
 {
-    /**
-     * Store a new review
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -23,20 +17,22 @@ class ReviewController extends Controller
             'comment' => 'required|string|min:10|max:1000',
         ]);
 
-        $order = MarketplaceOrder::findOrFail($validated['order_id']);
-        
-        // Verify order belongs to user
+        $order = DB::table('marketplace_orders')->find($validated['order_id']);
+
+        if (!$order) {
+            abort(404);
+        }
+
         if ($order->buyer_id !== auth()->id()) {
             abort(403, 'Unauthorized');
         }
 
-        // Verify order is completed
         if ($order->status !== 'completed') {
             return back()->withErrors(['message' => 'You can only review completed orders']);
         }
 
-        // Check if review already exists
-        $existingReview = MarketplaceReview::where('order_id', $order->id)
+        $existingReview = DB::table('marketplace_reviews')
+            ->where('order_id', $order->id)
             ->where('product_id', $validated['product_id'])
             ->where('buyer_id', auth()->id())
             ->first();
@@ -45,10 +41,13 @@ class ReviewController extends Controller
             return back()->withErrors(['message' => 'You have already reviewed this product']);
         }
 
-        $product = MarketplaceProduct::findOrFail($validated['product_id']);
+        $product = DB::table('marketplace_products')->find($validated['product_id']);
 
-        // Create review
-        MarketplaceReview::create([
+        if (!$product) {
+            abort(404);
+        }
+
+        DB::table('marketplace_reviews')->insert([
             'product_id' => $validated['product_id'],
             'order_id' => $order->id,
             'buyer_id' => auth()->id(),
@@ -56,111 +55,120 @@ class ReviewController extends Controller
             'rating' => $validated['rating'],
             'comment' => $validated['comment'],
             'is_verified_purchase' => true,
-            'is_approved' => true, // Auto-approve for now
+            'is_approved' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
-        // Update product rating
         $this->updateProductRating($product->id);
 
-        // Update seller rating
         $this->updateSellerRating($product->seller_id);
 
         return back()->with('success', 'Review submitted successfully!');
     }
 
-    /**
-     * Vote on review helpfulness
-     */
     public function vote(Request $request, int $reviewId)
     {
         $validated = $request->validate([
             'is_helpful' => 'required|boolean',
         ]);
 
-        $review = MarketplaceReview::findOrFail($reviewId);
+        $review = DB::table('marketplace_reviews')->find($reviewId);
 
-        // Check if user already voted
-        $existingVote = MarketplaceReviewVote::where('review_id', $reviewId)
+        if (!$review) {
+            abort(404);
+        }
+
+        $existingVote = DB::table('marketplace_review_votes')
+            ->where('review_id', $reviewId)
             ->where('user_id', auth()->id())
             ->first();
 
         if ($existingVote) {
-            // Update existing vote
-            $existingVote->update(['is_helpful' => $validated['is_helpful']]);
+            DB::table('marketplace_review_votes')
+                ->where('id', $existingVote->id)
+                ->update(['is_helpful' => $validated['is_helpful']]);
         } else {
-            // Create new vote
-            MarketplaceReviewVote::create([
+            DB::table('marketplace_review_votes')->insert([
                 'review_id' => $reviewId,
                 'user_id' => auth()->id(),
                 'is_helpful' => $validated['is_helpful'],
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
 
-        // Update review counts
-        $review->update([
-            'helpful_count' => MarketplaceReviewVote::where('review_id', $reviewId)
-                ->where('is_helpful', true)
-                ->count(),
-            'not_helpful_count' => MarketplaceReviewVote::where('review_id', $reviewId)
-                ->where('is_helpful', false)
-                ->count(),
-        ]);
+        $helpfulCount = DB::table('marketplace_review_votes')
+            ->where('review_id', $reviewId)
+            ->where('is_helpful', true)
+            ->count();
+
+        $notHelpfulCount = DB::table('marketplace_review_votes')
+            ->where('review_id', $reviewId)
+            ->where('is_helpful', false)
+            ->count();
+
+        DB::table('marketplace_reviews')
+            ->where('id', $reviewId)
+            ->update([
+                'helpful_count' => $helpfulCount,
+                'not_helpful_count' => $notHelpfulCount,
+            ]);
 
         return back();
     }
 
-    /**
-     * Seller response to review
-     */
     public function respond(Request $request, int $reviewId)
     {
         $validated = $request->validate([
             'response' => 'required|string|max:500',
         ]);
 
-        $review = MarketplaceReview::findOrFail($reviewId);
+        $review = DB::table('marketplace_reviews')->find($reviewId);
 
-        // Verify seller owns the product
-        $seller = auth()->user()->marketplaceSeller;
+        if (!$review) {
+            abort(404);
+        }
+
+        $seller = DB::table('marketplace_sellers')
+            ->where('user_id', auth()->id())
+            ->first();
+
         if (!$seller || $review->seller_id !== $seller->id) {
             abort(403, 'Unauthorized');
         }
 
-        $review->update([
-            'seller_response' => $validated['response'],
-            'seller_responded_at' => now(),
-        ]);
+        DB::table('marketplace_reviews')
+            ->where('id', $reviewId)
+            ->update([
+                'seller_response' => $validated['response'],
+                'seller_responded_at' => now(),
+            ]);
 
         return back()->with('success', 'Response posted successfully!');
     }
 
-    /**
-     * Update product average rating
-     */
     private function updateProductRating(int $productId): void
     {
-        $product = MarketplaceProduct::findOrFail($productId);
-        
-        $averageRating = MarketplaceReview::where('product_id', $productId)
+        $averageRating = DB::table('marketplace_reviews')
+            ->where('product_id', $productId)
             ->where('is_approved', true)
             ->avg('rating');
 
-        $product->update([
-            'rating' => $averageRating ?? 0,
-        ]);
+        DB::table('marketplace_products')
+            ->where('id', $productId)
+            ->update(['rating' => $averageRating ?? 0]);
     }
 
-    /**
-     * Update seller average rating
-     */
     private function updateSellerRating(int $sellerId): void
     {
-        $averageRating = MarketplaceReview::where('seller_id', $sellerId)
+        $averageRating = DB::table('marketplace_reviews')
+            ->where('seller_id', $sellerId)
             ->where('is_approved', true)
             ->avg('rating');
 
-        \App\Models\Marketplace\MarketplaceSeller::where('id', $sellerId)->update([
-            'rating' => $averageRating ?? 0,
-        ]);
+        DB::table('marketplace_sellers')
+            ->where('id', $sellerId)
+            ->update(['rating' => $averageRating ?? 0]);
     }
 }

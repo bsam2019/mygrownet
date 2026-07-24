@@ -2,31 +2,26 @@
 
 namespace App\Domain\Marketplace\Services;
 
-use App\Models\Marketplace\MarketplaceSeller;
-use App\Models\Marketplace\MarketplaceOrder;
-use App\Models\Marketplace\MarketplaceDispute;
+use App\Domain\Marketplace\Repositories\SellerRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 
 class SellerTierService
 {
-    /**
-     * Get commission rate for a seller based on their trust level
-     */
-    public function getCommissionRate(MarketplaceSeller $seller): float
+    public function __construct(
+        private SellerRepositoryInterface $sellerRepository,
+    ) {}
+
+    public function getCommissionRate(array $seller): float
     {
-        // Use custom rate if set, otherwise use tier-based rate
-        if ($seller->commission_rate && $seller->commission_rate > 0) {
-            return $seller->commission_rate;
+        if (!empty($seller['commission_rate']) && $seller['commission_rate'] > 0) {
+            return $seller['commission_rate'];
         }
 
         $rates = config('marketplace.commission.rates', []);
-        return $rates[$seller->trust_level] ?? 10.0;
+        return $rates[$seller['trust_level']] ?? 10.0;
     }
 
-    /**
-     * Calculate commission amount for an order
-     */
-    public function calculateCommission(MarketplaceSeller $seller, int $orderAmount): array
+    public function calculateCommission(array $seller, int $orderAmount): array
     {
         $commissionRate = $this->getCommissionRate($seller);
         $processingFee = config('marketplace.commission.payment_processing_fee', 2.5);
@@ -34,10 +29,9 @@ class SellerTierService
 
         $commissionAmount = (int) round($orderAmount * ($commissionRate / 100));
         $processingAmount = (int) round($orderAmount * ($processingFee / 100));
-        
-        // Ensure minimum commission
+
         $commissionAmount = max($commissionAmount, $minimumCommission);
-        
+
         $totalFees = $commissionAmount + $processingAmount;
         $sellerPayout = $orderAmount - $totalFees;
 
@@ -52,13 +46,10 @@ class SellerTierService
         ];
     }
 
-    /**
-     * Update seller metrics and recalculate tier
-     */
-    public function updateSellerMetrics(MarketplaceSeller $seller): void
+    public function updateSellerMetrics(int $sellerId): void
     {
-        // Calculate metrics from orders
-        $orderStats = MarketplaceOrder::where('seller_id', $seller->id)
+        $orderStats = DB::table('marketplace_orders')
+            ->where('seller_id', $sellerId)
             ->selectRaw('
                 COUNT(*) as total_orders,
                 SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed_orders,
@@ -67,102 +58,76 @@ class SellerTierService
             ')
             ->first();
 
-        $disputeCount = MarketplaceDispute::where('seller_id', $seller->id)->count();
+        $disputeCount = DB::table('marketplace_disputes')
+            ->where('seller_id', $sellerId)
+            ->count();
 
         $totalOrders = $orderStats->total_orders ?? 0;
         $completedOrders = $orderStats->completed_orders ?? 0;
         $totalSales = $orderStats->total_sales ?? 0;
         $cancelledOrders = $orderStats->cancelled_orders ?? 0;
 
-        // Calculate rates
         $disputeRate = $completedOrders > 0 ? ($disputeCount / $completedOrders) * 100 : 0;
         $cancellationRate = $totalOrders > 0 ? ($cancelledOrders / $totalOrders) * 100 : 0;
 
-        // Update seller metrics
-        $seller->update([
-            'total_orders' => $totalOrders,
+        $this->sellerRepository->updateSellerMetrics($sellerId, [
             'completed_orders' => $completedOrders,
             'total_sales_amount' => $totalSales,
             'dispute_rate' => round($disputeRate, 2),
             'cancellation_rate' => round($cancellationRate, 2),
         ]);
-
-        // Recalculate tier
-        $this->recalculateTier($seller);
     }
 
-    /**
-     * Recalculate seller tier based on performance metrics
-     */
-    public function recalculateTier(MarketplaceSeller $seller): void
+    public function recalculateTier(int $sellerId): void
     {
-        $seller->refresh();
-        
-        // Can't upgrade if not verified
-        if ($seller->kyc_status !== 'approved') {
+        $this->updateSellerMetrics($sellerId);
+        $seller = $this->sellerRepository->findById($sellerId);
+        if (!$seller) return;
+
+        if (!$seller->kycStatus->isApproved()) {
             return;
         }
 
-        $currentTier = $seller->trust_level;
         $newTier = $this->determineEligibleTier($seller);
 
-        if ($newTier !== $currentTier) {
+        if ($newTier !== $seller->trustLevel->value()) {
             $newCommissionRate = config("marketplace.commission.rates.{$newTier}", 10.0);
-            
-            $seller->update([
-                'trust_level' => $newTier,
-                'commission_rate' => $newCommissionRate,
-                'tier_calculated_at' => now(),
-            ]);
-
-            // TODO: Send notification about tier change
+            $this->sellerRepository->updateTierWithCommission($sellerId, $newTier, $newCommissionRate);
         }
     }
 
-    /**
-     * Determine the highest tier a seller is eligible for
-     */
-    private function determineEligibleTier(MarketplaceSeller $seller): string
+    private function determineEligibleTier(\App\Domain\Marketplace\Entities\Seller $seller): string
     {
-        $accountAgeDays = $seller->created_at->diffInDays(now());
+        $accountAgeDays = $seller->createdAt ? $seller->createdAt->diff(new \DateTimeImmutable())->days : 0;
 
-        // Check for Top tier
-        $topRequirements = config('marketplace.tiers.top');
+        $topRequirements = config('marketplace.tiers.top', []);
         if ($this->meetsTierRequirements($seller, $topRequirements, $accountAgeDays)) {
             return 'top';
         }
 
-        // Check for Trusted tier
-        $trustedRequirements = config('marketplace.tiers.trusted');
+        $trustedRequirements = config('marketplace.tiers.trusted', []);
         if ($this->meetsTierRequirements($seller, $trustedRequirements, $accountAgeDays)) {
             return 'trusted';
         }
 
-        // Default to verified (if KYC approved) or new
-        return $seller->kyc_status === 'approved' ? 'verified' : 'new';
+        return $seller->kycStatus->isApproved() ? 'verified' : 'new';
     }
 
-    /**
-     * Check if seller meets all requirements for a tier
-     */
-    private function meetsTierRequirements(MarketplaceSeller $seller, array $requirements, int $accountAgeDays): bool
+    private function meetsTierRequirements(\App\Domain\Marketplace\Entities\Seller $seller, array $requirements, int $accountAgeDays): bool
     {
-        return $seller->completed_orders >= ($requirements['min_completed_orders'] ?? 0)
-            && $seller->total_sales_amount >= ($requirements['min_total_sales'] ?? 0)
+        return $seller->completedOrders >= ($requirements['min_completed_orders'] ?? 0)
+            && $seller->totalSalesAmount >= ($requirements['min_total_sales'] ?? 0)
             && ($seller->rating ?? 0) >= ($requirements['min_rating'] ?? 0)
-            && $seller->dispute_rate <= ($requirements['max_dispute_rate'] ?? 100)
-            && $seller->cancellation_rate <= ($requirements['max_cancellation_rate'] ?? 100)
+            && $seller->disputeRate <= ($requirements['max_dispute_rate'] ?? 100)
+            && $seller->cancellationRate <= ($requirements['max_cancellation_rate'] ?? 100)
             && $accountAgeDays >= ($requirements['min_account_age_days'] ?? 0);
     }
 
-    /**
-     * Get tier progress for a seller (for dashboard display)
-     */
-    public function getTierProgress(MarketplaceSeller $seller): array
+    public function getTierProgress(array $seller): array
     {
-        $currentTier = $seller->trust_level;
+        $currentTier = $seller['trust_level'];
         $nextTier = $this->getNextTier($currentTier);
-        
+
         if (!$nextTier) {
             return [
                 'current_tier' => $currentTier,
@@ -173,28 +138,29 @@ class SellerTierService
         }
 
         $requirements = config("marketplace.tiers.{$nextTier}", []);
-        $accountAgeDays = $seller->created_at->diffInDays(now());
+        $createdAt = $seller['created_at'] ? new \DateTimeImmutable($seller['created_at']) : new \DateTimeImmutable();
+        $accountAgeDays = $createdAt->diff(new \DateTimeImmutable())->days;
 
         $progress = [
             'completed_orders' => [
-                'current' => $seller->completed_orders,
+                'current' => $seller['completed_orders'] ?? 0,
                 'required' => $requirements['min_completed_orders'] ?? 0,
-                'met' => $seller->completed_orders >= ($requirements['min_completed_orders'] ?? 0),
+                'met' => ($seller['completed_orders'] ?? 0) >= ($requirements['min_completed_orders'] ?? 0),
             ],
             'total_sales' => [
-                'current' => $seller->total_sales_amount,
+                'current' => $seller['total_sales_amount'] ?? 0,
                 'required' => $requirements['min_total_sales'] ?? 0,
-                'met' => $seller->total_sales_amount >= ($requirements['min_total_sales'] ?? 0),
+                'met' => ($seller['total_sales_amount'] ?? 0) >= ($requirements['min_total_sales'] ?? 0),
             ],
             'rating' => [
-                'current' => $seller->rating ?? 0,
+                'current' => $seller['rating'] ?? 0,
                 'required' => $requirements['min_rating'] ?? 0,
-                'met' => ($seller->rating ?? 0) >= ($requirements['min_rating'] ?? 0),
+                'met' => ($seller['rating'] ?? 0) >= ($requirements['min_rating'] ?? 0),
             ],
             'dispute_rate' => [
-                'current' => $seller->dispute_rate,
+                'current' => $seller['dispute_rate'] ?? 0,
                 'required' => $requirements['max_dispute_rate'] ?? 100,
-                'met' => $seller->dispute_rate <= ($requirements['max_dispute_rate'] ?? 100),
+                'met' => ($seller['dispute_rate'] ?? 0) <= ($requirements['max_dispute_rate'] ?? 100),
             ],
             'account_age' => [
                 'current' => $accountAgeDays,
@@ -211,18 +177,12 @@ class SellerTierService
         ];
     }
 
-    /**
-     * Get the next tier after the current one
-     */
     private function getNextTier(string $currentTier): ?string
     {
         $tierOrder = ['new' => 'verified', 'verified' => 'trusted', 'trusted' => 'top', 'top' => null];
         return $tierOrder[$currentTier] ?? null;
     }
 
-    /**
-     * Get all tier information for display
-     */
     public static function getTierInfo(): array
     {
         return [

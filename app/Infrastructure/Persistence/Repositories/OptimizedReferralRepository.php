@@ -3,8 +3,8 @@
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Models\User;
-use App\Models\MatrixPosition;
-use App\Models\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\MatrixPosition;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;

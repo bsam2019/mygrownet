@@ -5,7 +5,7 @@ namespace Tests\Unit\Services;
 use Tests\TestCase;
 use App\Services\ComplianceService;
 use App\Models\User;
-use App\Models\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class ComplianceServiceTest extends TestCase

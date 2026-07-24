@@ -92,6 +92,47 @@ final class Task
         );
     }
 
+    public static function reconstitute(array $data): self
+    {
+        return new self(
+            $data['id'],
+            $data['title'],
+            $data['assigned_to'],
+            $data['priority'],
+            $data['status'],
+            $data['description'] ?? null,
+            $data['assigned_by'] ?? null,
+            $data['department_id'] ?? null,
+            $data['due_date'] ?? null,
+            $data['estimated_hours'] ?? null,
+            $data['tags'] ?? [],
+            $data['notes'] ?? null
+        );
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'description' => $this->description,
+            'assigned_to' => $this->assignedTo,
+            'assigned_by' => $this->assignedBy,
+            'department_id' => $this->departmentId,
+            'priority' => $this->priority,
+            'status' => $this->status,
+            'due_date' => $this->dueDate,
+            'started_at' => $this->startedAt,
+            'completed_at' => $this->completedAt,
+            'estimated_hours' => $this->estimatedHours,
+            'actual_hours' => $this->actualHours,
+            'tags' => $this->tags,
+            'notes' => $this->notes,
+            'created_at' => $this->createdAt,
+            'updated_at' => $this->updatedAt,
+        ];
+    }
+
     public function start(): void
     {
         if (!$this->status->canTransitionTo('in_progress')) {

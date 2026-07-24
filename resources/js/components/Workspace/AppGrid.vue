@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppTile from './AppTile.vue';
+import { computed } from 'vue';
 
 interface App {
     id: number;
@@ -17,8 +18,6 @@ const props = defineProps<{
 const allApps = computed(() => {
     return Object.values(props.apps).flat();
 });
-
-import { computed } from 'vue';
 </script>
 
 <template>

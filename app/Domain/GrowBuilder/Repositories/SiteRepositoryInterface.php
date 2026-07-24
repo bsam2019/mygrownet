@@ -13,6 +13,7 @@ interface SiteRepositoryInterface
     public function findById(SiteId $id): ?Site;
     public function findBySubdomain(Subdomain $subdomain): ?Site;
     public function findByCustomDomain(string $domain): ?Site;
+    public function findByIdForUser(SiteId $id, int $userId): ?Site;
     public function findByUserId(int $userId): array;
     public function subdomainExists(Subdomain $subdomain): bool;
     public function customDomainExists(string $domain): bool;

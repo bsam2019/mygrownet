@@ -5,7 +5,7 @@ namespace App\Http\Controllers\LifePlus;
 use App\Http\Controllers\Controller;
 use App\Domain\LifePlus\Services\ProfileService;
 use App\Domain\Module\Services\TierConfigurationService;
-use App\Domain\Wallet\Services\WalletService;
+use App\Domain\GrowNet\Wallet\Services\WalletService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 

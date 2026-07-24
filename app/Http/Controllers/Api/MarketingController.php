@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
-use App\Models\ReferralProgram;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralProgram;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 

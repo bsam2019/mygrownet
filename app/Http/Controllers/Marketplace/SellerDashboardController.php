@@ -8,8 +8,8 @@ use App\Domain\Marketplace\Services\ProductService;
 use App\Domain\Marketplace\Services\OrderService;
 use App\Domain\Marketplace\Services\EscrowService;
 use App\Domain\Marketplace\Services\SellerTierService;
-use App\Models\Marketplace\MarketplaceSeller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -245,7 +245,7 @@ class SellerDashboardController extends Controller
                 'kyc_documents' => $kycDocuments,
             ]);
 
-            \Log::info('Seller registration successful', ['seller_id' => $seller->id]);
+            \Log::info('Seller registration successful', ['seller_id' => $seller['id']]);
 
             return redirect()->route('marketplace.seller.dashboard')
                 ->with('success', 'Registration submitted! We will review your documents and notify you.');

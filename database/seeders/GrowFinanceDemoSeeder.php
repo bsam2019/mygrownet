@@ -4,12 +4,12 @@ namespace Database\Seeders;
 
 use App\Domain\GrowFinance\Services\AccountingService;
 use App\Domain\GrowFinance\ValueObjects\AccountType;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceAccountModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceCustomerModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceExpenseModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceInvoiceItemModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceInvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceVendorModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceAccountModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceCustomerModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceExpenseModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceInvoiceItemModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceInvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceVendorModel;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;

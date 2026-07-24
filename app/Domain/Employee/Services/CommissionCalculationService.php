@@ -10,7 +10,7 @@ use App\Domain\Employee\Exceptions\CommissionCalculationException;
 use App\Domain\Employee\Exceptions\InvalidCommissionRateException;
 use App\Domain\Employee\Repositories\EmployeeRepositoryInterface;
 use App\Domain\Investment\Services\InvestmentTierService;
-use App\Domain\Reward\Services\ReferralMatrixService;
+use App\Domain\GrowNet\Reward\Services\ReferralMatrixService;
 use App\Models\Investment;
 use App\Models\User;
 use DateTimeImmutable;

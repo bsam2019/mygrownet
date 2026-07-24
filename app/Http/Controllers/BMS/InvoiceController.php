@@ -5,9 +5,12 @@ namespace App\Http\Controllers\BMS;
 use App\Domain\BMS\Core\Services\InvoiceService;
 use App\Domain\BMS\Core\Services\PdfInvoiceService;
 use App\Domain\BMS\Core\ValueObjects\InvoiceStatus;
+use App\Domain\BMS\Repositories\InvoiceRepositoryInterface;
+use App\Domain\BMS\Repositories\CustomerRepositoryInterface;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
 use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\BranchModel;
 use App\Notifications\BMS\InvoiceSentNotification;
 use App\Services\BMS\EmailService;
 use Illuminate\Http\RedirectResponse;
@@ -20,73 +23,53 @@ class InvoiceController extends Controller
     public function __construct(
         private readonly InvoiceService $invoiceService,
         private readonly PdfInvoiceService $pdfService,
-        private readonly EmailService $emailService
+        private readonly EmailService $emailService,
+        private readonly InvoiceRepositoryInterface $invoiceRepo,
+        private readonly CustomerRepositoryInterface $customerRepo
     ) {}
 
-    /**
-     * Get the company ID for the authenticated CMS user
-     */
     private function getCompanyId(Request $request): ?int
     {
-        $user = $request->user();
-        $cmsUser = \App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel::where('user_id', $user->id)->first();
-        
+        $cmsUser = CmsUserModel::where('user_id', $request->user()->id)->first();
         return $cmsUser?->company_id;
     }
 
-    /**
-     * Get CMS user or fail with redirect
-     */
     private function getBmsUserOrFail(Request $request)
     {
-        $user = $request->user();
-        $cmsUser = \App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel::where('user_id', $user->id)->first();
-        
+        $cmsUser = CmsUserModel::where('user_id', $request->user()->id)->first();
         if (!$cmsUser || !$cmsUser->company_id) {
             abort(403, 'You must be associated with a company.');
         }
-        
         return $cmsUser;
     }
 
     public function index(Request $request): Response
     {
-        $user = $request->user();
-        $cmsUser = \App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel::where('user_id', $user->id)->first();
-        
+        $cmsUser = CmsUserModel::where('user_id', $request->user()->id)->first();
+
         if (!$cmsUser || !$cmsUser->company_id) {
             return Inertia::render('BMS/Invoices/Index', [
                 'invoices' => ['data' => [], 'links' => [], 'meta' => []],
                 'summary' => [
-                    'total_invoices' => 0,
-                    'draft_count' => 0,
-                    'sent_count' => 0,
-                    'partial_count' => 0,
-                    'paid_count' => 0,
-                    'total_value' => 0,
-                    'total_paid' => 0,
-                    'total_outstanding' => 0,
+                    'total_invoices' => 0, 'draft_count' => 0, 'sent_count' => 0,
+                    'partial_count' => 0, 'paid_count' => 0, 'total_value' => 0,
+                    'total_paid' => 0, 'total_outstanding' => 0,
                 ],
-                'filters' => [
-                    'status' => 'all',
-                    'search' => '',
-                ],
+                'filters' => ['status' => 'all', 'search' => ''],
                 'statuses' => InvoiceStatus::all(),
             ])->with('error', 'You must be associated with a company to view invoices.');
         }
-        
+
         $companyId = $cmsUser->company_id;
 
         $query = InvoiceModel::where('company_id', $companyId)
             ->with(['customer', 'items', 'branch'])
             ->forBranch($request->branch_id);
 
-        // Filter by status
         if ($request->has('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
-        // Search
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -99,10 +82,9 @@ class InvoiceController extends Controller
 
         $invoices = $query->latest('invoice_date')->paginate(20);
 
-        // Get summary stats
-        $summary = $this->invoiceService->getInvoiceSummary($companyId);
+        $summary = $this->invoiceRepo->getSummary($companyId);
 
-        $branches = \App\Infrastructure\Persistence\Eloquent\BMS\BranchModel::where('company_id', $companyId)
+        $branches = BranchModel::where('company_id', $companyId)
             ->where('is_active', true)
             ->get(['id', 'branch_name']);
 
@@ -121,16 +103,13 @@ class InvoiceController extends Controller
 
     public function create(Request $request): Response
     {
-        $user = $request->user();
-        $cmsUser = \App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel::where('user_id', $user->id)->first();
-        
-        if (!$cmsUser || !$cmsUser->company_id) {
+        $companyId = $this->getCompanyId($request);
+
+        if (!$companyId) {
             return redirect()->route('bms.invoices.index')->with('error', 'You must be associated with a company.');
         }
-        
-        $companyId = $cmsUser->company_id;
 
-        $customers = CustomerModel::where('company_id', $companyId)
+        $customers = \App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel::where('company_id', $companyId)
             ->where('status', 'active')
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'phone', 'outstanding_balance']);
@@ -201,14 +180,13 @@ class InvoiceController extends Controller
             ->with(['customer', 'items'])
             ->findOrFail($id);
 
-        // Only draft invoices can be edited
         if ($invoice->status !== InvoiceStatus::DRAFT->value) {
             return redirect()
                 ->route('bms.invoices.show', $id)
                 ->with('error', 'Only draft invoices can be edited');
         }
 
-        $customers = CustomerModel::where('company_id', $companyId)
+        $customers = \App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel::where('company_id', $companyId)
             ->where('status', 'active')
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'phone']);
@@ -259,67 +237,52 @@ class InvoiceController extends Controller
 
         try {
             $invoice = $this->invoiceService->sendInvoice($id, $cmsUser->id);
-            
-            // Load relationships
-            $invoice->load(['customer', 'company', 'items']);
-            
-            $customer = $invoice->customer;
-            
-            // Send email if customer has email
-            if ($customer && $customer->email) {
-                // Generate PDF
-                $pdf = $this->pdfService->generate($invoice);
-                $pdfPath = storage_path("app/temp/invoice-{$invoice->invoice_number}.pdf");
-                
-                // Ensure temp directory exists
+
+            $eloquentInvoice = InvoiceModel::with(['customer', 'company', 'items'])->find($id);
+
+            if ($eloquentInvoice && $eloquentInvoice->customer && $eloquentInvoice->customer->email) {
+                $pdf = $this->pdfService->generate($eloquentInvoice);
+                $pdfPath = storage_path("app/temp/invoice-{$eloquentInvoice->invoice_number}.pdf");
+
                 if (!file_exists(storage_path('app/temp'))) {
                     mkdir(storage_path('app/temp'), 0755, true);
                 }
-                
+
                 file_put_contents($pdfPath, $pdf->output());
-                
-                // Send email using EmailService
+
                 $emailSent = $this->emailService->sendEmail(
-                    company: $invoice->company,
-                    to: $customer->email,
-                    subject: "Invoice {$invoice->invoice_number} from {$invoice->company->name}",
+                    company: $eloquentInvoice->company,
+                    to: $eloquentInvoice->customer->email,
+                    subject: "Invoice {$eloquentInvoice->invoice_number} from {$eloquentInvoice->company->name}",
                     view: 'emails.cms.invoice-sent',
                     data: [
-                        'invoice' => $invoice,
-                        'company' => $invoice->company,
-                        'customer' => $customer,
-                        'recipient_name' => $customer->name,
+                        'invoice' => $eloquentInvoice,
+                        'company' => $eloquentInvoice->company,
+                        'customer' => $eloquentInvoice->customer,
+                        'recipient_name' => $eloquentInvoice->customer->name,
                     ],
                     emailType: 'invoice',
                     referenceType: 'invoice',
-                    referenceId: $invoice->id,
+                    referenceId: $eloquentInvoice->id,
                     attachmentPath: $pdfPath
                 );
-                
-                // Clean up temp file
+
                 if (file_exists($pdfPath)) {
                     unlink($pdfPath);
                 }
-                
-                if ($emailSent) {
-                    // Send in-app notification
-                    if ($customer->user) {
-                        $customer->user->notify(new InvoiceSentNotification([
-                            'id' => $invoice->id,
-                            'invoice_number' => $invoice->invoice_number,
-                            'customer_name' => $customer->name,
-                            'total_amount' => $invoice->total_amount,
-                            'due_date' => $invoice->due_date?->format('Y-m-d'),
-                        ]));
-                    }
-                    
-                    return back()->with('success', 'Invoice sent successfully via email');
-                } else {
-                    return back()->with('warning', 'Invoice marked as sent but email delivery failed');
+
+                if ($emailSent && $eloquentInvoice->customer->user) {
+                    $eloquentInvoice->customer->user->notify(new InvoiceSentNotification([
+                        'id' => $eloquentInvoice->id,
+                        'invoice_number' => $eloquentInvoice->invoice_number,
+                        'customer_name' => $eloquentInvoice->customer->name,
+                        'total_amount' => $eloquentInvoice->total_amount,
+                        'due_date' => $eloquentInvoice->due_date?->format('Y-m-d'),
+                    ]));
                 }
             }
 
-            return back()->with('success', 'Invoice marked as sent');
+            return back()->with('success', 'Invoice sent successfully');
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to send invoice: ' . $e->getMessage());
         }
@@ -327,15 +290,11 @@ class InvoiceController extends Controller
 
     public function cancel(Request $request, int $id): RedirectResponse
     {
-        $validated = $request->validate([
-            'reason' => 'required|string|max:500',
-        ]);
-
+        $validated = $request->validate(['reason' => 'required|string|max:500']);
         $cmsUser = $this->getBmsUserOrFail($request);
 
         try {
             $this->invoiceService->cancelInvoice($id, $validated['reason'], $cmsUser->id);
-
             return back()->with('success', 'Invoice cancelled');
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to cancel invoice: ' . $e->getMessage());
@@ -344,15 +303,11 @@ class InvoiceController extends Controller
 
     public function void(Request $request, int $id): RedirectResponse
     {
-        $validated = $request->validate([
-            'reason' => 'required|string|max:500',
-        ]);
-
+        $validated = $request->validate(['reason' => 'required|string|max:500']);
         $cmsUser = $this->getBmsUserOrFail($request);
 
         try {
             $this->invoiceService->voidInvoice($id, $validated['reason'], $cmsUser->id);
-
             return back()->with('success', 'Invoice voided');
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to void invoice: ' . $e->getMessage());
@@ -362,60 +317,44 @@ class InvoiceController extends Controller
     public function downloadPdf(Request $request, int $id)
     {
         $cmsUser = $this->getBmsUserOrFail($request);
-
         $invoice = InvoiceModel::where('company_id', $cmsUser->company_id)
             ->with(['customer', 'items', 'company'])
             ->findOrFail($id);
 
-        // Check if company has BizDocs module enabled
         if ($invoice->company->hasBizDocsModule()) {
             try {
                 $adapter = app(\App\Domain\BMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
                 $pdfContent = $adapter->generateInvoicePdf($invoice);
-                
                 return response($pdfContent)
                     ->header('Content-Type', 'application/pdf')
                     ->header('Content-Disposition', 'attachment; filename="invoice-' . $invoice->invoice_number . '.pdf"');
             } catch (\Exception $e) {
-                \Log::error('BizDocs invoice PDF generation failed', [
-                    'invoice_id' => $id,
-                    'error' => $e->getMessage(),
-                ]);
-                // Fall through to existing PDF service
+                \Log::error('BizDocs invoice PDF generation failed', ['invoice_id' => $id, 'error' => $e->getMessage()]);
             }
         }
 
-        // Fallback: Use existing PDF service
         return $this->pdfService->download($invoice);
     }
 
     public function previewPdf(Request $request, int $id)
     {
         $cmsUser = $this->getBmsUserOrFail($request);
-
         $invoice = InvoiceModel::where('company_id', $cmsUser->company_id)
             ->with(['customer', 'items', 'company'])
             ->findOrFail($id);
 
-        // Check if company has BizDocs module enabled
         if ($invoice->company->hasBizDocsModule()) {
             try {
                 $adapter = app(\App\Domain\BMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
                 $pdfContent = $adapter->generateInvoicePdf($invoice);
-                
                 return response($pdfContent)
                     ->header('Content-Type', 'application/pdf')
                     ->header('Content-Disposition', 'inline; filename="invoice-' . $invoice->invoice_number . '.pdf"');
             } catch (\Exception $e) {
-                \Log::error('BizDocs invoice PDF preview failed', [
-                    'invoice_id' => $id,
-                    'error' => $e->getMessage(),
-                ]);
-                // Fall through to existing PDF service
+                \Log::error('BizDocs invoice PDF preview failed', ['invoice_id' => $id, 'error' => $e->getMessage()]);
             }
         }
 
-        // Fallback: Use existing PDF service
         return $this->pdfService->stream($invoice);
     }
 }

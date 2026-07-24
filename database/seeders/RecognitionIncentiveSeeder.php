@@ -5,8 +5,8 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\IncentiveProgram;
 use App\Models\RecognitionEvent;
-use App\Models\Achievement;
-use App\Models\Leaderboard;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\Achievement;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\Leaderboard;
 use Carbon\Carbon;
 
 class RecognitionIncentiveSeeder extends Seeder

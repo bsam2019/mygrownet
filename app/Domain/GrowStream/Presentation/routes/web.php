@@ -27,7 +27,7 @@ Route::middleware(['web'])->prefix('growstream')->name('growstream.')->group(fun
     // Admin routes
     Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/videos', [GrowStreamWebController::class, 'adminVideos'])->name('videos');
-        Route::get('/videos/{video}/edit', [GrowStreamWebController::class, 'adminVideoEdit'])->name('videos.edit');
+        Route::get('/videos/{id}/edit', [GrowStreamWebController::class, 'adminVideoEdit'])->name('videos.edit');
         Route::get('/analytics', [GrowStreamWebController::class, 'adminAnalytics'])->name('analytics');
         Route::get('/creators', [GrowStreamWebController::class, 'adminCreators'])->name('creators');
     });

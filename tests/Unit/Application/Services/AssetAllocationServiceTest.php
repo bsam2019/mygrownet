@@ -9,8 +9,8 @@ use App\Application\UseCases\Asset\ProcessAssetMaintenanceUseCase;
 use App\Services\AssetIncomeTrackingService;
 use App\Models\User;
 use App\Models\InvestmentTier;
-use App\Models\PhysicalReward;
-use App\Models\PhysicalRewardAllocation;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalReward;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalRewardAllocation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class AssetAllocationServiceTest extends TestCase

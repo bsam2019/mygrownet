@@ -4,8 +4,8 @@ namespace Tests\Unit\Services;
 
 use App\Models\User;
 use App\Models\InvestmentTier;
-use App\Models\PhysicalReward;
-use App\Models\TeamVolume;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalReward;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TeamVolume;
 use App\Services\PhysicalRewardAllocationService;
 use Tests\TestCase;
 use Tests\Traits\UsesMinimalDatabase;

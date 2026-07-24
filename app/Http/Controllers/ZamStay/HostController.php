@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers\ZamStay;
 
+use App\Domain\ZamStay\Services\BookingService;
+use App\Domain\ZamStay\Services\PropertyService;
 use App\Http\Controllers\Controller;
-use App\Models\ZamStay\ZamStayProperty;
-use App\Models\ZamStay\ZamStayBooking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class HostController extends Controller
 {
+    public function __construct(
+        private readonly PropertyService $propertyService,
+        private readonly BookingService $bookingService,
+    ) {}
+
     public function uploadImage(Request $request)
     {
         $request->validate(['image' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120']);
@@ -26,38 +31,20 @@ class HostController extends Controller
     public function dashboard(Request $request)
     {
         $user = $request->user();
-        $properties = ZamStayProperty::where('owner_id', $user->id)->get();
-        $propertyIds = $properties->pluck('id');
-
-        $stats = [
-            'total_properties' => $properties->count(),
-            'active_properties' => $properties->where('is_active', true)->count(),
-            'total_bookings' => ZamStayBooking::whereIn('property_id', $propertyIds)->count(),
-            'pending_bookings' => ZamStayBooking::whereIn('property_id', $propertyIds)->where('status', 'pending')->count(),
-            'confirmed_bookings' => ZamStayBooking::whereIn('property_id', $propertyIds)->where('status', 'confirmed')->count(),
-            'total_revenue' => ZamStayBooking::whereIn('property_id', $propertyIds)->where('status', 'confirmed')->sum('total_price'),
-        ];
-
-        $recentBookings = ZamStayBooking::whereIn('property_id', $propertyIds)
-            ->with(['property', 'user'])
-            ->orderBy('created_at', 'desc')
-            ->take(10)
-            ->get();
+        $stats = $this->bookingService->getHostStats($user->id);
+        $properties = $this->propertyService->findByOwner($user->id);
+        $bookings = $this->bookingService->getHostBookings($user->id);
 
         return Inertia::render('ZamStay/Host/Dashboard', [
             'stats' => $stats,
-            'recentBookings' => $recentBookings,
+            'recentBookings' => array_slice($bookings, 0, 10),
             'properties' => $properties,
         ]);
     }
 
     public function properties(Request $request)
     {
-        $properties = ZamStayProperty::where('owner_id', $request->user()->id)
-            ->withCount('bookings')
-            ->withCount('reviews')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $properties = $this->propertyService->findByOwner($request->user()->id);
 
         return Inertia::render('ZamStay/Host/Properties', [
             'properties' => $properties,
@@ -88,28 +75,30 @@ class HostController extends Controller
             'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
-        $validated['owner_id'] = $request->user()->id;
-
-        ZamStayProperty::create($validated);
+        $this->propertyService->create($request->user()->id, $validated);
 
         return redirect()->route('zamstay.host.properties')
             ->with('success', 'Property created successfully.');
     }
 
-    public function editProperty(ZamStayProperty $property, Request $request)
+    public function editProperty(int $id, Request $request)
     {
-        if ($property->owner_id !== $request->user()->id) {
+        $property = $this->propertyService->findOrFail($id);
+
+        if ($property->ownerId !== $request->user()->id) {
             abort(403);
         }
 
         return Inertia::render('ZamStay/Host/PropertyForm', [
-            'property' => $property,
+            'property' => $property->toArray(),
         ]);
     }
 
-    public function updateProperty(ZamStayProperty $property, Request $request)
+    public function updateProperty(int $id, Request $request)
     {
-        if ($property->owner_id !== $request->user()->id) {
+        $property = $this->propertyService->findOrFail($id);
+
+        if ($property->ownerId !== $request->user()->id) {
             abort(403);
         }
 
@@ -129,7 +118,7 @@ class HostController extends Controller
             'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
-        $property->update($validated);
+        $this->propertyService->update($property, $validated);
 
         return redirect()->route('zamstay.host.properties')
             ->with('success', 'Property updated successfully.');
@@ -137,12 +126,7 @@ class HostController extends Controller
 
     public function bookings(Request $request)
     {
-        $propertyIds = ZamStayProperty::where('owner_id', $request->user()->id)->pluck('id');
-
-        $bookings = ZamStayBooking::whereIn('property_id', $propertyIds)
-            ->with(['property', 'user'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $bookings = $this->bookingService->getHostBookings($request->user()->id);
 
         return Inertia::render('ZamStay/Host/Bookings', [
             'bookings' => $bookings,

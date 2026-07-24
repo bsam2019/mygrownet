@@ -12,8 +12,8 @@ use App\Domain\MLM\Repositories\TeamVolumeRepository;
 use App\Domain\MLM\Services\MLMCommissionCalculationService;
 use App\Models\User;
 use App\Models\InvestmentTier;
-use App\Models\ReferralCommission;
-use App\Models\TierQualification;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TierQualification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 

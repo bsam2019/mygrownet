@@ -7,7 +7,7 @@ namespace Tests\Unit\Services;
 use App\Services\MyGrowNetTierAdvancementService;
 use App\Models\User;
 use App\Models\InvestmentTier;
-use App\Models\TeamVolume;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TeamVolume;
 use PHPUnit\Framework\TestCase;
 
 class MyGrowNetTierAdvancementServiceTest extends TestCase

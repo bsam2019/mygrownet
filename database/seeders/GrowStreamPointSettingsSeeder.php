@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\LifePointSetting;
-use App\Models\BonusPointSetting;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\LifePointSetting;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\BonusPointSetting;
 use Illuminate\Database\Seeder;
 
 class GrowStreamPointSettingsSeeder extends Seeder

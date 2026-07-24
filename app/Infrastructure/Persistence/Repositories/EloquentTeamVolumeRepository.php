@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Repositories;
 
-use App\Domain\MLM\Repositories\TeamVolumeRepository;
-use App\Domain\MLM\ValueObjects\UserId;
-use App\Domain\MLM\ValueObjects\TeamVolumeAmount;
-use App\Models\TeamVolume;
-use App\Models\UserNetwork;
-use App\Models\ReferralCommission;
+use App\Domain\GrowNet\MLM\Repositories\TeamVolumeRepository;
+use App\Domain\GrowNet\MLM\ValueObjects\UserId;
+use App\Domain\GrowNet\MLM\ValueObjects\TeamVolumeAmount;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TeamVolume;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\UserNetwork;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use App\Models\User;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;

@@ -35,7 +35,6 @@ class HomeHubController extends Controller
             'growbuilder' => 'growbuilder',
             'bizboost' => 'bizboost',
             'growfinance' => 'growfinance',
-            'growbiz' => 'growbiz',
             'cms' => 'cms',
             'marketplace' => 'growmarket',
             'shop' => 'growmarket',
@@ -104,16 +103,10 @@ class HomeHubController extends Controller
         $moduleDTOs = $this->getUserModulesUseCase->execute($user);
         
         // Check setup status for modules that require it
-        $growbizNeedsSetup = SetupController::needsSetup($user->id);
         $bizboostNeedsSetup = $this->bizboostNeedsSetup($user->id);
         
-        $modules = array_map(function($dto) use ($growbizNeedsSetup, $bizboostNeedsSetup) {
+        $modules = array_map(function($dto) use ($bizboostNeedsSetup) {
             $arr = $dto->toArray();
-            // Add setup route for GrowBiz if needed
-            if ($arr['slug'] === 'growbiz' && $growbizNeedsSetup) {
-                $arr['primary_route'] = '/growbiz/setup';
-                $arr['needs_setup'] = true;
-            }
             // Add setup route for BizBoost if needed
             if ($arr['slug'] === 'bizboost' && $bizboostNeedsSetup) {
                 $arr['primary_route'] = '/bizboost/setup';

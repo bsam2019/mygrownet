@@ -7,9 +7,9 @@ use App\Infrastructure\Persistence\Repositories\EloquentTeamVolumeRepository;
 use App\Domain\MLM\ValueObjects\UserId;
 use App\Domain\MLM\ValueObjects\TeamVolumeAmount;
 use App\Models\User;
-use App\Models\TeamVolume;
-use App\Models\UserNetwork;
-use App\Models\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TeamVolume;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\UserNetwork;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use DateTimeImmutable;
 

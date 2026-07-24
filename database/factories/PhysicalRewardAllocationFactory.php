@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\PhysicalRewardAllocation;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalRewardAllocation;
 use App\Models\User;
-use App\Models\PhysicalReward;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalReward;
 use App\Models\InvestmentTier;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

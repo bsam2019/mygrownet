@@ -3,7 +3,7 @@
 namespace App\Listeners;
 
 use App\Domain\Payment\Events\PaymentVerified;
-use App\Services\MLMCommissionService;
+use App\Domain\GrowNet\Services\MLMCommissionService;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
@@ -54,7 +54,7 @@ class ProcessMLMCommissions
             if ($event->paymentType === 'registration' || ($event->paymentType === 'wallet_topup' && $event->amount >= 500)) {
                 // Check if ANY commission already exists for this user (registration OR starter_kit)
                 // This prevents duplicate commissions from different sources
-                $hasAnyCommission = \App\Models\ReferralCommission::where('referred_id', $user->id)
+                $hasAnyCommission = \App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission::where('referred_id', $user->id)
                     ->whereIn('package_type', ['registration', 'starter_kit'])
                     ->exists();
 
@@ -71,7 +71,7 @@ class ProcessMLMCommissions
                 $packageType = 'starter_kit';
             } elseif ($event->paymentType === 'subscription') {
                 // Check if subscription commission already exists for this period
-                $existingSubscriptionCommission = \App\Models\ReferralCommission::where('referred_id', $user->id)
+                $existingSubscriptionCommission = \App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission::where('referred_id', $user->id)
                     ->where('package_type', 'subscription')
                     ->where('created_at', '>=', now()->subMinutes(5))
                     ->exists();

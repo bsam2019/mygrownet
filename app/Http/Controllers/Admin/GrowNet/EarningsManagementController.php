@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin\GrowNet;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use App\Models\ProfitShare;
-use App\Models\PointTransaction;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PointTransaction;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

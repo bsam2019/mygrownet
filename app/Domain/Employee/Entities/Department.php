@@ -22,7 +22,7 @@ final class Department
     private DateTimeImmutable $createdAt;
     private DateTimeImmutable $updatedAt;
 
-    public function __construct(
+    private function __construct(
         DepartmentId $id,
         string $name,
         string $description,
@@ -55,6 +55,41 @@ final class Department
             $description,
             $parentDepartment
         );
+    }
+
+    public static function reconstitute(array $data): self
+    {
+        $instance = new self(
+            $data['id'],
+            $data['name'],
+            $data['description'],
+            $data['parent_department'] ?? null,
+            $data['is_active'] ?? true
+        );
+        $instance->head = $data['head'] ?? null;
+        $instance->employees = $data['employees'] ?? [];
+        $instance->positions = $data['positions'] ?? [];
+        $instance->subDepartments = $data['sub_departments'] ?? [];
+        $instance->createdAt = $data['created_at'] ?? new DateTimeImmutable();
+        $instance->updatedAt = $data['updated_at'] ?? new DateTimeImmutable();
+        return $instance;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'description' => $this->description,
+            'head' => $this->head,
+            'parent_department' => $this->parentDepartment,
+            'is_active' => $this->isActive,
+            'employee_count' => count($this->employees),
+            'positions_count' => count($this->positions),
+            'sub_departments_count' => count($this->subDepartments),
+            'created_at' => $this->createdAt,
+            'updated_at' => $this->updatedAt,
+        ];
     }
 
     public function addEmployee(Employee $employee): void

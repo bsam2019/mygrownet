@@ -2,9 +2,12 @@
 
 namespace App\Domain\GrowFinance\Services;
 
+use App\Domain\GrowFinance\Entities\Expense;
+use App\Domain\GrowFinance\Entities\RecurringTransaction;
+use App\Domain\GrowFinance\Repositories\ExpenseRepositoryInterface;
+use App\Domain\GrowFinance\Repositories\RecurringTransactionRepositoryInterface;
+use App\Domain\GrowFinance\ValueObjects\PaymentMethod;
 use App\Domain\Module\Services\SubscriptionService;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceExpenseModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceRecurringTransactionModel;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -12,60 +15,56 @@ use Illuminate\Support\Facades\Log;
 class RecurringTransactionService
 {
     public function __construct(
-        private SubscriptionService $subscriptionService
+        private SubscriptionService $subscriptionService,
+        private RecurringTransactionRepositoryInterface $recurringTransactionRepo,
+        private ExpenseRepositoryInterface $expenseRepo,
     ) {}
 
-    /**
-     * Get all recurring transactions for a business
-     */
-    public function getForBusiness(User $user, ?string $type = null): \Illuminate\Database\Eloquent\Collection
+    public function getForBusiness(int $businessId, ?string $type = null): array
     {
-        $query = GrowFinanceRecurringTransactionModel::forBusiness($user->id)
-            ->with(['account', 'vendor', 'customer']);
+        $transactions = $type
+            ? $this->recurringTransactionRepo->findByType($businessId, $type)
+            : $this->recurringTransactionRepo->findByBusiness($businessId);
 
-        if ($type) {
-            $query->where('type', $type);
-        }
-
-        return $query->orderBy('next_due_date')->get();
+        return array_map(fn(RecurringTransaction $t) => $t->toArray(), $transactions);
     }
 
-    /**
-     * Create a new recurring transaction
-     */
-    public function create(User $user, array $data): GrowFinanceRecurringTransactionModel
+    public function create(int $userId, array $data): array
     {
-        return GrowFinanceRecurringTransactionModel::create([
-            'business_id' => $user->id,
-            'type' => $data['type'],
-            'account_id' => $data['account_id'] ?? null,
-            'vendor_id' => $data['vendor_id'] ?? null,
-            'customer_id' => $data['customer_id'] ?? null,
-            'description' => $data['description'],
-            'category' => $data['category'] ?? null,
-            'amount' => $data['amount'],
-            'payment_method' => $data['payment_method'] ?? null,
-            'frequency' => $data['frequency'],
-            'start_date' => $data['start_date'],
-            'end_date' => $data['end_date'] ?? null,
-            'next_due_date' => $data['start_date'],
-            'max_occurrences' => $data['max_occurrences'] ?? null,
-            'notes' => $data['notes'] ?? null,
-            'is_active' => true,
-        ]);
+        $transaction = $this->recurringTransactionRepo->save(new RecurringTransaction(
+            id: null,
+            businessId: $userId,
+            type: $data['type'] ?? null,
+            accountId: isset($data['account_id']) ? (int) $data['account_id'] : null,
+            vendorId: isset($data['vendor_id']) ? (int) $data['vendor_id'] : null,
+            customerId: isset($data['customer_id']) ? (int) $data['customer_id'] : null,
+            description: $data['description'] ?? null,
+            category: $data['category'] ?? null,
+            amount: (float) ($data['amount'] ?? 0),
+            paymentMethod: $data['payment_method'] ?? null,
+            frequency: $data['frequency'] ?? null,
+            startDate: isset($data['start_date']) ? new \DateTimeImmutable($data['start_date']) : null,
+            endDate: isset($data['end_date']) ? new \DateTimeImmutable($data['end_date']) : null,
+            nextDueDate: isset($data['start_date']) ? new \DateTimeImmutable($data['start_date']) : null,
+            lastProcessedDate: null,
+            isActive: true,
+            occurrencesCount: 0,
+            maxOccurrences: isset($data['max_occurrences']) ? (int) $data['max_occurrences'] : null,
+            notes: $data['notes'] ?? null,
+            createdAt: null,
+            updatedAt: null,
+        ));
+
+        return $transaction->toArray();
     }
 
-    /**
-     * Process all due recurring transactions for a user
-     */
-    public function processDueTransactions(User $user): array
+    public function processDueTransactions(int $userId): array
     {
         $processed = [];
         $errors = [];
+        $user = User::findOrFail($userId);
 
-        $dueTransactions = GrowFinanceRecurringTransactionModel::forBusiness($user->id)
-            ->dueToday()
-            ->get();
+        $dueTransactions = $this->recurringTransactionRepo->findDueToday($userId);
 
         foreach ($dueTransactions as $recurring) {
             try {
@@ -73,7 +72,6 @@ class RecurringTransactionService
                     continue;
                 }
 
-                // Check subscription limits
                 $check = $this->subscriptionService->canIncrement($user, 'transactions_per_month', 'growfinance');
                 if (!$check['allowed']) {
                     $errors[] = [
@@ -88,19 +86,42 @@ class RecurringTransactionService
                     if ($recurring->type === 'expense') {
                         $this->createExpenseFromRecurring($recurring);
                     }
-                    // TODO: Add income/invoice creation
 
-                    // Update recurring transaction
-                    $recurring->update([
-                        'last_processed_date' => now(),
-                        'next_due_date' => $recurring->calculateNextDueDate(),
-                        'occurrences_count' => $recurring->occurrences_count + 1,
-                    ]);
+                    $nextDue = $this->calculateNextDueDate($recurring);
+                    $newOccurrencesCount = $recurring->occurrencesCount + 1;
+                    $shouldBeActive = true;
 
-                    // Check if should deactivate
-                    if (!$recurring->shouldProcess()) {
-                        $recurring->update(['is_active' => false]);
+                    if ($recurring->maxOccurrences !== null && $newOccurrencesCount >= $recurring->maxOccurrences) {
+                        $shouldBeActive = false;
                     }
+                    if ($recurring->endDate && $nextDue > $recurring->endDate) {
+                        $shouldBeActive = false;
+                    }
+
+                    $updated = new RecurringTransaction(
+                        id: $recurring->id,
+                        businessId: $recurring->businessId,
+                        type: $recurring->type,
+                        accountId: $recurring->accountId,
+                        vendorId: $recurring->vendorId,
+                        customerId: $recurring->customerId,
+                        description: $recurring->description,
+                        category: $recurring->category,
+                        amount: $recurring->amount,
+                        paymentMethod: $recurring->paymentMethod,
+                        frequency: $recurring->frequency,
+                        startDate: $recurring->startDate,
+                        endDate: $recurring->endDate,
+                        nextDueDate: $nextDue,
+                        lastProcessedDate: new \DateTimeImmutable('now'),
+                        isActive: $shouldBeActive,
+                        occurrencesCount: $newOccurrencesCount,
+                        maxOccurrences: $recurring->maxOccurrences,
+                        notes: $recurring->notes,
+                        createdAt: $recurring->createdAt,
+                        updatedAt: new \DateTimeImmutable('now'),
+                    );
+                    $this->recurringTransactionRepo->save($updated);
 
                     $processed[] = [
                         'id' => $recurring->id,
@@ -109,7 +130,6 @@ class RecurringTransactionService
                     ];
                 });
 
-                // Clear usage cache
                 $this->subscriptionService->clearCache($user, 'growfinance');
 
             } catch (\Exception $e) {
@@ -133,59 +153,120 @@ class RecurringTransactionService
         ];
     }
 
-    /**
-     * Create an expense from a recurring transaction
-     */
-    private function createExpenseFromRecurring(GrowFinanceRecurringTransactionModel $recurring): GrowFinanceExpenseModel
+    private function createExpenseFromRecurring(RecurringTransaction $recurring): array
     {
-        return GrowFinanceExpenseModel::create([
-            'business_id' => $recurring->business_id,
-            'account_id' => $recurring->account_id,
-            'vendor_id' => $recurring->vendor_id,
-            'expense_date' => now(),
-            'category' => $recurring->category,
-            'description' => $recurring->description . ' (Recurring)',
-            'amount' => $recurring->amount,
-            'payment_method' => $recurring->payment_method,
-            'notes' => $recurring->notes,
-            'is_recurring' => true,
-        ]);
+        $expense = $this->expenseRepo->save(new Expense(
+            id: null,
+            businessId: $recurring->businessId,
+            vendorId: $recurring->vendorId,
+            accountId: $recurring->accountId,
+            expenseDate: new \DateTimeImmutable('now'),
+            category: $recurring->category,
+            description: ($recurring->description ?? '') . ' (Recurring)',
+            amount: $recurring->amount,
+            paymentMethod: $recurring->paymentMethod ? PaymentMethod::from($recurring->paymentMethod) : null,
+            isRecurring: true,
+            notes: $recurring->notes,
+        ));
+
+        return $expense->toArray();
     }
 
-    /**
-     * Pause a recurring transaction
-     */
-    public function pause(GrowFinanceRecurringTransactionModel $recurring): void
+    public function pause(int $transactionId): void
     {
-        $recurring->update(['is_active' => false]);
+        $recurring = $this->recurringTransactionRepo->findById($transactionId);
+        if (!$recurring) return;
+
+        $this->recurringTransactionRepo->save(new RecurringTransaction(
+            id: $recurring->id,
+            businessId: $recurring->businessId,
+            type: $recurring->type,
+            accountId: $recurring->accountId,
+            vendorId: $recurring->vendorId,
+            customerId: $recurring->customerId,
+            description: $recurring->description,
+            category: $recurring->category,
+            amount: $recurring->amount,
+            paymentMethod: $recurring->paymentMethod,
+            frequency: $recurring->frequency,
+            startDate: $recurring->startDate,
+            endDate: $recurring->endDate,
+            nextDueDate: $recurring->nextDueDate,
+            lastProcessedDate: $recurring->lastProcessedDate,
+            isActive: false,
+            occurrencesCount: $recurring->occurrencesCount,
+            maxOccurrences: $recurring->maxOccurrences,
+            notes: $recurring->notes,
+            createdAt: $recurring->createdAt,
+            updatedAt: new \DateTimeImmutable('now'),
+        ));
     }
 
-    /**
-     * Resume a recurring transaction
-     */
-    public function resume(GrowFinanceRecurringTransactionModel $recurring): void
+    public function resume(int $transactionId): void
     {
-        // If next due date is in the past, set it to today
-        $nextDue = $recurring->next_due_date;
-        if ($nextDue->lt(now())) {
-            $nextDue = now();
+        $recurring = $this->recurringTransactionRepo->findById($transactionId);
+        if (!$recurring) return;
+
+        $nextDue = $recurring->nextDueDate;
+        $now = new \DateTimeImmutable('now');
+        if ($nextDue && $nextDue < $now) {
+            $nextDue = $now;
         }
 
-        $recurring->update([
-            'is_active' => true,
-            'next_due_date' => $nextDue,
-        ]);
+        $this->recurringTransactionRepo->save(new RecurringTransaction(
+            id: $recurring->id,
+            businessId: $recurring->businessId,
+            type: $recurring->type,
+            accountId: $recurring->accountId,
+            vendorId: $recurring->vendorId,
+            customerId: $recurring->customerId,
+            description: $recurring->description,
+            category: $recurring->category,
+            amount: $recurring->amount,
+            paymentMethod: $recurring->paymentMethod,
+            frequency: $recurring->frequency,
+            startDate: $recurring->startDate,
+            endDate: $recurring->endDate,
+            nextDueDate: $nextDue,
+            lastProcessedDate: $recurring->lastProcessedDate,
+            isActive: true,
+            occurrencesCount: $recurring->occurrencesCount,
+            maxOccurrences: $recurring->maxOccurrences,
+            notes: $recurring->notes,
+            createdAt: $recurring->createdAt,
+            updatedAt: new \DateTimeImmutable('now'),
+        ));
     }
 
-    /**
-     * Get upcoming recurring transactions
-     */
-    public function getUpcoming(User $user, int $days = 30): \Illuminate\Database\Eloquent\Collection
+    public function getUpcoming(int $userId, int $days = 30): array
     {
-        return GrowFinanceRecurringTransactionModel::forBusiness($user->id)
-            ->active()
-            ->where('next_due_date', '<=', now()->addDays($days))
-            ->orderBy('next_due_date')
-            ->get();
+        $transactions = $this->recurringTransactionRepo->findActive($userId);
+
+        $cutoff = new \DateTimeImmutable("+{$days} days");
+        $upcoming = array_filter(
+            $transactions,
+            fn(RecurringTransaction $t) => $t->nextDueDate && $t->nextDueDate <= $cutoff
+        );
+
+        usort($upcoming, fn(RecurringTransaction $a, RecurringTransaction $b) =>
+            ($a->nextDueDate?->getTimestamp() ?? 0) <=> ($b->nextDueDate?->getTimestamp() ?? 0)
+        );
+
+        return array_map(fn(RecurringTransaction $t) => $t->toArray(), $upcoming);
+    }
+
+    private function calculateNextDueDate(RecurringTransaction $recurring): \DateTimeImmutable
+    {
+        $current = $recurring->nextDueDate ?? new \DateTimeImmutable('now');
+
+        return match ($recurring->frequency) {
+            'daily' => $current->modify('+1 day'),
+            'weekly' => $current->modify('+1 week'),
+            'biweekly' => $current->modify('+2 weeks'),
+            'monthly' => $current->modify('+1 month'),
+            'quarterly' => $current->modify('+3 months'),
+            'yearly' => $current->modify('+1 year'),
+            default => $current->modify('+1 month'),
+        };
     }
 }

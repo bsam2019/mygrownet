@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AdminSidebar from '@/components/AdminSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
-import ToastContainer from '@/components/GrowBiz/ToastContainer.vue';
+import ToastContainer from '@/components/Shared/ToastContainer.vue';
 import { useToast } from '@/composables/useToast';
 import type { BreadcrumbItemType } from '@/types';
 import { ref, onMounted, computed, watch } from 'vue';

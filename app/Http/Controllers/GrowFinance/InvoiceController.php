@@ -6,9 +6,9 @@ use App\Domain\GrowFinance\Services\PdfInvoiceService;
 use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\GrowFinance\ValueObjects\InvoiceStatus;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceCustomerModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceInvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceInvoiceItemModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceCustomerModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceInvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceInvoiceItemModel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -54,7 +54,7 @@ class InvoiceController extends Controller
             ->get(['id', 'name', 'email', 'phone']);
 
         // Get available templates for the user
-        $templates = \App\Infrastructure\Persistence\Eloquent\GrowFinanceInvoiceTemplateModel::forBusiness($businessId)
+        $templates = \App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceInvoiceTemplateModel::forBusiness($businessId)
             ->orderByDesc('is_default')
             ->orderBy('name')
             ->get(['id', 'name', 'is_default', 'colors']);
@@ -93,7 +93,7 @@ class InvoiceController extends Controller
         // Get template_id - use provided, or default, or null
         $templateId = $validated['template_id'] ?? null;
         if (!$templateId) {
-            $defaultTemplate = \App\Infrastructure\Persistence\Eloquent\GrowFinanceInvoiceTemplateModel::forBusiness($businessId)
+            $defaultTemplate = \App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceInvoiceTemplateModel::forBusiness($businessId)
                 ->where('is_default', true)
                 ->first();
             $templateId = $defaultTemplate?->id;
@@ -143,7 +143,7 @@ class InvoiceController extends Controller
             ->findOrFail($id);
 
         // Get available templates
-        $templates = \App\Infrastructure\Persistence\Eloquent\GrowFinanceInvoiceTemplateModel::forBusiness($businessId)
+        $templates = \App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceInvoiceTemplateModel::forBusiness($businessId)
             ->orderByDesc('is_default')
             ->orderBy('name')
             ->get(['id', 'name', 'is_default', 'colors']);
@@ -335,16 +335,16 @@ class InvoiceController extends Controller
         // Get the template
         $template = null;
         if ($invoice->template_id) {
-            $template = \App\Infrastructure\Persistence\Eloquent\GrowFinanceInvoiceTemplateModel::find($invoice->template_id);
+            $template = \App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceInvoiceTemplateModel::find($invoice->template_id);
         }
         if (!$template) {
-            $template = \App\Infrastructure\Persistence\Eloquent\GrowFinanceInvoiceTemplateModel::forBusiness($businessId)
+            $template = \App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceInvoiceTemplateModel::forBusiness($businessId)
                 ->where('is_default', true)
                 ->first();
         }
 
         // Get business profile
-        $profile = \App\Infrastructure\Persistence\Eloquent\GrowFinanceProfileModel::where('user_id', $businessId)->first();
+        $profile = \App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceProfileModel::where('user_id', $businessId)->first();
 
         return view('growfinance.invoices.print', [
             'invoice' => $invoice,

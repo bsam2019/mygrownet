@@ -2,25 +2,25 @@
 
 namespace App\Domain\LifePlus\Services;
 
-use App\Infrastructure\Persistence\Eloquent\LifePlusHabitModel;
+use App\Domain\LifePlus\Entities\LifePlusHabit;
+use App\Domain\LifePlus\Repositories\HabitRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\LifePlusHabitLogModel;
-use Carbon\Carbon;
 
 class HabitService
 {
+    public function __construct(
+        private readonly HabitRepositoryInterface $habitRepo,
+    ) {}
+
     public function getHabits(int $userId): array
     {
-        return LifePlusHabitModel::where('user_id', $userId)
-            ->where('is_active', true)
-            ->orderBy('created_at')
-            ->get()
-            ->map(fn($h) => $this->mapHabit($h))
-            ->toArray();
+        $habits = $this->habitRepo->findByUser($userId);
+        return array_map(fn($h) => $this->mapHabit($h), $habits);
     }
 
     public function createHabit(int $userId, array $data): array
     {
-        $habit = LifePlusHabitModel::create([
+        $habit = LifePlusHabit::reconstitute([
             'user_id' => $userId,
             'name' => $data['name'],
             'icon' => $data['icon'] ?? '⭐',
@@ -30,39 +30,32 @@ class HabitService
             'is_active' => true,
         ]);
 
-        return $this->mapHabit($habit);
+        return $this->mapHabit($this->habitRepo->save($habit));
     }
 
     public function updateHabit(int $id, int $userId, array $data): ?array
     {
-        $habit = LifePlusHabitModel::where('id', $id)
-            ->where('user_id', $userId)
-            ->first();
+        $habit = $this->habitRepo->findById($id);
+        if (!$habit || $habit->userId !== $userId) return null;
 
-        if (!$habit) return null;
-
-        $habit->update($data);
-        return $this->mapHabit($habit->fresh());
+        $merged = array_merge($habit->toArray(), $data);
+        return $this->mapHabit($this->habitRepo->save(LifePlusHabit::reconstitute($merged)));
     }
 
     public function deleteHabit(int $id, int $userId): bool
     {
-        return LifePlusHabitModel::where('id', $id)
-            ->where('user_id', $userId)
-            ->delete() > 0;
+        $habit = $this->habitRepo->findById($id);
+        if (!$habit || $habit->userId !== $userId) return false;
+        return $this->habitRepo->delete($id);
     }
 
     public function logHabit(int $habitId, int $userId, ?string $date = null): ?array
     {
-        $habit = LifePlusHabitModel::where('id', $habitId)
-            ->where('user_id', $userId)
-            ->first();
+        $habit = $this->habitRepo->findById($habitId);
+        if (!$habit || $habit->userId !== $userId) return null;
 
-        if (!$habit) return null;
+        $logDate = $date ? (new \DateTimeImmutable($date))->format('Y-m-d') : now()->toDateString();
 
-        $logDate = $date ? Carbon::parse($date)->toDateString() : now()->toDateString();
-
-        // Toggle - if already logged, remove it
         $existing = LifePlusHabitLogModel::where('habit_id', $habitId)
             ->where('completed_date', $logDate)
             ->first();
@@ -76,50 +69,15 @@ class HabitService
             ]);
         }
 
-        return $this->mapHabit($habit->fresh());
+        return $this->mapHabit($habit);
     }
 
-    public function getWeekProgress(int $userId): array
-    {
-        $habits = LifePlusHabitModel::where('user_id', $userId)
-            ->where('is_active', true)
-            ->get();
-
-        $startOfWeek = now()->startOfWeek();
-        $endOfWeek = now()->endOfWeek();
-        $days = [];
-
-        for ($i = 0; $i < 7; $i++) {
-            $days[] = $startOfWeek->copy()->addDays($i)->toDateString();
-        }
-
-        return $habits->map(function ($habit) use ($days) {
-            $logs = LifePlusHabitLogModel::where('habit_id', $habit->id)
-                ->whereBetween('completed_date', [$days[0], $days[6]])
-                ->pluck('completed_date')
-                ->map(fn($d) => Carbon::parse($d)->toDateString())
-                ->toArray();
-
-            return [
-                'id' => $habit->id,
-                'name' => $habit->name,
-                'icon' => $habit->icon,
-                'color' => $habit->color,
-                'days' => collect($days)->map(fn($d) => [
-                    'date' => $d,
-                    'completed' => in_array($d, $logs),
-                ])->toArray(),
-                'completed_count' => count($logs),
-            ];
-        })->toArray();
-    }
-
-    public function getStreak(int $habitId): int
+    private function getStreak(int $habitId): int
     {
         $logs = LifePlusHabitLogModel::where('habit_id', $habitId)
             ->orderBy('completed_date', 'desc')
             ->pluck('completed_date')
-            ->map(fn($d) => Carbon::parse($d)->toDateString())
+            ->map(fn($d) => $d instanceof \DateTimeImmutable ? $d->format('Y-m-d') : (new \DateTimeImmutable($d))->format('Y-m-d'))
             ->toArray();
 
         if (empty($logs)) return 0;
@@ -127,20 +85,19 @@ class HabitService
         $streak = 0;
         $checkDate = now()->toDateString();
 
-        // If not completed today, start from yesterday
         if (!in_array($checkDate, $logs)) {
             $checkDate = now()->subDay()->toDateString();
         }
 
         while (in_array($checkDate, $logs)) {
             $streak++;
-            $checkDate = Carbon::parse($checkDate)->subDay()->toDateString();
+            $checkDate = \Carbon\Carbon::parse($checkDate)->subDay()->toDateString();
         }
 
         return $streak;
     }
 
-    private function mapHabit($habit): array
+    private function mapHabit(LifePlusHabit $habit): array
     {
         $streak = $this->getStreak($habit->id);
         $todayCompleted = LifePlusHabitLogModel::where('habit_id', $habit->id)
@@ -153,8 +110,8 @@ class HabitService
             'icon' => $habit->icon,
             'color' => $habit->color,
             'frequency' => $habit->frequency,
-            'reminder_time' => $habit->reminder_time,
-            'is_active' => $habit->is_active,
+            'reminder_time' => $habit->reminderTime,
+            'is_active' => $habit->isActive,
             'streak' => $streak,
             'today_completed' => $todayCompleted,
         ];

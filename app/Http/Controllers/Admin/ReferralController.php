@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\ReferralService;
+use App\Domain\GrowNet\Services\ReferralService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 

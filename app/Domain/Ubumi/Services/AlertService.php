@@ -5,6 +5,8 @@ namespace App\Domain\Ubumi\Services;
 use App\Domain\Ubumi\Entities\CheckIn;
 use App\Domain\Ubumi\Repositories\FamilyRepositoryInterface;
 use App\Domain\Ubumi\Repositories\PersonRepositoryInterface;
+use App\Domain\Ubumi\ValueObjects\FamilyId;
+use App\Domain\Ubumi\ValueObjects\PersonId;
 use App\Models\User;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\DB;
@@ -16,9 +18,6 @@ class AlertService
         private readonly PersonRepositoryInterface $personRepository
     ) {}
 
-    /**
-     * Process check-in and create alerts if needed
-     */
     public function processCheckIn(CheckIn $checkIn): void
     {
         if (!$checkIn->requiresAlert()) {
@@ -30,12 +29,11 @@ class AlertService
             return;
         }
 
-        $family = $this->familyRepository->findById($person->familyId());
+        $family = $this->familyRepository->findById(FamilyId::fromString($person->getFamilyId()));
         if (!$family) {
             return;
         }
 
-        // Create alert
         $alertType = match($checkIn->status()->value) {
             'unwell' => 'unwell',
             'need_assistance' => 'need_assistance',
@@ -46,12 +44,12 @@ class AlertService
             return;
         }
 
-        $message = $this->generateAlertMessage($person->name()->fullName(), $checkIn);
+        $message = $this->generateAlertMessage($person->getName()->toString(), $checkIn);
 
         $alertId = DB::table('ubumi_alerts')->insertGetId([
             'id' => \Ramsey\Uuid\Uuid::uuid4()->toString(),
-            'family_id' => $family->id()->value(),
-            'person_id' => $person->id()->value(),
+            'family_id' => $family->getId()->toString(),
+            'person_id' => $person->getId()->toString(),
             'check_in_id' => $checkIn->id()->value(),
             'alert_type' => $alertType,
             'message' => $message,
@@ -60,19 +58,40 @@ class AlertService
             'updated_at' => now(),
         ]);
 
-        // Notify family admin
-        $this->notifyFamilyAdmin($family->adminUserId(), $message, $person->name()->fullName());
+        $this->notifyFamilyAdmin($family->getAdminUserId(), $message, $person->getName()->toString());
 
-        // Notify caregivers
-        $this->notifyCaregivers($person->id()->value(), $message, $person->name()->fullName());
+        $this->notifyCaregivers($person->getId()->toString(), $message, $person->getName()->toString());
     }
 
-    /**
-     * Check for missed check-ins and create alerts
-     */
+    public function getPendingAlertsByFamily(FamilyId $familyId): array
+    {
+        return DB::table('ubumi_alerts')
+            ->where('family_id', $familyId->toString())
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(fn($alert) => [
+                'id' => $alert->id,
+                'message' => $alert->message,
+                'created_at' => $alert->created_at,
+            ])
+            ->toArray();
+    }
+
+    public function acknowledgeAlert(string $alertId, int $userId): void
+    {
+        DB::table('ubumi_alerts')
+            ->where('id', $alertId)
+            ->update([
+                'status' => 'acknowledged',
+                'acknowledged_by' => $userId,
+                'acknowledged_at' => now(),
+                'updated_at' => now(),
+            ]);
+    }
+
     public function checkMissedCheckIns(): void
     {
-        // Get all persons with check-in settings
         $settings = DB::table('ubumi_check_in_settings')
             ->where('reminders_enabled', true)
             ->get();
@@ -89,7 +108,6 @@ class AlertService
 
             $hoursSinceLastCheckIn = now()->diffInHours($lastCheckIn->checked_in_at);
 
-            // Check if threshold exceeded and no pending alert exists
             if ($hoursSinceLastCheckIn >= $setting->missed_threshold_hours) {
                 $existingAlert = DB::table('ubumi_alerts')
                     ->where('person_id', $setting->person_id)
@@ -106,26 +124,26 @@ class AlertService
 
     private function createMissedCheckInAlert(string $personId, int $hoursMissed): void
     {
-        $person = $this->personRepository->findById(\App\Domain\Ubumi\ValueObjects\PersonId::fromString($personId));
+        $person = $this->personRepository->findById(PersonId::fromString($personId));
         if (!$person) {
             return;
         }
 
-        $family = $this->familyRepository->findById($person->familyId());
+        $family = $this->familyRepository->findById(FamilyId::fromString($person->getFamilyId()));
         if (!$family) {
             return;
         }
 
         $message = sprintf(
             '%s has not checked in for %d hours. Please reach out to ensure they are okay.',
-            $person->name()->fullName(),
+            $person->getName()->toString(),
             $hoursMissed
         );
 
         DB::table('ubumi_alerts')->insert([
             'id' => \Ramsey\Uuid\Uuid::uuid4()->toString(),
-            'family_id' => $family->id()->value(),
-            'person_id' => $person->id()->value(),
+            'family_id' => $family->getId()->toString(),
+            'person_id' => $person->getId()->toString(),
             'check_in_id' => null,
             'alert_type' => 'missed_checkin',
             'message' => $message,
@@ -134,8 +152,8 @@ class AlertService
             'updated_at' => now(),
         ]);
 
-        $this->notifyFamilyAdmin($family->adminUserId(), $message, $person->name()->fullName());
-        $this->notifyCaregivers($personId, $message, $person->name()->fullName());
+        $this->notifyFamilyAdmin($family->getAdminUserId(), $message, $person->getName()->toString());
+        $this->notifyCaregivers($personId, $message, $person->getName()->toString());
     }
 
     private function generateAlertMessage(string $personName, CheckIn $checkIn): string
@@ -160,11 +178,7 @@ class AlertService
             return;
         }
 
-        // Send in-app notification
         $admin->notify(new \App\Notifications\Ubumi\CheckInAlertNotification($message, $personName));
-
-        // TODO: Send SMS if enabled
-        // TODO: Send email if enabled
     }
 
     private function notifyCaregivers(string $personId, string $message, string $personName): void

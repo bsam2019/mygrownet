@@ -4,25 +4,28 @@ namespace App\Http\Controllers\ZamStay;
 
 use App\Domain\Payment\DTOs\CollectionRequest;
 use App\Domain\Payment\Services\PaymentService;
+use App\Domain\ZamStay\Services\BookingService;
+use App\Domain\ZamStay\Services\PropertyService;
 use App\Http\Controllers\Controller;
-use App\Models\ZamStay\ZamStayBooking;
-use App\Models\ZamStay\ZamStayProperty;
 use App\Notifications\ZamStay\BookingCancelledNotification;
 use App\Notifications\ZamStay\BookingConfirmedNotification;
 use App\Notifications\ZamStay\BookingCreatedNotification;
-use App\Services\TransactionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 
 class BookingController extends Controller
 {
-    public function checkout(ZamStayProperty $property, Request $request)
+    public function __construct(
+        private readonly BookingService $bookingService,
+        private readonly PropertyService $propertyService,
+    ) {}
+
+    public function checkout(int $propertyId, Request $request)
     {
-        $property->load('owner');
+        $property = $this->propertyService->findOrFail($propertyId);
 
         return Inertia::render('ZamStay/Checkout', [
-            'property' => $property,
+            'property' => $property->toArray(),
             'checkIn' => $request->check_in,
             'checkOut' => $request->check_out,
             'guests' => $request->guests ?? 1,
@@ -39,54 +42,19 @@ class BookingController extends Controller
             'special_requests' => 'nullable|string|max:1000',
         ]);
 
-        $property = ZamStayProperty::findOrFail($validated['property_id']);
+        $booking = $this->bookingService->create($request->user()->id, $validated);
 
-        if ($property->max_guests < $validated['guests']) {
-            return back()->withErrors(['guests' => 'This property only accommodates up to ' . $property->max_guests . ' guests.']);
-        }
-
-        $exists = ZamStayBooking::where('property_id', $property->id)
-            ->where('status', '!=', 'cancelled')
-            ->where(function ($q) use ($validated) {
-                $q->whereBetween('check_in', [$validated['check_in'], $validated['check_out']])
-                  ->orWhereBetween('check_out', [$validated['check_in'], $validated['check_out']])
-                  ->orWhere(function ($q2) use ($validated) {
-                      $q2->where('check_in', '<=', $validated['check_in'])
-                         ->where('check_out', '>=', $validated['check_out']);
-                  });
-            })->exists();
-
-        if ($exists) {
-            return back()->withErrors(['dates' => 'Property is not available for the selected dates.']);
-        }
-
-        $checkIn = \Carbon\Carbon::parse($validated['check_in']);
-        $checkOut = \Carbon\Carbon::parse($validated['check_out']);
-        $nights = $checkIn->diffInDays($checkOut);
-        $totalPrice = $nights * $property->price_per_night;
-
-        $booking = ZamStayBooking::create([
-            'property_id' => $property->id,
-            'user_id' => $request->user()->id,
-            'check_in' => $validated['check_in'],
-            'check_out' => $validated['check_out'],
-            'total_price' => $totalPrice,
-            'status' => 'pending',
-            'guests' => $validated['guests'],
-            'special_requests' => $validated['special_requests'] ?? null,
-        ]);
-
-        $booking->load('property.owner', 'user');
-        $booking->user->notify(new BookingCreatedNotification($booking, 'guest'));
-        $booking->property->owner->notify(new BookingCreatedNotification($booking, 'host'));
+        $bookingArr = $booking->toArray();
+        $request->user()->notify(new BookingCreatedNotification($bookingArr, 'guest'));
 
         return redirect()->route('zamstay.bookings.show', $booking->id)
             ->with('success', 'Booking created! Please complete payment to confirm.');
     }
 
-    public function pay(ZamStayBooking $booking, Request $request, PaymentService $paymentService)
+    public function pay(int $id, Request $request, PaymentService $paymentService)
     {
-        if ($booking->user_id !== $request->user()->id) {
+        $booking = $this->bookingService->findById($id);
+        if (!$booking || $booking->userId !== $request->user()->id) {
             abort(403);
         }
 
@@ -103,21 +71,19 @@ class BookingController extends Controller
             'payment_phone' => 'required_if:payment_method,mobile_money|string|max:20',
         ]);
 
-        $booking->update([
-            'payment_method' => $validated['payment_method'],
-            'payment_phone' => $validated['payment_phone'] ?? null,
-        ]);
+        $this->bookingService->updatePaymentInfo($id, $validated['payment_method'], $validated['payment_phone'] ?? null);
 
         if ($validated['payment_method'] === 'mobile_money') {
             $network = $this->detectNetwork($validated['payment_phone']);
+            $property = $this->propertyService->findById($booking->propertyId);
 
             $collectRequest = new CollectionRequest(
                 phoneNumber: $validated['payment_phone'],
-                amount: (float) $booking->total_price,
+                amount: (float) $booking->totalPrice,
                 currency: 'ZMW',
                 provider: $network,
                 reference: 'ZAM-' . $booking->id . '-' . now()->timestamp,
-                description: "ZamStay payment for booking #{$booking->id} - {$booking->property->title}",
+                description: "ZamStay payment for booking #{$booking->id} - " . ($property?->title ?? ''),
                 customerName: $request->user()->name,
                 customerEmail: $request->user()->email,
                 metadata: ['booking_id' => $booking->id, 'module' => 'zamstay'],
@@ -125,17 +91,11 @@ class BookingController extends Controller
 
             try {
                 $response = $paymentService->collect($collectRequest);
-                $booking->update([
-                    'transaction_id' => $response->transactionId,
-                    'payment_reference' => $response->providerReference,
-                ]);
 
-                    if ($response->success) {
-                    $booking->update(['status' => 'confirmed', 'paid_at' => now()]);
-                    $booking->load('property.owner', 'user');
-                    $booking->user->notify(new BookingConfirmedNotification($booking, 'guest'));
-                    $booking->property->owner->notify(new BookingConfirmedNotification($booking, 'host'));
-                    return redirect()->route('zamstay.bookings.show', $booking->id)
+                if ($response->success) {
+                    $bookingArr = $this->bookingService->markAsPaid($id, $response->transactionId, $response->providerReference)->toArray();
+                    $request->user()->notify(new BookingConfirmedNotification($bookingArr, 'guest'));
+                    return redirect()->route('zamstay.bookings.show', $id)
                         ->with('success', 'Payment successful! Your booking is confirmed.');
                 }
 
@@ -145,8 +105,63 @@ class BookingController extends Controller
             }
         }
 
-        return redirect()->route('zamstay.bookings.show', $booking->id)
+        return redirect()->route('zamstay.bookings.show', $id)
             ->with('info', 'Booking submitted. The host will confirm once payment is received.');
+    }
+
+    public function checkAvailability(Request $request)
+    {
+        $request->validate([
+            'property_id' => 'required|exists:zamstay_properties,id',
+            'check_in' => 'required|date',
+            'check_out' => 'required|date|after:check_in',
+        ]);
+
+        $result = $this->bookingService->checkAvailability(
+            (int) $request->property_id,
+            $request->check_in,
+            $request->check_out
+        );
+
+        return response()->json($result);
+    }
+
+    public function myBookings(Request $request)
+    {
+        $bookings = $this->bookingService->findByUser($request->user()->id);
+
+        return Inertia::render('ZamStay/MyBookings', [
+            'bookings' => $bookings,
+        ]);
+    }
+
+    public function show(int $id)
+    {
+        $booking = $this->bookingService->findById($id);
+
+        return Inertia::render('ZamStay/BookingDetail', [
+            'booking' => $booking?->toArray(),
+        ]);
+    }
+
+    public function cancel(int $id, Request $request)
+    {
+        $booking = $this->bookingService->cancel($id, $request->user()->id);
+
+        $bookingArr = $booking->toArray();
+        $request->user()->notify(new BookingCancelledNotification($bookingArr, 'guest'));
+
+        return back()->with('success', 'Booking cancelled successfully.');
+    }
+
+    public function confirm(int $id, Request $request)
+    {
+        $booking = $this->bookingService->confirm($id, $request->user()->id);
+
+        $bookingArr = $booking->toArray();
+        $request->user()->notify(new BookingConfirmedNotification($bookingArr, 'guest'));
+
+        return back()->with('success', 'Booking confirmed.');
     }
 
     private function detectNetwork(string $phone): string
@@ -158,88 +173,5 @@ class BookingController extends Controller
         if (preg_match('/^09[567]\d{7}$/', $phone)) return 'airtel';
         if (preg_match('/^07[567]\d{7}$/', $phone)) return 'zamtel';
         return 'mtn';
-    }
-
-    public function checkAvailability(Request $request)
-    {
-        $request->validate([
-            'property_id' => 'required|exists:zamstay_properties,id',
-            'check_in' => 'required|date',
-            'check_out' => 'required|date|after:check_in',
-        ]);
-
-        $property = ZamStayProperty::findOrFail($request->property_id);
-
-        $exists = ZamStayBooking::where('property_id', $property->id)
-            ->where('status', '!=', 'cancelled')
-            ->where(function ($q) use ($request) {
-                $q->whereBetween('check_in', [$request->check_in, $request->check_out])
-                  ->orWhereBetween('check_out', [$request->check_in, $request->check_out])
-                  ->orWhere(function ($q2) use ($request) {
-                      $q2->where('check_in', '<=', $request->check_in)
-                         ->where('check_out', '>=', $request->check_out);
-                  });
-            })->exists();
-
-        $checkIn = \Carbon\Carbon::parse($request->check_in);
-        $checkOut = \Carbon\Carbon::parse($request->check_out);
-        $nights = $checkIn->diffInDays($checkOut);
-        $totalPrice = $nights * $property->price_per_night;
-
-        return response()->json([
-            'available' => !$exists,
-            'total_price' => $totalPrice,
-            'nights' => $nights,
-            'price_per_night' => $property->price_per_night,
-        ]);
-    }
-
-    public function myBookings(Request $request)
-    {
-        $bookings = ZamStayBooking::where('user_id', $request->user()->id)
-            ->with('property')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
-        return Inertia::render('ZamStay/MyBookings', [
-            'bookings' => $bookings,
-        ]);
-    }
-
-    public function show(ZamStayBooking $booking)
-    {
-        $booking->load(['property.owner', 'review']);
-
-        return Inertia::render('ZamStay/BookingDetail', [
-            'booking' => $booking,
-        ]);
-    }
-
-    public function cancel(ZamStayBooking $booking, Request $request)
-    {
-        if ($booking->user_id !== $request->user()->id) {
-            abort(403);
-        }
-
-        $booking->update(['status' => 'cancelled']);
-        $booking->load('property.owner', 'user');
-        $booking->user->notify(new BookingCancelledNotification($booking, 'guest'));
-        $booking->property->owner->notify(new BookingCancelledNotification($booking, 'host'));
-
-        return back()->with('success', 'Booking cancelled successfully.');
-    }
-
-    public function confirm(ZamStayBooking $booking, Request $request)
-    {
-        if ($booking->property->owner_id !== $request->user()->id) {
-            abort(403);
-        }
-
-        $booking->load('property.owner', 'user');
-        $booking->update(['status' => 'confirmed']);
-        $booking->user->notify(new BookingConfirmedNotification($booking, 'guest'));
-        $booking->property->owner->notify(new BookingConfirmedNotification($booking, 'host'));
-
-        return back()->with('success', 'Booking confirmed.');
     }
 }

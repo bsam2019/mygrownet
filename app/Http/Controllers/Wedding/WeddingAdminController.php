@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Wedding;
 
 use App\Http\Controllers\Controller;
+use App\Domain\Wedding\Repositories\WeddingEventRepositoryInterface;
 use App\Domain\Wedding\Repositories\WeddingRsvpRepositoryInterface;
 use App\Domain\Wedding\Repositories\WeddingGuestRepositoryInterface;
 use App\Domain\Wedding\Entities\WeddingRsvp;
 use App\Domain\Wedding\Entities\WeddingGuest;
-use App\Infrastructure\Persistence\Eloquent\Wedding\WeddingEventModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Http\JsonResponse;
@@ -18,6 +18,7 @@ use Inertia\Inertia;
 class WeddingAdminController extends Controller
 {
     public function __construct(
+        private WeddingEventRepositoryInterface $eventRepository,
         private WeddingRsvpRepositoryInterface $rsvpRepository,
         private WeddingGuestRepositoryInterface $guestRepository
     ) {}
@@ -64,11 +65,11 @@ class WeddingAdminController extends Controller
         ]);
 
         // Try to find wedding event by slug
-        $weddingEvent = WeddingEventModel::where('slug', $slug)->first();
+        $weddingEvent = $this->eventRepository->findBySlug($slug);
 
-        if ($weddingEvent && $weddingEvent->access_code) {
+        if ($weddingEvent && $weddingEvent->getAccessCode()) {
             // Use database access code
-            if ($validated['access_code'] !== $weddingEvent->access_code) {
+            if ($validated['access_code'] !== $weddingEvent->getAccessCode()) {
                 return back()->withErrors(['access_code' => 'Invalid access code']);
             }
         } else {
@@ -361,7 +362,7 @@ class WeddingAdminController extends Controller
             return $access;
         }
 
-        $weddingEvent = WeddingEventModel::where('slug', $slug)->first();
+        $weddingEvent = $this->eventRepository->findBySlug($slug);
 
         if (!$weddingEvent) {
             return redirect()->back()->withErrors(['error' => 'Wedding not found']);
@@ -369,8 +370,8 @@ class WeddingAdminController extends Controller
 
         // Generate a new 8-character access code
         $newCode = strtoupper(Str::random(8));
-        $weddingEvent->access_code = $newCode;
-        $weddingEvent->save();
+        $weddingEvent->regenerateAccessCode($newCode);
+        $this->eventRepository->save($weddingEvent);
 
         return redirect()->back();
     }
@@ -479,10 +480,10 @@ class WeddingAdminController extends Controller
 
     private function getWeddingEventId(string $slug): int
     {
-        $weddingEvent = WeddingEventModel::where('slug', $slug)->first();
+        $weddingEvent = $this->eventRepository->findBySlug($slug);
         
         if ($weddingEvent) {
-            return $weddingEvent->id;
+            return $weddingEvent->getId();
         }
 
         // Fallback for demo/legacy
@@ -496,10 +497,10 @@ class WeddingAdminController extends Controller
 
     private function getWeddingName(string $slug): string
     {
-        $weddingEvent = WeddingEventModel::where('slug', $slug)->first();
+        $weddingEvent = $this->eventRepository->findBySlug($slug);
         
         if ($weddingEvent) {
-            return $weddingEvent->partner_name . ' Wedding';
+            return $weddingEvent->getPartnerName() . ' Wedding';
         }
 
         $names = [

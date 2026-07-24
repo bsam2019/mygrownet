@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\GrowStart;
 
 use App\Http\Controllers\Controller;
-use App\Models\GrowStart\PartnerProvider;
+use App\Domain\GrowStart\Repositories\ProviderRepositoryInterface;
 use App\Domain\GrowStart\Repositories\JourneyRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -13,25 +13,18 @@ use Inertia\Response;
 class ProviderController extends Controller
 {
     public function __construct(
+        private ProviderRepositoryInterface $providerRepo,
         private JourneyRepositoryInterface $journeyRepository
     ) {}
 
     public function index(Request $request): Response
     {
         $journey = $this->journeyRepository->findActiveByUserId($request->user()->id);
+        $countryId = $journey ? $journey->getCountryId() : null;
 
-        $query = PartnerProvider::query();
-
-        // Filter by country
-        if ($journey) {
-            $query->forCountry($journey->getCountryId());
-        } elseif ($request->has('country_id')) {
-            $query->forCountry($request->country_id);
-        }
-
-        $providers = $query->orderByDesc('is_featured')
-            ->orderByDesc('rating')
-            ->get();
+        $providers = $this->providerRepo->findAll(
+            $countryId ?? ($request->has('country_id') ? (int) $request->country_id : null)
+        );
 
         $categories = [
             ['value' => 'accountant', 'label' => 'Accountants'],
@@ -43,7 +36,6 @@ class ProviderController extends Controller
             ['value' => 'consultant', 'label' => 'Consultants'],
         ];
 
-        // Get unique provinces from providers
         $provinces = $providers->pluck('province')->unique()->filter()->sort()->values()->toArray();
 
         return Inertia::render('GrowStart/Providers/Index', [
@@ -55,31 +47,26 @@ class ProviderController extends Controller
 
     public function show(Request $request, int $id): Response
     {
-        $provider = PartnerProvider::with('country')->findOrFail($id);
+        $provider = $this->providerRepo->findById($id);
+
+        if (!$provider) {
+            abort(404);
+        }
 
         return Inertia::render('GrowStart/Directory/ProviderDetail', [
             'provider' => $provider,
         ]);
     }
 
-    // API Methods
     public function apiIndex(Request $request): JsonResponse
     {
         $journey = $this->journeyRepository->findActiveByUserId($request->user()->id);
+        $countryId = $journey ? $journey->getCountryId() : null;
 
-        $query = PartnerProvider::query();
-
-        if ($journey) {
-            $query->forCountry($journey->getCountryId());
-        }
-
-        if ($request->has('category')) {
-            $query->byCategory($request->category);
-        }
-
-        $providers = $query->orderByDesc('is_featured')
-            ->orderByDesc('rating')
-            ->get();
+        $providers = $this->providerRepo->findAll(
+            $countryId,
+            $request->has('category') ? $request->category : null
+        );
 
         return response()->json(['data' => $providers]);
     }

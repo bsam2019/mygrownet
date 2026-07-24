@@ -8,7 +8,7 @@ use App\Domain\StarterKit\ValueObjects\Money;
 use App\Domain\StarterKit\ValueObjects\ShopCredit;
 use App\Domain\Library\ValueObjects\AccessPeriod;
 use App\Models\User;
-use App\Services\StarterKitService;
+use App\Domain\GrowNet\Services\StarterKitService;
 use InvalidArgumentException;
 
 class PurchaseStarterKitUseCase
@@ -20,7 +20,7 @@ class PurchaseStarterKitUseCase
     public function __construct(
         private readonly PurchasePolicy $purchasePolicy,
         private readonly StarterKitService $starterKitService, // Keep for now, will refactor later
-        private readonly \App\Services\WalletService $walletService
+        private readonly \App\Domain\GrowNet\Services\WalletService $walletService
     ) {}
 
     public function execute(

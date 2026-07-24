@@ -4,7 +4,8 @@ namespace App\Http\Controllers\BizBoost;
 
 use App\Domain\Module\Services\SubscriptionService;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
+use App\Domain\BizBoost\Services\BusinessService;
+use App\Domain\BizBoost\Repositories\TeamMemberRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -15,13 +16,15 @@ class TeamController extends Controller
     private const MODULE_ID = 'bizboost';
 
     public function __construct(
-        private SubscriptionService $subscriptionService
+        private SubscriptionService $subscriptionService,
+        private BusinessService $businessService,
+        private TeamMemberRepositoryInterface $teamMemberRepo,
     ) {}
 
     public function index(Request $request)
     {
-        $business = $this->getBusiness($request);
-        
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
+
         $members = DB::table('bizboost_team_members')
             ->where('business_id', $business->id)
             ->orderBy('role')
@@ -57,9 +60,8 @@ class TeamController extends Controller
             'location_id' => 'nullable|exists:bizboost_locations,id',
         ]);
 
-        $business = $this->getBusiness($request);
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
 
-        // Check team limit
         $currentCount = DB::table('bizboost_team_members')
             ->where('business_id', $business->id)
             ->where('status', 'active')
@@ -70,7 +72,6 @@ class TeamController extends Controller
             return back()->withErrors(['limit' => 'Team member limit reached. Please upgrade your plan.']);
         }
 
-        // Check if already invited
         $existing = DB::table('bizboost_team_members')
             ->where('business_id', $business->id)
             ->where('email', $validated['email'])
@@ -105,8 +106,6 @@ class TeamController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-
-            // TODO: Send invitation email notification
         });
 
         return redirect()->route('bizboost.team.index')
@@ -115,50 +114,37 @@ class TeamController extends Controller
 
     public function updateRole(Request $request, $id)
     {
-        $validated = $request->validate([
-            'role' => 'required|in:admin,editor,member',
-        ]);
-
-        $business = $this->getBusiness($request);
-
+        $validated = $request->validate(['role' => 'required|in:admin,editor,member']);
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
         DB::table('bizboost_team_members')
             ->where('id', $id)
             ->where('business_id', $business->id)
-            ->update([
-                'role' => $validated['role'],
-                'updated_at' => now(),
-            ]);
-
+            ->update(['role' => $validated['role'], 'updated_at' => now()]);
         return back()->with('success', 'Role updated successfully.');
     }
 
     public function remove(Request $request, $id)
     {
-        $business = $this->getBusiness($request);
-
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
         DB::table('bizboost_team_members')
             ->where('id', $id)
             ->where('business_id', $business->id)
             ->where('role', '!=', 'owner')
             ->delete();
-
         return back()->with('success', 'Team member removed.');
     }
 
     public function cancelInvitation(Request $request, $id)
     {
-        $business = $this->getBusiness($request);
-
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
         $invitation = DB::table('bizboost_team_invitations')
             ->where('id', $id)
             ->where('business_id', $business->id)
             ->first();
-
         if ($invitation) {
             DB::table('bizboost_team_members')->where('id', $invitation->team_member_id)->delete();
             DB::table('bizboost_team_invitations')->where('id', $id)->delete();
         }
-
         return back()->with('success', 'Invitation cancelled.');
     }
 
@@ -184,7 +170,6 @@ class TeamController extends Controller
                     'joined_at' => now(),
                     'updated_at' => now(),
                 ]);
-
             DB::table('bizboost_team_invitations')
                 ->where('id', $invitation->id)
                 ->update(['accepted_at' => now(), 'updated_at' => now()]);
@@ -194,15 +179,9 @@ class TeamController extends Controller
             ->with('success', 'You have joined the team!');
     }
 
-    private function getBusiness(Request $request): BizBoostBusinessModel
-    {
-        return BizBoostBusinessModel::where('user_id', $request->user()->id)->firstOrFail();
-    }
-
     private function getTeamLimit(Request $request): int
     {
-        $user = $request->user();
-        $limits = $this->subscriptionService->getUserLimits($user, self::MODULE_ID);
+        $limits = $this->subscriptionService->getUserLimits($request->user(), self::MODULE_ID);
         return $limits['team_members'] ?? 1;
     }
 }

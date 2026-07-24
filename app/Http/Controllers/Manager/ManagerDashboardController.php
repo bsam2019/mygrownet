@@ -6,7 +6,7 @@ use Inertia\Inertia;
 use App\Models\Investment;
 use App\Models\User;
 use App\Models\WithdrawalRequest;
-use App\Models\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use App\Services\DashboardService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;

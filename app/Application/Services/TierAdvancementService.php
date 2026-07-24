@@ -2,10 +2,10 @@
 
 namespace App\Application\Services;
 
-use App\Application\UseCases\MLM\ProcessTierAdvancementUseCase;
+use App\Domain\GrowNet\Application\UseCases\MLM\ProcessTierAdvancementUseCase;
 use App\Models\User;
 use App\Models\InvestmentTier;
-use App\Models\TierQualification;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TierQualification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;

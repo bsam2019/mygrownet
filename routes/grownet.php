@@ -1,26 +1,26 @@
 <?php
 
 use App\Http\Controllers\GrowNet\GuestController;
-use App\Http\Controllers\MyGrowNet\DashboardController;
-use App\Http\Controllers\MyGrowNet\MembershipController;
-use App\Http\Controllers\MyGrowNet\StarterKitController;
-use App\Http\Controllers\MyGrowNet\GiftController;
+use App\Http\Controllers\GrowNet\DashboardController;
+use App\Http\Controllers\GrowNet\MembershipController;
+use App\Http\Controllers\GrowNet\MyGrowNetStarterKitController;
+use App\Http\Controllers\GrowNet\GiftController;
 use App\Http\Controllers\MyGrowNet\LibraryController;
 use App\Http\Controllers\MyGrowNet\ToolsController;
 use App\Http\Controllers\MyGrowNet\BusinessPlanController;
 use App\Http\Controllers\MyGrowNet\NotificationController;
 use App\Http\Controllers\MyGrowNet\MessageController;
 use App\Http\Controllers\MyGrowNet\SupportTicketController;
-use App\Http\Controllers\MyGrowNet\LoyaltyRewardController;
-use App\Http\Controllers\MyGrowNet\LgrPackageController;
+use App\Http\Controllers\GrowNet\LoyaltyRewardController;
+use App\Http\Controllers\GrowNet\LgrPackageController;
 use App\Http\Controllers\MyGrowNet\AnalyticsController;
-use App\Http\Controllers\MyGrowNet\WalletController;
-use App\Http\Controllers\MyGrowNet\LgrTransferController;
+use App\Http\Controllers\GrowNet\MyGrowNetWalletController;
+use App\Http\Controllers\GrowNet\LgrTransferController;
 use App\Http\Controllers\MyGrowNet\LoanApplicationController;
-use App\Http\Controllers\MyGrowNet\EarningsController;
-use App\Http\Controllers\MyGrowNet\MemberPaymentController;
+use App\Http\Controllers\GrowNet\EarningsController;
+use App\Http\Controllers\GrowNet\MemberPaymentController;
 use App\Http\Controllers\MyGrowNet\WorkshopController;
-use App\Http\Controllers\MyGrowNet\ProfitShareController;
+use App\Http\Controllers\GrowNet\ProfitShareController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -51,10 +51,10 @@ $registerGrowNetSubdomainRoutes = function (string $prefix, string $namePrefix) 
         Route::get('/benefits', fn() => inertia('GrowNet/Benefits'))->name('benefits.index');
 
         Route::prefix('content')->name('content.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\MyGrowNet\StarterKitContentController::class, 'index'])->name('index');
-            Route::get('/{id}', [\App\Http\Controllers\MyGrowNet\StarterKitContentController::class, 'show'])->name('show');
-            Route::get('/{id}/download', [\App\Http\Controllers\MyGrowNet\StarterKitContentController::class, 'download'])->name('download');
-            Route::get('/{id}/stream', [\App\Http\Controllers\MyGrowNet\StarterKitContentController::class, 'stream'])->name('stream');
+            Route::get('/', [\App\Http\Controllers\GrowNet\StarterKitContentController::class, 'index'])->name('index');
+            Route::get('/{id}', [\App\Http\Controllers\GrowNet\StarterKitContentController::class, 'show'])->name('show');
+            Route::get('/{id}/download', [\App\Http\Controllers\GrowNet\StarterKitContentController::class, 'download'])->name('download');
+            Route::get('/{id}/stream', [\App\Http\Controllers\GrowNet\StarterKitContentController::class, 'stream'])->name('stream');
         });
 
         Route::prefix('tools')->name('tools.')->group(function () {

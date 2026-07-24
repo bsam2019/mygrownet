@@ -7,10 +7,10 @@ use App\Domain\GrowFinance\Services\PdfReportService;
 use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\GrowFinance\ValueObjects\AccountType;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceAccountModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceExpenseModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceInvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceJournalEntryModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceAccountModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceExpenseModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceInvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceJournalEntryModel;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
@@ -529,7 +529,7 @@ class ReportsController extends Controller
 
         foreach ($trialBalance['balances'] as $item) {
             $rows[] = [
-                $item['account']->name,
+                $item['account']['name'],
                 $item['debit'] > 0 ? number_format($item['debit'], 2) : '',
                 $item['credit'] > 0 ? number_format($item['credit'], 2) : '',
             ];

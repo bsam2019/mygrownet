@@ -3,7 +3,6 @@
 namespace App\Notifications\ZamStay;
 
 use App\Mail\GenericNotificationMail;
-use App\Models\ZamStay\ZamStayBooking;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
@@ -13,7 +12,7 @@ class BookingCancelledNotification extends Notification implements ShouldQueue
     use Queueable;
 
     public function __construct(
-        protected ZamStayBooking $booking,
+        protected array $booking,
         protected string $recipientType = 'guest',
     ) {}
 
@@ -24,32 +23,32 @@ class BookingCancelledNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): GenericNotificationMail
     {
-        $property = $this->booking->property;
+        $propertyTitle = $this->booking['property']['title'] ?? 'Property';
 
         if ($this->recipientType === 'host') {
             return new GenericNotificationMail(
-                subject: "Booking Cancelled: {$property->title}",
+                subject: "Booking Cancelled: {$propertyTitle}",
                 greeting: "Hello {$notifiable->name},",
-                message: "A booking for {$property->title} has been cancelled. These dates are now available for new bookings.",
+                message: "A booking for {$propertyTitle} has been cancelled. These dates are now available for new bookings.",
                 actionText: 'View Properties',
                 actionUrl: url('/zamstay/host/properties'),
                 details: [
-                    'Guest' => $this->booking->user->name,
-                    'Check-in' => $this->booking->check_in,
-                    'Check-out' => $this->booking->check_out,
+                    'Guest' => $this->booking['user']['name'] ?? 'Guest',
+                    'Check-in' => $this->booking['check_in'] ?? '',
+                    'Check-out' => $this->booking['check_out'] ?? '',
                 ],
             );
         }
 
         return new GenericNotificationMail(
-            subject: "Booking Cancelled: {$property->title}",
+            subject: "Booking Cancelled: {$propertyTitle}",
             greeting: "Hello {$notifiable->name},",
-            message: "Your booking for {$property->title} has been cancelled. If you paid, the refund will be processed within 5-7 business days.",
+            message: "Your booking for {$propertyTitle} has been cancelled. If you paid, the refund will be processed within 5-7 business days.",
             actionText: 'Browse Properties',
             actionUrl: url('/zamstay/search'),
             details: [
-                'Check-in' => $this->booking->check_in,
-                'Check-out' => $this->booking->check_out,
+                'Check-in' => $this->booking['check_in'] ?? '',
+                'Check-out' => $this->booking['check_out'] ?? '',
             ],
             footerNote: 'We hope to see you again soon!',
         );
@@ -57,13 +56,15 @@ class BookingCancelledNotification extends Notification implements ShouldQueue
 
     public function toArray(object $notifiable): array
     {
+        $propertyTitle = $this->booking['property']['title'] ?? 'Property';
+
         return [
             'type' => 'booking_cancelled',
-            'booking_id' => $this->booking->id,
-            'property_title' => $this->booking->property->title,
-            'check_in' => $this->booking->check_in,
-            'check_out' => $this->booking->check_out,
-            'message' => "Booking cancelled for {$this->booking->property->title}",
+            'booking_id' => $this->booking['id'],
+            'property_title' => $propertyTitle,
+            'check_in' => $this->booking['check_in'],
+            'check_out' => $this->booking['check_out'],
+            'message' => "Booking cancelled for {$propertyTitle}",
         ];
     }
 }

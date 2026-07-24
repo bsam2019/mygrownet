@@ -34,6 +34,9 @@ use Inertia\Inertia;
 $registerGrowBuilderAuthRoutes = function (string $prefix, string $namePrefix) {
     Route::prefix($prefix)->name($namePrefix)->middleware(['auth'])->group(function () {
 
+        // Logout (used by GrowBuilderLayout on subdomain)
+        Route::post('/logout', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
         // DEBUG: Test if any growbuilder routes work
         Route::get('/debug', function() {
             \Log::info('DEBUG route hit');
@@ -125,6 +128,7 @@ $registerGrowBuilderAuthRoutes = function (string $prefix, string $namePrefix) {
         Route::post('/sites/{id}/restore', [SiteController::class, 'restore'])->name('sites.restore');
         Route::post('/sites/{id}/publish', [SiteController::class, 'publish'])->name('sites.publish');
         Route::post('/sites/{id}/unpublish', [SiteController::class, 'unpublish'])->name('sites.unpublish');
+        Route::post('/sites/batch', [SiteController::class, 'batchUpdate'])->name('sites.batch');
         Route::post('/sites/{id}/complete-onboarding', [SiteController::class, 'completeOnboarding'])->name('sites.complete-onboarding');
 
         // Site Export
@@ -290,8 +294,30 @@ Route::get('/growbuilder', function () {
     if (auth()->check()) {
         return redirect()->route('growbuilder.dashboard');
     }
-    return Inertia::render('GrowBuilder/Welcome');
+    $tiers = app(\App\Domain\Module\Services\TierConfigurationService::class)->getAllTiersForDisplay('growbuilder');
+    return Inertia::render('GrowBuilder/Welcome', ['tiers' => $tiers]);
 })->name('growbuilder.welcome');
+
+Route::get('/growbuilder/pricing', function () {
+    if (auth()->check()) {
+        return redirect()->route('growbuilder.subscription.index');
+    }
+    $tiers = app(\App\Domain\Module\Services\TierConfigurationService::class)->getAllTiersForDisplay('growbuilder');
+    return Inertia::render('GrowBuilder/Pricing', ['tiers' => $tiers]);
+})->name('growbuilder.pricing');
+
+Route::get('/growbuilder/terms', function () {
+    return Inertia::render('GrowBuilder/Terms');
+})->name('growbuilder.terms');
+
+Route::get('/growbuilder/privacy', function () {
+    return Inertia::render('GrowBuilder/Privacy');
+})->name('growbuilder.privacy');
+
+// Logout — registered OUTSIDE the closure because the closure's logout route disappears mysteriously
+Route::post('/growbuilder/logout', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'destroy'])
+    ->middleware(['auth'])
+    ->name('growbuilder.logout');
 
 // Authenticated GrowBuilder routes
 $registerGrowBuilderAuthRoutes('growbuilder', 'growbuilder.');
@@ -413,8 +439,30 @@ Route::domain('growbuilder.mygrownet.com')->group(function () use ($registerGrow
 
     // Public welcome page at root
     Route::get('/', function () {
-        return Inertia::render('GrowBuilder/Welcome');
+        $tiers = app(\App\Domain\Module\Services\TierConfigurationService::class)->getAllTiersForDisplay('growbuilder');
+        return Inertia::render('GrowBuilder/Welcome', ['tiers' => $tiers]);
     })->name('growbuilder.sub.welcome');
+
+    Route::get('/pricing', function () {
+        if (auth()->check()) {
+            return redirect()->route('growbuilder.sub.subscription.index');
+        }
+        $tiers = app(\App\Domain\Module\Services\TierConfigurationService::class)->getAllTiersForDisplay('growbuilder');
+        return Inertia::render('GrowBuilder/Pricing', ['tiers' => $tiers]);
+    })->name('growbuilder.sub.pricing');
+
+    Route::get('/terms', function () {
+        return Inertia::render('GrowBuilder/Terms');
+    })->name('growbuilder.sub.terms');
+
+    Route::get('/privacy', function () {
+        return Inertia::render('GrowBuilder/Privacy');
+    })->name('growbuilder.sub.privacy');
+
+    // Logout — registered OUTSIDE the closure (same reason as main domain)
+    Route::post('/logout', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'destroy'])
+        ->middleware(['auth'])
+        ->name('growbuilder.sub.logout');
 
     // Authenticated routes (served at root, no prefix)
     $registerGrowBuilderAuthRoutes('', 'growbuilder.sub.');

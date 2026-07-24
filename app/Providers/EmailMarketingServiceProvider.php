@@ -25,6 +25,6 @@ class EmailMarketingServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $this->loadMigrationsFrom(database_path('migrations/email_marketing'));
     }
 }

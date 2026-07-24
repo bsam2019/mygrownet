@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\User;
-use App\Models\MatrixPosition;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\MatrixPosition;
 
 class InitializeMatrixPositions extends Command
 {

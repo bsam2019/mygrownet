@@ -2,14 +2,15 @@
 
 namespace App\Domain\GrowStream\Presentation\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
-use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\Video;
-use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoSeries;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoView;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\WatchHistory;
+use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
+use App\Domain\GrowStream\Repositories\VideoSeriesRepositoryInterface;
+use App\Domain\GrowStream\Repositories\WatchHistoryRepositoryInterface;
+use App\Http\Controllers\Controller;
+use App\Domain\GrowNet\Services\PointService;
 use App\Models\User;
-use App\Models\PointTransaction;
-use App\Services\PointService;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PointTransaction;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -17,18 +18,18 @@ use Illuminate\Support\Facades\DB;
 class GrowStreamAdminController extends Controller
 {
     public function __construct(
+        private VideoRepositoryInterface $videoRepo,
+        private VideoSeriesRepositoryInterface $seriesRepo,
+        private WatchHistoryRepositoryInterface $watchHistoryRepo,
         private PointService $pointService
     ) {}
 
-    /**
-     * GrowStream Admin Dashboard
-     */
     public function dashboard()
     {
         $stats = [
-            'total_videos' => Video::count(),
-            'published_videos' => Video::published()->count(),
-            'total_series' => VideoSeries::count(),
+            'total_videos' => $this->videoRepo->query()->count(),
+            'published_videos' => $this->videoRepo->query()->published()->count(),
+            'total_series' => $this->seriesRepo->query()->count(),
             'total_views' => VideoView::count(),
             'unique_viewers' => VideoView::distinct('user_id')->count('user_id'),
             'completion_rate' => $this->getCompletionRate(),
@@ -36,7 +37,8 @@ class GrowStreamAdminController extends Controller
             'points_awarded' => $this->getTotalPointsAwarded(),
         ];
 
-        $recentVideos = Video::with(['creator.user', 'categories'])
+        $recentVideos = $this->videoRepo->query()
+            ->with(['creator.user', 'categories'])
             ->latest()
             ->take(10)
             ->get()
@@ -50,7 +52,8 @@ class GrowStreamAdminController extends Controller
                 'created_at' => $video->created_at->format('Y-m-d H:i'),
             ]);
 
-        $topVideos = Video::published()
+        $topVideos = $this->videoRepo->query()
+            ->published()
             ->orderBy('view_count', 'desc')
             ->take(10)
             ->get()
@@ -71,20 +74,12 @@ class GrowStreamAdminController extends Controller
         ]);
     }
 
-    /**
-     * Manage point rewards for GrowStream content
-     * Redirects to centralized bonus point settings
-     */
     public function pointRewards()
     {
-        // Redirect to centralized bonus point settings with GrowStream filter
         return redirect()->route('admin.settings.bp.index')
             ->with('info', 'GrowStream point rewards are managed through the centralized Bonus Point Settings.');
     }
 
-    /**
-     * Award points to users for GrowStream activities
-     */
     public function awardPoints(Request $request)
     {
         $request->validate([
@@ -116,13 +111,11 @@ class GrowStreamAdminController extends Controller
         return back()->with('success', "Points awarded to {$awarded} users successfully.");
     }
 
-    /**
-     * Manage GrowStream integration with starter kits
-     */
     public function starterKitIntegration(Request $request)
     {
-        // Get videos that can be added to starter kits
-        $availableVideos = Video::published()
+        $query = $this->videoRepo->query();
+
+        $availableVideos = (clone $query)->published()
             ->with(['creator.user', 'categories'])
             ->where('is_starter_kit_content', false)
             ->get()
@@ -136,8 +129,7 @@ class GrowStreamAdminController extends Controller
                 'current_points' => $video->watch_points + $video->completion_points + $video->share_points,
             ]);
 
-        // Get videos already in starter kits
-        $starterKitVideos = Video::published()
+        $starterKitVideos = (clone $query)->published()
             ->with(['creator.user'])
             ->where('is_starter_kit_content', true)
             ->orderBy('starter_kit_unlock_order')
@@ -159,11 +151,13 @@ class GrowStreamAdminController extends Controller
         ]);
     }
 
-    /**
-     * Add video to starter kit
-     */
-    public function addToStarterKit(Request $request, Video $video)
+    public function addToStarterKit(Request $request, int $id)
     {
+        $video = $this->videoRepo->findById($id);
+        if (!$video) {
+            return back()->with('error', 'Video not found.');
+        }
+
         $request->validate([
             'tier' => 'required|string|in:basic,premium,elite,all',
             'unlock_order' => 'required|integer|min:1|max:100',
@@ -171,15 +165,13 @@ class GrowStreamAdminController extends Controller
             'description' => 'nullable|string|max:255',
         ]);
 
-        // Update video with starter kit information
-        $video->update([
+        $this->videoRepo->update($video, [
             'is_starter_kit_content' => true,
             'starter_kit_tier' => $request->tier,
             'starter_kit_unlock_order' => $request->unlock_order,
             'starter_kit_points_reward' => $request->points_reward,
         ]);
 
-        // Create starter kit content entry
         \App\Infrastructure\Persistence\Eloquent\StarterKit\ContentItemModel::create([
             'title' => $video->title,
             'description' => $request->description ?? $video->description,
@@ -197,28 +189,26 @@ class GrowStreamAdminController extends Controller
         return back()->with('success', 'Video added to starter kit successfully.');
     }
 
-    /**
-     * Remove video from starter kit
-     */
-    public function removeFromStarterKit(Video $video)
+    public function removeFromStarterKit(int $id)
     {
-        // Update video to remove starter kit information
-        $video->update([
+        $video = $this->videoRepo->findById($id);
+        if (!$video) {
+            return back()->with('error', 'Video not found.');
+        }
+
+        $this->videoRepo->update($video, [
             'is_starter_kit_content' => false,
             'starter_kit_tier' => null,
             'starter_kit_unlock_order' => null,
             'starter_kit_points_reward' => 0,
         ]);
 
-        // Remove from starter kit content items
         \App\Infrastructure\Persistence\Eloquent\StarterKit\ContentItemModel::where('file_type', 'growstream_video')
             ->where('file_url', route('growstream.video.show', $video->slug))
             ->delete();
 
         return back()->with('success', 'Video removed from starter kit successfully.');
     }
-
-    // Private helper methods
 
     private function getCompletionRate(): float
     {
@@ -253,7 +243,7 @@ class GrowStreamAdminController extends Controller
 
     private function getVideoPointsAwarded(int $videoId): int
     {
-        return PointTransaction::where('reference_type', Video::class)
+        return PointTransaction::where('reference_type', \App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\Video::class)
             ->where('reference_id', $videoId)
             ->sum('lp_amount');
     }
@@ -302,7 +292,8 @@ class GrowStreamAdminController extends Controller
 
     private function getContentPerformance(): array
     {
-        return Video::published()
+        return $this->videoRepo->query()
+            ->published()
             ->selectRaw('id, title, view_count, (SELECT COUNT(*) FROM growstream_watch_history WHERE video_id = growstream_videos.id AND is_completed = true) as completions')
             ->orderByDesc('view_count')
             ->take(20)
@@ -330,5 +321,4 @@ class GrowStreamAdminController extends Controller
                 ->toArray(),
         ];
     }
-
 }

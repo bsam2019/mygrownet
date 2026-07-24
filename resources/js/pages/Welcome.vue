@@ -15,23 +15,23 @@
             <div class="flex-1 max-w-2xl">
               <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs text-violet-200 mb-6 backdrop-blur-sm">
                 <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
-                Beta access now open
+                Learn. Earn. Grow.
               </div>
               <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.08]">
-                Amplify your
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 to-indigo-300">digital presence</span>
+                Your Complete
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 to-indigo-300">Business Growth Platform</span>
               </h1>
               <p class="mt-4 text-base sm:text-lg text-slate-300/80 leading-relaxed max-w-xl">
-                One integrated platform for advertising, e-commerce, bookings, and network growth. Your entire business ecosystem in a single dashboard.
+                One integrated ecosystem combining SME tools, e-commerce, network marketing, and wealth-building — designed to help you learn, earn, and grow.
               </p>
               <div class="mt-8 flex flex-col sm:flex-row gap-4">
                 <button @click="showLoginModal = true" class="group inline-flex items-center justify-center px-7 py-3 bg-white text-slate-900 rounded-xl font-semibold text-sm hover:bg-slate-100 transition-all duration-200 shadow-2xl shadow-violet-500/10">
-                  Get started free
+                  Start your journey
                   <svg class="ml-2 w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                 </button>
                 <a href="#how-it-works" class="inline-flex items-center justify-center px-7 py-3 border border-white/15 text-slate-200 rounded-xl font-medium text-sm hover:bg-white/5 transition-all duration-200">
-                  Watch demo
-                  <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                  How it works
+                  <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
                 </a>
               </div>
               <div class="mt-8 flex flex-wrap items-center gap-6 text-sm text-slate-400">
@@ -60,7 +60,7 @@
                       <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-blue-400 border-2 border-slate-800"></div>
                       <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-400 border-2 border-slate-800"></div>
                     </div>
-                    <div class="text-xs text-slate-300">Trusted by 2,000+ businesses</div>
+                    <div class="text-xs text-slate-300">Trusted by 2,000+ entrepreneurs</div>
                   </div>
                   <div class="space-y-4">
                     <div class="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
@@ -85,7 +85,7 @@
                         </div>
                       </div>
                       <div class="text-right">
-                        <div class="text-sm font-semibold text-white">₱284k</div>
+                        <div class="text-sm font-semibold text-white">K284k</div>
                         <div class="text-xs text-slate-400">Revenue</div>
                       </div>
                     </div>
@@ -157,51 +157,51 @@
           <div class="max-w-xl mb-14">
             <div class="w-12 h-1 bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full mb-6"></div>
             <span class="text-xs font-semibold text-violet-600 uppercase tracking-widest">Capabilities</span>
-            <h2 class="mt-4 text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">Built for real<br>business results</h2>
-            <p class="mt-4 text-lg text-slate-500 leading-relaxed">Every feature is designed to help you earn more, work less, and stay in control.</p>
+            <h2 class="mt-4 text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">Built around three<br>core pillars</h2>
+            <p class="mt-4 text-lg text-slate-500 leading-relaxed">Learn new skills, earn real income, and grow your business — all on one platform.</p>
           </div>
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center mb-5 text-white shadow-lg shadow-emerald-200/50">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5"/></svg>
+              </div>
+              <h3 class="text-base font-semibold text-slate-900">Learn</h3>
+              <p class="mt-2 text-sm text-slate-500 leading-relaxed">Access courses, tutorials, and resources to build digital and entrepreneurial skills at your own pace.</p>
+            </div>
+            <div class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mb-5 text-white shadow-lg shadow-amber-200/50">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+              </div>
+              <h3 class="text-base font-semibold text-slate-900">Earn</h3>
+              <p class="mt-2 text-sm text-slate-500 leading-relaxed">Generate income through commissions, network marketing, e-commerce sales, and investment opportunities.</p>
+            </div>
+            <div class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center mb-5 text-white shadow-lg shadow-violet-200/50">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5m.75-9 3-3 2.148 2.148A12.061 12.061 0 0 1 16.5 7.605"/></svg>
+              </div>
+              <h3 class="text-base font-semibold text-slate-900">Grow</h3>
+              <p class="mt-2 text-sm text-slate-500 leading-relaxed">Scale your business with SME tools — inventory, invoicing, websites, document management, and more.</p>
+            </div>
             <div class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
               <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center mb-5 text-white shadow-lg shadow-violet-200/50">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25-2.25M12 13.875V7.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               </div>
               <h3 class="text-base font-semibold text-slate-900">Integrated Ecosystem</h3>
-              <p class="mt-2 text-sm text-slate-500 leading-relaxed">All your tools work as one — advertising, e-commerce, bookings, and finance in a unified dashboard.</p>
-            </div>
-            <div class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center mb-5 text-white shadow-lg shadow-violet-200/50">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
-              </div>
-              <h3 class="text-base font-semibold text-slate-900">Ad Campaigns</h3>
-              <p class="mt-2 text-sm text-slate-500 leading-relaxed">Run AI-optimized campaigns across Meta and Google with real-time performance tracking.</p>
-            </div>
-            <div class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center mb-5 text-white shadow-lg shadow-violet-200/50">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
-              </div>
-              <h3 class="text-base font-semibold text-slate-900">Network Growth</h3>
-              <p class="mt-2 text-sm text-slate-500 leading-relaxed">Referral tracking, multi-level commissions, and sponsor management built right in.</p>
+              <p class="mt-2 text-sm text-slate-500 leading-relaxed">All your tools work as one — inventory, e-commerce, bookings, finance, and content in a unified dashboard.</p>
             </div>
             <div class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
               <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center mb-5 text-white shadow-lg shadow-violet-200/50">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
               </div>
-              <h3 class="text-base font-semibold text-slate-900">E-Commerce</h3>
-              <p class="mt-2 text-sm text-slate-500 leading-relaxed">Full online store with product management, payments, order tracking, and delivery.</p>
+              <h3 class="text-base font-semibold text-slate-900">Multi-Vendor Marketplace</h3>
+              <p class="mt-2 text-sm text-slate-500 leading-relaxed">Full e-commerce with product management, payments, order tracking, and delivery — plus vendor commissions.</p>
             </div>
             <div class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
               <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center mb-5 text-white shadow-lg shadow-violet-200/50">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21v-6.75a.75.75 0 01.75-.75h6a.75.75 0 01.75.75V21m-9-21h18M9 3v2.25M15 3v2.25M3 6v15a2.25 2.25 0 002.25 2.25h13.5A2.25 2.25 0 0021 21V6"/></svg>
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
               </div>
-              <h3 class="text-base font-semibold text-slate-900">Bookings</h3>
-              <p class="mt-2 text-sm text-slate-500 leading-relaxed">Manage accommodations, event spaces, and reservations from a single dashboard.</p>
-            </div>
-            <div class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center mb-5 text-white shadow-lg shadow-violet-200/50">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
-              </div>
-              <h3 class="text-base font-semibold text-slate-900">Analytics</h3>
-              <p class="mt-2 text-sm text-slate-500 leading-relaxed">Real-time dashboards, custom reports, and actionable insights to guide your decisions.</p>
+              <h3 class="text-base font-semibold text-slate-900">Network Marketing</h3>
+              <p class="mt-2 text-sm text-slate-500 leading-relaxed">Referral tracking, multi-level commissions, sponsor management, and team-building tools built right in.</p>
             </div>
           </div>
         </div>
@@ -213,8 +213,8 @@
           <div class="max-w-xl mb-14">
             <div class="w-12 h-1 bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full mb-6"></div>
             <span class="text-xs font-semibold text-violet-600 uppercase tracking-widest">Getting started</span>
-            <h2 class="mt-4 text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">Three steps to<br>get started</h2>
-            <p class="mt-4 text-lg text-slate-500 leading-relaxed">No technical skills required. No complicated setup.</p>
+            <h2 class="mt-4 text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">Your journey in<br>three steps</h2>
+            <p class="mt-4 text-lg text-slate-500 leading-relaxed">No technical skills required. Start building your digital wealth today.</p>
           </div>
           <div class="relative">
             <div class="absolute top-12 left-0 right-0 h-px bg-gradient-to-r from-violet-200 via-indigo-200 to-transparent hidden sm:block"></div>
@@ -228,14 +228,14 @@
               <div class="relative p-8 rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
                 <span class="absolute top-6 right-6 text-5xl font-bold text-slate-50">02</span>
                 <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white text-lg font-bold mb-6 shadow-lg shadow-violet-200/50">2</div>
-                <h3 class="text-lg font-semibold text-slate-900">Choose your tools</h3>
-                <p class="mt-3 text-sm text-slate-500 leading-relaxed">Activate the apps you need — store, ads, bookings, or all of them.</p>
+                <h3 class="text-lg font-semibold text-slate-900">Explore the ecosystem</h3>
+                <p class="mt-3 text-sm text-slate-500 leading-relaxed">Activate the apps you need — store, inventory, finance, bookings, or all of them.</p>
               </div>
               <div class="relative p-8 rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
                 <span class="absolute top-6 right-6 text-5xl font-bold text-slate-50">03</span>
                 <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white text-lg font-bold mb-6 shadow-lg shadow-violet-200/50">3</div>
-                <h3 class="text-lg font-semibold text-slate-900">Start growing</h3>
-                <p class="mt-3 text-sm text-slate-500 leading-relaxed">Launch campaigns, fulfill orders, manage reservations — all from one place.</p>
+                <h3 class="text-lg font-semibold text-slate-900">Start earning</h3>
+                <p class="mt-3 text-sm text-slate-500 leading-relaxed">Sell products, earn commissions, build your network, and grow your wealth — all from one place.</p>
               </div>
             </div>
           </div>
@@ -296,15 +296,15 @@
 
         <div class="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <span class="text-xs font-semibold text-violet-300 uppercase tracking-widest">Get started</span>
-          <h2 class="mt-4 text-3xl sm:text-4xl font-bold text-white tracking-tight">Ready to amplify your business?</h2>
-          <p class="mt-4 text-lg text-slate-400 leading-relaxed">Join thousands of users already building their digital ecosystem with MyGrowNet. No commitment. No risk.</p>
+          <h2 class="mt-4 text-3xl sm:text-4xl font-bold text-white tracking-tight">Ready to grow your business?</h2>
+          <p class="mt-4 text-lg text-slate-400 leading-relaxed">Join thousands of users already learning, earning, and growing with MyGrowNet. No commitment. No risk.</p>
           <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <button @click="showLoginModal = true" class="group inline-flex items-center justify-center px-8 py-3.5 bg-white text-slate-900 rounded-xl font-semibold text-sm hover:bg-slate-100 transition-all duration-200 shadow-2xl shadow-violet-500/10">
-              Create free account
+              Start free
               <svg class="ml-2 w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
             </button>
-            <a href="#features" class="inline-flex items-center justify-center px-8 py-3.5 border border-white/15 text-slate-300 rounded-xl font-medium text-sm hover:bg-white/5 transition-all duration-200">
-              Learn more
+            <a href="#how-it-works" class="inline-flex items-center justify-center px-8 py-3.5 border border-white/15 text-slate-300 rounded-xl font-medium text-sm hover:bg-white/5 transition-all duration-200">
+              How it works
             </a>
           </div>
         </div>

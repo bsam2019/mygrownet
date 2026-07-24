@@ -22,7 +22,7 @@ class SetUserTier extends Command
 {
     protected $signature = 'user:set-tier 
                             {email : User email address}
-                            {module : Module ID (e.g., growbuilder, growbiz, growfinance)}
+                            {module : Module ID (e.g., growbuilder, growfinance)}
                             {tier : Tier key (e.g., free, starter, business, agency)}';
 
     protected $description = 'Set a user\'s subscription tier for testing purposes';

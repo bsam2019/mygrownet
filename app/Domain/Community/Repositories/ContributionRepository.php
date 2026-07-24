@@ -6,7 +6,7 @@ namespace App\Domain\Community\Repositories;
 
 use App\Domain\Community\ValueObjects\ProjectId;
 use App\Domain\Community\ValueObjects\ContributionAmount;
-use App\Domain\MLM\ValueObjects\UserId;
+use App\Domain\GrowNet\MLM\ValueObjects\UserId;
 use DateTimeImmutable;
 
 interface ContributionRepository

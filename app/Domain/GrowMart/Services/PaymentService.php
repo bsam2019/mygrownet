@@ -2,9 +2,9 @@
 
 namespace App\Domain\GrowMart\Services;
 
-use App\Models\GrowMart\GrowMartOrder;
+use App\Domain\GrowMart\Repositories\OrderRepositoryInterface;
+use App\Models\User;
 use App\Notifications\GrowMartOrderNotification;
-use App\Domain\GrowMart\Services\NotificationService;
 
 enum PaymentProvider: string
 {
@@ -17,10 +17,11 @@ enum PaymentProvider: string
 class PaymentService
 {
     public function __construct(
+        private readonly OrderRepositoryInterface $orderRepository,
         private readonly NotificationService $notificationService,
     ) {}
 
-    public function processPayment(GrowMartOrder $order, PaymentProvider $provider, array $metadata = []): array
+    public function processPayment(array $order, PaymentProvider $provider, array $metadata = []): array
     {
         return match ($provider) {
             PaymentProvider::MobileMoney => $this->processMobileMoneyPayment($order, $metadata),
@@ -30,35 +31,37 @@ class PaymentService
         };
     }
 
-    public function markAsPaid(GrowMartOrder $order, PaymentProvider $provider, string $reference = null): void
+    public function markAsPaid(array $order, PaymentProvider $provider, string $reference = null): void
     {
-        $order->update([
+        $this->orderRepository->update($order['id'], [
             'payment_status' => 'paid',
-            'paid_at' => now(),
+            'paid_at' => now()->toDateTimeString(),
         ]);
 
-        $this->notificationService->notify(
-            $order->user,
-            'growmart.order_paid',
-            'Payment Received',
-            "Payment received for order {$order->order_number}.",
-            route('growmart.orders.show', $order->id),
-            'View Order',
-            'payments',
-            'high',
-            ['order_number' => $order->order_number, 'order_id' => $order->id],
-        );
-        $order->user->notify(new GrowMartOrderNotification('order_paid', [
-            'order_number' => $order->order_number,
-            'order_id' => $order->id,
-            'payment_method' => $provider->value,
-            'reference' => $reference,
-        ]));
+        $user = User::find($order['user_id']);
+        if ($user) {
+            $this->notificationService->notify(
+                $user,
+                'growmart.order_paid',
+                'Payment Received',
+                "Payment received for order {$order['order_number']}.",
+                route('growmart.orders.show', $order['id']),
+                'View Order',
+                'payments',
+                'high',
+                ['order_number' => $order['order_number'], 'order_id' => $order['id']],
+            );
+            $user->notify(new GrowMartOrderNotification('order_paid', [
+                'order_number' => $order['order_number'],
+                'order_id' => $order['id'],
+                'payment_method' => $provider->value,
+                'reference' => $reference,
+            ]));
+        }
     }
 
-    private function processMobileMoneyPayment(GrowMartOrder $order, array $metadata): array
+    private function processMobileMoneyPayment(array $order, array $metadata): array
     {
-        // Stub: Integrate with Airtel Money / MTN Mobile Money APIs
         return [
             'success' => true,
             'provider' => PaymentProvider::MobileMoney->value,
@@ -68,9 +71,8 @@ class PaymentService
         ];
     }
 
-    private function processCardPayment(GrowMartOrder $order, array $metadata): array
+    private function processCardPayment(array $order, array $metadata): array
     {
-        // Stub: Integrate with Stripe/Paystack/Flutterwave
         return [
             'success' => false,
             'provider' => PaymentProvider::Card->value,
@@ -79,7 +81,7 @@ class PaymentService
         ];
     }
 
-    private function processBankTransfer(GrowMartOrder $order, array $metadata): array
+    private function processBankTransfer(array $order, array $metadata): array
     {
         return [
             'success' => true,
@@ -89,7 +91,7 @@ class PaymentService
         ];
     }
 
-    private function processCryptoPayment(GrowMartOrder $order, array $metadata): array
+    private function processCryptoPayment(array $order, array $metadata): array
     {
         return [
             'success' => true,

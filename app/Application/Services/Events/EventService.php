@@ -5,7 +5,7 @@ namespace App\Application\Services\Events;
 use App\Infrastructure\Persistence\Eloquent\Events\LiveEventModel;
 use App\Infrastructure\Persistence\Eloquent\Events\EventRegistrationModel;
 use App\Infrastructure\Persistence\Eloquent\Events\EventAttendanceModel;
-use App\Services\LgrActivityTrackingService;
+use App\Domain\GrowNet\Services\LgrActivityTrackingService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 

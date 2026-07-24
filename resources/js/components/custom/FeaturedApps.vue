@@ -196,7 +196,6 @@ const getAppIcon = (slug: string) => {
   const iconMap: Record<string, any> = {
     'bizboost': SparklesIcon,
     'growfinance': BanknotesIcon,
-    'growbiz': ClipboardDocumentCheckIcon,
     'marketplace': ShoppingCartIcon,
   };
   return iconMap[slug] || CubeIcon;
@@ -206,7 +205,6 @@ const getAppDescription = (slug: string): string => {
   const descriptions: Record<string, string> = {
     'bizboost': 'Complete business management & marketing automation platform',
     'growfinance': 'Professional accounting & financial management for SMEs',
-    'growbiz': 'Team management & employee productivity system',
     'marketplace': 'Browse and purchase products & services',
   };
   return descriptions[slug] || 'Business tool';
@@ -216,7 +214,6 @@ const getPublicRoute = (app: App): string => {
   const publicRoutes: Record<string, string> = {
     'bizboost': '/bizboost/welcome',
     'growfinance': '/growfinance',
-    'growbiz': '/growbiz',
     'marketplace': '/marketplace',
   };
   return publicRoutes[app.slug] || app.primary_route || '/apps';

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Services\StarterKitService;
+use App\Domain\GrowNet\Services\StarterKitService;
 use App\Services\DefaultSponsorService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;

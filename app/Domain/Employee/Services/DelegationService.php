@@ -3,10 +3,9 @@
 namespace App\Domain\Employee\Services;
 
 use App\Domain\Employee\Constants\DelegatedPermissions;
+use App\Domain\Employee\Repositories\DelegationRepositoryInterface;
+use App\Domain\Employee\Repositories\EmployeeRepositoryInterface;
 use App\Models\DelegationApprovalRequest;
-use App\Models\Employee\Employee;
-use App\Models\Employee\EmployeeDelegation;
-use App\Models\Employee\EmployeeDelegationLog;
 use App\Models\User;
 use App\Notifications\DelegationApprovalNeededNotification;
 use App\Notifications\DelegationGrantedNotification;
@@ -16,20 +15,30 @@ use Illuminate\Support\Facades\DB;
 
 class DelegationService
 {
-    /**
-     * Grant a delegated permission to an employee
-     */
+    public const ACTION_GRANTED = 'granted';
+    public const ACTION_REVOKED = 'revoked';
+    public const ACTION_USED = 'used';
+    public const ACTION_APPROVAL_REQUESTED = 'approval_requested';
+    public const ACTION_APPROVED = 'approved';
+    public const ACTION_REJECTED = 'rejected';
+    public const ACTION_EXPIRED = 'expired';
+
+    public function __construct(
+        private DelegationRepositoryInterface $delegationRepo,
+        private EmployeeRepositoryInterface $employeeRepo
+    ) {}
+
     public function grantPermission(
-        Employee $employee,
+        object $employee,
         string $permissionKey,
         User $delegator,
         bool $requiresApproval = false,
-        ?Employee $approvalManager = null,
+        ?object $approvalManager = null,
         ?\DateTimeInterface $expiresAt = null,
         ?string $notes = null
-    ): EmployeeDelegation {
+    ): object {
         return DB::transaction(function () use ($employee, $permissionKey, $delegator, $requiresApproval, $approvalManager, $expiresAt, $notes) {
-            $delegation = EmployeeDelegation::updateOrCreate(
+            $delegation = $this->delegationRepo->updateOrCreate(
                 [
                     'employee_id' => $employee->id,
                     'permission_key' => $permissionKey,
@@ -48,7 +57,7 @@ class DelegationService
                 $delegation,
                 $employee,
                 $permissionKey,
-                EmployeeDelegationLog::ACTION_GRANTED,
+                self::ACTION_GRANTED,
                 $delegator,
                 ['requires_approval' => $requiresApproval, 'expires_at' => $expiresAt?->format('Y-m-d H:i:s')]
             );
@@ -57,39 +66,36 @@ class DelegationService
         });
     }
 
-    /**
-     * Revoke a delegated permission from an employee
-     */
     public function revokePermission(
-        Employee $employee,
+        object $employee,
         string $permissionKey,
         User $revoker,
         ?string $reason = null
     ): bool {
         return DB::transaction(function () use ($employee, $permissionKey, $revoker, $reason) {
-            $delegation = EmployeeDelegation::where('employee_id', $employee->id)
-                ->where('permission_key', $permissionKey)
-                ->first();
+            $delegation = $this->delegationRepo->findActiveByEmployeeAndKey($employee->id, $permissionKey);
 
             if (!$delegation) {
                 return false;
             }
 
-            $delegation->update(['is_active' => false]);
+            $this->delegationRepo->updateOrCreate(
+                ['id' => $delegation->id],
+                ['is_active' => false]
+            );
 
             $this->logAction(
                 $delegation,
                 $employee,
                 $permissionKey,
-                EmployeeDelegationLog::ACTION_REVOKED,
+                self::ACTION_REVOKED,
                 $revoker,
                 ['reason' => $reason]
             );
 
-            // Send notification
             $permissionMeta = $this->getPermissionMetadata($permissionKey);
             $permissionName = $permissionMeta['name'] ?? $permissionKey;
-            
+
             if ($employee->user) {
                 $employee->user->notify(new DelegationRevokedNotification([$permissionName], $revoker->name, $reason));
             }
@@ -98,11 +104,8 @@ class DelegationService
         });
     }
 
-    /**
-     * Grant multiple permissions at once (e.g., from a preset)
-     */
     public function grantPermissionSet(
-        Employee $employee,
+        object $employee,
         array $permissionKeys,
         User $delegator,
         ?string $notes = null
@@ -128,7 +131,6 @@ class DelegationService
             $permissionNames[] = $permissionMeta['name'] ?? $permissionKey;
         }
 
-        // Send notification for batch grant
         if ($employee->user && count($permissionNames) > 0) {
             $employee->user->notify(new DelegationGrantedNotification($permissionNames, $delegator->name));
         }
@@ -136,43 +138,22 @@ class DelegationService
         return $delegations;
     }
 
-    /**
-     * Check if an employee has a specific delegated permission
-     */
-    public function hasPermission(Employee $employee, string $permissionKey): bool
+    public function hasPermission(object $employee, string $permissionKey): bool
     {
-        return EmployeeDelegation::where('employee_id', $employee->id)
-            ->where('permission_key', $permissionKey)
-            ->active()
-            ->exists();
+        return $this->delegationRepo->hasActivePermission($employee->id, $permissionKey);
     }
 
-    /**
-     * Get a specific delegation for an employee
-     */
-    public function getDelegation(Employee $employee, string $permissionKey): ?EmployeeDelegation
+    public function getDelegation(object $employee, string $permissionKey): ?object
     {
-        return EmployeeDelegation::where('employee_id', $employee->id)
-            ->where('permission_key', $permissionKey)
-            ->active()
-            ->first();
+        return $this->delegationRepo->findActiveByEmployeeAndKey($employee->id, $permissionKey);
     }
 
-    /**
-     * Get all active delegations for an employee
-     */
-    public function getEmployeeDelegations(Employee $employee): Collection
+    public function getEmployeeDelegations(object $employee): Collection
     {
-        return EmployeeDelegation::where('employee_id', $employee->id)
-            ->active()
-            ->with(['delegator', 'approvalManager'])
-            ->get();
+        return $this->delegationRepo->findActiveByEmployee($employee->id);
     }
 
-    /**
-     * Get delegations grouped by category for display
-     */
-    public function getEmployeeDelegationsGrouped(Employee $employee): array
+    public function getEmployeeDelegationsGrouped(object $employee): array
     {
         $delegations = $this->getEmployeeDelegations($employee);
         $categories = DelegatedPermissions::getPermissionsByCategory();
@@ -180,10 +161,10 @@ class DelegationService
 
         foreach ($categories as $categoryName => $categoryData) {
             $categoryPermissions = [];
-            
+
             foreach ($categoryData['permissions'] as $permKey => $permData) {
                 $delegation = $delegations->firstWhere('permission_key', $permKey);
-                
+
                 if ($delegation) {
                     $categoryPermissions[] = [
                         'key' => $permKey,
@@ -207,40 +188,32 @@ class DelegationService
         return $grouped;
     }
 
-    /**
-     * Log usage of a delegated permission
-     */
     public function logUsage(
-        Employee $employee,
+        object $employee,
         string $permissionKey,
         User $user,
         array $metadata = []
     ): void {
-        $delegation = EmployeeDelegation::where('employee_id', $employee->id)
-            ->where('permission_key', $permissionKey)
-            ->first();
+        $delegation = $this->delegationRepo->findActiveByEmployeeAndKey($employee->id, $permissionKey);
 
         $this->logAction(
             $delegation,
             $employee,
             $permissionKey,
-            EmployeeDelegationLog::ACTION_USED,
+            self::ACTION_USED,
             $user,
             $metadata
         );
     }
 
-    /**
-     * Request approval for an action
-     */
     public function requestApproval(
-        EmployeeDelegation $delegation,
+        object $delegation,
         string $actionType,
         string $resourceType,
         int $resourceId,
         array $actionData
     ): DelegationApprovalRequest {
-        $request = DelegationApprovalRequest::create([
+        $request = $this->delegationRepo->createApprovalRequest([
             'delegation_id' => $delegation->id,
             'employee_id' => $delegation->employee_id,
             'action_type' => $actionType,
@@ -254,12 +227,11 @@ class DelegationService
             $delegation,
             $delegation->employee,
             $delegation->permission_key,
-            EmployeeDelegationLog::ACTION_APPROVAL_REQUESTED,
+            self::ACTION_APPROVAL_REQUESTED,
             $delegation->employee->user,
             ['request_id' => $request->id, 'action_type' => $actionType]
         );
 
-        // Notify manager
         $manager = $delegation->approvalManager ?? $delegation->employee->manager;
         if ($manager?->user) {
             $actionDescription = str_replace('_', ' ', $actionType);
@@ -273,26 +245,25 @@ class DelegationService
         return $request;
     }
 
-    /**
-     * Approve a pending request
-     */
     public function approveRequest(
         DelegationApprovalRequest $request,
         User $reviewer,
         ?string $notes = null
     ): DelegationApprovalRequest {
-        $request->update([
+        $this->delegationRepo->updateApprovalRequest($request->id, [
             'status' => DelegationApprovalRequest::STATUS_APPROVED,
             'reviewed_by' => $reviewer->id,
             'reviewed_at' => now(),
             'review_notes' => $notes,
         ]);
 
+        $request->refresh();
+
         $this->logAction(
             $request->delegation,
             $request->employee,
             $request->delegation->permission_key,
-            EmployeeDelegationLog::ACTION_APPROVED,
+            self::ACTION_APPROVED,
             $reviewer,
             ['request_id' => $request->id]
         );
@@ -300,26 +271,25 @@ class DelegationService
         return $request;
     }
 
-    /**
-     * Reject a pending request
-     */
     public function rejectRequest(
         DelegationApprovalRequest $request,
         User $reviewer,
         ?string $reason = null
     ): DelegationApprovalRequest {
-        $request->update([
+        $this->delegationRepo->updateApprovalRequest($request->id, [
             'status' => DelegationApprovalRequest::STATUS_REJECTED,
             'reviewed_by' => $reviewer->id,
             'reviewed_at' => now(),
             'review_notes' => $reason,
         ]);
 
+        $request->refresh();
+
         $this->logAction(
             $request->delegation,
             $request->employee,
             $request->delegation->permission_key,
-            EmployeeDelegationLog::ACTION_REJECTED,
+            self::ACTION_REJECTED,
             $reviewer,
             ['request_id' => $request->id, 'reason' => $reason]
         );
@@ -327,43 +297,25 @@ class DelegationService
         return $request;
     }
 
-    /**
-     * Get pending approval requests for a manager
-     */
-    public function getPendingApprovalsForManager(Employee $manager): Collection
+    public function getPendingApprovalsForManager(object $manager): Collection
     {
-        return DelegationApprovalRequest::pending()
-            ->whereHas('delegation', function ($query) use ($manager) {
-                $query->where('approval_manager_id', $manager->id);
-            })
-            ->with(['employee', 'delegation'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        return $this->delegationRepo->findPendingApprovalsForManager($manager->id);
     }
 
-    /**
-     * Get all available permissions for delegation UI
-     */
     public function getAvailablePermissions(): array
     {
         return DelegatedPermissions::getPermissionsByCategory();
     }
 
-    /**
-     * Get recommended permission sets
-     */
     public function getRecommendedSets(): array
     {
         return DelegatedPermissions::getRecommendedSets();
     }
 
-    /**
-     * Get permission metadata
-     */
     protected function getPermissionMetadata(string $permissionKey): array
     {
         $categories = DelegatedPermissions::getPermissionsByCategory();
-        
+
         foreach ($categories as $categoryData) {
             if (isset($categoryData['permissions'][$permissionKey])) {
                 return $categoryData['permissions'][$permissionKey];
@@ -373,34 +325,29 @@ class DelegationService
         return [];
     }
 
-    /**
-     * Expire delegations that have passed their expiration date
-     */
     public function expireOverdueDelegations(): int
     {
-        $expiredDelegations = EmployeeDelegation::where('is_active', true)
-            ->whereNotNull('expires_at')
-            ->where('expires_at', '<=', now())
-            ->with('employee.user')
-            ->get();
+        $expiredDelegations = $this->delegationRepo->findExpiredDelegations();
 
         $count = 0;
         foreach ($expiredDelegations as $delegation) {
-            $delegation->update(['is_active' => false]);
-            
+            $this->delegationRepo->updateOrCreate(
+                ['id' => $delegation->id],
+                ['is_active' => false]
+            );
+
             $this->logAction(
                 $delegation,
                 $delegation->employee,
                 $delegation->permission_key,
-                EmployeeDelegationLog::ACTION_EXPIRED,
-                User::first(), // System user
+                self::ACTION_EXPIRED,
+                User::first(),
                 ['expired_at' => $delegation->expires_at->toDateTimeString()]
             );
 
-            // Notify employee
             $permissionMeta = $this->getPermissionMetadata($delegation->permission_key);
             $permissionName = $permissionMeta['name'] ?? $delegation->permission_key;
-            
+
             if ($delegation->employee->user) {
                 $delegation->employee->user->notify(
                     new DelegationRevokedNotification([$permissionName], 'System', 'Permission expired')
@@ -413,18 +360,15 @@ class DelegationService
         return $count;
     }
 
-    /**
-     * Log a delegation action
-     */
     protected function logAction(
-        ?EmployeeDelegation $delegation,
-        Employee $employee,
+        ?object $delegation,
+        object $employee,
         string $permissionKey,
         string $action,
         User $performer,
         array $metadata = []
-    ): EmployeeDelegationLog {
-        return EmployeeDelegationLog::create([
+    ): object {
+        return $this->delegationRepo->createDelegationLog([
             'delegation_id' => $delegation?->id,
             'employee_id' => $employee->id,
             'permission_key' => $permissionKey,

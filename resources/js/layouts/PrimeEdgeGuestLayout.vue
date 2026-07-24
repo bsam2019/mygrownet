@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
-import ToastContainer from '@/components/GrowBiz/ToastContainer.vue';
+import ToastContainer from '@/components/Shared/ToastContainer.vue';
 import { useToast } from '@/composables/useToast';
 
 const page = usePage();

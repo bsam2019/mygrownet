@@ -202,7 +202,7 @@ class TaskNotificationService
         // Create notification in database using custom structure with polymorphic relationship
         \DB::table('notifications')->insert([
             'id' => \Str::uuid(),
-            'notifiable_type' => 'App\\Models\\User',
+            'notifiable_type' => 'App\Models\User',
             'notifiable_id' => $user->id,
             'type' => $data['type'] ?? 'task',
             'category' => 'operations',

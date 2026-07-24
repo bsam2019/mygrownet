@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\UserPoints;
-use App\Models\PointTransaction;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\UserPoints;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PointTransaction;
 use App\Models\MonthlyActivityStatus;
-use App\Services\PointService;
-use App\Services\LevelAdvancementService;
+use App\Domain\GrowNet\Services\PointService;
+use App\Domain\GrowNet\Services\LevelAdvancementService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;

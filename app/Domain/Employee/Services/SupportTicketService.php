@@ -3,43 +3,25 @@
 namespace App\Domain\Employee\Services;
 
 use App\Domain\Employee\ValueObjects\EmployeeId;
+use App\Domain\Employee\Repositories\SupportTicketRepositoryInterface;
 use App\Events\Employee\SupportTicketCreated;
 use App\Events\Employee\LiveChatMessage;
-use App\Models\Employee\EmployeeSupportTicket;
-use App\Models\Employee\EmployeeSupportTicketComment;
 use Illuminate\Support\Collection;
 
 class SupportTicketService
 {
+    public function __construct(
+        private SupportTicketRepositoryInterface $ticketRepo
+    ) {}
+
     public function getTicketsForEmployee(EmployeeId $employeeId, array $filters = []): Collection
     {
-        $query = EmployeeSupportTicket::forEmployee($employeeId->toInt())
-            ->with('assignee');
-
-        if (!empty($filters['status'])) {
-            if ($filters['status'] === 'open') {
-                $query->open();
-            } elseif ($filters['status'] === 'closed') {
-                $query->closed();
-            } else {
-                $query->where('status', $filters['status']);
-            }
-        }
-
-        if (!empty($filters['category'])) {
-            $query->byCategory($filters['category']);
-        }
-
-        if (!empty($filters['priority'])) {
-            $query->byPriority($filters['priority']);
-        }
-
-        return $query->orderBy('created_at', 'desc')->get();
+        return $this->ticketRepo->findByEmployee($employeeId, $filters);
     }
 
     public function getTicketStats(EmployeeId $employeeId): array
     {
-        $tickets = EmployeeSupportTicket::forEmployee($employeeId->toInt())->get();
+        $tickets = $this->ticketRepo->findByEmployee($employeeId);
 
         return [
             'total' => $tickets->count(),
@@ -49,9 +31,9 @@ class SupportTicketService
         ];
     }
 
-    public function createTicket(EmployeeId $employeeId, array $data): EmployeeSupportTicket
+    public function createTicket(EmployeeId $employeeId, array $data): object
     {
-        $ticket = EmployeeSupportTicket::create([
+        $ticket = $this->ticketRepo->create([
             'employee_id' => $employeeId->toInt(),
             'subject' => $data['subject'],
             'description' => $data['description'],
@@ -61,37 +43,35 @@ class SupportTicketService
             'status' => 'open',
         ]);
 
-        // Load the employee relationship for broadcasting
         $ticket->load('employee');
 
-        // Broadcast to admin support dashboard (new ticket notification)
         broadcast(new SupportTicketCreated($ticket));
 
-        // Also broadcast the initial message for live chat
-        // This ensures admin LiveChat receives the first message in real-time
         broadcast(new LiveChatMessage(
             $ticket->id,
             $employeeId->toInt(),
             $ticket->employee->full_name,
             'employee',
-            $data['description'], // The initial message is stored as description
+            $data['description'],
             now()->toISOString()
         ))->toOthers();
 
-        // Clear the cached support stats so sidebar updates
         cache()->forget('admin_support_stats');
 
         return $ticket;
     }
 
-    public function addComment(int $ticketId, EmployeeId $employeeId, string $content, array $attachments = []): EmployeeSupportTicketComment
+    public function addComment(int $ticketId, EmployeeId $employeeId, string $content, array $attachments = []): object
     {
-        $ticket = EmployeeSupportTicket::where('id', $ticketId)
-            ->where('employee_id', $employeeId->toInt())
-            ->with('employee')
-            ->firstOrFail();
+        $ticket = $this->ticketRepo->findById($ticketId);
 
-        $comment = $ticket->comments()->create([
+        if (!$ticket || $ticket->employee_id !== $employeeId->toInt()) {
+            throw new \RuntimeException('Ticket not found');
+        }
+
+        $ticket->load('employee');
+
+        $comment = $this->ticketRepo->addComment($ticketId, [
             'author_id' => $employeeId->toInt(),
             'author_type' => 'employee',
             'content' => $content,
@@ -99,7 +79,6 @@ class SupportTicketService
             'is_internal' => false,
         ]);
 
-        // Broadcast the message for live chat
         broadcast(new LiveChatMessage(
             $ticket->id,
             $employeeId->toInt(),
@@ -112,16 +91,15 @@ class SupportTicketService
         return $comment;
     }
 
-    public function getTicketWithComments(int $ticketId, EmployeeId $employeeId): EmployeeSupportTicket
+    public function getTicketWithComments(int $ticketId, EmployeeId $employeeId): object
     {
-        return EmployeeSupportTicket::where('id', $ticketId)
-            ->where('employee_id', $employeeId->toInt())
-            ->with([
-                'comments' => fn($q) => $q->public()->orderBy('created_at', 'asc'),
-                'comments.author',
-                'assignee'
-            ])
-            ->firstOrFail();
+        $ticket = $this->ticketRepo->findWithComments($ticketId, $employeeId);
+
+        if (!$ticket) {
+            throw new \RuntimeException('Ticket not found');
+        }
+
+        return $ticket;
     }
 
     public function getCategories(): array

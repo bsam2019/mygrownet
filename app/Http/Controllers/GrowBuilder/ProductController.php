@@ -2,19 +2,21 @@
 
 namespace App\Http\Controllers\GrowBuilder;
 
+use App\Domain\GrowBuilder\Repositories\ProductRepositoryInterface;
 use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
+use App\Domain\GrowBuilder\ValueObjects\Money;
+use App\Domain\GrowBuilder\ValueObjects\ProductId;
 use App\Domain\GrowBuilder\ValueObjects\SiteId;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\GrowBuilder\Models\GrowBuilderProduct;
 use App\Services\GrowBuilder\TierRestrictionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class ProductController extends Controller
 {
     public function __construct(
         private SiteRepositoryInterface $siteRepository,
+        private ProductRepositoryInterface $productRepository,
         private TierRestrictionService $tierRestrictionService,
     ) {}
 
@@ -26,13 +28,10 @@ class ProductController extends Controller
             abort(404);
         }
 
-        $products = GrowBuilderProduct::where('site_id', $siteId)
-            ->orderBy('sort_order')
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-
+        $siteVo = SiteId::fromInt($siteId);
+        $products = $this->productRepository->getAllForSitePaginated($siteVo, 20);
         $tierRestrictions = $this->tierRestrictionService->getRestrictions($request->user());
-        $productCount = GrowBuilderProduct::where('site_id', $siteId)->count();
+        $productCount = $this->productRepository->countForSite($siteVo);
 
         return Inertia::render('GrowBuilder/Products/Index', [
             'site' => $this->siteToArray($site),
@@ -51,10 +50,7 @@ class ProductController extends Controller
             abort(404);
         }
 
-        $categories = GrowBuilderProduct::where('site_id', $siteId)
-            ->whereNotNull('category')
-            ->distinct()
-            ->pluck('category');
+        $categories = $this->productRepository->getCategoriesForSite(SiteId::fromInt($siteId));
 
         return Inertia::render('GrowBuilder/Products/Create', [
             'site' => $this->siteToArray($site),
@@ -70,8 +66,9 @@ class ProductController extends Controller
             abort(404);
         }
 
-        // Check product limit
-        $productCount = GrowBuilderProduct::where('site_id', $siteId)->count();
+        $siteVo = SiteId::fromInt($siteId);
+
+        $productCount = $this->productRepository->countForSite($siteVo);
         if (!$this->tierRestrictionService->canAddProduct($request->user(), $productCount)) {
             $limit = $this->tierRestrictionService->getProductsLimit($request->user());
             return back()->withErrors([
@@ -96,31 +93,31 @@ class ProductController extends Controller
             'is_featured' => 'boolean',
         ]);
 
-        $slug = Str::slug($validated['name']);
-        $existingCount = GrowBuilderProduct::where('site_id', $siteId)
-            ->where('slug', 'like', $slug . '%')
-            ->count();
-        
-        if ($existingCount > 0) {
-            $slug .= '-' . ($existingCount + 1);
+        $slug = $this->productRepository->generateUniqueSlug($siteId, $validated['name']);
+
+        $product = \App\Domain\GrowBuilder\Entities\Product::create(
+            siteId: $siteId,
+            name: $validated['name'],
+            slug: $slug,
+            priceInNgwee: (int) ($validated['price'] * 100),
+            description: $validated['description'] ?? null,
+            stockQuantity: $validated['stock_quantity'] ?? 0,
+        );
+
+        if (!empty($validated['images'])) {
+            $product->setImages($validated['images']);
+        }
+        if (isset($validated['compare_price'])) {
+            $product->updatePricing((int) ($validated['price'] * 100), (int) ($validated['compare_price'] * 100));
+        }
+        if (isset($validated['is_active']) && !$validated['is_active']) {
+            $product->deactivate();
+        }
+        if (isset($validated['is_featured']) && $validated['is_featured']) {
+            $product->setFeatured(true);
         }
 
-        $product = GrowBuilderProduct::create([
-            'site_id' => $siteId,
-            'name' => $validated['name'],
-            'slug' => $slug,
-            'description' => $validated['description'] ?? null,
-            'short_description' => $validated['short_description'] ?? null,
-            'price' => (int) ($validated['price'] * 100), // Convert to Ngwee
-            'compare_price' => isset($validated['compare_price']) ? (int) ($validated['compare_price'] * 100) : null,
-            'stock_quantity' => $validated['stock_quantity'] ?? 0,
-            'track_stock' => $validated['track_stock'] ?? true,
-            'sku' => $validated['sku'] ?? null,
-            'category' => $validated['category'] ?? null,
-            'images' => $validated['images'] ?? [],
-            'is_active' => $validated['is_active'] ?? true,
-            'is_featured' => $validated['is_featured'] ?? false,
-        ]);
+        $this->productRepository->save($product);
 
         return redirect()->route('growbuilder.products.index', $siteId)
             ->with('success', 'Product created successfully');
@@ -134,13 +131,13 @@ class ProductController extends Controller
             abort(404);
         }
 
-        $product = GrowBuilderProduct::where('site_id', $siteId)
-            ->findOrFail($productId);
+        $product = $this->productRepository->findByIdForSite(ProductId::fromInt($productId), SiteId::fromInt($siteId));
 
-        $categories = GrowBuilderProduct::where('site_id', $siteId)
-            ->whereNotNull('category')
-            ->distinct()
-            ->pluck('category');
+        if (!$product) {
+            abort(404);
+        }
+
+        $categories = $this->productRepository->getCategoriesForSite(SiteId::fromInt($siteId));
 
         return Inertia::render('GrowBuilder/Products/Edit', [
             'site' => $this->siteToArray($site),
@@ -157,8 +154,11 @@ class ProductController extends Controller
             abort(404);
         }
 
-        $product = GrowBuilderProduct::where('site_id', $siteId)
-            ->findOrFail($productId);
+        $product = $this->productRepository->findByIdForSite(ProductId::fromInt($productId), SiteId::fromInt($siteId));
+
+        if (!$product) {
+            abort(404);
+        }
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -175,20 +175,33 @@ class ProductController extends Controller
             'is_featured' => 'boolean',
         ]);
 
-        $product->update([
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
-            'short_description' => $validated['short_description'] ?? null,
-            'price' => (int) ($validated['price'] * 100),
-            'compare_price' => isset($validated['compare_price']) ? (int) ($validated['compare_price'] * 100) : null,
-            'stock_quantity' => $validated['stock_quantity'] ?? 0,
-            'track_stock' => $validated['track_stock'] ?? true,
-            'sku' => $validated['sku'] ?? null,
-            'category' => $validated['category'] ?? null,
-            'images' => $validated['images'] ?? [],
-            'is_active' => $validated['is_active'] ?? true,
-            'is_featured' => $validated['is_featured'] ?? false,
-        ]);
+        $product->updateDetails(
+            name: $validated['name'],
+            description: $validated['description'] ?? null,
+            shortDescription: $validated['short_description'] ?? null,
+            category: $validated['category'] ?? null,
+        );
+
+        $product->updatePricing(
+            priceInNgwee: (int) ($validated['price'] * 100),
+            comparePriceInNgwee: isset($validated['compare_price']) ? (int) ($validated['compare_price'] * 100) : null,
+        );
+
+        $product->updateStock($validated['stock_quantity'] ?? 0);
+
+        if (isset($validated['images'])) {
+            $product->setImages($validated['images']);
+        }
+
+        if (!$validated['is_active']) {
+            $product->deactivate();
+        } else {
+            $product->activate();
+        }
+
+        $product->setFeatured($validated['is_featured'] ?? false);
+
+        $this->productRepository->save($product);
 
         return redirect()->route('growbuilder.products.index', $siteId)
             ->with('success', 'Product updated successfully');
@@ -202,10 +215,7 @@ class ProductController extends Controller
             abort(404);
         }
 
-        $product = GrowBuilderProduct::where('site_id', $siteId)
-            ->findOrFail($productId);
-
-        $product->delete();
+        $this->productRepository->delete(ProductId::fromInt($productId));
 
         return redirect()->route('growbuilder.products.index', $siteId)
             ->with('success', 'Product deleted successfully');

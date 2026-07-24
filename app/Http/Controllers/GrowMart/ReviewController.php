@@ -3,16 +3,13 @@
 namespace App\Http\Controllers\GrowMart;
 
 use App\Http\Controllers\Controller;
-use App\Models\GrowMart\GrowMartProduct;
-use App\Models\GrowMart\GrowMartReview;
-use App\Domain\GrowMart\Services\CartService;
+use App\Domain\GrowMart\Repositories\ReviewRepositoryInterface;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 
 class ReviewController extends Controller
 {
     public function __construct(
-        private readonly CartService $cartService,
+        private readonly ReviewRepositoryInterface $reviewRepository,
     ) {}
 
     public function store(Request $request)
@@ -23,17 +20,15 @@ class ReviewController extends Controller
             'review_text' => 'nullable|string|max:2000',
         ]);
 
-        $existing = GrowMartReview::where('user_id', auth()->id())
-            ->where('product_id', $request->product_id)
-            ->first();
+        $existing = $this->reviewRepository->findUserReview(auth()->id(), $request->product_id);
 
         if ($existing) {
-            $existing->update([
+            $this->reviewRepository->update($existing['id'], [
                 'rating' => $request->rating,
                 'review_text' => $request->review_text,
             ]);
         } else {
-            GrowMartReview::create([
+            $this->reviewRepository->save([
                 'user_id' => auth()->id(),
                 'product_id' => $request->product_id,
                 'rating' => $request->rating,
@@ -46,27 +41,21 @@ class ReviewController extends Controller
 
     public function product(int $productId)
     {
-        $reviews = GrowMartReview::with('user')
-            ->where('product_id', $productId)
-            ->where('is_approved', true)
-            ->latest()
-            ->get()
-            ->map(fn($r) => [
-                'id' => $r->id,
-                'user_name' => $r->user->name,
-                'rating' => $r->rating,
-                'review_text' => $r->review_text,
-                'created_at' => $r->created_at->diffForHumans(),
-            ]);
+        $reviews = $this->reviewRepository->findByProduct($productId);
+        $averageRating = $this->reviewRepository->getAverageRating($productId);
 
-        $avg = GrowMartReview::where('product_id', $productId)
-            ->where('is_approved', true)
-            ->avg('rating');
+        $formatted = array_map(fn($r) => [
+            'id' => $r['id'],
+            'user_name' => $r['user']['name'] ?? 'Unknown',
+            'rating' => $r['rating'],
+            'review_text' => $r['review_text'] ?? '',
+            'created_at' => \Carbon\Carbon::parse($r['created_at'])->diffForHumans(),
+        ], $reviews);
 
         return response()->json([
-            'reviews' => $reviews,
-            'average_rating' => $avg ? round($avg, 1) : 0,
-            'total_reviews' => $reviews->count(),
+            'reviews' => $formatted,
+            'average_rating' => $averageRating,
+            'total_reviews' => count($formatted),
         ]);
     }
 }

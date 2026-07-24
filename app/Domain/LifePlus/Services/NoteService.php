@@ -2,32 +2,30 @@
 
 namespace App\Domain\LifePlus\Services;
 
-use App\Infrastructure\Persistence\Eloquent\LifePlusNoteModel;
+use App\Domain\LifePlus\Entities\LifePlusNote;
+use App\Domain\LifePlus\Repositories\NoteRepositoryInterface;
 
 class NoteService
 {
+    public function __construct(
+        private readonly NoteRepositoryInterface $noteRepo,
+    ) {}
+
     public function getNotes(int $userId): array
     {
-        return LifePlusNoteModel::where('user_id', $userId)
-            ->orderBy('is_pinned', 'desc')
-            ->orderBy('updated_at', 'desc')
-            ->get()
-            ->map(fn($n) => $this->mapNote($n))
-            ->toArray();
+        return array_map(fn($n) => $this->mapNote($n), $this->noteRepo->findByUser($userId));
     }
 
     public function getNote(int $id, int $userId): ?array
     {
-        $note = LifePlusNoteModel::where('id', $id)
-            ->where('user_id', $userId)
-            ->first();
-
-        return $note ? $this->mapNote($note) : null;
+        $note = $this->noteRepo->findById($id);
+        if (!$note || $note->userId !== $userId) return null;
+        return $this->mapNote($note);
     }
 
     public function createNote(int $userId, array $data): array
     {
-        $note = LifePlusNoteModel::create([
+        $note = LifePlusNote::reconstitute([
             'user_id' => $userId,
             'title' => $data['title'],
             'content' => $data['content'] ?? null,
@@ -36,38 +34,33 @@ class NoteService
             'local_id' => $data['local_id'] ?? null,
         ]);
 
-        return $this->mapNote($note);
+        return $this->mapNote($this->noteRepo->save($note));
     }
 
     public function updateNote(int $id, int $userId, array $data): ?array
     {
-        $note = LifePlusNoteModel::where('id', $id)
-            ->where('user_id', $userId)
-            ->first();
+        $note = $this->noteRepo->findById($id);
+        if (!$note || $note->userId !== $userId) return null;
 
-        if (!$note) return null;
-
-        $note->update($data);
-        return $this->mapNote($note->fresh());
+        $merged = array_merge($note->toArray(), $data);
+        return $this->mapNote($this->noteRepo->save(LifePlusNote::reconstitute($merged)));
     }
 
     public function togglePin(int $id, int $userId): ?array
     {
-        $note = LifePlusNoteModel::where('id', $id)
-            ->where('user_id', $userId)
-            ->first();
+        $note = $this->noteRepo->findById($id);
+        if (!$note || $note->userId !== $userId) return null;
 
-        if (!$note) return null;
-
-        $note->update(['is_pinned' => !$note->is_pinned]);
-        return $this->mapNote($note->fresh());
+        $merged = $note->toArray();
+        $merged['is_pinned'] = !$note->isPinned;
+        return $this->mapNote($this->noteRepo->save(LifePlusNote::reconstitute($merged)));
     }
 
     public function deleteNote(int $id, int $userId): bool
     {
-        return LifePlusNoteModel::where('id', $id)
-            ->where('user_id', $userId)
-            ->delete() > 0;
+        $note = $this->noteRepo->findById($id);
+        if (!$note || $note->userId !== $userId) return false;
+        return $this->noteRepo->delete($id);
     }
 
     public function syncNotes(int $userId, array $notes): array
@@ -75,13 +68,9 @@ class NoteService
         $synced = [];
         foreach ($notes as $note) {
             if (!empty($note['local_id'])) {
-                $existing = LifePlusNoteModel::where('user_id', $userId)
-                    ->where('local_id', $note['local_id'])
-                    ->first();
-
+                $existing = $this->noteRepo->findByLocalId($userId, $note['local_id']);
                 if ($existing) {
-                    $existing->update($note);
-                    $synced[] = $this->mapNote($existing->fresh());
+                    $synced[] = $this->updateNote($existing->id, $userId, $note);
                 } else {
                     $synced[] = $this->createNote($userId, $note);
                 }
@@ -89,21 +78,19 @@ class NoteService
                 $synced[] = $this->createNote($userId, $note);
             }
         }
-        return $synced;
+        return array_filter($synced);
     }
 
-    private function mapNote($note): array
+    private function mapNote(LifePlusNote $note): array
     {
         return [
             'id' => $note->id,
             'title' => $note->title,
             'content' => $note->content,
             'excerpt' => $note->content ? substr($note->content, 0, 100) . '...' : null,
-            'is_pinned' => $note->is_pinned,
-            'is_synced' => $note->is_synced,
-            'local_id' => $note->local_id,
-            'updated_at' => $note->updated_at->format('M d, Y'),
-            'created_at' => $note->created_at->toISOString(),
+            'is_pinned' => $note->isPinned,
+            'is_synced' => $note->isSynced,
+            'local_id' => $note->localId,
         ];
     }
 }

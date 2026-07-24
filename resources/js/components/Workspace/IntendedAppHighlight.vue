@@ -47,18 +47,18 @@ function continueToApp() {
 <template>
     <div
         v-if="show && intendedApp"
-        class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between"
+        class="mb-6 px-5 py-3 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-between"
     >
-        <div class="text-sm text-blue-800">
+        <div class="text-sm text-indigo-800">
             <span class="font-medium">{{ intendedApp.name }}</span>
-            <span class="text-blue-600"> is ready for you</span>
+            <span class="text-indigo-500"> is ready for you</span>
         </div>
         <button
             @click="continueToApp"
-            class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
         >
             Continue
-            <ArrowRightIcon class="w-4 h-4" />
+            <ArrowRightIcon class="w-3.5 h-3.5" />
         </button>
     </div>
 </template>

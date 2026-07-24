@@ -4,10 +4,10 @@ namespace Tests\Unit\Domain\Reward\Services;
 
 use App\Domain\Reward\Services\ReferralMatrixService;
 use App\Models\User;
-use App\Models\MatrixPosition;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\MatrixPosition;
 use App\Models\Investment;
 use App\Models\InvestmentTier;
-use App\Models\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

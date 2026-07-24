@@ -12,9 +12,9 @@ use App\Domain\Reward\Repositories\PhysicalRewardAllocationRepository;
 use App\Services\AssetIncomeTrackingService;
 use App\Models\User;
 use App\Models\InvestmentTier;
-use App\Models\PhysicalReward;
-use App\Models\PhysicalRewardAllocation;
-use App\Models\TierQualification;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalReward;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalRewardAllocation;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TierQualification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 

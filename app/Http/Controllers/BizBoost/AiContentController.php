@@ -4,37 +4,29 @@ namespace App\Http\Controllers\BizBoost;
 
 use App\Http\Controllers\Controller;
 use App\Domain\Module\Services\SubscriptionService;
-use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
-use App\Infrastructure\Persistence\Eloquent\BizBoostAiUsageLogModel;
+use App\Domain\BizBoost\Services\BusinessService;
+use App\Domain\BizBoost\Repositories\AiUsageLogRepositoryInterface;
 use App\Services\BizBoost\AIContentSuggestionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class AiContentController extends Controller
 {
     public function __construct(
         private SubscriptionService $subscriptionService,
         private AIContentSuggestionService $aiService,
+        private BusinessService $businessService,
+        private AiUsageLogRepositoryInterface $aiUsageRepo,
     ) {}
 
-    public function index(Request $request): Response
+    public function index(Request $request)
     {
         $user = $request->user();
-        $business = $this->getBusiness($request);
-
-        // Check if AI content generator is available
+        $business = $this->businessService->getBusinessOrFail($user->id);
         $hasFeature = $this->subscriptionService->hasFeature($user, 'ai_content_generator', 'bizboost');
-        
-        // Get AI credits usage
         $canUseAi = $this->subscriptionService->canIncrement($user, 'ai_credits_per_month', 'bizboost');
 
-        // Recent generations
-        $recentGenerations = BizBoostAiUsageLogModel::where('business_id', $business->id)
-            ->where('was_successful', true)
-            ->latest()
-            ->take(10)
-            ->get(['id', 'content_type', 'prompt', 'response', 'created_at']);
+        $recentGenerations = $this->aiUsageRepo->findByBusiness($business->id, ['was_successful' => true]);
 
         return Inertia::render('BizBoost/AiContent/Index', [
             'hasFeature' => $hasFeature,
@@ -49,7 +41,7 @@ class AiContentController extends Controller
                 'promo' => 'Promotion Announcement',
             ],
             'industries' => config('modules.bizboost.industry_kits', []),
-            'business' => $business,
+            'business' => $business->toArray(),
         ]);
     }
 
@@ -67,54 +59,54 @@ class AiContentController extends Controller
         ]);
 
         $user = $request->user();
-        $business = $this->getBusiness($request);
+        $business = $this->businessService->getBusinessOrFail($user->id);
 
-        // Check AI credits
         $canUseAi = $this->subscriptionService->canIncrement($user, 'ai_credits_per_month', 'bizboost');
         if (!$canUseAi['allowed']) {
-            return response()->json([
-                'success' => false,
-                'error' => $canUseAi['reason'],
-                'upgrade_required' => true,
-            ], 403);
+            return response()->json(['success' => false, 'error' => $canUseAi['reason'], 'upgrade_required' => true], 403);
         }
 
         try {
             $generatedContent = $this->aiService->generateContentForParams($validated, $business);
 
-            BizBoostAiUsageLogModel::create([
-                'business_id' => $business->id,
-                'user_id' => $user->id,
-                'content_type' => $validated['content_type'],
-                'model' => config('services.ai.nvidia_model', 'deepseek-ai/deepseek-v4-flash'),
-                'input_tokens' => 0,
-                'output_tokens' => 0,
-                'credits_used' => 1,
-                'prompt' => $validated['context'],
-                'response' => $generatedContent,
-                'was_successful' => true,
-            ]);
+            $this->aiUsageRepo->save(new \App\Domain\BizBoost\Entities\AiUsageLog(
+                id: null,
+                businessId: $business->id,
+                userId: $user->id,
+                feature: $validated['content_type'],
+                model: config('services.ai.nvidia_model', 'deepseek-ai/deepseek-v4-flash'),
+                inputTokens: 0,
+                outputTokens: 0,
+                creditsUsed: 1,
+                prompt: $validated['context'],
+                response: $generatedContent,
+                wasSuccessful: true,
+                errorMessage: null,
+                createdAt: null,
+                updatedAt: null,
+            ));
 
-            return response()->json([
-                'success' => true,
-                'content' => $generatedContent,
-                'credits_remaining' => $this->getRemainingCredits($user),
-            ]);
+            return response()->json(['success' => true, 'content' => $generatedContent, 'credits_remaining' => $this->getRemainingCredits($user)]);
 
         } catch (\Exception $e) {
-            BizBoostAiUsageLogModel::create([
-                'business_id' => $business->id,
-                'user_id' => $user->id,
-                'content_type' => $validated['content_type'],
-                'credits_used' => 0,
-                'was_successful' => false,
-                'error_message' => $e->getMessage(),
-            ]);
+            $this->aiUsageRepo->save(new \App\Domain\BizBoost\Entities\AiUsageLog(
+                id: null,
+                businessId: $business->id,
+                userId: $user->id,
+                feature: $validated['content_type'],
+                model: null,
+                inputTokens: 0,
+                outputTokens: 0,
+                creditsUsed: 0,
+                prompt: $validated['context'],
+                response: null,
+                wasSuccessful: false,
+                errorMessage: $e->getMessage(),
+                createdAt: null,
+                updatedAt: null,
+            ));
 
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage(),
-            ], 500);
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -122,11 +114,5 @@ class AiContentController extends Controller
     {
         $result = $this->subscriptionService->canIncrement($user, 'ai_credits_per_month', 'bizboost');
         return $result['remaining'] ?? 0;
-    }
-
-    private function getBusiness(Request $request): BizBoostBusinessModel
-    {
-        return BizBoostBusinessModel::where('user_id', $request->user()->id)
-            ->firstOrFail();
     }
 }

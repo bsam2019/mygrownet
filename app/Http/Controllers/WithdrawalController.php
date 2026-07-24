@@ -53,7 +53,7 @@ class WithdrawalController extends Controller
         $availableBalance = $totalEarnings - $totalWithdrawals;
         
         // Get verification limits
-        $walletController = app(\App\Http\Controllers\MyGrowNet\WalletController::class);
+        $walletController = app(\App\Http\Controllers\GrowNet\MyGrowNetWalletController::class);
         $limits = $this->getVerificationLimits($user->verification_level ?? 'basic');
         
         // Reset daily withdrawal if needed

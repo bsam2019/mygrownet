@@ -3,67 +3,60 @@
 namespace App\Domain\Employee\Services;
 
 use App\Domain\Employee\ValueObjects\EmployeeId;
-use App\Models\Employee\EmployeeTrainingCourse;
-use App\Models\Employee\EmployeeCourseEnrollment;
-use App\Models\Employee\EmployeeCertification;
+use App\Domain\Employee\Repositories\TrainingRepositoryInterface;
 use Illuminate\Support\Collection;
 
 class TrainingService
 {
+    public function __construct(
+        private TrainingRepositoryInterface $trainingRepo
+    ) {}
+
     public function getEnrollmentsForEmployee(EmployeeId $employeeId, array $filters = []): Collection
     {
-        $query = EmployeeCourseEnrollment::forEmployee($employeeId->value())
-            ->with('course');
-
-        if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
-
-        return $query->orderBy('assigned_date', 'desc')->get();
+        return $this->trainingRepo->findEnrollmentsByEmployee($employeeId, $filters);
     }
 
     public function getActiveEnrollments(EmployeeId $employeeId): Collection
     {
-        return EmployeeCourseEnrollment::forEmployee($employeeId->value())
-            ->inProgress()
-            ->with('course')
-            ->orderBy('due_date')
-            ->get();
+        return $this->trainingRepo->findActiveEnrollments($employeeId);
     }
 
     public function getCertifications(EmployeeId $employeeId): Collection
     {
-        return EmployeeCertification::forEmployee($employeeId->value())
-            ->orderBy('issue_date', 'desc')
-            ->get();
+        return $this->trainingRepo->findCertifications($employeeId);
     }
 
     public function getTrainingStats(EmployeeId $employeeId): array
     {
-        $enrollments = EmployeeCourseEnrollment::forEmployee($employeeId->value())->get();
-        $certifications = EmployeeCertification::forEmployee($employeeId->value())->get();
+        $enrollments = $this->trainingRepo->findEnrollmentsByEmployee($employeeId);
+        $certifications = $this->trainingRepo->findCertifications($employeeId);
 
         return [
             'total_courses' => $enrollments->count(),
             'completed_courses' => $enrollments->where('status', 'completed')->count(),
             'in_progress' => $enrollments->whereIn('status', ['assigned', 'in_progress'])->count(),
-            'overdue' => $enrollments->filter(fn($e) => 
+            'overdue' => $enrollments->filter(fn($e) =>
                 $e->due_date && $e->due_date < now() && in_array($e->status, ['assigned', 'in_progress'])
             )->count(),
             'total_certifications' => $certifications->count(),
-            'valid_certifications' => $certifications->filter(fn($c) => 
+            'valid_certifications' => $certifications->filter(fn($c) =>
                 !$c->expiry_date || $c->expiry_date >= now()
             )->count(),
-            'expiring_soon' => $certifications->filter(fn($c) => 
+            'expiring_soon' => $certifications->filter(fn($c) =>
                 $c->expiry_date && $c->expiry_date >= now() && $c->expiry_date <= now()->addDays(30)
             )->count(),
             'average_score' => $enrollments->where('status', 'completed')->avg('score'),
         ];
     }
 
-    public function updateEnrollmentProgress(int $enrollmentId, int $progress): EmployeeCourseEnrollment
+    public function updateEnrollmentProgress(int $enrollmentId, int $progress): object
     {
-        $enrollment = EmployeeCourseEnrollment::findOrFail($enrollmentId);
+        $enrollment = $this->trainingRepo->findEnrollmentById($enrollmentId);
+
+        if (!$enrollment) {
+            throw new \RuntimeException('Enrollment not found');
+        }
 
         $data = ['progress' => $progress];
 
@@ -77,35 +70,20 @@ class TrainingService
             $data['completed_at'] = now();
         }
 
-        $enrollment->update($data);
+        $this->trainingRepo->updateEnrollment($enrollmentId, $data);
 
-        return $enrollment;
+        return $this->trainingRepo->findEnrollmentById($enrollmentId);
     }
 
     public function getAvailableCourses(EmployeeId $employeeId): Collection
     {
-        $enrolledCourseIds = EmployeeCourseEnrollment::forEmployee($employeeId->value())
-            ->pluck('course_id');
-
-        return EmployeeTrainingCourse::active()
-            ->whereNotIn('id', $enrolledCourseIds)
-            ->orderBy('title')
-            ->get();
+        return $this->trainingRepo->findAvailableCourses($employeeId);
     }
 
     public function getLearningPath(EmployeeId $employeeId): array
     {
-        $mandatory = EmployeeCourseEnrollment::forEmployee($employeeId->value())
-            ->whereHas('course', fn($q) => $q->where('is_mandatory', true))
-            ->inProgress()
-            ->with('course')
-            ->get();
-
-        $recommended = EmployeeTrainingCourse::active()
-            ->where('is_mandatory', false)
-            ->whereNotIn('id', EmployeeCourseEnrollment::forEmployee($employeeId->value())->pluck('course_id'))
-            ->limit(5)
-            ->get();
+        $mandatory = $this->trainingRepo->findMandatoryEnrollments($employeeId);
+        $recommended = $this->trainingRepo->findRecommendedCourses($employeeId);
 
         return [
             'mandatory' => $mandatory,

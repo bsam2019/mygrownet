@@ -9,13 +9,14 @@ use App\Domain\Employee\Services\TimeOffService;
 use App\Domain\Employee\Services\AttendanceService;
 use App\Domain\Employee\ValueObjects\EmployeeId;
 use App\Domain\Employee\ValueObjects\TaskId;
-use App\Models\Employee\Employee;
-use App\Models\Employee\EmployeeTask;
-use App\Models\Employee\EmployeeDocument;
-use App\Models\Employee\EmployeeNotification;
-use App\Models\Employee\EmployeePayslip;
-use App\Models\Employee\EmployeeAnnouncement;
-use App\Models\Department;
+use App\Domain\Employee\Repositories\EmployeeRepositoryInterface;
+use App\Infrastructure\Persistence\Eloquent\EmployeeModel;
+use App\Infrastructure\Persistence\Eloquent\EmployeeTaskModel;
+use App\Infrastructure\Persistence\Eloquent\EmployeeDocumentModel;
+use App\Infrastructure\Persistence\Eloquent\EmployeeNotificationModel;
+use App\Infrastructure\Persistence\Eloquent\EmployeePayslipModel;
+use App\Infrastructure\Persistence\Eloquent\EmployeeAnnouncementModel;
+use App\Infrastructure\Persistence\Eloquent\DepartmentModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,22 +27,34 @@ use DateTimeImmutable;
 class PortalController extends Controller
 {
     public function __construct(
+        private EmployeeRepositoryInterface $employeeRepo,
         private TaskManagementService $taskService,
         private GoalTrackingService $goalService,
         private TimeOffService $timeOffService,
         private AttendanceService $attendanceService
     ) {}
 
-    protected function getEmployee(): Employee
+    protected function getEmployee(): ?EmployeeModel
     {
-        return Employee::where('user_id', Auth::id())
-            ->with(['department', 'position', 'manager'])
-            ->firstOrFail();
+        $employee = $this->employeeRepo->findByUserId(Auth::id());
+        if ($employee) {
+            $employee->load(['department', 'position', 'manager']);
+        }
+        return $employee;
+    }
+
+    protected function getEmployeeOrFail(): EmployeeModel
+    {
+        $employee = $this->getEmployee();
+        if (!$employee) {
+            abort(404, 'Employee not found');
+        }
+        return $employee;
     }
 
     protected function getEmployeeId(): EmployeeId
     {
-        return EmployeeId::fromInt($this->getEmployee()->id);
+        return EmployeeId::fromInt($this->getEmployeeOrFail()->id);
     }
 
     // ==================== DASHBOARD ====================
@@ -62,7 +75,7 @@ class PortalController extends Controller
         $recentTasks = $this->taskService->getUpcomingTasks($employeeId, 7);
         $activeGoals = $this->goalService->getActiveGoals($employeeId);
 
-        $unreadNotifications = EmployeeNotification::where('employee_id', $employee->id)
+        $unreadNotifications = EmployeeNotificationModel::where('employee_id', $employee->id)
             ->unread()
             ->count();
 
@@ -128,9 +141,10 @@ class PortalController extends Controller
         ]);
     }
 
-    public function taskShow(EmployeeTask $task)
+    public function taskShow(int $taskId)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
+        $task = EmployeeTaskModel::findOrFail($taskId);
 
         if ($task->assigned_to !== $employee->id) {
             abort(403);
@@ -171,9 +185,10 @@ class PortalController extends Controller
         ]);
     }
 
-    public function taskAddComment(Request $request, EmployeeTask $task)
+    public function taskAddComment(Request $request, int $taskId)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
+        $task = EmployeeTaskModel::findOrFail($taskId);
 
         $request->validate(['content' => 'required|string|max:1000']);
 
@@ -371,14 +386,14 @@ class PortalController extends Controller
 
     public function documents(Request $request)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
 
-        $documents = EmployeeDocument::where('employee_id', $employee->id)
+        $documents = EmployeeDocumentModel::where('employee_id', $employee->id)
             ->when($request->category, fn($q) => $q->byCategory($request->category))
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        $categories = EmployeeDocument::where('employee_id', $employee->id)
+        $categories = EmployeeDocumentModel::where('employee_id', $employee->id)
             ->distinct()
             ->pluck('category');
 
@@ -393,9 +408,9 @@ class PortalController extends Controller
 
     public function team()
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
 
-        $teamMembers = Employee::where('department_id', $employee->department_id)
+        $teamMembers = EmployeeModel::where('department_id', $employee->department_id)
             ->with(['position', 'user'])
             ->where('employment_status', 'active')
             ->orderBy('first_name')
@@ -421,9 +436,9 @@ class PortalController extends Controller
 
     public function notifications()
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
 
-        $notifications = EmployeeNotification::where('employee_id', $employee->id)
+        $notifications = EmployeeNotificationModel::where('employee_id', $employee->id)
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
@@ -432,9 +447,10 @@ class PortalController extends Controller
         ]);
     }
 
-    public function markNotificationRead(EmployeeNotification $notification)
+    public function markNotificationRead(int $notificationId)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
+        $notification = EmployeeNotificationModel::findOrFail($notificationId);
 
         if ($notification->employee_id !== $employee->id) {
             abort(403);
@@ -447,9 +463,9 @@ class PortalController extends Controller
 
     public function markAllNotificationsRead()
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
 
-        EmployeeNotification::where('employee_id', $employee->id)
+        EmployeeNotificationModel::where('employee_id', $employee->id)
             ->unread()
             ->update(['read_at' => now()]);
 
@@ -460,7 +476,7 @@ class PortalController extends Controller
 
     public function profile()
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
 
         return Inertia::render('Employee/Portal/Profile/Index', [
             'employee' => $employee->load(['department', 'position', 'manager']),
@@ -469,7 +485,7 @@ class PortalController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
 
         $validated = $request->validate([
             'phone' => 'nullable|string|max:20',
@@ -487,10 +503,10 @@ class PortalController extends Controller
 
     public function payslips(Request $request)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
         $year = $request->year ?? date('Y');
 
-        $payslips = EmployeePayslip::where('employee_id', $employee->id)
+        $payslips = EmployeePayslipModel::where('employee_id', $employee->id)
             ->paid()
             ->forYear((int) $year)
             ->orderBy('payment_date', 'desc')
@@ -505,7 +521,7 @@ class PortalController extends Controller
         ];
 
         // Get available years
-        $availableYears = EmployeePayslip::where('employee_id', $employee->id)
+        $availableYears = EmployeePayslipModel::where('employee_id', $employee->id)
             ->paid()
             ->selectRaw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y', payment_date) as year" : 'YEAR(payment_date) as year')
             ->distinct()
@@ -520,9 +536,10 @@ class PortalController extends Controller
         ]);
     }
 
-    public function payslipShow(EmployeePayslip $payslip)
+    public function payslipShow(int $payslipId)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
+        $payslip = EmployeePayslipModel::findOrFail($payslipId);
 
         if ($payslip->employee_id !== $employee->id) {
             abort(403);
@@ -533,9 +550,10 @@ class PortalController extends Controller
         ]);
     }
 
-    public function payslipDownload(EmployeePayslip $payslip)
+    public function payslipDownload(int $payslipId)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
+        $payslip = EmployeePayslipModel::findOrFail($payslipId);
 
         if ($payslip->employee_id !== $employee->id) {
             abort(403);
@@ -545,8 +563,6 @@ class PortalController extends Controller
             return Storage::download($payslip->pdf_path, "payslip-{$payslip->payslip_number}.pdf");
         }
 
-        // Generate PDF on the fly if not stored
-        // For now, return a simple response
         return back()->with('error', 'PDF not available for this payslip.');
     }
 
@@ -554,9 +570,9 @@ class PortalController extends Controller
 
     public function announcements(Request $request)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
 
-        $announcements = EmployeeAnnouncement::active()
+        $announcements = EmployeeAnnouncementModel::active()
             ->forDepartment($employee->department_id)
             ->with('author', 'department')
             ->orderBy('is_pinned', 'desc')
@@ -570,7 +586,7 @@ class PortalController extends Controller
         });
 
         // Count unread
-        $unreadCount = EmployeeAnnouncement::active()
+        $unreadCount = EmployeeAnnouncementModel::active()
             ->forDepartment($employee->department_id)
             ->whereDoesntHave('readBy', fn($q) => $q->where('employee_id', $employee->id))
             ->count();
@@ -582,9 +598,10 @@ class PortalController extends Controller
         ]);
     }
 
-    public function announcementShow(EmployeeAnnouncement $announcement)
+    public function announcementShow(int $announcementId)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
+        $announcement = EmployeeAnnouncementModel::findOrFail($announcementId);
 
         // Check if employee can view this announcement
         if ($announcement->department_id && $announcement->department_id !== $employee->department_id) {
@@ -599,9 +616,10 @@ class PortalController extends Controller
         ]);
     }
 
-    public function markAnnouncementRead(EmployeeAnnouncement $announcement)
+    public function markAnnouncementRead(int $announcementId)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
+        $announcement = EmployeeAnnouncementModel::findOrFail($announcementId);
         $announcement->markAsReadBy($employee->id);
 
         return back();
@@ -611,12 +629,11 @@ class PortalController extends Controller
 
     public function directory(Request $request)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
 
-        $query = Employee::with(['department', 'position'])
+        $query = EmployeeModel::with(['department', 'position'])
             ->where('employment_status', 'active');
 
-        // Search
         if ($request->search) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -626,7 +643,6 @@ class PortalController extends Controller
             });
         }
 
-        // Filter by department
         if ($request->department) {
             $query->where('department_id', $request->department);
         }
@@ -643,7 +659,7 @@ class PortalController extends Controller
                 'is_self' => $emp->id === $employee->id,
             ]);
 
-        $departments = Department::where('is_active', true)
+        $departments = DepartmentModel::where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -656,7 +672,7 @@ class PortalController extends Controller
 
     public function orgChart()
     {
-        $departments = Department::with(['employees' => function ($q) {
+        $departments = DepartmentModel::with(['employees' => function ($q) {
             $q->where('employment_status', 'active')
                 ->with('position')
                 ->orderBy('first_name');
@@ -708,9 +724,10 @@ class PortalController extends Controller
         ]);
     }
 
-    public function performanceReviewShow(\App\Models\Employee\EmployeePerformanceReview $review)
+    public function performanceReviewShow(int $reviewId)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
+        $review = \App\Infrastructure\Persistence\Eloquent\EmployeePerformanceReviewModel::findOrFail($reviewId);
 
         if ($review->employee_id !== $employee->id) {
             abort(403);
@@ -721,9 +738,10 @@ class PortalController extends Controller
         ]);
     }
 
-    public function submitSelfAssessment(Request $request, \App\Models\Employee\EmployeePerformanceReview $review)
+    public function submitSelfAssessment(Request $request, int $reviewId)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
+        $review = \App\Infrastructure\Persistence\Eloquent\EmployeePerformanceReviewModel::findOrFail($reviewId);
 
         if ($review->employee_id !== $employee->id) {
             abort(403);
@@ -788,9 +806,10 @@ class PortalController extends Controller
         ]);
     }
 
-    public function updateCourseProgress(Request $request, \App\Models\Employee\EmployeeCourseEnrollment $enrollment)
+    public function updateCourseProgress(Request $request, int $enrollmentId)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
+        $enrollment = \App\Infrastructure\Persistence\Eloquent\EmployeeCourseEnrollmentModel::findOrFail($enrollmentId);
 
         if ($enrollment->employee_id !== $employee->id) {
             abort(403);
@@ -857,9 +876,10 @@ class PortalController extends Controller
             ->with('success', 'Expense created successfully.');
     }
 
-    public function expenseShow(\App\Models\Employee\EmployeeExpense $expense)
+    public function expenseShow(int $expenseId)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
+        $expense = \App\Infrastructure\Persistence\Eloquent\EmployeeExpenseModel::findOrFail($expenseId);
 
         if ($expense->employee_id !== $employee->id) {
             abort(403);
@@ -870,22 +890,22 @@ class PortalController extends Controller
         ]);
     }
 
-    public function expenseSubmit(\App\Models\Employee\EmployeeExpense $expense)
+    public function expenseSubmit(int $expenseId)
     {
         $employeeId = $this->getEmployeeId();
 
         $expenseService = app(\App\Domain\Employee\Services\ExpenseService::class);
-        $expenseService->submitExpense($expense->id, $employeeId);
+        $expenseService->submitExpense($expenseId, $employeeId);
 
         return back()->with('success', 'Expense submitted for approval.');
     }
 
-    public function expenseCancel(\App\Models\Employee\EmployeeExpense $expense)
+    public function expenseCancel(int $expenseId)
     {
         $employeeId = $this->getEmployeeId();
 
         $expenseService = app(\App\Domain\Employee\Services\ExpenseService::class);
-        $expenseService->cancelExpense($expense->id, $employeeId);
+        $expenseService->cancelExpense($expenseId, $employeeId);
 
         return redirect()->route('employee.portal.expenses.index')
             ->with('success', 'Expense cancelled.');
@@ -959,12 +979,12 @@ class PortalController extends Controller
             ->with('success', 'Support ticket created successfully.');
     }
 
-    public function supportTicketShow(Request $request, \App\Models\Employee\EmployeeSupportTicket $ticket)
+    public function supportTicketShow(Request $request, int $ticketId)
     {
         $employeeId = $this->getEmployeeId();
         $ticketService = app(\App\Domain\Employee\Services\SupportTicketService::class);
 
-        $ticket = $ticketService->getTicketWithComments($ticket->id, $employeeId);
+        $ticket = $ticketService->getTicketWithComments($ticketId, $employeeId);
         $categories = $ticketService->getCategories();
 
         // Return JSON for AJAX requests (used by polling)
@@ -980,7 +1000,7 @@ class PortalController extends Controller
         ]);
     }
 
-    public function supportTicketAddComment(Request $request, \App\Models\Employee\EmployeeSupportTicket $ticket)
+    public function supportTicketAddComment(Request $request, int $ticketId)
     {
         $employeeId = $this->getEmployeeId();
 
@@ -990,21 +1010,23 @@ class PortalController extends Controller
         ]);
 
         $ticketService = app(\App\Domain\Employee\Services\SupportTicketService::class);
-        $ticketService->addComment($ticket->id, $employeeId, $request->content, $request->attachments ?? []);
+        $ticketService->addComment($ticketId, $employeeId, $request->content, $request->attachments ?? []);
 
         return back()->with('success', 'Comment added.');
     }
 
-    public function supportTicketChat(Request $request, \App\Models\Employee\EmployeeSupportTicket $ticket)
+    public function supportTicketChat(Request $request, int $ticketId)
     {
         try {
-            $employee = $this->getEmployee();
+            $employee = $this->getEmployeeOrFail();
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'error' => 'Employee record not found. Please contact your administrator.',
                 'code' => 'EMPLOYEE_NOT_FOUND'
             ], 404);
         }
+
+        $ticket = \App\Infrastructure\Persistence\Eloquent\EmployeeSupportTicketModel::findOrFail($ticketId);
 
         if ($ticket->employee_id !== $employee->id) {
             return response()->json(['error' => 'Unauthorized'], 403);
@@ -1015,11 +1037,9 @@ class PortalController extends Controller
         ]);
 
         try {
-            // Add comment to ticket (this also broadcasts the message)
             $ticketService = app(\App\Domain\Employee\Services\SupportTicketService::class);
             $ticketService->addComment($ticket->id, EmployeeId::fromInt($employee->id), $request->message, []);
 
-            // Always return JSON for chat endpoint
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
             \Log::error('Failed to send chat message', [
@@ -1039,7 +1059,7 @@ class PortalController extends Controller
     public function supportQuickChat(Request $request)
     {
         try {
-            $employee = $this->getEmployee();
+            $employee = $this->getEmployeeOrFail();
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'error' => 'Employee record not found. Please contact your administrator.',
@@ -1099,11 +1119,11 @@ class PortalController extends Controller
     /**
      * Rate a closed support ticket
      */
-    public function supportTicketRate(Request $request, \App\Models\Employee\EmployeeSupportTicket $ticket)
+    public function supportTicketRate(Request $request, int $ticketId)
     {
         $employeeId = $this->getEmployeeId();
+        $ticket = \App\Infrastructure\Persistence\Eloquent\EmployeeSupportTicketModel::findOrFail($ticketId);
         
-        // Verify ownership
         if ($ticket->employee_id !== $employeeId) {
             return response()->json(['error' => 'Access denied'], 403);
         }
@@ -1113,12 +1133,10 @@ class PortalController extends Controller
             'feedback' => 'nullable|string|max:1000',
         ]);
 
-        // Only allow rating closed/resolved tickets
         if (!in_array($ticket->status, ['closed', 'resolved'])) {
             return response()->json(['error' => 'Can only rate closed tickets'], 400);
         }
 
-        // Check if already rated
         if ($ticket->satisfaction_rating) {
             return response()->json(['error' => 'Ticket already rated'], 400);
         }
@@ -1200,7 +1218,7 @@ class PortalController extends Controller
         return back()->with('success', 'Event created.');
     }
 
-    public function calendarEventUpdate(Request $request, \App\Models\Employee\EmployeeCalendarEvent $event)
+    public function calendarEventUpdate(Request $request, int $eventId)
     {
         $employeeId = $this->getEmployeeId();
 
@@ -1213,17 +1231,17 @@ class PortalController extends Controller
         ]);
 
         $calendarService = app(\App\Domain\Employee\Services\CalendarService::class);
-        $calendarService->updateEvent($event->id, $employeeId, $validated);
+        $calendarService->updateEvent($eventId, $employeeId, $validated);
 
         return back()->with('success', 'Event updated.');
     }
 
-    public function calendarEventCancel(\App\Models\Employee\EmployeeCalendarEvent $event)
+    public function calendarEventCancel(int $eventId)
     {
         $employeeId = $this->getEmployeeId();
 
         $calendarService = app(\App\Domain\Employee\Services\CalendarService::class);
-        $calendarService->cancelEvent($event->id, $employeeId);
+        $calendarService->cancelEvent($eventId, $employeeId);
 
         return back()->with('success', 'Event cancelled.');
     }
@@ -1235,9 +1253,8 @@ class PortalController extends Controller
      */
     public function supportAgentDashboard()
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
         
-        // Get unified support tickets (members + investors)
         $memberTickets = \App\Infrastructure\Persistence\Eloquent\Support\SupportTicketModel::query()
             ->whereIn('status', ['open', 'in_progress', 'pending'])
             ->orderBy('created_at', 'desc')
@@ -1308,7 +1325,7 @@ class PortalController extends Controller
      */
     public function supportAgentTickets(Request $request)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
         
         $status = $request->get('status', 'open');
         $source = $request->get('source', 'all');
@@ -1397,7 +1414,7 @@ class PortalController extends Controller
      */
     public function supportAgentTicketShow(Request $request, int $ticket)
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
         $source = $request->get('source', 'member');
 
         if ($source === 'investor') {
@@ -1479,7 +1496,7 @@ class PortalController extends Controller
             'source' => 'required|in:member,investor',
         ]);
 
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
         $source = $request->input('source');
         $message = $request->input('message');
 
@@ -1556,7 +1573,7 @@ class PortalController extends Controller
             'source' => 'required|in:member,investor',
         ]);
 
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
         $source = $request->input('source');
         $status = $request->input('status');
 
@@ -1582,7 +1599,7 @@ class PortalController extends Controller
             'assigned_to' => 'nullable|integer', // This should be a user_id
         ]);
 
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
         // assigned_to references users.id, not employees.id
         $assignedTo = $request->input('assigned_to', $employee->user_id);
 
@@ -1598,7 +1615,7 @@ class PortalController extends Controller
      */
     public function supportAgentStats()
     {
-        $employee = $this->getEmployee();
+        $employee = $this->getEmployeeOrFail();
 
         $stats = [
             'tickets_handled_today' => \App\Infrastructure\Persistence\Eloquent\Support\TicketCommentModel::where('author_id', $employee->user_id)

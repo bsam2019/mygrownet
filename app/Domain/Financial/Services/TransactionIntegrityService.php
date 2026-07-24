@@ -112,7 +112,7 @@ class TransactionIntegrityService
      */
     public function checkSufficientBalance(User $user, float $amount): bool
     {
-        $walletService = app(\App\Services\WalletService::class);
+        $walletService = app(\App\Domain\GrowNet\Services\WalletService::class);
         $currentBalance = $walletService->calculateBalance($user);
         
         return $currentBalance >= $amount;

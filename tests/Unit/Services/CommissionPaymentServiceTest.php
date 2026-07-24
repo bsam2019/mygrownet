@@ -6,7 +6,7 @@ use Tests\TestCase;
 use App\Services\CommissionPaymentService;
 use App\Services\MobileMoneyService;
 use App\Models\User;
-use App\Models\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use App\Models\PaymentTransaction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;

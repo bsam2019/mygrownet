@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Repositories;
 
-use App\Domain\MLM\Entities\Commission;
-use App\Domain\MLM\Repositories\CommissionRepository;
-use App\Domain\MLM\ValueObjects\CommissionId;
-use App\Domain\MLM\ValueObjects\UserId;
-use App\Domain\MLM\ValueObjects\CommissionLevel;
-use App\Domain\MLM\ValueObjects\CommissionType;
-use App\Domain\MLM\ValueObjects\CommissionStatus;
-use App\Domain\MLM\ValueObjects\CommissionAmount;
-use App\Models\ReferralCommission;
-use App\Models\UserNetwork;
+use App\Domain\GrowNet\MLM\Entities\Commission;
+use App\Domain\GrowNet\MLM\Repositories\CommissionRepository;
+use App\Domain\GrowNet\MLM\ValueObjects\CommissionId;
+use App\Domain\GrowNet\MLM\ValueObjects\UserId;
+use App\Domain\GrowNet\MLM\ValueObjects\CommissionLevel;
+use App\Domain\GrowNet\MLM\ValueObjects\CommissionType;
+use App\Domain\GrowNet\MLM\ValueObjects\CommissionStatus;
+use App\Domain\GrowNet\MLM\ValueObjects\CommissionAmount;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\UserNetwork;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 

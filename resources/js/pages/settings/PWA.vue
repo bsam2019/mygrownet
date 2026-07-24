@@ -55,7 +55,6 @@ const appIcons: Record<string, any> = {
     'growbuilder': GlobeAltIcon,
     'bizboost': SparklesIcon,
     'growfinance': BanknotesIcon,
-    'growbiz': ClipboardDocumentCheckIcon,
     'marketplace': ShoppingCartIcon,
     'wallet': WalletIcon,
 };
@@ -118,12 +117,6 @@ const appOptions = computed(() => {
             name: 'GrowFinance',
             description: 'Accounting & financial management',
             icon: 'growfinance'
-        },
-        {
-            slug: 'growbiz',
-            name: 'GrowBiz',
-            description: 'Team & employee management',
-            icon: 'growbiz'
         },
         {
             slug: 'marketplace',

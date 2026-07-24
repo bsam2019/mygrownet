@@ -5,10 +5,10 @@ namespace Tests\Feature\Commands;
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\InvestmentTier;
-use App\Models\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use App\Models\Investment;
-use App\Models\TeamVolume;
-use App\Models\UserNetwork;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TeamVolume;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\UserNetwork;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 

@@ -2,15 +2,18 @@
 
 namespace App\Domain\GrowFinance\Services;
 
+use App\Domain\GrowFinance\Entities\ApiToken;
+use App\Domain\GrowFinance\Repositories\ApiTokenRepositoryInterface;
 use App\Domain\Module\Services\SubscriptionService;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceApiTokenModel;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ApiTokenService
 {
     public function __construct(
-        private SubscriptionService $subscriptionService
+        private SubscriptionService $subscriptionService,
+        private ApiTokenRepositoryInterface $apiTokenRepo,
     ) {}
 
     /**
@@ -18,21 +21,22 @@ class ApiTokenService
      */
     public function getTokens(int $businessId): array
     {
-        return GrowFinanceApiTokenModel::forBusiness($businessId)
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(fn($token) => [
-                'id' => $token->id,
-                'name' => $token->name,
-                'masked_token' => $token->getMaskedToken(),
-                'abilities' => $token->abilities,
-                'last_used_at' => $token->last_used_at?->toISOString(),
-                'expires_at' => $token->expires_at?->toISOString(),
-                'is_active' => $token->is_active,
-                'is_expired' => $token->isExpired(),
-                'created_at' => $token->created_at->toISOString(),
-            ])
-            ->toArray();
+        $tokens = $this->apiTokenRepo->findByBusiness($businessId);
+
+        $sorted = $tokens;
+        usort($sorted, fn(ApiToken $a, ApiToken $b) => ($b->createdAt?->getTimestamp() ?? 0) <=> ($a->createdAt?->getTimestamp() ?? 0));
+
+        return array_map(fn(ApiToken $token) => [
+            'id' => $token->id,
+            'name' => $token->name,
+            'masked_token' => substr($token->token, 0, 8) . '...' . substr($token->token, -4),
+            'abilities' => $token->abilities,
+            'last_used_at' => $token->lastUsedAt?->format('c'),
+            'expires_at' => $token->expiresAt?->format('c'),
+            'is_active' => $token->isActive,
+            'is_expired' => $token->isExpired(),
+            'created_at' => $token->createdAt?->format('c'),
+        ], $sorted);
     }
 
     /**
@@ -61,15 +65,15 @@ class ApiTokenService
     ): array {
         $plainToken = Str::random(64);
 
-        $token = GrowFinanceApiTokenModel::create([
-            'business_id' => $businessId,
-            'name' => $name,
-            'token' => hash('sha256', $plainToken),
-            'abilities' => $abilities,
-            'expires_at' => $expiresInDays ? now()->addDays($expiresInDays) : null,
-        ]);
+        $token = $this->apiTokenRepo->save(new ApiToken(
+            id: null,
+            businessId: $businessId,
+            name: $name,
+            token: hash('sha256', $plainToken),
+            abilities: $abilities,
+            expiresAt: $expiresInDays ? new \DateTimeImmutable('+' . $expiresInDays . ' days') : null,
+        ));
 
-        // Return plain token only once - it won't be retrievable later
         return [
             'token' => $token,
             'plain_token' => $plainToken,
@@ -84,20 +88,28 @@ class ApiTokenService
     {
         $hashedToken = hash('sha256', $plainToken);
 
-        $token = GrowFinanceApiTokenModel::where('token', $hashedToken)
-            ->valid()
-            ->first();
+        $token = $this->apiTokenRepo->findByToken($hashedToken);
 
-        if (!$token) {
+        if (!$token || !$token->isActive || $token->isExpired()) {
             return null;
         }
 
-        // Update last used timestamp
-        $token->markAsUsed();
+        $this->apiTokenRepo->save(new ApiToken(
+            id: $token->id,
+            businessId: $token->businessId,
+            name: $token->name,
+            token: $token->token,
+            abilities: $token->abilities,
+            lastUsedAt: new \DateTimeImmutable(),
+            expiresAt: $token->expiresAt,
+            isActive: $token->isActive,
+            createdAt: $token->createdAt,
+            updatedAt: null,
+        ));
 
         return [
             'token' => $token,
-            'business_id' => $token->business_id,
+            'business_id' => $token->businessId,
             'abilities' => $token->abilities,
         ];
     }
@@ -121,10 +133,23 @@ class ApiTokenService
      */
     public function revokeToken(int $businessId, int $tokenId): bool
     {
-        $token = GrowFinanceApiTokenModel::forBusiness($businessId)
-            ->findOrFail($tokenId);
+        $token = $this->apiTokenRepo->findById($tokenId);
+        if (!$token || $token->businessId !== $businessId) {
+            return false;
+        }
 
-        $token->update(['is_active' => false]);
+        $this->apiTokenRepo->save(new ApiToken(
+            id: $token->id,
+            businessId: $token->businessId,
+            name: $token->name,
+            token: $token->token,
+            abilities: $token->abilities,
+            lastUsedAt: $token->lastUsedAt,
+            expiresAt: $token->expiresAt,
+            isActive: false,
+            createdAt: $token->createdAt,
+            updatedAt: null,
+        ));
 
         return true;
     }
@@ -134,12 +159,12 @@ class ApiTokenService
      */
     public function deleteToken(int $businessId, int $tokenId): bool
     {
-        $token = GrowFinanceApiTokenModel::forBusiness($businessId)
-            ->findOrFail($tokenId);
+        $deleted = DB::table('growfinance_api_tokens')
+            ->where('id', $tokenId)
+            ->where('business_id', $businessId)
+            ->delete();
 
-        $token->delete();
-
-        return true;
+        return $deleted > 0;
     }
 
     /**
@@ -147,18 +172,29 @@ class ApiTokenService
      */
     public function regenerateToken(int $businessId, int $tokenId): array
     {
-        $oldToken = GrowFinanceApiTokenModel::forBusiness($businessId)
-            ->findOrFail($tokenId);
+        $oldToken = $this->apiTokenRepo->findById($tokenId);
+        if (!$oldToken || $oldToken->businessId !== $businessId) {
+            throw new \RuntimeException('Token not found');
+        }
 
-        // Deactivate old token
-        $oldToken->update(['is_active' => false]);
+        $this->apiTokenRepo->save(new ApiToken(
+            id: $oldToken->id,
+            businessId: $oldToken->businessId,
+            name: $oldToken->name,
+            token: $oldToken->token,
+            abilities: $oldToken->abilities,
+            lastUsedAt: $oldToken->lastUsedAt,
+            expiresAt: $oldToken->expiresAt,
+            isActive: false,
+            createdAt: $oldToken->createdAt,
+            updatedAt: null,
+        ));
 
-        // Create new token with same settings
         return $this->createToken(
             $businessId,
             $oldToken->name . ' (regenerated)',
             $oldToken->abilities ?? ['read'],
-            $oldToken->expires_at ? now()->diffInDays($oldToken->expires_at) : null
+            $oldToken->expiresAt ? (int) ceil((new \DateTimeImmutable())->diff($oldToken->expiresAt)->days) : null
         );
     }
 
@@ -168,8 +204,19 @@ class ApiTokenService
     public function getAvailableAbilities(): array
     {
         return [
-            'general' => GrowFinanceApiTokenModel::ABILITIES,
-            'resources' => GrowFinanceApiTokenModel::RESOURCE_ABILITIES,
+            'general' => [
+                'read' => 'Read data (invoices, expenses, customers, reports)',
+                'write' => 'Create and update records',
+                'delete' => 'Delete records',
+            ],
+            'resources' => [
+                'invoices:read', 'invoices:write', 'invoices:delete',
+                'expenses:read', 'expenses:write', 'expenses:delete',
+                'customers:read', 'customers:write', 'customers:delete',
+                'vendors:read', 'vendors:write', 'vendors:delete',
+                'reports:read',
+                'accounts:read', 'accounts:write',
+            ],
         ];
     }
 }

@@ -16,7 +16,11 @@ interface FamilyRepositoryInterface
 
     public function findById(FamilyId $id): ?Family;
 
+    public function findBySlug(string $slug): ?Family;
+
     public function findByAdminUserId(int $userId): array;
+
+    public function slugExists(string $slug, ?FamilyId $excludeId = null): bool;
 
     public function delete(FamilyId $id): void;
 

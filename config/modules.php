@@ -81,18 +81,6 @@ return [
             'color' => 'orange',
         ],
 
-        'growbiz' => [
-            'enabled' => false,
-            'name' => 'GrowBiz',
-            'description' => 'Team & employee management',
-            'icon' => 'ClipboardDocumentCheckIcon',
-            'route' => 'growbiz.dashboard',
-            'nav_group' => 'business',
-            'requires_subscription' => true,
-            'category' => 'operations',
-            'color' => 'green',
-        ],
-
         'growfinance' => [
             'enabled' => true,
             'name' => 'GrowFinance',

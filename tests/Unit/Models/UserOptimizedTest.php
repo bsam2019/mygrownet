@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Models;
 
-use App\Models\Commission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\Commission;
 use App\Models\Investment;
 use App\Models\InvestmentTier;
 use App\Models\ProfitShare;

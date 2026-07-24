@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers\GrowBuilder;
 
+use App\Domain\GrowBuilder\Repositories\OrderRepositoryInterface;
+use App\Domain\GrowBuilder\Repositories\ProductRepositoryInterface;
 use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
+use App\Domain\GrowBuilder\ValueObjects\ProductId;
+use App\Domain\GrowBuilder\ValueObjects\SiteId;
 use App\Domain\GrowBuilder\ValueObjects\Subdomain;
 use App\Domain\GrowBuilder\Payment\Services\GrowBuilderPaymentService;
 use App\Domain\GrowBuilder\Payment\DTOs\PaymentRequest;
@@ -10,7 +14,6 @@ use App\Http\Controllers\Controller;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderOrder;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderPayment;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderPaymentSettings;
-use App\Infrastructure\GrowBuilder\Models\GrowBuilderProduct;
 use App\Models\GrowBuilder\SitePaymentConfig;
 use Illuminate\Http\Request;
 
@@ -18,6 +21,8 @@ class CheckoutController extends Controller
 {
     public function __construct(
         private SiteRepositoryInterface $siteRepository,
+        private ProductRepositoryInterface $productRepository,
+        private OrderRepositoryInterface $orderRepository,
         private GrowBuilderPaymentService $paymentService,
     ) {}
 
@@ -52,33 +57,30 @@ class CheckoutController extends Controller
         $subtotal = 0;
 
         foreach ($validated['items'] as $item) {
-            $product = GrowBuilderProduct::where('site_id', $siteId)
-                ->where('id', $item['product_id'])
-                ->active()
-                ->first();
+            $product = $this->productRepository->findById(ProductId::fromInt($item['product_id']));
 
-            if (!$product) {
+            if (!$product || !$product->isActive()) {
                 return response()->json([
                     'error' => 'Product not found or unavailable',
                 ], 400);
             }
 
-            if ($product->track_stock && $product->stock_quantity < $item['quantity']) {
+            if (!$product->isInStock() && $product->getStockQuantity() < $item['quantity']) {
                 return response()->json([
-                    'error' => "Insufficient stock for {$product->name}",
+                    'error' => "Insufficient stock for {$product->getName()}",
                 ], 400);
             }
 
-            $lineTotal = $product->price * $item['quantity'];
+            $lineTotal = $product->getPrice()->getAmountInNgwee() * $item['quantity'];
             $subtotal += $lineTotal;
 
             $orderItems[] = [
-                'product_id' => $product->id,
-                'name' => $product->name,
-                'price' => $product->price,
+                'product_id' => $product->getId()->value(),
+                'name' => $product->getName(),
+                'price' => $product->getPrice()->getAmountInNgwee(),
                 'quantity' => $item['quantity'],
                 'total' => $lineTotal,
-                'image' => $product->main_image,
+                'image' => $product->getMainImage(),
             ];
         }
 
@@ -102,10 +104,7 @@ class CheckoutController extends Controller
 
         // Decrement stock
         foreach ($validated['items'] as $item) {
-            $product = GrowBuilderProduct::find($item['product_id']);
-            if ($product && $product->track_stock) {
-                $product->decrement('stock_quantity', $item['quantity']);
-            }
+            $this->productRepository->decrementStock(ProductId::fromInt($item['product_id']), $item['quantity']);
         }
 
         // Handle payment based on method

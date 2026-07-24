@@ -4,7 +4,7 @@ namespace App\Http\Controllers\GrowFinance;
 
 use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\Module\Services\TierConfigurationService;
-use App\Domain\Wallet\Services\WalletService;
+use App\Domain\GrowNet\Wallet\Services\WalletService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

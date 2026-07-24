@@ -97,11 +97,11 @@ class DiagnoseWalletBalance extends Command
         
         // Compare with services
         $this->info("\n--- SERVICE COMPARISON ---");
-        $uws = app(\App\Domain\Wallet\Services\WalletService::class);
+        $uws = app(\App\Domain\GrowNet\Wallet\Services\WalletService::class);
         $uwsBalance = $uws->calculateBalance($user);
         $this->info("WalletService Balance: K{$uwsBalance}");
         
-        $uws = app(\App\Domain\Wallet\Services\WalletService::class);
+        $uws = app(\App\Domain\GrowNet\Wallet\Services\WalletService::class);
         $uwsBalance = $uws->calculateBalance($user);
         $this->info("WalletService Balance: K{$uwsBalance}");
         

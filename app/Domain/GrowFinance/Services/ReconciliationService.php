@@ -2,85 +2,138 @@
 
 namespace App\Domain\GrowFinance\Services;
 
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceBankAccountModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceBankStatementModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceBankStatementLineModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceJournalEntryModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceJournalLineModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceReconciliationPeriodModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceReconciliationMatchModel;
+use App\Domain\GrowFinance\Entities\Account;
+use App\Domain\GrowFinance\Entities\BankAccount;
+use App\Domain\GrowFinance\Entities\BankStatement;
+use App\Domain\GrowFinance\Entities\BankStatementLine;
+use App\Domain\GrowFinance\Entities\JournalLine;
+use App\Domain\GrowFinance\Entities\ReconciliationMatch;
+use App\Domain\GrowFinance\Entities\ReconciliationPeriod;
+use App\Domain\GrowFinance\Repositories\AccountRepositoryInterface;
+use App\Domain\GrowFinance\Repositories\BankAccountRepositoryInterface;
+use App\Domain\GrowFinance\Repositories\BankStatementLineRepositoryInterface;
+use App\Domain\GrowFinance\Repositories\BankStatementRepositoryInterface;
+use App\Domain\GrowFinance\Repositories\JournalEntryRepositoryInterface;
+use App\Domain\GrowFinance\Repositories\JournalLineRepositoryInterface;
+use App\Domain\GrowFinance\Repositories\ReconciliationMatchRepositoryInterface;
+use App\Domain\GrowFinance\Repositories\ReconciliationPeriodRepositoryInterface;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class ReconciliationService
 {
+    public function __construct(
+        private BankAccountRepositoryInterface $bankAccountRepo,
+        private BankStatementRepositoryInterface $bankStatementRepo,
+        private BankStatementLineRepositoryInterface $bankStatementLineRepo,
+        private JournalEntryRepositoryInterface $journalEntryRepo,
+        private JournalLineRepositoryInterface $journalLineRepo,
+        private ReconciliationPeriodRepositoryInterface $reconciliationPeriodRepo,
+        private ReconciliationMatchRepositoryInterface $reconciliationMatchRepo,
+        private AccountRepositoryInterface $accountRepo,
+    ) {}
+
     public function importStatement(
         int $businessId,
         int $bankAccountId,
         array $data,
         array $lines
-    ): GrowFinanceBankStatementModel {
+    ): array {
         return DB::transaction(function () use ($businessId, $bankAccountId, $data, $lines) {
-            $statement = GrowFinanceBankStatementModel::create([
-                'business_id' => $businessId,
-                'bank_account_id' => $bankAccountId,
-                'statement_period' => $data['statement_period'] ?? null,
-                'start_date' => $data['start_date'],
-                'end_date' => $data['end_date'],
-                'opening_balance' => $data['opening_balance'] ?? 0,
-                'closing_balance' => $data['closing_balance'] ?? 0,
-                'file_name' => $data['file_name'] ?? null,
-                'file_path' => $data['file_path'] ?? null,
-                'line_count' => count($lines),
-                'status' => 'imported',
-            ]);
+            $statement = $this->bankStatementRepo->save(new BankStatement(
+                id: null,
+                businessId: $businessId,
+                bankAccountId: $bankAccountId,
+                statementPeriod: $data['statement_period'] ?? null,
+                startDate: isset($data['start_date']) ? new \DateTimeImmutable($data['start_date']) : null,
+                endDate: isset($data['end_date']) ? new \DateTimeImmutable($data['end_date']) : null,
+                openingBalance: (float) ($data['opening_balance'] ?? 0),
+                closingBalance: (float) ($data['closing_balance'] ?? 0),
+                fileName: $data['file_name'] ?? null,
+                filePath: $data['file_path'] ?? null,
+                lineCount: count($lines),
+                status: 'imported',
+            ));
 
             foreach ($lines as $line) {
-                $statement->lines()->create([
-                    'transaction_date' => $line['transaction_date'],
-                    'description' => $line['description'],
-                    'reference' => $line['reference'] ?? null,
-                    'debit_amount' => $line['debit_amount'] ?? 0,
-                    'credit_amount' => $line['credit_amount'] ?? 0,
-                    'running_balance' => $line['running_balance'] ?? null,
-                    'status' => 'unmatched',
-                ]);
+                $this->bankStatementLineRepo->save(new BankStatementLine(
+                    id: null,
+                    statementId: $statement->id,
+                    transactionDate: isset($line['transaction_date']) ? new \DateTimeImmutable($line['transaction_date']) : null,
+                    description: $line['description'] ?? null,
+                    reference: $line['reference'] ?? null,
+                    debitAmount: (float) ($line['debit_amount'] ?? 0),
+                    creditAmount: (float) ($line['credit_amount'] ?? 0),
+                    runningBalance: isset($line['running_balance']) ? (float) $line['running_balance'] : null,
+                    status: 'unmatched',
+                ));
             }
 
-            // Auto-match against journal entries
             $this->autoMatchStatementLines($businessId, $statement);
 
-            return $statement->load('lines');
+            $savedLines = $this->bankStatementLineRepo->findByStatement($statement->id);
+            $result = $statement->toArray();
+            $result['lines'] = array_map(fn(BankStatementLine $l) => $l->toArray(), $savedLines);
+
+            return $result;
         });
     }
 
-    public function autoMatchStatementLines(int $businessId, GrowFinanceBankStatementModel $statement): int
+    public function autoMatchStatementLines(int $businessId, BankStatement $statement): int
     {
         $matched = 0;
+        $lines = $this->bankStatementLineRepo->findByStatement($statement->id);
+        $postedEntries = $this->journalEntryRepo->findPosted($businessId);
 
-        foreach ($statement->lines as $line) {
+        foreach ($lines as $line) {
             if ($line->status !== 'unmatched') continue;
+            if (!$line->transactionDate) continue;
 
-            // Find journal entries with matching amount and close date
-            $candidates = GrowFinanceJournalLineModel::whereHas('journalEntry', function ($q) use ($businessId, $line) {
-                $q->where('business_id', $businessId)
-                  ->where('is_posted', true)
-                  ->whereBetween('entry_date', [
-                      $line->transaction_date->copy()->subDays(3),
-                      $line->transaction_date->copy()->addDays(3),
-                  ]);
-            })
-            ->where('reconciled', false)
-            ->where(function ($q) use ($line) {
-                $q->where('debit_amount', $line->debit_amount)
-                  ->where('credit_amount', $line->credit_amount);
-            })
-            ->get();
+            $startRange = $line->transactionDate->modify('-3 days');
+            $endRange = $line->transactionDate->modify('+3 days');
 
-            if ($candidates->count() === 1) {
-                $candidate = $candidates->first();
-                $line->update(['status' => 'matched']);
-                $candidate->update(['reconciled' => true, 'reconciled_at' => now()]);
+            $candidates = [];
+            foreach ($postedEntries as $entry) {
+                if (!$entry->entryDate || $entry->entryDate < $startRange || $entry->entryDate > $endRange) continue;
+
+                $entryLines = $this->journalLineRepo->findByJournalEntry($entry->id);
+                foreach ($entryLines as $jl) {
+                    if ($jl->debitAmount == $line->debitAmount && $jl->creditAmount == $line->creditAmount) {
+                        $candidates[] = $jl;
+                    }
+                }
+            }
+
+            if (count($candidates) === 1) {
+                $candidate = $candidates[0];
+
+                $updatedLine = new BankStatementLine(
+                    id: $line->id,
+                    statementId: $line->statementId,
+                    transactionDate: $line->transactionDate,
+                    description: $line->description,
+                    reference: $line->reference,
+                    debitAmount: $line->debitAmount,
+                    creditAmount: $line->creditAmount,
+                    runningBalance: $line->runningBalance,
+                    status: 'matched',
+                    notes: $line->notes,
+                    createdAt: $line->createdAt,
+                    updatedAt: new \DateTimeImmutable('now'),
+                );
+                $this->bankStatementLineRepo->save($updatedLine);
+
+                $updatedJl = new JournalLine(
+                    id: $candidate->id,
+                    journalEntryId: $candidate->journalEntryId,
+                    accountId: $candidate->accountId,
+                    debitAmount: $candidate->debitAmount,
+                    creditAmount: $candidate->creditAmount,
+                    description: $candidate->description,
+                    createdAt: $candidate->createdAt,
+                    updatedAt: new \DateTimeImmutable('now'),
+                );
+                $this->journalLineRepo->save($updatedJl);
+
                 $matched++;
             }
         }
@@ -93,23 +146,35 @@ class ReconciliationService
         int $bankAccountId,
         int $statementId,
         int $createdBy
-    ): GrowFinanceReconciliationPeriodModel {
-        $statement = GrowFinanceBankStatementModel::findOrFail($statementId);
-        $account = GrowFinanceBankAccountModel::findOrFail($bankAccountId);
+    ): array {
+        $statement = $this->bankStatementRepo->findById($statementId);
+        $account = $this->bankAccountRepo->findById($bankAccountId);
+
+        if (!$statement || !$account) {
+            throw new \RuntimeException('Statement or Bank Account not found');
+        }
 
         return DB::transaction(function () use ($businessId, $bankAccountId, $statement, $account, $createdBy) {
-            return GrowFinanceReconciliationPeriodModel::create([
-                'business_id' => $businessId,
-                'bank_account_id' => $bankAccountId,
-                'start_date' => $statement->start_date,
-                'end_date' => $statement->end_date,
-                'opening_balance' => $statement->opening_balance,
-                'closing_balance' => $statement->closing_balance,
-                'book_balance' => $account->current_balance,
-                'difference' => $statement->closing_balance - $account->current_balance,
-                'status' => 'in_progress',
-                'created_by' => $createdBy,
-            ]);
+            $period = $this->reconciliationPeriodRepo->save(new ReconciliationPeriod(
+                id: null,
+                businessId: $businessId,
+                bankAccountId: $bankAccountId,
+                startDate: $statement->startDate,
+                endDate: $statement->endDate,
+                openingBalance: $statement->openingBalance,
+                closingBalance: $statement->closingBalance,
+                bookBalance: $account->currentBalance,
+                difference: ($statement->closingBalance ?? 0) - ($account->currentBalance ?? 0),
+                status: 'in_progress',
+                createdBy: $createdBy,
+                completedBy: null,
+                completedAt: null,
+                notes: null,
+                createdAt: null,
+                updatedAt: null,
+            ));
+
+            return $period->toArray();
         });
     }
 
@@ -118,91 +183,223 @@ class ReconciliationService
         int $statementLineId,
         int $journalLineId,
         string $matchType = 'manual'
-    ): GrowFinanceReconciliationMatchModel {
+    ): array {
         return DB::transaction(function () use ($reconciliationPeriodId, $statementLineId, $journalLineId, $matchType) {
-            $statementLine = GrowFinanceBankStatementLineModel::findOrFail($statementLineId);
-            $journalLine = GrowFinanceJournalLineModel::findOrFail($journalLineId);
+            $statementLine = $this->bankStatementLineRepo->findById($statementLineId);
+            $journalLine = $this->journalLineRepo->findById($journalLineId);
 
-            $match = GrowFinanceReconciliationMatchModel::create([
-                'reconciliation_period_id' => $reconciliationPeriodId,
-                'statement_line_id' => $statementLineId,
-                'journal_line_id' => $journalLineId,
-                'statement_amount' => $statementLine->debit_amount > 0
-                    ? -$statementLine->debit_amount : $statementLine->credit_amount,
-                'journal_amount' => $journalLine->debit_amount > 0
-                    ? $journalLine->debit_amount : -$journalLine->credit_amount,
-                'match_type' => $matchType,
-            ]);
+            if (!$statementLine || !$journalLine) {
+                throw new \RuntimeException('Statement line or Journal line not found');
+            }
 
-            $statementLine->update(['status' => 'matched']);
-            $journalLine->update(['reconciled' => true, 'reconciled_at' => now()]);
+            $statementAmount = ($statementLine->debitAmount ?? 0) > 0
+                ? -($statementLine->debitAmount ?? 0) : ($statementLine->creditAmount ?? 0);
+            $journalAmount = ($journalLine->debitAmount ?? 0) > 0
+                ? ($journalLine->debitAmount ?? 0) : -($journalLine->creditAmount ?? 0);
 
-            return $match;
+            $match = $this->reconciliationMatchRepo->save(new ReconciliationMatch(
+                id: null,
+                reconciliationPeriodId: $reconciliationPeriodId,
+                statementLineId: $statementLineId,
+                journalLineId: $journalLineId,
+                statementAmount: $statementAmount,
+                journalAmount: $journalAmount,
+                matchType: $matchType,
+                createdAt: null,
+                updatedAt: null,
+            ));
+
+            $updatedLine = new BankStatementLine(
+                id: $statementLine->id,
+                statementId: $statementLine->statementId,
+                transactionDate: $statementLine->transactionDate,
+                description: $statementLine->description,
+                reference: $statementLine->reference,
+                debitAmount: $statementLine->debitAmount,
+                creditAmount: $statementLine->creditAmount,
+                runningBalance: $statementLine->runningBalance,
+                status: 'matched',
+                notes: $statementLine->notes,
+                createdAt: $statementLine->createdAt,
+                updatedAt: new \DateTimeImmutable('now'),
+            );
+            $this->bankStatementLineRepo->save($updatedLine);
+
+            $updatedJl = new JournalLine(
+                id: $journalLine->id,
+                journalEntryId: $journalLine->journalEntryId,
+                accountId: $journalLine->accountId,
+                debitAmount: $journalLine->debitAmount,
+                creditAmount: $journalLine->creditAmount,
+                description: $journalLine->description,
+                createdAt: $journalLine->createdAt,
+                updatedAt: new \DateTimeImmutable('now'),
+            );
+            $this->journalLineRepo->save($updatedJl);
+
+            return $match->toArray();
         });
     }
 
     public function unmatchTransaction(int $matchId): void
     {
         DB::transaction(function () use ($matchId) {
-            $match = GrowFinanceReconciliationMatchModel::findOrFail($matchId);
+            $match = $this->reconciliationMatchRepo->findById($matchId);
+            if (!$match) return;
 
-            $match->statementLine()->update(['status' => 'unmatched']);
-            $match->journalLine()->update(['reconciled' => false, 'reconciled_at' => null]);
+            if ($match->statementLineId) {
+                $statementLine = $this->bankStatementLineRepo->findById($match->statementLineId);
+                if ($statementLine) {
+                    $updatedLine = new BankStatementLine(
+                        id: $statementLine->id,
+                        statementId: $statementLine->statementId,
+                        transactionDate: $statementLine->transactionDate,
+                        description: $statementLine->description,
+                        reference: $statementLine->reference,
+                        debitAmount: $statementLine->debitAmount,
+                        creditAmount: $statementLine->creditAmount,
+                        runningBalance: $statementLine->runningBalance,
+                        status: 'unmatched',
+                        notes: $statementLine->notes,
+                        createdAt: $statementLine->createdAt,
+                        updatedAt: new \DateTimeImmutable('now'),
+                    );
+                    $this->bankStatementLineRepo->save($updatedLine);
+                }
+            }
 
-            $match->delete();
+            if ($match->journalLineId) {
+                $journalLine = $this->journalLineRepo->findById($match->journalLineId);
+                if ($journalLine) {
+                    $updatedJl = new JournalLine(
+                        id: $journalLine->id,
+                        journalEntryId: $journalLine->journalEntryId,
+                        accountId: $journalLine->accountId,
+                        debitAmount: $journalLine->debitAmount,
+                        creditAmount: $journalLine->creditAmount,
+                        description: $journalLine->description,
+                        createdAt: $journalLine->createdAt,
+                        updatedAt: new \DateTimeImmutable('now'),
+                    );
+                    $this->journalLineRepo->save($updatedJl);
+                }
+            }
+
+            DB::table('growfinance_reconciliation_matches')->where('id', $matchId)->delete();
         });
     }
 
-    public function completeReconciliation(int $periodId, int $completedBy): GrowFinanceReconciliationPeriodModel
+    public function completeReconciliation(int $periodId, int $completedBy): array
     {
         return DB::transaction(function () use ($periodId, $completedBy) {
-            $period = GrowFinanceReconciliationPeriodModel::findOrFail($periodId);
+            $period = $this->reconciliationPeriodRepo->findById($periodId);
+            if (!$period) {
+                throw new \RuntimeException('Reconciliation period not found');
+            }
 
-            $statementLines = GrowFinanceBankStatementLineModel::whereIn(
-                'statement_id',
-                GrowFinanceBankStatementModel::where('bank_account_id', $period->bank_account_id)
-                    ->whereBetween('start_date', [$period->start_date, $period->end_date])
-                    ->pluck('id')
+            $statements = $this->bankStatementRepo->findByBankAccount($period->bankAccountId);
+
+            $relevantStatementIds = [];
+            foreach ($statements as $stmt) {
+                if ($stmt->startDate && $period->startDate && $period->endDate) {
+                    if ($stmt->startDate >= $period->startDate && $stmt->startDate <= $period->endDate) {
+                        $relevantStatementIds[] = $stmt->id;
+                    }
+                }
+            }
+
+            $unmatchedCount = 0;
+            $ignoredCount = 0;
+            foreach ($relevantStatementIds as $stmtId) {
+                $statementLines = $this->bankStatementLineRepo->findByStatement($stmtId);
+                foreach ($statementLines as $sl) {
+                    if ($sl->status === 'unmatched') $unmatchedCount++;
+                    if ($sl->status === 'ignored') $ignoredCount++;
+                }
+            }
+
+            $difference = ($period->closingBalance ?? 0) - ($period->bookBalance ?? 0);
+            $notes = $period->notes ?? "Completed with {$unmatchedCount} unmatched, {$ignoredCount} ignored";
+
+            $updated = new ReconciliationPeriod(
+                id: $period->id,
+                businessId: $period->businessId,
+                bankAccountId: $period->bankAccountId,
+                startDate: $period->startDate,
+                endDate: $period->endDate,
+                openingBalance: $period->openingBalance,
+                closingBalance: $period->closingBalance,
+                bookBalance: $period->bookBalance,
+                difference: $difference,
+                status: 'completed',
+                createdBy: $period->createdBy,
+                completedBy: $completedBy,
+                completedAt: new \DateTimeImmutable('now'),
+                notes: $notes,
+                createdAt: $period->createdAt,
+                updatedAt: new \DateTimeImmutable('now'),
             );
+            $this->reconciliationPeriodRepo->save($updated);
 
-            $unmatchedCount = (clone $statementLines)->where('status', 'unmatched')->count();
-            $ignoredCount = (clone $statementLines)->where('status', 'ignored')->count();
+            $account = $this->bankAccountRepo->findById($period->bankAccountId);
+            if ($account) {
+                $updatedAccount = new BankAccount(
+                    id: $account->id,
+                    businessId: $account->businessId,
+                    accountName: $account->accountName,
+                    accountNumber: $account->accountNumber,
+                    bankName: $account->bankName,
+                    bankBranch: $account->bankBranch,
+                    accountType: $account->accountType,
+                    currency: $account->currency,
+                    openingBalance: $account->openingBalance,
+                    currentBalance: $period->closingBalance ?? $account->currentBalance,
+                    isDefault: $account->isDefault,
+                    isActive: $account->isActive,
+                    notes: $account->notes,
+                    deletedAt: $account->deletedAt,
+                    createdAt: $account->createdAt,
+                    updatedAt: new \DateTimeImmutable('now'),
+                );
+                $this->bankAccountRepo->save($updatedAccount);
+            }
 
-            $period->update([
-                'status' => 'completed',
-                'completed_by' => $completedBy,
-                'completed_at' => now(),
-                'difference' => $period->closing_balance - $period->book_balance,
-                'notes' => $period->notes ?: "Completed with {$unmatchedCount} unmatched, {$ignoredCount} ignored",
-            ]);
-
-            // Update bank account balance
-            $account = GrowFinanceBankAccountModel::findOrFail($period->bank_account_id);
-            $account->update(['current_balance' => $period->closing_balance]);
-
-            return $period;
+            return $updated->toArray();
         });
     }
 
     public function getUnreconciledJournalLines(int $businessId, int $accountId, array $dateRange = []): array
     {
-        $query = GrowFinanceJournalLineModel::whereHas('journalEntry', function ($q) use ($businessId, $dateRange) {
-            $q->where('business_id', $businessId)->where('is_posted', true);
-            if (!empty($dateRange)) {
-                $q->whereBetween('entry_date', [$dateRange[0], $dateRange[1]]);
+        $accounts = $this->accountRepo->findByBusiness($businessId);
+        $bankCategories = ['Cash', 'Bank', 'Mobile Money', 'cash', 'bank'];
+        $bankAccountIds = array_map(
+            fn(Account $a) => $a->id,
+            array_filter(
+                $accounts,
+                fn(Account $a) => $a->category !== null && in_array($a->category, $bankCategories)
+            )
+        );
+
+        $postedEntries = $this->journalEntryRepo->findPosted($businessId);
+
+        $lines = [];
+        foreach ($postedEntries as $entry) {
+            if (!empty($dateRange) && $entry->entryDate) {
+                if ($entry->entryDate < new \DateTimeImmutable($dateRange[0]) || $entry->entryDate > new \DateTimeImmutable($dateRange[1])) {
+                    continue;
+                }
             }
-        })
-        ->where('reconciled', false);
 
-        // Filter lines where the journal entry's other line(s) involve the bank account
-        $bankAccountIds = GrowFinanceAccountModel::forBusiness($businessId)
-            ->whereIn('category', ['Cash', 'Bank', 'Mobile Money', 'cash', 'bank'])
-            ->pluck('id');
+            $entryLines = $this->journalLineRepo->findByJournalEntry($entry->id);
+            foreach ($entryLines as $line) {
+                if (in_array($line->accountId, $bankAccountIds)) {
+                    $lines[] = $line->toArray();
+                }
+            }
+        }
 
-        return $query->whereIn('account_id', $bankAccountIds)
-            ->with(['journalEntry', 'account'])
-            ->orderBy('journal_entry_id')
-            ->get()
-            ->toArray();
+        usort($lines, fn($a, $b) => ($a['journal_entry_id'] ?? 0) <=> ($b['journal_entry_id'] ?? 0));
+
+        return $lines;
     }
 }

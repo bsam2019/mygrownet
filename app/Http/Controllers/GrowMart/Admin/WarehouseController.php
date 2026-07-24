@@ -3,17 +3,19 @@
 namespace App\Http\Controllers\GrowMart\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\GrowMart\GrowMartWarehouse;
+use App\Domain\GrowMart\Repositories\WarehouseRepositoryInterface;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class WarehouseController extends Controller
 {
+    public function __construct(
+        private readonly WarehouseRepositoryInterface $warehouseRepository,
+    ) {}
+
     public function index()
     {
-        $warehouses = GrowMartWarehouse::withCount('inventory')
-            ->orderBy('name')
-            ->paginate(20);
+        $warehouses = $this->warehouseRepository->findAll(['per_page' => 20]);
 
         return Inertia::render('GrowMart/Admin/Warehouses/Index', [
             'warehouses' => $warehouses,
@@ -35,20 +37,22 @@ class WarehouseController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        GrowMartWarehouse::create($validated);
+        $this->warehouseRepository->save($validated);
 
         return redirect()->route('admin.growmart.warehouses.index')
             ->with('success', 'Warehouse created successfully.');
     }
 
-    public function edit(GrowMartWarehouse $warehouse)
+    public function edit(int $id)
     {
+        $warehouse = $this->warehouseRepository->findById($id);
+
         return Inertia::render('GrowMart/Admin/Warehouses/Edit', [
             'warehouse' => $warehouse,
         ]);
     }
 
-    public function update(Request $request, GrowMartWarehouse $warehouse)
+    public function update(Request $request, int $id)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -58,19 +62,19 @@ class WarehouseController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        $warehouse->update($validated);
+        $this->warehouseRepository->update($id, $validated);
 
         return redirect()->route('admin.growmart.warehouses.index')
             ->with('success', 'Warehouse updated successfully.');
     }
 
-    public function destroy(GrowMartWarehouse $warehouse)
+    public function destroy(int $id)
     {
-        if ($warehouse->inventory()->count() > 0) {
+        if ($this->warehouseRepository->inventoryCount($id) > 0) {
             return back()->with('error', 'Cannot delete warehouse with existing inventory.');
         }
 
-        $warehouse->delete();
+        $this->warehouseRepository->delete($id);
 
         return redirect()->route('admin.growmart.warehouses.index')
             ->with('success', 'Warehouse deleted successfully.');

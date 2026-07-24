@@ -2,28 +2,31 @@
 
 namespace App\Domain\Investor\Services;
 
+use App\Domain\Investor\Repositories\QuarterlyReportRepositoryInterface;
+use App\Domain\Investor\Repositories\InvestorAccountRepositoryInterface;
 use App\Models\Investor\InvestorRelationsDocument;
 use App\Models\Investor\InvestorRelationsUpdate;
 use App\Models\Investor\InvestorDocumentAccessLog;
-use App\Models\QuarterlyReport;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 
 class InvestorRelationsService
 {
-    /**
-     * Get all published documents
-     */
+    public function __construct(
+        private readonly QuarterlyReportRepositoryInterface $quarterlyReportRepository,
+        private readonly InvestorAccountRepositoryInterface $accountRepository
+    ) {}
+
     public function getPublishedDocuments(?string $type = null): Collection
     {
         $query = InvestorRelationsDocument::where('status', 'published')
             ->where('is_public', true)
             ->orderBy('document_date', 'desc');
-            
+
         if ($type) {
             $query->where('document_type', $type);
         }
-        
+
         return $query->get()->map(fn($doc) => [
             'id' => $doc->id,
             'type' => $doc->document_type,
@@ -39,9 +42,6 @@ class InvestorRelationsService
         ]);
     }
 
-    /**
-     * Get documents by category
-     */
     public function getDocumentsByCategory(): array
     {
         $categories = [
@@ -50,9 +50,9 @@ class InvestorRelationsService
             'legal' => ['shareholder_agreement', 'articles_of_association', 'compliance_certificate'],
             'tax' => ['tax_statement'],
         ];
-        
+
         $result = [];
-        
+
         foreach ($categories as $category => $types) {
             $docs = InvestorRelationsDocument::where('status', 'published')
                 ->where('is_public', true)
@@ -60,7 +60,7 @@ class InvestorRelationsService
                 ->orderBy('document_date', 'desc')
                 ->limit(10)
                 ->get();
-                
+
             $result[$category] = [
                 'label' => ucfirst($category),
                 'count' => $docs->count(),
@@ -73,13 +73,10 @@ class InvestorRelationsService
                 ]),
             ];
         }
-        
+
         return $result;
     }
 
-    /**
-     * Get recent updates
-     */
     public function getRecentUpdates(int $limit = 10): Collection
     {
         return InvestorRelationsUpdate::where('is_published', true)
@@ -100,9 +97,6 @@ class InvestorRelationsService
             ]);
     }
 
-    /**
-     * Log document access
-     */
     public function logDocumentAccess(int $investorId, int $documentId, bool $downloaded = false): void
     {
         InvestorDocumentAccessLog::create([
@@ -113,28 +107,21 @@ class InvestorRelationsService
         ]);
     }
 
-    /**
-     * Download document
-     */
     public function downloadDocument(int $documentId, int $investorId): \Symfony\Component\HttpFoundation\StreamedResponse
     {
         $document = InvestorRelationsDocument::findOrFail($documentId);
-        
+
         if (!Storage::disk('private')->exists($document->file_path)) {
             throw new \Exception('Document file not found');
         }
-        
-        // Log access
+
         $this->logDocumentAccess($investorId, $documentId, true);
-        
+
         $filename = "{$document->title}.{$document->file_type}";
-        
+
         return Storage::disk('private')->download($document->file_path, $filename);
     }
 
-    /**
-     * Check if investor has acknowledged document
-     */
     public function hasAcknowledged(int $investorId, int $documentId): bool
     {
         return InvestorDocumentAccessLog::where('investor_account_id', $investorId)
@@ -143,9 +130,6 @@ class InvestorRelationsService
             ->exists();
     }
 
-    /**
-     * Mark document as acknowledged
-     */
     public function acknowledgeDocument(int $investorId, int $documentId): bool
     {
         return InvestorDocumentAccessLog::updateOrCreate(
@@ -160,9 +144,26 @@ class InvestorRelationsService
         );
     }
 
-    /**
-     * Get document type label
-     */
+    public function getLatestQuarterlyReport()
+    {
+        return $this->quarterlyReportRepository->findLatest();
+    }
+
+    public function getUpcomingMeetings(int $limit = 5): array
+    {
+        return [];
+    }
+
+    public function getQuarterlyReports(int $investorId): Collection
+    {
+        return collect();
+    }
+
+    public function getBoardUpdates(int $investorId): Collection
+    {
+        return collect();
+    }
+
     private function getDocumentTypeLabel(string $type): string
     {
         return match($type) {
@@ -180,9 +181,6 @@ class InvestorRelationsService
         };
     }
 
-    /**
-     * Get update type label
-     */
     private function getUpdateTypeLabel(string $type): string
     {
         return match($type) {
@@ -195,41 +193,18 @@ class InvestorRelationsService
         };
     }
 
-    /**
-     * Get latest quarterly report
-     */
-    public function getLatestQuarterlyReport()
-    {
-        return QuarterlyReport::orderBy('year', 'desc')
-            ->orderBy('quarter', 'desc')
-            ->first();
-    }
-
-    /**
-     * Get upcoming meetings
-     */
-    public function getUpcomingMeetings(int $limit = 5): array
-    {
-        // For now, return empty array since we don't have a meetings table yet
-        // This can be implemented when the meetings feature is added
-        return [];
-    }
-
-    /**
-     * Format file size
-     */
     private function formatFileSize(?int $bytes): string
     {
         if (!$bytes) return 'Unknown';
-        
+
         $units = ['B', 'KB', 'MB', 'GB'];
         $i = 0;
-        
+
         while ($bytes >= 1024 && $i < count($units) - 1) {
             $bytes /= 1024;
             $i++;
         }
-        
+
         return round($bytes, 2) . ' ' . $units[$i];
     }
 }

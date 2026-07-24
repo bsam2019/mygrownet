@@ -199,7 +199,6 @@ class ModuleService
             'growbuilder' => 'growbuilder',
             'bizboost' => 'bizboost',
             'growfinance' => 'growfinance',
-            'growbiz' => 'growbiz',
             'cms' => 'cms',
             'marketplace' => 'growmarket',
             'shop' => 'growmarket',

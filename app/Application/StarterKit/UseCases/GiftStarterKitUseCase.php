@@ -7,8 +7,8 @@ use App\Domain\StarterKit\ValueObjects\GiftLimits;
 use App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitGiftModel;
 use App\Infrastructure\Persistence\Eloquent\Settings\GiftSettingsModel;
 use App\Models\User;
-use App\Services\StarterKitService;
-use App\Services\WalletService;
+use App\Domain\GrowNet\Services\StarterKitService;
+use App\Domain\GrowNet\Services\WalletService;
 use App\Domain\Announcement\Services\EventBasedAnnouncementService;
 use Illuminate\Support\Facades\DB;
 

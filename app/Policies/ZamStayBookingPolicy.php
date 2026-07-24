@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\User;
-use App\Models\ZamStay\ZamStayBooking;
+use App\Infrastructure\Persistence\Eloquent\ZamStay\ZamStayBookingModel;
 
 class ZamStayBookingPolicy
 {
@@ -12,7 +12,7 @@ class ZamStayBookingPolicy
         return true;
     }
 
-    public function view(User $user, ZamStayBooking $booking): bool
+    public function view(User $user, ZamStayBookingModel $booking): bool
     {
         return $user->id === $booking->user_id
             || $user->id === $booking->property->owner_id
@@ -24,24 +24,24 @@ class ZamStayBookingPolicy
         return true;
     }
 
-    public function update(User $user, ZamStayBooking $booking): bool
+    public function update(User $user, ZamStayBookingModel $booking): bool
     {
         return $user->id === $booking->user_id
             || $user->id === $booking->property->owner_id;
     }
 
-    public function pay(User $user, ZamStayBooking $booking): bool
+    public function pay(User $user, ZamStayBookingModel $booking): bool
     {
         return $user->id === $booking->user_id;
     }
 
-    public function cancel(User $user, ZamStayBooking $booking): bool
+    public function cancel(User $user, ZamStayBookingModel $booking): bool
     {
         return $user->id === $booking->user_id
             || $user->id === $booking->property->owner_id;
     }
 
-    public function confirm(User $user, ZamStayBooking $booking): bool
+    public function confirm(User $user, ZamStayBookingModel $booking): bool
     {
         return $user->id === $booking->property->owner_id;
     }

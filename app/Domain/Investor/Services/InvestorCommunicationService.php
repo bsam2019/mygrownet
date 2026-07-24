@@ -2,19 +2,22 @@
 
 namespace App\Domain\Investor\Services;
 
-use App\Models\Investor\InvestorQuestion;
-use App\Models\Investor\InvestorQuestionAnswer;
-use App\Models\Investor\InvestorQuestionUpvote;
-use App\Models\Investor\InvestorFeedback;
-use App\Models\Investor\InvestorSurvey;
-use App\Models\Investor\InvestorSurveyResponse;
-use Illuminate\Support\Collection;
+use App\Domain\Investor\Repositories\InvestorQuestionRepositoryInterface;
+use App\Domain\Investor\Repositories\InvestorFeedbackRepositoryInterface;
+use App\Domain\Investor\Repositories\InvestorSurveyRepositoryInterface;
+use App\Domain\Investor\Repositories\InvestorSurveyResponseRepositoryInterface;
+use App\Domain\Investor\Entities\InvestorQuestion;
+use App\Domain\Investor\Entities\InvestorFeedback;
+use App\Domain\Investor\Entities\InvestorSurveyResponse;
 
 class InvestorCommunicationService
 {
-    // =====================================================
-    // Q&A PORTAL
-    // =====================================================
+    public function __construct(
+        private readonly InvestorQuestionRepositoryInterface $questionRepository,
+        private readonly InvestorFeedbackRepositoryInterface $feedbackRepository,
+        private readonly InvestorSurveyRepositoryInterface $surveyRepository,
+        private readonly InvestorSurveyResponseRepositoryInterface $surveyResponseRepository
+    ) {}
 
     public function submitQuestion(
         int $investorAccountId,
@@ -23,91 +26,46 @@ class InvestorCommunicationService
         string $category,
         bool $isAnonymous = false
     ): InvestorQuestion {
-        return InvestorQuestion::create([
-            'investor_account_id' => $investorAccountId,
-            'subject' => $subject,
-            'question' => $question,
-            'category' => $category,
-            'status' => 'pending',
-            'is_public' => !$isAnonymous,
-        ]);
+        $entity = InvestorQuestion::create(
+            investorAccountId: $investorAccountId,
+            subject: $subject,
+            question: $question,
+            category: $category,
+            isPublic: !$isAnonymous
+        );
+
+        return $this->questionRepository->save($entity);
     }
 
-    public function getPublishedQuestions(int $limit = 20): Collection
+    public function getPublishedQuestions(int $limit = 20): array
     {
-        return InvestorQuestion::with(['latestAnswer', 'investorAccount'])
-            ->where('status', 'published')
-            ->orderBy('upvotes', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->limit($limit)
-            ->get();
+        return $this->questionRepository->findPublished($limit);
     }
 
-    public function getFeaturedQuestions(): Collection
+    public function getFeaturedQuestions(): array
     {
-        // Return top upvoted questions as "featured"
-        return InvestorQuestion::with(['latestAnswer'])
-            ->where('status', 'published')
-            ->where('upvotes', '>', 0)
-            ->orderBy('upvotes', 'desc')
-            ->limit(5)
-            ->get();
+        return $this->questionRepository->findFeatured();
     }
 
-    public function getQuestionsByCategory(string $category): Collection
+    public function getQuestionsByCategory(string $category): array
     {
-        return InvestorQuestion::with(['latestAnswer'])
-            ->where('status', 'published')
-            ->where('category', $category)
-            ->orderBy('upvotes', 'desc')
-            ->get();
+        return $this->questionRepository->findByCategory($category);
     }
 
-    public function getInvestorQuestions(int $investorAccountId): Collection
+    public function getInvestorQuestions(int $investorAccountId): array
     {
-        return InvestorQuestion::with(['latestAnswer'])
-            ->where('investor_account_id', $investorAccountId)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        return $this->questionRepository->findByInvestor($investorAccountId);
     }
 
     public function upvoteQuestion(int $questionId, int $investorAccountId): bool
     {
-        $existing = InvestorQuestionUpvote::where('question_id', $questionId)
-            ->where('investor_account_id', $investorAccountId)
-            ->first();
-
-        if ($existing) {
-            return false;
-        }
-
-        InvestorQuestionUpvote::create([
-            'question_id' => $questionId,
-            'investor_account_id' => $investorAccountId,
-            'upvoted_at' => now(),
-        ]);
-
-        InvestorQuestion::where('id', $questionId)->increment('upvotes');
-        return true;
+        return $this->questionRepository->upvote($questionId, $investorAccountId);
     }
 
     public function removeUpvote(int $questionId, int $investorAccountId): bool
     {
-        $deleted = InvestorQuestionUpvote::where('question_id', $questionId)
-            ->where('investor_account_id', $investorAccountId)
-            ->delete();
-
-        if ($deleted) {
-            InvestorQuestion::where('id', $questionId)->decrement('upvotes');
-            return true;
-        }
-
-        return false;
+        return $this->questionRepository->removeUpvote($questionId, $investorAccountId);
     }
-
-    // =====================================================
-    // FEEDBACK SYSTEM
-    // =====================================================
 
     public function submitFeedback(
         int $investorAccountId,
@@ -116,46 +74,36 @@ class InvestorCommunicationService
         string $message,
         ?int $rating = null
     ): InvestorFeedback {
-        return InvestorFeedback::create([
-            'investor_account_id' => $investorAccountId,
-            'feedback_type' => $feedbackType,
-            'category' => 'general',
-            'subject' => $subject,
-            'feedback' => $message,
-            'satisfaction_rating' => $rating,
-            'status' => 'submitted',
-        ]);
+        $entity = InvestorFeedback::create(
+            investorAccountId: $investorAccountId,
+            feedbackType: $feedbackType,
+            category: 'general',
+            subject: $subject,
+            feedback: $message,
+            satisfactionRating: $rating
+        );
+
+        return $this->feedbackRepository->save($entity);
     }
 
-    public function getInvestorFeedback(int $investorAccountId): Collection
+    public function getInvestorFeedback(int $investorAccountId): array
     {
-        return InvestorFeedback::where('investor_account_id', $investorAccountId)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        return $this->feedbackRepository->findByInvestor($investorAccountId);
     }
 
-    // =====================================================
-    // SURVEYS
-    // =====================================================
-
-    public function getActiveSurveys(): Collection
+    public function getActiveSurveys(): array
     {
-        return InvestorSurvey::where('status', 'active')
-            ->where('start_date', '<=', now())
-            ->where('end_date', '>=', now())
-            ->get();
+        return $this->surveyRepository->findActive();
     }
 
-    public function getSurveyById(int $surveyId): ?InvestorSurvey
+    public function getSurveyById(int $surveyId)
     {
-        return InvestorSurvey::find($surveyId);
+        return $this->surveyRepository->findById($surveyId);
     }
 
     public function hasCompletedSurvey(int $surveyId, int $investorAccountId): bool
     {
-        return InvestorSurveyResponse::where('survey_id', $surveyId)
-            ->where('investor_account_id', $investorAccountId)
-            ->exists();
+        return $this->surveyResponseRepository->hasCompleted($surveyId, $investorAccountId);
     }
 
     public function submitSurveyResponse(
@@ -163,9 +111,9 @@ class InvestorCommunicationService
         int $investorAccountId,
         array $answers
     ): InvestorSurveyResponse {
-        $survey = InvestorSurvey::findOrFail($surveyId);
+        $survey = $this->surveyRepository->findById($surveyId);
 
-        if (!$survey->isActive()) {
+        if (!$survey || !$survey->isActive()) {
             throw new \Exception('This survey is no longer active.');
         }
 
@@ -173,19 +121,17 @@ class InvestorCommunicationService
             throw new \Exception('You have already completed this survey.');
         }
 
-        return InvestorSurveyResponse::create([
-            'survey_id' => $surveyId,
-            'investor_account_id' => $survey->is_anonymous ? null : $investorAccountId,
-            'answers' => $answers,
-            'submitted_at' => now(),
-        ]);
+        $response = InvestorSurveyResponse::create(
+            surveyId: $surveyId,
+            investorAccountId: $survey->isAnonymous() ? null : $investorAccountId,
+            responses: $answers
+        );
+
+        return $this->surveyResponseRepository->save($response);
     }
 
-    public function getInvestorSurveyResponses(int $investorAccountId): Collection
+    public function getInvestorSurveyResponses(int $investorAccountId): array
     {
-        return InvestorSurveyResponse::with('survey')
-            ->where('investor_account_id', $investorAccountId)
-            ->orderBy('submitted_at', 'desc')
-            ->get();
+        return $this->surveyResponseRepository->findByInvestor($investorAccountId);
     }
 }

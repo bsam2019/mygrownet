@@ -5,8 +5,8 @@ namespace App\Http\Controllers\BizBoost;
 use App\Http\Controllers\Controller;
 use App\Domain\BizBoost\Services\WalletService;
 use App\Domain\BizBoost\Services\BillingLedgerService;
+use App\Domain\BizBoost\Repositories\AdCampaignRepositoryInterface;
 use App\Infrastructure\Services\MetaAdsMarketingService;
-use App\Infrastructure\Persistence\Eloquent\BizBoostAdCampaignModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
@@ -17,31 +17,24 @@ class AdCampaignController extends Controller
         private WalletService $wallet,
         private BillingLedgerService $ledger,
         private MetaAdsMarketingService $meta,
+        private AdCampaignRepositoryInterface $campaignRepo,
     ) {}
-
-    private function getMarkupPercentage(): int
-    {
-        return (int) config('modules.bizboost.markup_percentage', 20);
-    }
 
     public function index()
     {
         $user = auth()->user();
-        $campaigns = BizBoostAdCampaignModel::where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-
-        $all = BizBoostAdCampaignModel::where('user_id', $user->id);
+        $campaigns = $this->campaignRepo->findByUser($user->id);
+        $all = $this->campaignRepo->getQueryByUser($user->id);
 
         return Inertia::render('BizBoost/AdCampaigns/Index', [
             'campaigns' => $campaigns,
             'userCurrency' => $user->user_currency ?? 'ZMW',
             'stats' => [
-                'total' => (clone $all)->count(),
-                'active' => (clone $all)->where('status', 'active')->count(),
-                'paused' => (clone $all)->where('status', 'paused')->count(),
-                'draft' => (clone $all)->where('status', 'draft')->count(),
-                'completed' => (clone $all)->where('status', 'completed')->count(),
+                'total' => $all->count(),
+                'active' => $all->where('status', 'active')->count(),
+                'paused' => $all->where('status', 'paused')->count(),
+                'draft' => $all->where('status', 'draft')->count(),
+                'completed' => $all->where('status', 'completed')->count(),
             ],
             'wallet' => [
                 'available' => $this->wallet->getAvailableBalance($user->id),
@@ -97,7 +90,7 @@ class AdCampaignController extends Controller
 
         $this->wallet->lockFunds($user->id, $clientBudget, 'campaign_lock_' . str_replace(' ', '_', $validated['name']));
 
-        $campaign = BizBoostAdCampaignModel::create([
+        $campaign = $this->campaignRepo->create([
             'user_id' => $user->id,
             'name' => $validated['name'],
             'objective' => $validated['objective'],
@@ -120,13 +113,13 @@ class AdCampaignController extends Controller
             ]);
 
             if ($result['success'] && isset($result['id'])) {
-                $campaign->update([
+                $this->campaignRepo->update($campaign->id, [
                     'meta_campaign_id' => $result['id'],
                     'status' => 'draft',
                 ]);
 
                 if (!empty($validated['creatives'])) {
-                    $dailyBudget = round($metaBudget / $campaign->duration_days, 2);
+                    $dailyBudget = round($metaBudget / $durationDays, 2);
                     $adSetResult = $this->meta->createAdSet($result['id'], [
                         'name' => $validated['name'] . ' - Ad Set',
                         'daily_budget' => $dailyBudget,
@@ -137,16 +130,16 @@ class AdCampaignController extends Controller
                     ]);
 
                     if ($adSetResult['success'] && isset($adSetResult['id'])) {
-                        $campaign->update(['meta_ad_set_id' => $adSetResult['id']]);
+                        $this->campaignRepo->update($campaign->id, ['meta_ad_set_id' => $adSetResult['id']]);
                     }
                 }
             } else {
-                $campaign->update(['status' => 'failed', 'error_message' => $result['error'] ?? 'Meta campaign creation failed']);
+                $this->campaignRepo->update($campaign->id, ['status' => 'failed', 'error_message' => $result['error'] ?? 'Meta campaign creation failed']);
                 $this->wallet->releaseLockedFunds($user->id, $clientBudget, 'campaign_release_' . $campaign->id);
             }
         } catch (\Exception $e) {
             Log::error("Ad campaign creation failed", ['campaign_id' => $campaign->id, 'error' => $e->getMessage()]);
-            $campaign->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
+            $this->campaignRepo->update($campaign->id, ['status' => 'failed', 'error_message' => $e->getMessage()]);
             $this->wallet->releaseLockedFunds($user->id, $clientBudget, 'campaign_release_' . $campaign->id);
         }
 
@@ -156,11 +149,16 @@ class AdCampaignController extends Controller
 
     public function show(int $id)
     {
-        $campaign = BizBoostAdCampaignModel::where('user_id', auth()->id())->findOrFail($id);
+        $user = auth()->user();
+        $campaign = $this->campaignRepo->findByUserAndId($user->id, $id);
+
+        if (!$campaign) {
+            abort(404);
+        }
 
         $insights = null;
-        if ($campaign->meta_campaign_id && $campaign->status === 'active') {
-            $raw = $this->meta->getInsights($campaign->meta_campaign_id);
+        if ($campaign->metaCampaignId && $campaign->status === 'active') {
+            $raw = $this->meta->getInsights($campaign->metaCampaignId);
             if ($raw['success'] && isset($raw['data']['data'][0])) {
                 $row = $raw['data']['data'][0];
                 $insights = [
@@ -178,7 +176,7 @@ class AdCampaignController extends Controller
         }
 
         return Inertia::render('BizBoost/AdCampaigns/Show', [
-            'campaign' => $campaign,
+            'campaign' => $campaign->toArray(),
             'insights' => $insights,
             'userCurrency' => $user->user_currency ?? 'ZMW',
         ]);
@@ -186,39 +184,39 @@ class AdCampaignController extends Controller
 
     public function launch(int $id)
     {
-        $campaign = BizBoostAdCampaignModel::where('user_id', auth()->id())->findOrFail($id);
+        $user = auth()->user();
+        $campaign = $this->campaignRepo->findByUserAndId($user->id, $id);
 
-        if (!$campaign->meta_campaign_id) {
+        if (!$campaign) {
+            abort(404);
+        }
+
+        if (!$campaign->metaCampaignId) {
             return redirect()->back()->with('error', 'Campaign not created on Meta yet');
         }
 
-        $user = auth()->user();
-
-        $this->wallet->releaseLockedFunds($user->id, $campaign->client_budget, 'campaign_release_' . $campaign->id);
-
+        $this->wallet->releaseLockedFunds($user->id, $campaign->clientBudget, 'campaign_release_' . $campaign->id);
         $this->wallet->withdraw(
             userId: $user->id,
-            amount: $campaign->client_budget,
+            amount: $campaign->clientBudget,
             reference: 'campaign_' . $campaign->id,
             description: "Ad campaign: {$campaign->name}",
         );
 
-        $result = $this->meta->resumeCampaign($campaign->meta_campaign_id);
+        $result = $this->meta->resumeCampaign($campaign->metaCampaignId);
 
         if ($result) {
-            $campaign->update(['status' => 'active']);
-
+            $this->campaignRepo->update($campaign->id, ['status' => 'active']);
             $this->ledger->recordTransaction(
                 userId: $user->id,
                 serviceType: 'facebook_ad',
-                grossAmountCharged: $campaign->client_budget,
-                netVendorCost: $campaign->meta_budget,
+                grossAmountCharged: $campaign->clientBudget,
+                netVendorCost: $campaign->metaBudget,
                 campaignId: $campaign->id,
                 vendor: 'meta_marketing_api',
                 deliveryStatus: 'success',
-                meta: ['meta_campaign_id' => $campaign->meta_campaign_id],
+                meta: ['meta_campaign_id' => $campaign->metaCampaignId],
             );
-
             return redirect()->back()->with('success', 'Campaign launched');
         }
 
@@ -227,26 +225,39 @@ class AdCampaignController extends Controller
 
     public function pause(int $id)
     {
-        $campaign = BizBoostAdCampaignModel::where('user_id', auth()->id())->findOrFail($id);
+        $user = auth()->user();
+        $campaign = $this->campaignRepo->findByUserAndId($user->id, $id);
 
-        if ($campaign->meta_campaign_id && $this->meta->pauseCampaign($campaign->meta_campaign_id)) {
-            $campaign->update(['status' => 'paused']);
-            return redirect()->back()->with('success', 'Campaign paused');
+        if (!$campaign) {
+            abort(404);
         }
 
+        if ($campaign->metaCampaignId && $this->meta->pauseCampaign($campaign->metaCampaignId)) {
+            $this->campaignRepo->update($campaign->id, ['status' => 'paused']);
+            return redirect()->back()->with('success', 'Campaign paused');
+        }
         return redirect()->back()->with('error', 'Failed to pause campaign');
     }
 
     public function resume(int $id)
     {
-        $campaign = BizBoostAdCampaignModel::where('user_id', auth()->id())->findOrFail($id);
+        $user = auth()->user();
+        $campaign = $this->campaignRepo->findByUserAndId($user->id, $id);
 
-        if ($campaign->meta_campaign_id && $this->meta->resumeCampaign($campaign->meta_campaign_id)) {
-            $campaign->update(['status' => 'active']);
-            return redirect()->back()->with('success', 'Campaign resumed');
+        if (!$campaign) {
+            abort(404);
         }
 
+        if ($campaign->metaCampaignId && $this->meta->resumeCampaign($campaign->metaCampaignId)) {
+            $this->campaignRepo->update($campaign->id, ['status' => 'active']);
+            return redirect()->back()->with('success', 'Campaign resumed');
+        }
         return redirect()->back()->with('error', 'Failed to resume campaign');
+    }
+
+    private function getMarkupPercentage(): int
+    {
+        return (int) config('modules.bizboost.markup_percentage', 20);
     }
 
     private function resolveObjective(string $objective): string

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\GrowFinance;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceBankAccountModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceBankStatementModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceReconciliationPeriodModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceBankAccountModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceBankStatementModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceReconciliationPeriodModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;

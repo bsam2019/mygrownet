@@ -18,6 +18,10 @@ interface WorkspaceContext {
     application_id: number | null;
 }
 
+const props = withDefaults(defineProps<{
+    align?: 'right' | 'left' | 'right-side';
+}>(), { align: 'right' });
+
 const open = ref(false);
 const page = usePage();
 
@@ -63,18 +67,18 @@ const currentLabel = computed(() => {
     <div class="relative">
         <button
             @click="open = !open"
-            class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            class="p-2 text-white/50 hover:text-white/90 hover:bg-white/[0.06] rounded-lg transition-all"
             title="Switch Application"
         >
-            <Squares2X2Icon class="w-5 h-5" />
+            <Squares2X2Icon class="w-4 h-4" />
         </button>
 
         <div
             v-if="open"
-            class="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200 p-3 z-50"
-            @click.away="open = false"
+            class="absolute w-72 bg-white rounded-xl shadow-xl border border-gray-200 p-3 z-50"
+            :class="align === 'right-side' ? 'left-full top-0 ml-2' : align === 'left' ? 'left-0 mt-2' : 'right-0 mt-2'"
         >
-            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 px-1">
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 px-1">
                 {{ currentLabel }}
             </p>
 
@@ -83,22 +87,22 @@ const currentLabel = computed(() => {
                     v-for="app in allApps"
                     :key="app.id"
                     @click="goTo(app.url)"
-                    class="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-gray-50 transition-colors text-center"
+                    class="flex flex-col items-center gap-1.5 p-2.5 rounded-lg hover:bg-gray-50 transition-colors text-center"
                 >
-                    <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                        <span class="text-blue-600 text-xs font-bold">{{ app.name.charAt(0) }}</span>
+                    <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+                        <span class="text-indigo-600 text-xs font-bold">{{ app.name.charAt(0) }}</span>
                     </div>
-                    <span class="text-xs text-gray-600 truncate w-full">{{ app.name }}</span>
+                    <span class="text-[11px] text-gray-600 truncate w-full leading-tight">{{ app.name }}</span>
                 </button>
             </div>
 
             <div v-if="orgs.length > 0" class="border-t border-gray-100 pt-2 mt-1">
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1 px-1">Organizations</p>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">Organizations</p>
                 <button
                     v-for="org in orgs"
                     :key="org.id"
                     @click="goToOrg(org.slug)"
-                    class="w-full text-left px-2 py-1.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                    class="w-full text-left px-2.5 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                 >
                     {{ org.name }}
                 </button>
@@ -107,7 +111,7 @@ const currentLabel = computed(() => {
             <div class="border-t border-gray-100 pt-2 mt-1">
                 <button
                     @click="goToPlatform()"
-                    class="w-full text-left px-2 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg font-medium"
+                    class="w-full text-left px-2.5 py-2 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg font-medium transition-colors"
                 >
                     MyGrowNet Platform
                 </button>

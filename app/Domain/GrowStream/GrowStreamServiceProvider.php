@@ -11,6 +11,16 @@ use App\Domain\GrowStream\Infrastructure\Listeners\NotifyVideoProcessingFailed;
 use App\Domain\GrowStream\Infrastructure\Providers\DigitalOceanSpacesProvider;
 use App\Domain\GrowStream\Infrastructure\Providers\VideoProviderInterface;
 use App\Domain\GrowStream\Infrastructure\Providers\VideoProviderFactory;
+use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
+use App\Domain\GrowStream\Repositories\VideoCategoryRepositoryInterface;
+use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
+use App\Domain\GrowStream\Repositories\VideoSeriesRepositoryInterface;
+use App\Domain\GrowStream\Repositories\WatchHistoryRepositoryInterface;
+use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorProfileRepository;
+use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoCategoryRepository;
+use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoRepository;
+use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoSeriesRepository;
+use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentWatchHistoryRepository;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
@@ -36,6 +46,13 @@ class GrowStreamServiceProvider extends ServiceProvider
         $this->app->singleton(DigitalOceanSpacesProvider::class, function ($app) {
             return new DigitalOceanSpacesProvider();
         });
+
+        // Register repository bindings
+        $this->app->bind(VideoRepositoryInterface::class, EloquentVideoRepository::class);
+        $this->app->bind(VideoSeriesRepositoryInterface::class, EloquentVideoSeriesRepository::class);
+        $this->app->bind(VideoCategoryRepositoryInterface::class, EloquentVideoCategoryRepository::class);
+        $this->app->bind(CreatorProfileRepositoryInterface::class, EloquentCreatorProfileRepository::class);
+        $this->app->bind(WatchHistoryRepositoryInterface::class, EloquentWatchHistoryRepository::class);
     }
 
     /**
@@ -44,7 +61,7 @@ class GrowStreamServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Load migrations
-        $this->loadMigrationsFrom(database_path('migrations'));
+        $this->loadMigrationsFrom(database_path('migrations/growstream'));
 
         // Publish config
         $this->publishes([

@@ -11,7 +11,7 @@ use App\Domain\MLM\ValueObjects\CommissionAmount;
 use App\Domain\MLM\ValueObjects\CommissionType;
 use App\Domain\MLM\ValueObjects\CommissionStatus;
 use App\Models\User;
-use App\Models\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class CommissionRepositoryTest extends TestCase

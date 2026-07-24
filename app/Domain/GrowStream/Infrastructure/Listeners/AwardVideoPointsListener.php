@@ -5,10 +5,10 @@ namespace App\Domain\GrowStream\Infrastructure\Listeners;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\Video;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoView;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\WatchHistory;
-use App\Services\PointService;
+use App\Domain\GrowNet\Services\PointService;
 use App\Models\User;
-use App\Models\LifePointSetting;
-use App\Models\BonusPointSetting;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\LifePointSetting;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\BonusPointSetting;
 use Illuminate\Support\Facades\Log;
 
 class AwardVideoPointsListener
@@ -49,7 +49,7 @@ class AwardVideoPointsListener
             }
 
             // Check if user already received watch points for this video
-            $alreadyAwarded = \App\Models\PointTransaction::where('user_id', $user->id)
+            $alreadyAwarded = \App\Infrastructure\Persistence\Eloquent\GrowNet\PointTransaction::where('user_id', $user->id)
                 ->where('source', 'growstream_video_watch')
                 ->where('reference_type', Video::class)
                 ->where('reference_id', $video->id)
@@ -117,7 +117,7 @@ class AwardVideoPointsListener
             }
 
             // Check if user already received completion points for this video
-            $alreadyAwarded = \App\Models\PointTransaction::where('user_id', $user->id)
+            $alreadyAwarded = \App\Infrastructure\Persistence\Eloquent\GrowNet\PointTransaction::where('user_id', $user->id)
                 ->where('source', 'growstream_video_completion')
                 ->where('reference_type', Video::class)
                 ->where('reference_id', $video->id)

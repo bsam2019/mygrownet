@@ -73,7 +73,7 @@ class StockFlowServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        $this->loadMigrationsFrom(database_path('migrations'));
+        $this->loadMigrationsFrom(database_path('migrations/stockflow'));
 
         \Illuminate\Support\Facades\Redirect::macro('sfRoute', function ($name, $parameters = [], $status = 302, $headers = []) {
             // Convert stockflow.* to stockflow.sub.* for subdomain routes

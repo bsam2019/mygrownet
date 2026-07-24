@@ -5,8 +5,8 @@ namespace App\Http\Controllers\BizBoost;
 use App\Http\Controllers\Controller;
 use App\Domain\BizBoost\Services\OmnichannelRouter;
 use App\Domain\BizBoost\Services\BillingLedgerService;
-use App\Infrastructure\Persistence\Eloquent\BizBoostOmnichannelLogModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class OmnichannelController extends Controller
@@ -23,24 +23,31 @@ class OmnichannelController extends Controller
     public function index()
     {
         $user = auth()->user();
-        $logs = BizBoostOmnichannelLogModel::where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
+        $logs = DB::table('bizboost_omnichannel_logs')
+            ->where('user_id', $user->id)
+            ->orderByDesc('created_at')
             ->paginate(20);
 
-        $all = BizBoostOmnichannelLogModel::where('user_id', $user->id);
-
-        $stats = [
-            'total' => (clone $all)->count(),
-            'delivered' => (clone $all)->where('delivery_status', 'delivered')->count(),
-            'failed' => (clone $all)->where('delivery_status', 'failed')->count(),
-            'whatsapp' => (clone $all)->where('channel_type', 'whatsapp')->count(),
-            'sms' => (clone $all)->where('channel_type', 'sms')->count(),
-            'total_profit' => (float) (clone $all)->sum('net_platform_profit'),
-        ];
+        $stats = DB::table('bizboost_omnichannel_logs')
+            ->where('user_id', $user->id)
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN delivery_status = ? THEN 1 ELSE 0 END) as delivered', ['delivered'])
+            ->selectRaw('SUM(CASE WHEN delivery_status = ? THEN 1 ELSE 0 END) as failed', ['failed'])
+            ->selectRaw('SUM(CASE WHEN channel_type = ? THEN 1 ELSE 0 END) as whatsapp', ['whatsapp'])
+            ->selectRaw('SUM(CASE WHEN channel_type = ? THEN 1 ELSE 0 END) as sms', ['sms'])
+            ->selectRaw('COALESCE(SUM(net_platform_profit), 0) as total_profit')
+            ->first();
 
         return Inertia::render('BizBoost/Omnichannel/Index', [
             'logs' => $logs,
-            'stats' => $stats,
+            'stats' => [
+                'total' => (int) ($stats->total ?? 0),
+                'delivered' => (int) ($stats->delivered ?? 0),
+                'failed' => (int) ($stats->failed ?? 0),
+                'whatsapp' => (int) ($stats->whatsapp ?? 0),
+                'sms' => (int) ($stats->sms ?? 0),
+                'total_profit' => (float) ($stats->total_profit ?? 0),
+            ],
             'channels' => [
                 ['value' => 'whatsapp', 'label' => 'WhatsApp'],
                 ['value' => 'sms', 'label' => 'SMS'],

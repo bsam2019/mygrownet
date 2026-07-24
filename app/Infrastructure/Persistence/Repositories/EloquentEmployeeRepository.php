@@ -6,27 +6,27 @@ namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Domain\Employee\Repositories\EmployeeRepositoryInterface;
 use App\Domain\Employee\ValueObjects\EmployeeId;
-use App\Models\Employee\Employee;
+use App\Infrastructure\Persistence\Eloquent\EmployeeModel;
 use Illuminate\Support\Collection;
 
 class EloquentEmployeeRepository implements EmployeeRepositoryInterface
 {
-    public function findById(EmployeeId $id): ?Employee
+    public function findById(EmployeeId $id): ?EmployeeModel
     {
-        return Employee::with(['department', 'position', 'manager', 'user'])
+        return EmployeeModel::with(['department', 'position', 'manager', 'user'])
             ->find($id->toInt());
     }
 
-    public function findByUserId(int $userId): ?Employee
+    public function findByUserId(int $userId): ?EmployeeModel
     {
-        return Employee::with(['department', 'position', 'manager', 'user'])
+        return EmployeeModel::with(['department', 'position', 'manager', 'user'])
             ->where('user_id', $userId)
             ->first();
     }
 
     public function findByDepartment(int $departmentId): Collection
     {
-        return Employee::with(['position', 'user'])
+        return EmployeeModel::with(['position', 'user'])
             ->where('department_id', $departmentId)
             ->where('employment_status', 'active')
             ->orderBy('first_name')
@@ -35,7 +35,7 @@ class EloquentEmployeeRepository implements EmployeeRepositoryInterface
 
     public function findByManager(EmployeeId $managerId): Collection
     {
-        return Employee::with(['department', 'position', 'user'])
+        return EmployeeModel::with(['department', 'position', 'user'])
             ->where('manager_id', $managerId->toInt())
             ->where('employment_status', 'active')
             ->orderBy('first_name')
@@ -44,15 +44,20 @@ class EloquentEmployeeRepository implements EmployeeRepositoryInterface
 
     public function getActiveEmployees(): Collection
     {
-        return Employee::with(['department', 'position'])
+        return EmployeeModel::with(['department', 'position'])
             ->where('employment_status', 'active')
             ->orderBy('first_name')
             ->get();
     }
 
+    public function query()
+    {
+        return EmployeeModel::query();
+    }
+
     public function save(object $employee): void
     {
-        if ($employee instanceof Employee) {
+        if ($employee instanceof EmployeeModel) {
             $employee->save();
         }
     }

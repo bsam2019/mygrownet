@@ -2,65 +2,43 @@
 
 namespace App\Http\Controllers\ZamStay;
 
+use App\Domain\ZamStay\Services\PropertyService;
 use App\Http\Controllers\Controller;
-use App\Models\ZamStay\ZamStayProperty;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class PropertyController extends Controller
 {
+    public function __construct(
+        private readonly PropertyService $propertyService,
+    ) {}
+
     public function index(Request $request)
     {
-        $query = ZamStayProperty::active()->with(['owner', 'reviews']);
+        $filters = $request->only(['location', 'property_type', 'min_price', 'max_price', 'guests']);
 
-        if ($request->filled('location')) {
-            $query->where('location', 'like', '%' . $request->location . '%');
-        }
-
-        if ($request->filled('property_type')) {
-            $query->where('property_type', $request->property_type);
-        }
-
-        if ($request->filled('min_price')) {
-            $query->where('price_per_night', '>=', $request->min_price);
-        }
-
-        if ($request->filled('max_price')) {
-            $query->where('price_per_night', '<=', $request->max_price);
-        }
-
-        if ($request->filled('guests')) {
-            $query->where('max_guests', '>=', $request->guests);
-        }
-
-        $properties = $query->paginate(12)->withQueryString();
+        $properties = $this->propertyService->search($filters);
 
         return Inertia::render('ZamStay/Search', [
             'properties' => $properties,
-            'filters' => $request->only(['location', 'property_type', 'min_price', 'max_price', 'guests']),
+            'filters' => $filters,
         ]);
     }
 
-    public function show(ZamStayProperty $property)
+    public function show(int $id)
     {
-        $property->load(['owner', 'reviews.user', 'bookings']);
+        $property = $this->propertyService->findOrFail($id);
 
         return Inertia::render('ZamStay/PropertyDetail', [
-            'property' => $property,
+            'property' => $property->toArray(),
         ]);
     }
 
-    public function home(Request $request)
+    public function home()
     {
-        $featured = ZamStayProperty::active()->withCount('reviews')->inRandomOrder()->take(6)->get();
-        $latest = ZamStayProperty::active()->latest()->take(8)->get();
-        $locations = ZamStayProperty::active()->select('location')->distinct()->pluck('location');
+        $data = $this->propertyService->getHomeData();
 
-        return Inertia::render('ZamStay/Home', [
-            'featured' => $featured,
-            'latest' => $latest,
-            'locations' => $locations,
-        ]);
+        return Inertia::render('ZamStay/Home', $data);
     }
 
     public function search(Request $request)

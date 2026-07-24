@@ -6,8 +6,8 @@ use App\Domain\GrowFinance\Services\BudgetService;
 use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\GrowFinance\ValueObjects\AccountType;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceAccountModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceBudgetModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceAccountModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceBudgetModel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -30,8 +30,9 @@ class BudgetController extends Controller
             ]);
         }
 
-        $budgets = $this->budgetService->getForBusiness($request->user());
-        $summary = $this->budgetService->getSummary($request->user());
+        $businessId = $request->user()->id;
+        $budgets = $this->budgetService->getForBusiness($businessId);
+        $summary = $this->budgetService->getSummary($businessId);
 
         return Inertia::render('GrowFinance/Budgets/Index', [
             'budgets' => $budgets,
@@ -101,7 +102,7 @@ class BudgetController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $this->budgetService->create($request->user(), $validated);
+        $this->budgetService->create($request->user()->id, $validated);
 
         return redirect()->route('growfinance.budgets.index')
             ->with('success', 'Budget created successfully!');
@@ -181,20 +182,14 @@ class BudgetController extends Controller
 
     public function recalculate(Request $request, int $id): RedirectResponse
     {
-        $budget = GrowFinanceBudgetModel::forBusiness($request->user()->id)
-            ->findOrFail($id);
-
-        $this->budgetService->recalculateSpent($budget);
+        $this->budgetService->recalculateSpent($id);
 
         return back()->with('success', 'Budget recalculated successfully!');
     }
 
     public function rollover(Request $request, int $id): RedirectResponse
     {
-        $budget = GrowFinanceBudgetModel::forBusiness($request->user()->id)
-            ->findOrFail($id);
-
-        $this->budgetService->rolloverBudget($budget);
+        $this->budgetService->rolloverBudget($id);
 
         return back()->with('success', 'New budget period created!');
     }

@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\GrowFinance;
 
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceExpenseModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceVendorModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceExpenseModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceVendorModel;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;

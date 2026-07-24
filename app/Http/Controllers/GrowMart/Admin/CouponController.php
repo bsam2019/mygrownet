@@ -3,15 +3,19 @@
 namespace App\Http\Controllers\GrowMart\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\GrowMart\GrowMartCoupon;
+use App\Domain\GrowMart\Repositories\CouponRepositoryInterface;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class CouponController extends Controller
 {
+    public function __construct(
+        private readonly CouponRepositoryInterface $couponRepository,
+    ) {}
+
     public function index()
     {
-        $coupons = GrowMartCoupon::latest()->paginate(20);
+        $coupons = $this->couponRepository->findAll([], 20);
 
         return Inertia::render('GrowMart/Admin/Coupons/Index', [
             'coupons' => $coupons,
@@ -42,23 +46,25 @@ class CouponController extends Controller
 
         $validated['code'] = strtoupper($validated['code']);
 
-        GrowMartCoupon::create($validated);
+        $this->couponRepository->save($validated);
 
         return redirect()->route('admin.growmart.coupons.index')
             ->with('success', 'Coupon created successfully.');
     }
 
-    public function edit(GrowMartCoupon $coupon)
+    public function edit(int $id)
     {
+        $coupon = $this->couponRepository->findById($id);
+
         return Inertia::render('GrowMart/Admin/Coupons/Edit', [
             'coupon' => $coupon,
         ]);
     }
 
-    public function update(Request $request, GrowMartCoupon $coupon)
+    public function update(Request $request, int $id)
     {
         $validated = $request->validate([
-            'code' => 'required|string|max:50|unique:growmart_coupons,code,' . $coupon->id,
+            'code' => 'required|string|max:50|unique:growmart_coupons,code,' . $id,
             'type' => 'required|in:percentage,fixed,bogo',
             'value' => 'required|integer|min:1',
             'min_order_amount' => 'nullable|integer|min:0',
@@ -74,15 +80,15 @@ class CouponController extends Controller
 
         $validated['code'] = strtoupper($validated['code']);
 
-        $coupon->update($validated);
+        $this->couponRepository->update($id, $validated);
 
         return redirect()->route('admin.growmart.coupons.index')
             ->with('success', 'Coupon updated successfully.');
     }
 
-    public function destroy(GrowMartCoupon $coupon)
+    public function destroy(int $id)
     {
-        $coupon->delete();
+        $this->couponRepository->delete($id);
 
         return back()->with('success', 'Coupon deleted.');
     }

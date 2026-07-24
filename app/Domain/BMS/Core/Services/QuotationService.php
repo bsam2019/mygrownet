@@ -2,34 +2,40 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\BMS\QuotationModel;
-use App\Infrastructure\Persistence\Eloquent\BMS\QuotationItemModel;
-use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
+use App\Domain\BMS\Entities\Quotation;
+use App\Domain\BMS\Entities\QuotationItem;
+use App\Domain\BMS\Entities\Job;
+use App\Domain\BMS\Repositories\QuotationRepositoryInterface;
+use App\Domain\BMS\Repositories\QuotationItemRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 
 class QuotationService
 {
-    public function createQuotation(array $data, int $companyId, int $userId): QuotationModel
+    public function __construct(
+        private QuotationRepositoryInterface $quotationRepo,
+        private QuotationItemRepositoryInterface $quotationItemRepo,
+        private JobService $jobService,
+        private AuditTrailService $auditTrail
+    ) {}
+
+    public function createQuotation(array $data, int $companyId, int $userId): Quotation
     {
         return DB::transaction(function () use ($data, $companyId, $userId) {
-            // Generate quotation number
             $quotationNumber = $this->generateQuotationNumber($companyId);
 
-            // Calculate totals
             $subtotal = 0;
             foreach ($data['items'] as $item) {
                 $subtotal += $item['line_total'];
             }
-
             $taxAmount = $data['tax_amount'] ?? 0;
             $discountAmount = $data['discount_amount'] ?? 0;
             $totalAmount = $subtotal + $taxAmount - $discountAmount;
 
-            $quotation = QuotationModel::create([
+            $quotation = Quotation::reconstitute([
                 'company_id' => $companyId,
                 'customer_id' => $data['customer_id'],
                 'quotation_number' => $quotationNumber,
-                'quotation_date' => $data['quotation_date'] ?? now(),
+                'quotation_date' => $data['quotation_date'] ?? now()->format('Y-m-d'),
                 'expiry_date' => $data['expiry_date'] ?? null,
                 'subtotal' => $subtotal,
                 'tax_amount' => $taxAmount,
@@ -40,59 +46,45 @@ class QuotationService
                 'terms' => $data['terms'] ?? null,
                 'created_by' => $userId,
             ]);
+            $quotation = $this->quotationRepo->save($quotation);
 
-            // Create line items
             foreach ($data['items'] as $item) {
-                QuotationItemModel::create([
-                    'quotation_id'     => $quotation->id,
-                    'description'      => $item['description'],
-                    'quantity'         => $item['quantity'],
-                    'unit_price'       => $item['unit_price'],
-                    'tax_rate'         => $item['tax_rate'] ?? 0,
-                    'discount_rate'    => $item['discount_rate'] ?? 0,
-                    'line_total'       => $item['line_total'],
-                    'dimensions'       => $item['dimensions'] ?? null,
+                $quotationItem = QuotationItem::reconstitute([
+                    'quotation_id' => $quotation->id,
+                    'description' => $item['description'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'tax_rate' => $item['tax_rate'] ?? 0,
+                    'discount_rate' => $item['discount_rate'] ?? 0,
+                    'line_total' => $item['line_total'],
+                    'dimensions' => $item['dimensions'] ?? null,
                     'dimensions_value' => $item['dimensions_value'] ?? 1,
                 ]);
+                $this->quotationItemRepo->save($quotationItem);
             }
 
-            // Log audit trail
-            app(AuditTrailService::class)->log(
-                $companyId,
-                $userId,
-                'quotation',
-                $quotation->id,
-                'created',
-                null,
-                $quotation->toArray()
-            );
-
-            return $quotation->load('items');
+            $this->auditTrail->log($companyId, $userId, 'quotation', $quotation->id, 'created', null, $quotation->toArray());
+            return $quotation;
         });
     }
 
-    public function updateQuotation(int $quotationId, array $data, int $userId): QuotationModel
+    public function updateQuotation(int $quotationId, array $data, int $userId): Quotation
     {
         return DB::transaction(function () use ($quotationId, $data, $userId) {
-            $quotation = QuotationModel::findOrFail($quotationId);
-
-            if (!$quotation->isDraft()) {
-                throw new \Exception('Only draft quotations can be edited');
-            }
+            $quotation = $this->quotationRepo->findById($quotationId);
+            if (!$quotation || !$quotation->isDraft()) throw new \Exception('Only draft quotations can be edited');
 
             $oldData = $quotation->toArray();
 
-            // Calculate totals
             $subtotal = 0;
             foreach ($data['items'] as $item) {
                 $subtotal += $item['line_total'];
             }
-
             $taxAmount = $data['tax_amount'] ?? 0;
             $discountAmount = $data['discount_amount'] ?? 0;
             $totalAmount = $subtotal + $taxAmount - $discountAmount;
 
-            $quotation->update([
+            $updated = Quotation::reconstitute(array_merge($quotation->toArray(), [
                 'customer_id' => $data['customer_id'],
                 'quotation_date' => $data['quotation_date'],
                 'expiry_date' => $data['expiry_date'] ?? null,
@@ -102,103 +94,67 @@ class QuotationService
                 'total_amount' => $totalAmount,
                 'notes' => $data['notes'] ?? null,
                 'terms' => $data['terms'] ?? null,
-            ]);
+            ]));
+            $this->quotationRepo->save($updated);
+            $this->quotationItemRepo->deleteByQuotation($quotationId);
 
-            // Delete old items and create new ones
-            $quotation->items()->delete();
             foreach ($data['items'] as $item) {
-                QuotationItemModel::create([
-                    'quotation_id'     => $quotation->id,
-                    'description'      => $item['description'],
-                    'quantity'         => $item['quantity'],
-                    'unit_price'       => $item['unit_price'],
-                    'tax_rate'         => $item['tax_rate'] ?? 0,
-                    'discount_rate'    => $item['discount_rate'] ?? 0,
-                    'line_total'       => $item['line_total'],
-                    'dimensions'       => $item['dimensions'] ?? null,
+                $quotationItem = QuotationItem::reconstitute([
+                    'quotation_id' => $quotationId,
+                    'description' => $item['description'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'tax_rate' => $item['tax_rate'] ?? 0,
+                    'discount_rate' => $item['discount_rate'] ?? 0,
+                    'line_total' => $item['line_total'],
+                    'dimensions' => $item['dimensions'] ?? null,
                     'dimensions_value' => $item['dimensions_value'] ?? 1,
                 ]);
+                $this->quotationItemRepo->save($quotationItem);
             }
 
-            // Log audit trail
-            app(AuditTrailService::class)->log(
-                $quotation->company_id,
-                $userId,
-                'quotation',
-                $quotation->id,
-                'updated',
-                $oldData,
-                $quotation->fresh()->toArray()
-            );
-
-            return $quotation->fresh()->load('items');
+            $this->auditTrail->log($updated->companyId, $userId, 'quotation', $quotationId, 'updated', $oldData, $updated->toArray());
+            return $this->quotationRepo->findById($quotationId);
         });
     }
 
-    public function sendQuotation(int $quotationId, int $userId): QuotationModel
+    public function sendQuotation(int $quotationId, int $userId): Quotation
     {
-        $quotation = QuotationModel::findOrFail($quotationId);
-        
-        $oldData = $quotation->toArray();
-        
-        $quotation->update(['status' => 'sent']);
+        $quotation = $this->quotationRepo->findById($quotationId);
+        if (!$quotation) throw new \Exception('Quotation not found');
 
-        // Log audit trail
-        app(AuditTrailService::class)->log(
-            $quotation->company_id,
-            $userId,
-            'quotation',
-            $quotation->id,
-            'sent',
-            $oldData,
-            $quotation->fresh()->toArray()
-        );
+        $updated = Quotation::reconstitute(array_merge($quotation->toArray(), ['status' => 'sent']));
+        $this->quotationRepo->save($updated);
 
-        return $quotation->fresh();
+        $this->auditTrail->log($quotation->companyId, $userId, 'quotation', $quotationId, 'sent', $quotation->toArray(), $updated->toArray());
+        return $this->quotationRepo->findById($quotationId);
     }
 
-    public function convertToJob(int $quotationId, int $userId): JobModel
+    public function convertToJob(int $quotationId, int $userId): Job
     {
         return DB::transaction(function () use ($quotationId, $userId) {
-            $quotation = QuotationModel::with('items')->findOrFail($quotationId);
+            $quotation = $this->quotationRepo->findById($quotationId);
+            if (!$quotation || $quotation->isConverted()) throw new \Exception('Quotation already converted to job');
 
-            if ($quotation->isConverted()) {
-                throw new \Exception('Quotation already converted to job');
-            }
-
-            // Create job from quotation
-            $jobService = app(JobService::class);
-            
             $jobData = [
-                'company_id'   => $quotation->company_id,
-                'customer_id'  => $quotation->customer_id,
-                'quotation_id' => $quotation->id,
-                'job_type'     => 'Aluminium Fabrication – ' . $quotation->quotation_number,
-                'description'  => $quotation->notes ?? 'Converted from quotation ' . $quotation->quotation_number,
-                'quoted_value' => $quotation->total_amount,
-                'priority'     => 'normal',
-                'created_by'   => $userId,
+                'company_id' => $quotation->companyId,
+                'customer_id' => $quotation->customerId,
+                'job_type' => 'Aluminium Fabrication – ' . $quotation->quotationNumber,
+                'description' => $quotation->notes ?? 'Converted from quotation ' . $quotation->quotationNumber,
+                'quoted_value' => $quotation->totalAmount,
+                'priority' => 'normal',
+                'created_by' => $userId,
             ];
 
-            $job = $jobService->createJob($jobData);
+            $job = $this->jobService->createJob($jobData);
 
-            // Update quotation
-            $quotation->update([
+            $updated = Quotation::reconstitute(array_merge($quotation->toArray(), [
                 'status' => 'accepted',
                 'converted_to_job_id' => $job->id,
-            ]);
+            ]));
+            $this->quotationRepo->save($updated);
 
-            // Log audit trail
-            app(AuditTrailService::class)->log(
-                $quotation->company_id,
-                $userId,
-                'quotation',
-                $quotation->id,
-                'converted',
-                null,
-                ['job_id' => $job->id]
-            );
-
+            $this->auditTrail->log($quotation->companyId, $userId, 'quotation', $quotationId, 'converted', null, ['job_id' => $job->id]);
             return $job;
         });
     }
@@ -206,19 +162,18 @@ class QuotationService
     private function generateQuotationNumber(int $companyId): string
     {
         $year = date('Y');
-        
-        $lastQuotation = QuotationModel::where('company_id', $companyId)
-            ->where('quotation_number', 'like', "QUO-{$year}-%")
-            ->orderBy('quotation_number', 'desc')
-            ->first();
+        $quotations = $this->quotationRepo->findByCompany($companyId);
+        $lastQuotation = null;
+        foreach ($quotations as $q) {
+            if (str_starts_with($q->quotationNumber, "QUO-{$year}-")) $lastQuotation = $q;
+        }
 
         if ($lastQuotation) {
-            $lastNumber = (int) substr($lastQuotation->quotation_number, -4);
+            $lastNumber = (int) substr($lastQuotation->quotationNumber, -4);
             $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
         } else {
             $newNumber = '0001';
         }
-
         return "QUO-{$year}-{$newNumber}";
     }
 }

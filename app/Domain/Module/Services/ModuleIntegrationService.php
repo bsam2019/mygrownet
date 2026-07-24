@@ -33,7 +33,7 @@ class ModuleIntegrationService
     /**
      * Modules that can have integrations
      */
-    public const PARENT_MODULES = ['growbiz', 'bizboost', 'ecommerce'];
+    public const PARENT_MODULES = ['bizboost', 'ecommerce'];
 
     /**
      * Check if an integration is enabled for a user in a specific module
@@ -86,7 +86,7 @@ class ModuleIntegrationService
      */
     public function getPOSService(string $moduleContext, int $userId = null): POSService
     {
-        $service = new POSService();
+        $service = app(POSService::class);
         $service->forModule($moduleContext);
         
         if ($userId) {
@@ -101,7 +101,7 @@ class ModuleIntegrationService
      */
     public function getInventoryService(string $moduleContext = 'inventory', int $userId = null): InventoryService
     {
-        $service = new InventoryService();
+        $service = app(InventoryService::class);
         $service->forModule($moduleContext);
         
         if ($userId) {

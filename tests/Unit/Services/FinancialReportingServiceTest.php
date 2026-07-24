@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Models\User;
-use App\Models\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use App\Models\Subscription;
 use App\Models\PaymentTransaction;
 use App\Services\FinancialReportingService;

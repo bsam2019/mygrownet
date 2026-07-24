@@ -2,14 +2,18 @@
 
 namespace App\Domain\GrowFinance\Services;
 
+use App\Domain\GrowFinance\Entities\InvoiceTemplate;
+use App\Domain\GrowFinance\Repositories\InvoiceTemplateRepositoryInterface;
 use App\Domain\Module\Services\SubscriptionService;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceInvoiceTemplateModel;
 use App\Models\User;
+use DateTimeImmutable;
+use Illuminate\Support\Str;
 
 class InvoiceTemplateService
 {
     public function __construct(
-        private SubscriptionService $subscriptionService
+        private SubscriptionService $subscriptionService,
+        private InvoiceTemplateRepositoryInterface $templateRepo
     ) {}
 
     /**
@@ -17,23 +21,18 @@ class InvoiceTemplateService
      */
     public function getTemplates(int $businessId): array
     {
-        return GrowFinanceInvoiceTemplateModel::forBusiness($businessId)
-            ->active()
-            ->orderBy('is_default', 'desc')
-            ->orderBy('name')
-            ->get()
-            ->toArray();
+        return array_map(
+            fn(InvoiceTemplate $t) => $t->toArray(),
+            $this->templateRepo->findActive($businessId)
+        );
     }
 
     /**
      * Get default template for a business
      */
-    public function getDefaultTemplate(int $businessId): ?GrowFinanceInvoiceTemplateModel
+    public function getDefaultTemplate(int $businessId): ?array
     {
-        return GrowFinanceInvoiceTemplateModel::forBusiness($businessId)
-            ->active()
-            ->default()
-            ->first();
+        return $this->templateRepo->findDefault($businessId)?->toArray();
     }
 
     /**
@@ -51,9 +50,7 @@ class InvoiceTemplateService
             ];
         }
 
-        $currentCount = GrowFinanceInvoiceTemplateModel::forBusiness($user->id)
-            ->active()
-            ->count();
+        $currentCount = count($this->templateRepo->findActive($user->id));
 
         if ($maxTemplates !== -1 && $currentCount >= $maxTemplates) {
             return [
@@ -74,51 +71,69 @@ class InvoiceTemplateService
     /**
      * Create a new template
      */
-    public function createTemplate(int $businessId, array $data): GrowFinanceInvoiceTemplateModel
+    public function createTemplate(int $businessId, array $data): array
     {
-        return GrowFinanceInvoiceTemplateModel::create([
-            'business_id' => $businessId,
-            'name' => $data['name'],
-            'description' => $data['description'] ?? null,
-            'layout' => $data['layout'] ?? GrowFinanceInvoiceTemplateModel::LAYOUT_STANDARD,
-            'colors' => $data['colors'] ?? GrowFinanceInvoiceTemplateModel::DEFAULT_COLORS,
-            'fonts' => $data['fonts'] ?? GrowFinanceInvoiceTemplateModel::DEFAULT_FONTS,
-            'logo_position' => $data['logo_position'] ?? 'left',
-            'show_logo' => $data['show_logo'] ?? true,
-            'show_watermark' => $data['show_watermark'] ?? false,
-            'header_text' => $data['header_text'] ?? null,
-            'footer_text' => $data['footer_text'] ?? null,
-            'terms_text' => $data['terms_text'] ?? null,
-            'custom_fields' => $data['custom_fields'] ?? null,
-            'is_default' => $data['is_default'] ?? false,
-        ]);
+        $template = new InvoiceTemplate(
+            id: null,
+            businessId: $businessId,
+            name: $data['name'],
+            slug: Str::slug($data['name']),
+            description: $data['description'] ?? null,
+            layout: $data['layout'] ?? 'standard',
+            colors: $data['colors'] ?? ['primary' => '#2563eb', 'secondary' => '#64748b', 'accent' => '#059669', 'text' => '#1f2937', 'background' => '#ffffff'],
+            fonts: $data['fonts'] ?? ['heading' => 'Inter', 'body' => 'Inter'],
+            logoPosition: $data['logo_position'] ?? 'left',
+            showLogo: $data['show_logo'] ?? true,
+            showWatermark: $data['show_watermark'] ?? false,
+            headerText: $data['header_text'] ?? null,
+            footerText: $data['footer_text'] ?? null,
+            termsText: $data['terms_text'] ?? null,
+            customFields: $data['custom_fields'] ?? null,
+            isDefault: $data['is_default'] ?? false,
+            isActive: true,
+            createdAt: null,
+            updatedAt: null,
+        );
+
+        return $this->templateRepo->save($template)->toArray();
     }
 
     /**
      * Update a template
      */
-    public function updateTemplate(int $businessId, int $templateId, array $data): GrowFinanceInvoiceTemplateModel
+    public function updateTemplate(int $businessId, int $templateId, array $data): array
     {
-        $template = GrowFinanceInvoiceTemplateModel::forBusiness($businessId)
-            ->findOrFail($templateId);
+        $template = $this->templateRepo->findById($templateId);
 
-        $template->update([
-            'name' => $data['name'] ?? $template->name,
-            'description' => $data['description'] ?? $template->description,
-            'layout' => $data['layout'] ?? $template->layout,
-            'colors' => $data['colors'] ?? $template->colors,
-            'fonts' => $data['fonts'] ?? $template->fonts,
-            'logo_position' => $data['logo_position'] ?? $template->logo_position,
-            'show_logo' => $data['show_logo'] ?? $template->show_logo,
-            'show_watermark' => $data['show_watermark'] ?? $template->show_watermark,
-            'header_text' => $data['header_text'] ?? $template->header_text,
-            'footer_text' => $data['footer_text'] ?? $template->footer_text,
-            'terms_text' => $data['terms_text'] ?? $template->terms_text,
-            'custom_fields' => $data['custom_fields'] ?? $template->custom_fields,
-            'is_default' => $data['is_default'] ?? $template->is_default,
-        ]);
+        $name = $data['name'] ?? $template->name;
+        $slug = $template->slug;
+        if (isset($data['name']) && $data['name'] !== $template->name) {
+            $slug = Str::slug($data['name']);
+        }
 
-        return $template->fresh();
+        $updated = new InvoiceTemplate(
+            id: $templateId,
+            businessId: $businessId,
+            name: $name,
+            slug: $slug,
+            description: $data['description'] ?? $template->description,
+            layout: $data['layout'] ?? $template->layout,
+            colors: $data['colors'] ?? $template->colors,
+            fonts: $data['fonts'] ?? $template->fonts,
+            logoPosition: $data['logo_position'] ?? $template->logoPosition,
+            showLogo: $data['show_logo'] ?? $template->showLogo,
+            showWatermark: $data['show_watermark'] ?? $template->showWatermark,
+            headerText: $data['header_text'] ?? $template->headerText,
+            footerText: $data['footer_text'] ?? $template->footerText,
+            termsText: $data['terms_text'] ?? $template->termsText,
+            customFields: $data['custom_fields'] ?? $template->customFields,
+            isDefault: $data['is_default'] ?? $template->isDefault,
+            isActive: $template->isActive,
+            createdAt: $template->createdAt,
+            updatedAt: null,
+        );
+
+        return $this->templateRepo->save($updated)->toArray();
     }
 
     /**
@@ -126,25 +141,70 @@ class InvoiceTemplateService
      */
     public function deleteTemplate(int $businessId, int $templateId): bool
     {
-        $template = GrowFinanceInvoiceTemplateModel::forBusiness($businessId)
-            ->findOrFail($templateId);
+        $template = $this->templateRepo->findById($templateId);
 
-        // Don't allow deleting the only template
-        $count = GrowFinanceInvoiceTemplateModel::forBusiness($businessId)->active()->count();
-        if ($count <= 1) {
+        if (!$template) {
             return false;
         }
 
-        // If deleting default, make another one default
-        if ($template->is_default) {
-            GrowFinanceInvoiceTemplateModel::forBusiness($businessId)
-                ->where('id', '!=', $templateId)
-                ->active()
-                ->first()
-                ?->update(['is_default' => true]);
+        $templates = $this->templateRepo->findActive($businessId);
+
+        if (count($templates) <= 1) {
+            return false;
         }
 
-        $template->update(['is_active' => false]);
+        if ($template->isDefault) {
+            foreach ($templates as $t) {
+                if ($t->id !== $templateId) {
+                    $newDefault = new InvoiceTemplate(
+                        id: $t->id,
+                        businessId: $t->businessId,
+                        name: $t->name,
+                        slug: $t->slug,
+                        description: $t->description,
+                        layout: $t->layout,
+                        colors: $t->colors,
+                        fonts: $t->fonts,
+                        logoPosition: $t->logoPosition,
+                        showLogo: $t->showLogo,
+                        showWatermark: $t->showWatermark,
+                        headerText: $t->headerText,
+                        footerText: $t->footerText,
+                        termsText: $t->termsText,
+                        customFields: $t->customFields,
+                        isDefault: true,
+                        isActive: $t->isActive,
+                        createdAt: $t->createdAt,
+                        updatedAt: null,
+                    );
+                    $this->templateRepo->save($newDefault);
+                    break;
+                }
+            }
+        }
+
+        $deactivated = new InvoiceTemplate(
+            id: $templateId,
+            businessId: $businessId,
+            name: $template->name,
+            slug: $template->slug,
+            description: $template->description,
+            layout: $template->layout,
+            colors: $template->colors,
+            fonts: $template->fonts,
+            logoPosition: $template->logoPosition,
+            showLogo: $template->showLogo,
+            showWatermark: $template->showWatermark,
+            headerText: $template->headerText,
+            footerText: $template->footerText,
+            termsText: $template->termsText,
+            customFields: $template->customFields,
+            isDefault: false,
+            isActive: false,
+            createdAt: $template->createdAt,
+            updatedAt: null,
+        );
+        $this->templateRepo->save($deactivated);
 
         return true;
     }
@@ -152,14 +212,33 @@ class InvoiceTemplateService
     /**
      * Set template as default
      */
-    public function setAsDefault(int $businessId, int $templateId): GrowFinanceInvoiceTemplateModel
+    public function setAsDefault(int $businessId, int $templateId): array
     {
-        $template = GrowFinanceInvoiceTemplateModel::forBusiness($businessId)
-            ->findOrFail($templateId);
+        $template = $this->templateRepo->findById($templateId);
 
-        $template->update(['is_default' => true]);
+        $updated = new InvoiceTemplate(
+            id: $templateId,
+            businessId: $businessId,
+            name: $template->name,
+            slug: $template->slug,
+            description: $template->description,
+            layout: $template->layout,
+            colors: $template->colors,
+            fonts: $template->fonts,
+            logoPosition: $template->logoPosition,
+            showLogo: $template->showLogo,
+            showWatermark: $template->showWatermark,
+            headerText: $template->headerText,
+            footerText: $template->footerText,
+            termsText: $template->termsText,
+            customFields: $template->customFields,
+            isDefault: true,
+            isActive: $template->isActive,
+            createdAt: $template->createdAt,
+            updatedAt: null,
+        );
 
-        return $template->fresh();
+        return $this->templateRepo->save($updated)->toArray();
     }
 
     /**
@@ -167,18 +246,23 @@ class InvoiceTemplateService
      */
     public function getAvailableLayouts(): array
     {
-        return GrowFinanceInvoiceTemplateModel::LAYOUTS;
+        return [
+            'standard' => 'Standard',
+            'modern' => 'Modern',
+            'minimal' => 'Minimal',
+            'professional' => 'Professional',
+        ];
     }
 
     /**
      * Create default template for new business
      */
-    public function createDefaultTemplate(int $businessId): GrowFinanceInvoiceTemplateModel
+    public function createDefaultTemplate(int $businessId): array
     {
         return $this->createTemplate($businessId, [
             'name' => 'Default Template',
             'description' => 'Standard invoice template',
-            'layout' => GrowFinanceInvoiceTemplateModel::LAYOUT_STANDARD,
+            'layout' => 'standard',
             'is_default' => true,
         ]);
     }

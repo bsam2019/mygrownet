@@ -32,4 +32,6 @@ interface TimeOffRepositoryInterface
     public function findPendingForManager(EmployeeId $managerId): Collection;
     
     public function hasOverlappingRequest(EmployeeId $employeeId, \DateTimeImmutable $start, \DateTimeImmutable $end, ?int $excludeId = null): bool;
+
+    public function findByDepartmentAndDate(int $departmentId, \DateTimeImmutable $date): Collection;
 }

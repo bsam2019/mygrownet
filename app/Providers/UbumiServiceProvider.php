@@ -47,6 +47,8 @@ class UbumiServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->loadMigrationsFrom(database_path('migrations/ubumi'));
+
         // Register route model binding for Family using slug
         Route::bind('family', function ($value) {
             return FamilyModel::where('slug', $value)->firstOrFail();

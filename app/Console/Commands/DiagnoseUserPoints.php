@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
-use App\Models\UserPoints;
-use App\Models\PointTransaction;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\UserPoints;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PointTransaction;
 use Illuminate\Console\Command;
 
 class DiagnoseUserPoints extends Command

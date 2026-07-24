@@ -2,12 +2,16 @@
 
 namespace App\Domain\Marketplace\Services;
 
-use App\Models\Marketplace\MarketplaceProduct;
+use App\Domain\Marketplace\Repositories\ProductRepositoryInterface;
 use Illuminate\Support\Facades\Session;
 
 class CartService
 {
     private const CART_KEY = 'marketplace_cart';
+
+    public function __construct(
+        private ProductRepositoryInterface $productRepository,
+    ) {}
 
     public function getCart(): array
     {
@@ -16,9 +20,8 @@ class CartService
 
     public function addItem(int $productId, int $quantity = 1): array
     {
-        $product = MarketplaceProduct::with('seller')->findOrFail($productId);
-        
-        if ($product->status !== 'active' || $product->stock_quantity < $quantity) {
+        $product = $this->productRepository->findById($productId);
+        if (!$product || !$product->isAvailable() || $product->stockQuantity < $quantity) {
             throw new \Exception('Product is not available.');
         }
 
@@ -27,24 +30,23 @@ class CartService
 
         if (isset($cart[$key])) {
             $newQuantity = $cart[$key]['quantity'] + $quantity;
-            if ($newQuantity > $product->stock_quantity) {
+            if ($newQuantity > $product->stockQuantity) {
                 throw new \Exception('Not enough stock available.');
             }
             $cart[$key]['quantity'] = $newQuantity;
         } else {
-            // Get first image - images is an array
-            $firstImage = is_array($product->images) && count($product->images) > 0 
-                ? $product->images[0] 
+            $firstImage = is_array($product->images) && count($product->images) > 0
+                ? $product->images[0]
                 : null;
-            
+
             $cart[$key] = [
                 'product_id' => $productId,
-                'seller_id' => $product->seller_id,
+                'seller_id' => $product->sellerId,
                 'name' => $product->name,
-                'price' => $product->price,
+                'price' => $product->price->amount(),
                 'image' => $firstImage,
                 'quantity' => $quantity,
-                'max_quantity' => $product->stock_quantity,
+                'max_quantity' => $product->stockQuantity,
             ];
         }
 
@@ -65,14 +67,14 @@ class CartService
             return $this->removeItem($productId);
         }
 
-        $product = MarketplaceProduct::find($productId);
-        if ($product && $quantity > $product->stock_quantity) {
+        $product = $this->productRepository->findById($productId);
+        if ($product && $quantity > $product->stockQuantity) {
             throw new \Exception('Not enough stock available.');
         }
 
         $cart[$key]['quantity'] = $quantity;
         Session::put(self::CART_KEY, $cart);
-        
+
         return $this->getCartSummary();
     }
 
@@ -81,7 +83,7 @@ class CartService
         $cart = $this->getCart();
         unset($cart[(string) $productId]);
         Session::put(self::CART_KEY, $cart);
-        
+
         return $this->getCartSummary();
     }
 
@@ -104,12 +106,11 @@ class CartService
             $itemCount += $item['quantity'];
             $sellerIds[$item['seller_id']] = true;
 
-            // Handle image - could be string, array, or null from old cart data
             $image = $item['image'] ?? null;
             $imageUrl = null;
             if ($image) {
                 if (is_array($image)) {
-                    $firstImage = reset($image); // Safely get first element
+                    $firstImage = reset($image);
                     $imageUrl = $firstImage ? asset('storage/' . $firstImage) : null;
                 } else {
                     $imageUrl = asset('storage/' . $image);
@@ -138,21 +139,20 @@ class CartService
         $items = [];
 
         foreach ($cart as $item) {
-            // Verify product is still available
-            $product = MarketplaceProduct::with('seller')->find($item['product_id']);
-            
-            if (!$product || $product->status !== 'active') {
+            $product = $this->productRepository->findById($item['product_id']);
+
+            if (!$product || !$product->status->isActive()) {
                 continue;
             }
 
-            $quantity = min($item['quantity'], $product->stock_quantity);
+            $quantity = min($item['quantity'], $product->stockQuantity);
             if ($quantity <= 0) {
                 continue;
             }
 
             $items[] = [
                 'product_id' => $product->id,
-                'seller_id' => $product->seller_id,
+                'seller_id' => $product->sellerId,
                 'quantity' => $quantity,
             ];
         }

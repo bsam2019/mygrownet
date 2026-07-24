@@ -3,31 +3,25 @@
 namespace App\Http\Controllers\GrowMart;
 
 use App\Http\Controllers\Controller;
-use App\Models\GrowMart\GrowMartCategory;
-use App\Models\GrowMart\GrowMartProduct;
+use App\Domain\GrowMart\Repositories\CategoryRepositoryInterface;
+use App\Domain\GrowMart\Repositories\ProductRepositoryInterface;
 use App\Domain\GrowMart\Services\CartService;
 use Inertia\Inertia;
 
 class HomeController extends Controller
 {
     public function __construct(
+        private readonly CategoryRepositoryInterface $categoryRepository,
+        private readonly ProductRepositoryInterface $productRepository,
         private readonly CartService $cartService,
     ) {}
 
     public function index()
     {
-        $categories = GrowMartCategory::where('is_active', true)
-            ->whereNull('parent_id')
-            ->with(['children' => fn($q) => $q->where('is_active', true)])
-            ->orderBy('sort_order')
-            ->get();
+        $categories = $this->categoryRepository->findActive();
 
-        $featuredProducts = GrowMartProduct::with(['category', 'images'])
-            ->where('status', 'active')
-            ->latest()
-            ->take(12)
-            ->get()
-            ->map(fn($p) => $this->mapProduct($p));
+        $featuredProducts = $this->productRepository->findFeatured();
+        $featuredProducts = array_map(fn($p) => $this->mapProduct($p), $featuredProducts);
 
         $cartSummary = $this->cartService->getSummary(auth()->id());
 
@@ -59,23 +53,23 @@ class HomeController extends Controller
         ]);
     }
 
-    private function mapProduct($product): array
+    private function mapProduct(array $product): array
     {
         return [
-            'id' => $product->id,
-            'name' => $product->name,
-            'slug' => $product->slug,
-            'unit' => $product->unit,
-            'price' => $product->price,
-            'price_formatted' => 'K' . number_format($product->price / 100, 2),
-            'compare_price' => $product->compare_price,
-            'compare_price_formatted' => $product->compare_price ? 'K' . number_format($product->compare_price / 100, 2) : null,
-            'has_discount' => $product->compare_price && $product->compare_price > $product->price,
-            'discount_percentage' => $product->compare_price && $product->compare_price > $product->price
-                ? (int) round((1 - $product->price / $product->compare_price) * 100) : 0,
-            'category' => $product->category?->name,
-            'image' => $product->images->first()?->path ?? null,
-            'stock' => (int) $product->inventory()->sum('quantity'),
+            'id' => $product['id'],
+            'name' => $product['name'],
+            'slug' => $product['slug'],
+            'unit' => $product['unit'] ?? '',
+            'price' => $product['price'],
+            'price_formatted' => 'K' . number_format($product['price'] / 100, 2),
+            'compare_price' => $product['compare_price'] ?? null,
+            'compare_price_formatted' => isset($product['compare_price']) ? 'K' . number_format($product['compare_price'] / 100, 2) : null,
+            'has_discount' => isset($product['compare_price']) && $product['compare_price'] > $product['price'],
+            'discount_percentage' => isset($product['compare_price']) && $product['compare_price'] > $product['price']
+                ? (int) round((1 - $product['price'] / $product['compare_price']) * 100) : 0,
+            'category' => $product['category']['name'] ?? null,
+            'image' => $product['images'][0]['path'] ?? null,
+            'stock' => (int) ($product['inventory_sum_quantity'] ?? 0),
         ];
     }
 }

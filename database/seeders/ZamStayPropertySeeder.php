@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\ZamStay\ZamStayProperty;
+use App\Infrastructure\Persistence\Eloquent\ZamStay\ZamStayPropertyModel;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -155,7 +155,7 @@ class ZamStayPropertySeeder extends Seeder
         ];
 
         foreach ($properties as $data) {
-            ZamStayProperty::create($data + ['is_active' => true, 'status' => 'available']);
+            ZamStayPropertyModel::create($data + ['is_active' => true, 'status' => 'available']);
         }
 
         $this->command->info('Created ' . count($properties) . ' ZamStay properties across Zambia.');

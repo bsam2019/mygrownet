@@ -25,7 +25,7 @@ final class Position
     private DateTimeImmutable $createdAt;
     private DateTimeImmutable $updatedAt;
 
-    public function __construct(
+    private function __construct(
         PositionId $id,
         string $title,
         string $description,
@@ -76,6 +76,40 @@ final class Position
             $commissionEligible,
             $commissionRate
         );
+    }
+
+    public static function reconstitute(array $data): self
+    {
+        return new self(
+            $data['id'],
+            $data['title'],
+            $data['description'] ?? '',
+            $data['department'],
+            $data['base_salary_min'],
+            $data['base_salary_max'],
+            $data['commission_eligible'] ?? false,
+            $data['commission_rate'] ?? 0.0,
+            $data['responsibilities'] ?? [],
+            $data['required_permissions'] ?? [],
+            $data['is_active'] ?? true
+        );
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'description' => $this->description,
+            'department' => $this->department,
+            'base_salary_min' => $this->baseSalaryMin,
+            'base_salary_max' => $this->baseSalaryMax,
+            'commission_eligible' => $this->commissionEligible,
+            'commission_rate' => $this->commissionRate,
+            'is_active' => $this->isActive,
+            'created_at' => $this->createdAt,
+            'updated_at' => $this->updatedAt,
+        ];
     }
 
     public function addResponsibility(string $responsibility): void

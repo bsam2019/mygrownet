@@ -3,14 +3,21 @@
 namespace App\Providers;
 
 use App\Application\BizDocs\UseCases\GenerateReceiptUseCase;
+use App\Application\BizDocs\UseCases\GenerateStationeryUseCase;
 use App\Application\BizDocs\UseCases\RecordPaymentUseCase;
 use App\Domain\BizDocs\BusinessIdentity\Repositories\BusinessProfileRepositoryInterface;
 use App\Domain\BizDocs\CustomerManagement\Repositories\CustomerRepositoryInterface;
 use App\Domain\BizDocs\DocumentManagement\Repositories\DocumentRepositoryInterface;
+use App\Domain\BizDocs\DocumentManagement\Repositories\DocumentSequenceRepositoryInterface;
+use App\Domain\BizDocs\DocumentManagement\Repositories\DocumentStatusHistoryRepositoryInterface;
+use App\Domain\BizDocs\DocumentManagement\Repositories\DocumentTemplateRepositoryInterface;
 use App\Domain\BizDocs\DocumentManagement\Services\DocumentNumberingService;
 use App\Infrastructure\BizDocs\Persistence\Repositories\EloquentBusinessProfileRepository;
 use App\Infrastructure\BizDocs\Persistence\Repositories\EloquentCustomerRepository;
 use App\Infrastructure\BizDocs\Persistence\Repositories\EloquentDocumentRepository;
+use App\Infrastructure\BizDocs\Persistence\Repositories\EloquentDocumentSequenceRepository;
+use App\Infrastructure\BizDocs\Persistence\Repositories\EloquentDocumentStatusHistoryRepository;
+use App\Infrastructure\BizDocs\Persistence\Repositories\EloquentDocumentTemplateRepository;
 use Illuminate\Support\ServiceProvider;
 
 class BizDocsServiceProvider extends ServiceProvider
@@ -20,7 +27,6 @@ class BizDocsServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Bind repository interfaces to implementations
         $this->app->bind(
             DocumentRepositoryInterface::class,
             EloquentDocumentRepository::class
@@ -36,7 +42,21 @@ class BizDocsServiceProvider extends ServiceProvider
             EloquentCustomerRepository::class
         );
 
-        // Register use cases
+        $this->app->bind(
+            DocumentTemplateRepositoryInterface::class,
+            EloquentDocumentTemplateRepository::class
+        );
+
+        $this->app->bind(
+            DocumentSequenceRepositoryInterface::class,
+            EloquentDocumentSequenceRepository::class
+        );
+
+        $this->app->bind(
+            DocumentStatusHistoryRepositoryInterface::class,
+            EloquentDocumentStatusHistoryRepository::class
+        );
+
         $this->app->bind(GenerateReceiptUseCase::class, function ($app) {
             return new GenerateReceiptUseCase(
                 $app->make(DocumentRepositoryInterface::class),
@@ -77,9 +97,10 @@ class BizDocsServiceProvider extends ServiceProvider
             );
         });
 
-        $this->app->bind(\App\Application\BizDocs\UseCases\GenerateStationeryUseCase::class, function ($app) {
-            return new \App\Application\BizDocs\UseCases\GenerateStationeryUseCase(
+        $this->app->bind(GenerateStationeryUseCase::class, function ($app) {
+            return new GenerateStationeryUseCase(
                 $app->make(BusinessProfileRepositoryInterface::class),
+                $app->make(DocumentTemplateRepositoryInterface::class),
                 $app->make(\App\Application\BizDocs\Services\StationeryGeneratorService::class)
             );
         });
@@ -90,6 +111,6 @@ class BizDocsServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $this->loadMigrationsFrom(database_path('migrations/bizdocs'));
     }
 }

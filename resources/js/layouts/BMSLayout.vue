@@ -1676,7 +1676,7 @@ import ExpenseForm from '@/components/BMS/Forms/ExpenseForm.vue'
 import NavItem from '@/components/BMS/NavItem.vue'
 import { useBMSSlideOver } from '@/composables/useBMSSlideOver'
 import { useToast } from '@/composables/useToast'
-import ToastContainer from '@/components/GrowBiz/ToastContainer.vue'
+import ToastContainer from '@/components/Shared/ToastContainer.vue'
 import GlobalAppSwitcher from '@/Components/Workspace/GlobalAppSwitcher.vue'
 
 interface Notification {

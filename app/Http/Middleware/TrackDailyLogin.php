@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Services\PointService;
+use App\Domain\GrowNet\Services\PointService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

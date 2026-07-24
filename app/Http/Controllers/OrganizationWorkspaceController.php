@@ -188,12 +188,6 @@ class OrganizationWorkspaceController extends Controller
                     ['name' => $org->name, 'email' => $user->email, 'status' => 'active']
                 );
                 break;
-            case 'growbiz':
-                GrowBizBusinessProfileModel::firstOrCreate(
-                    ['organization_id' => $org->id],
-                    ['business_name' => $org->name]
-                );
-                break;
             case 'bizdocs':
                 BizDocsBusinessProfile::firstOrCreate(
                     ['organization_id' => $org->id],

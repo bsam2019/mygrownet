@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Investor;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Investor\Concerns\RequiresInvestorAuth;
 use App\Domain\Investor\Services\ShareholderCommunityService;
+use App\Domain\Investor\Repositories\InvestorAccountRepositoryInterface;
 use App\Models\Shareholder\ShareholderForumTopic;
 use App\Models\Shareholder\ShareholderContactRequest;
-use App\Models\Investor\InvestorAccount;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -16,20 +16,14 @@ class CommunityController extends Controller
     use RequiresInvestorAuth;
 
     public function __construct(
-        private ShareholderCommunityService $communityService
+        private ShareholderCommunityService $communityService,
+        private InvestorAccountRepositoryInterface $accountRepository
     ) {}
 
-    // =====================================================
-    // FORUM
-    // =====================================================
-
-    /**
-     * Display forum categories
-     */
     public function forum(Request $request)
     {
         $domainInvestor = $this->requireInvestorAuth();
-        
+
         if ($domainInvestor instanceof \Illuminate\Http\RedirectResponse) {
             return $domainInvestor;
         }
@@ -49,13 +43,10 @@ class CommunityController extends Controller
         ]);
     }
 
-    /**
-     * Display topics in a category
-     */
     public function forumCategory(Request $request, int $categoryId)
     {
         $domainInvestor = $this->requireInvestorAuth();
-        
+
         if ($domainInvestor instanceof \Illuminate\Http\RedirectResponse) {
             return $domainInvestor;
         }
@@ -78,13 +69,10 @@ class CommunityController extends Controller
         ]);
     }
 
-    /**
-     * Display a topic with replies
-     */
     public function forumTopic(Request $request, string $slug)
     {
         $domainInvestor = $this->requireInvestorAuth();
-        
+
         if ($domainInvestor instanceof \Illuminate\Http\RedirectResponse) {
             return $domainInvestor;
         }
@@ -104,9 +92,6 @@ class CommunityController extends Controller
         ]);
     }
 
-    /**
-     * Create a new topic
-     */
     public function createTopic(Request $request)
     {
         $validated = $request->validate([
@@ -116,12 +101,12 @@ class CommunityController extends Controller
         ]);
 
         $domainInvestor = $this->requireInvestorAuth();
-        
+
         if ($domainInvestor instanceof \Illuminate\Http\RedirectResponse) {
             return $domainInvestor;
         }
 
-        $investor = InvestorAccount::find($domainInvestor->getId());
+        $investor = $this->accountRepository->findById($domainInvestor->getId());
 
         try {
             $topic = $this->communityService->createTopic(
@@ -131,8 +116,8 @@ class CommunityController extends Controller
                 content: $validated['content']
             );
 
-            $message = $topic->isPending() 
-                ? 'Topic submitted for moderation.' 
+            $message = $topic->isPending()
+                ? 'Topic submitted for moderation.'
                 : 'Topic created successfully.';
 
             return back()->with('success', $message);
@@ -141,13 +126,10 @@ class CommunityController extends Controller
         }
     }
 
-    /**
-     * Create a reply to a topic
-     */
     public function createReply(Request $request, ShareholderForumTopic $topic)
     {
         $domainInvestor = $this->requireInvestorAuth();
-        
+
         if ($domainInvestor instanceof \Illuminate\Http\RedirectResponse) {
             return $domainInvestor;
         }
@@ -156,7 +138,7 @@ class CommunityController extends Controller
             'content' => 'required|string|max:5000',
         ]);
 
-        $investor = InvestorAccount::find($domainInvestor->getId());
+        $investor = $this->accountRepository->findById($domainInvestor->getId());
 
         try {
             $reply = $this->communityService->createReply(
@@ -165,8 +147,8 @@ class CommunityController extends Controller
                 content: $validated['content']
             );
 
-            $message = $reply->isPending() 
-                ? 'Reply submitted for moderation.' 
+            $message = $reply->isPending()
+                ? 'Reply submitted for moderation.'
                 : 'Reply posted successfully.';
 
             return back()->with('success', $message);
@@ -175,22 +157,15 @@ class CommunityController extends Controller
         }
     }
 
-    // =====================================================
-    // DIRECTORY
-    // =====================================================
-
-    /**
-     * Display shareholder directory
-     */
     public function directory(Request $request)
     {
         $domainInvestor = $this->requireInvestorAuth();
-        
+
         if ($domainInvestor instanceof \Illuminate\Http\RedirectResponse) {
             return $domainInvestor;
         }
 
-        $investor = InvestorAccount::find($domainInvestor->getId());
+        $investor = $this->accountRepository->findById($domainInvestor->getId());
         $listings = $this->communityService->getDirectoryListings();
         $myProfile = $this->communityService->getOrCreateProfile($investor);
 
@@ -208,9 +183,6 @@ class CommunityController extends Controller
         ]);
     }
 
-    /**
-     * Update directory profile
-     */
     public function updateProfile(Request $request)
     {
         $validated = $request->validate([
@@ -224,25 +196,18 @@ class CommunityController extends Controller
         ]);
 
         $domainInvestor = $this->requireInvestorAuth();
-        
+
         if ($domainInvestor instanceof \Illuminate\Http\RedirectResponse) {
             return $domainInvestor;
         }
 
-        $investor = InvestorAccount::find($domainInvestor->getId());
+        $investor = $this->accountRepository->findById($domainInvestor->getId());
 
         $this->communityService->updateProfile($investor, $validated);
 
         return back()->with('success', 'Profile updated successfully.');
     }
 
-    // =====================================================
-    // CONTACT REQUESTS
-    // =====================================================
-
-    /**
-     * Send a contact request
-     */
     public function sendContactRequest(Request $request)
     {
         $validated = $request->validate([
@@ -251,13 +216,17 @@ class CommunityController extends Controller
         ]);
 
         $domainInvestor = $this->requireInvestorAuth();
-        
+
         if ($domainInvestor instanceof \Illuminate\Http\RedirectResponse) {
             return $domainInvestor;
         }
 
-        $requester = InvestorAccount::find($domainInvestor->getId());
-        $recipient = InvestorAccount::findOrFail($validated['recipient_id']);
+        $requester = $this->accountRepository->findById($domainInvestor->getId());
+        $recipient = $this->accountRepository->findById($validated['recipient_id']);
+
+        if (!$recipient) {
+            return back()->withErrors(['error' => 'Recipient not found.']);
+        }
 
         try {
             $this->communityService->sendContactRequest(
@@ -272,9 +241,6 @@ class CommunityController extends Controller
         }
     }
 
-    /**
-     * Respond to a contact request
-     */
     public function respondToContactRequest(Request $request, ShareholderContactRequest $contactRequest)
     {
         $validated = $request->validate([
@@ -283,14 +249,14 @@ class CommunityController extends Controller
         ]);
 
         $domainInvestor = $this->requireInvestorAuth();
-        
+
         if ($domainInvestor instanceof \Illuminate\Http\RedirectResponse) {
             return $domainInvestor;
         }
 
-        $investor = InvestorAccount::find($domainInvestor->getId());
+        $investor = $this->accountRepository->findById($domainInvestor->getId());
 
-        if ($contactRequest->recipient_id !== $investor->id) {
+        if ($contactRequest->recipient_id !== $investor->getId()) {
             abort(403);
         }
 
@@ -304,18 +270,15 @@ class CommunityController extends Controller
         return back()->with('success', $message);
     }
 
-    /**
-     * Get contact requests
-     */
     public function contactRequests(Request $request)
     {
         $domainInvestor = $this->requireInvestorAuth();
-        
+
         if ($domainInvestor instanceof \Illuminate\Http\RedirectResponse) {
             return $domainInvestor;
         }
 
-        $investor = InvestorAccount::find($domainInvestor->getId());
+        $investor = $this->accountRepository->findById($domainInvestor->getId());
         $pending = $this->communityService->getPendingContactRequests($investor);
         $sent = $this->communityService->getSentContactRequests($investor);
 

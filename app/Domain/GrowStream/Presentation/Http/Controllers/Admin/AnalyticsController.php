@@ -2,10 +2,10 @@
 
 namespace App\Domain\GrowStream\Presentation\Http\Controllers\Admin;
 
-use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\CreatorProfile;
-use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\Video;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoView;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\WatchHistory;
+use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
+use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,46 +13,40 @@ use Illuminate\Support\Facades\DB;
 
 class AnalyticsController extends Controller
 {
-    /**
-     * Get platform overview analytics
-     */
+    public function __construct(
+        private VideoRepositoryInterface $videoRepo,
+        private CreatorProfileRepositoryInterface $creatorRepo
+    ) {}
+
     public function overview(Request $request): JsonResponse
     {
-        $period = $request->get('period', '30'); // days
-
+        $period = $request->get('period', '30');
         $startDate = now()->subDays($period);
 
-        // Total videos
-        $totalVideos = Video::count();
-        $publishedVideos = Video::published()->count();
-        $newVideosThisPeriod = Video::where('created_at', '>=', $startDate)->count();
+        $totalVideos = $this->videoRepo->query()->count();
+        $publishedVideos = $this->videoRepo->query()->published()->count();
+        $newVideosThisPeriod = $this->videoRepo->query()->where('created_at', '>=', $startDate)->count();
 
-        // Total views
         $totalViews = VideoView::count();
         $viewsThisPeriod = VideoView::where('created_at', '>=', $startDate)->count();
 
-        // Watch time (in hours)
         $totalWatchTime = WatchHistory::sum('watch_duration') / 3600;
         $watchTimeThisPeriod = WatchHistory::where('created_at', '>=', $startDate)
             ->sum('watch_duration') / 3600;
 
-        // Unique viewers
         $uniqueViewers = VideoView::distinct('user_id')->count('user_id');
         $uniqueViewersThisPeriod = VideoView::where('created_at', '>=', $startDate)
             ->distinct('user_id')
             ->count('user_id');
 
-        // Completion rate
         $completedViews = WatchHistory::where('is_completed', true)->count();
         $totalWatchSessions = WatchHistory::count();
-        $completionRate = $totalWatchSessions > 0 
-            ? round(($completedViews / $totalWatchSessions) * 100, 2) 
+        $completionRate = $totalWatchSessions > 0
+            ? round(($completedViews / $totalWatchSessions) * 100, 2)
             : 0;
 
-        // Average watch duration
         $avgWatchDuration = WatchHistory::avg('watch_duration');
 
-        // Top categories
         $topCategories = DB::table('growstream_video_categories as c')
             ->join('growstream_video_category as vc', 'c.id', '=', 'vc.category_id')
             ->join('growstream_videos as v', 'vc.video_id', '=', 'v.id')
@@ -63,7 +57,6 @@ class AnalyticsController extends Controller
             ->limit(5)
             ->get();
 
-        // Daily views trend
         $dailyViews = VideoView::where('created_at', '>=', $startDate)
             ->select(
                 DB::raw('DATE(created_at) as date'),
@@ -96,15 +89,13 @@ class AnalyticsController extends Controller
         ]);
     }
 
-    /**
-     * Get video analytics
-     */
     public function videoAnalytics(Request $request): JsonResponse
     {
         $period = $request->get('period', '30');
         $startDate = now()->subDays($period);
 
-        $query = Video::with(['creator', 'categories'])
+        $query = $this->videoRepo->query();
+        $query->with(['creator', 'categories'])
             ->withCount([
                 'views',
                 'views as recent_views_count' => function ($q) use ($startDate) {
@@ -113,7 +104,6 @@ class AnalyticsController extends Controller
             ])
             ->withSum('watchHistory as total_watch_time', 'watch_duration');
 
-        // Sort by views
         $sortBy = $request->get('sort_by', 'views_count');
         $sortOrder = $request->get('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
@@ -132,22 +122,22 @@ class AnalyticsController extends Controller
         ]);
     }
 
-    /**
-     * Get detailed analytics for a specific video
-     */
-    public function videoDetails(Request $request, Video $video): JsonResponse
+    public function videoDetails(Request $request, int $id): JsonResponse
     {
+        $video = $this->videoRepo->findById($id);
+        if (!$video) {
+            return response()->json(['success' => false, 'error' => 'Video not found'], 404);
+        }
+
         $period = $request->get('period', '30');
         $startDate = now()->subDays($period);
 
-        // Basic stats
         $totalViews = $video->views()->count();
         $uniqueViewers = $video->views()->distinct('user_id')->count('user_id');
         $totalWatchTime = $video->watchHistory()->sum('watch_duration');
         $avgWatchTime = $video->watchHistory()->avg('watch_duration');
         $completionRate = $this->calculateCompletionRate($video);
 
-        // Views over time
         $dailyViews = $video->views()
             ->where('created_at', '>=', $startDate)
             ->select(
@@ -159,10 +149,9 @@ class AnalyticsController extends Controller
             ->orderBy('date')
             ->get();
 
-        // Watch duration distribution
         $durationBuckets = $video->watchHistory()
             ->select(
-                DB::raw('CASE 
+                DB::raw('CASE
                     WHEN watch_duration < 60 THEN "0-1min"
                     WHEN watch_duration < 300 THEN "1-5min"
                     WHEN watch_duration < 900 THEN "5-15min"
@@ -174,13 +163,11 @@ class AnalyticsController extends Controller
             ->groupBy('bucket')
             ->get();
 
-        // Device breakdown
         $deviceBreakdown = $video->views()
             ->select('device_type', DB::raw('COUNT(*) as count'))
             ->groupBy('device_type')
             ->get();
 
-        // Geographic data
         $topCountries = $video->views()
             ->select('country', DB::raw('COUNT(*) as count'))
             ->whereNotNull('country')
@@ -208,15 +195,13 @@ class AnalyticsController extends Controller
         ]);
     }
 
-    /**
-     * Get creator analytics
-     */
     public function creatorAnalytics(Request $request): JsonResponse
     {
         $period = $request->get('period', '30');
         $startDate = now()->subDays($period);
 
-        $creators = CreatorProfile::with('user')
+        $creators = $this->creatorRepo->query()
+            ->with('user')
             ->withCount([
                 'videos',
                 'videos as published_videos_count' => function ($q) {
@@ -258,31 +243,24 @@ class AnalyticsController extends Controller
         ]);
     }
 
-    /**
-     * Get engagement analytics
-     */
     public function engagement(Request $request): JsonResponse
     {
         $period = $request->get('period', '30');
         $startDate = now()->subDays($period);
 
-        // Active users (users who watched at least one video)
         $activeUsers = WatchHistory::where('created_at', '>=', $startDate)
             ->distinct('user_id')
             ->count('user_id');
 
-        // Average session duration
         $avgSessionDuration = WatchHistory::where('created_at', '>=', $startDate)
             ->avg('watch_duration');
 
-        // Completion rate
         $completedViews = WatchHistory::where('created_at', '>=', $startDate)
             ->where('is_completed', true)
             ->count();
         $totalViews = WatchHistory::where('created_at', '>=', $startDate)->count();
         $completionRate = $totalViews > 0 ? round(($completedViews / $totalViews) * 100, 2) : 0;
 
-        // Returning viewers
         $returningViewers = DB::table('growstream_watch_history')
             ->select('user_id', DB::raw('COUNT(DISTINCT DATE(created_at)) as days_active'))
             ->where('created_at', '>=', $startDate)
@@ -290,7 +268,6 @@ class AnalyticsController extends Controller
             ->having('days_active', '>', 1)
             ->count();
 
-        // Peak viewing hours
         $peakHours = VideoView::where('created_at', '>=', $startDate)
             ->select(
                 DB::raw('HOUR(created_at) as hour'),
@@ -300,8 +277,7 @@ class AnalyticsController extends Controller
             ->orderBy('hour')
             ->get();
 
-        // Most watched content types
-        $contentTypeStats = Video::select('content_type', DB::raw('COUNT(*) as video_count'))
+        $contentTypeStats = $this->videoRepo->query()->select('content_type', DB::raw('COUNT(*) as video_count'))
             ->withCount('views')
             ->groupBy('content_type')
             ->get();
@@ -319,15 +295,10 @@ class AnalyticsController extends Controller
         ]);
     }
 
-    /**
-     * Get revenue analytics (placeholder for future implementation)
-     */
     public function revenue(Request $request): JsonResponse
     {
         $period = $request->get('period', '30');
-        $startDate = now()->subDays($period);
 
-        // Placeholder data - will be implemented when payment system is integrated
         return response()->json([
             'success' => true,
             'data' => [
@@ -342,10 +313,7 @@ class AnalyticsController extends Controller
         ]);
     }
 
-    /**
-     * Calculate completion rate for a video
-     */
-    protected function calculateCompletionRate(Video $video): float
+    protected function calculateCompletionRate($video): float
     {
         $totalWatches = $video->watchHistory()->count();
         if ($totalWatches === 0) {
@@ -353,7 +321,7 @@ class AnalyticsController extends Controller
         }
 
         $completedWatches = $video->watchHistory()->where('is_completed', true)->count();
-        
+
         return round(($completedWatches / $totalWatches) * 100, 2);
     }
 }

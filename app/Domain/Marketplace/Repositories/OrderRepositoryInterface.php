@@ -13,6 +13,8 @@ interface OrderRepositoryInterface
     public function findPendingAutoRelease(): array;
     public function save(Order $order): Order;
     public function updateStatus(int $orderId, string $status): void;
+    public function updateOrderFields(int $orderId, array $data): void;
     public function markAsDelivered(int $orderId): void;
     public function markAsConfirmed(int $orderId): void;
+    public function orderNumberExists(string $orderNumber): bool;
 }

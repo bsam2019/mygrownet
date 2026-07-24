@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Models;
 
-use App\Models\MatrixPosition;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\MatrixPosition;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

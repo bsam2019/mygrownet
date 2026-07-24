@@ -2,10 +2,10 @@
 
 namespace App\Infrastructure\Persistence\Repositories;
 
-use App\Domain\Reward\Repositories\ReferralRepositoryInterface;
+use App\Domain\GrowNet\Reward\Repositories\ReferralRepositoryInterface;
 use App\Models\User;
-use App\Models\ReferralCommission;
-use App\Models\MatrixPosition;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\MatrixPosition;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 

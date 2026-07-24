@@ -1,10 +1,9 @@
 <?php
 
 namespace App\Http\Controllers\BizBoost;
-
 use App\Domain\Module\Services\SubscriptionService;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
+use App\Domain\BizBoost\Services\BusinessService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -15,7 +14,8 @@ class ApiTokenController extends Controller
     private const MODULE_ID = 'bizboost';
 
     public function __construct(
-        private SubscriptionService $subscriptionService
+        private SubscriptionService $subscriptionService,
+        private BusinessService $businessService,
     ) {}
 
     public function index(Request $request)
@@ -31,8 +31,8 @@ class ApiTokenController extends Controller
             ]);
         }
 
-        $business = $this->getBusiness($request);
-        
+        $business = $this->businessService->getBusinessOrFail($user->id);
+
         $tokens = DB::table('bizboost_api_tokens')
             ->where('business_id', $business->id)
             ->orderByDesc('created_at')
@@ -63,7 +63,7 @@ class ApiTokenController extends Controller
             'expires_in_days' => 'nullable|integer|min:1|max:365',
         ]);
 
-        $business = $this->getBusiness($request);
+        $business = $this->businessService->getBusinessOrFail($user->id);
         $token = Str::random(64);
 
         DB::table('bizboost_api_tokens')->insert([
@@ -71,38 +71,23 @@ class ApiTokenController extends Controller
             'name' => $validated['name'],
             'token' => hash('sha256', $token),
             'abilities' => json_encode($validated['abilities']),
-            'expires_at' => $validated['expires_in_days'] 
-                ? now()->addDays($validated['expires_in_days']) 
-                : null,
+            'expires_at' => $validated['expires_in_days'] ? now()->addDays($validated['expires_in_days']) : null,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        return back()->with([
-            'success' => 'API token created.',
-            'newToken' => $token, // Only shown once
-        ]);
+        return back()->with(['success' => 'API token created.', 'newToken' => $token]);
     }
 
     public function destroy(Request $request, $id)
     {
-        $business = $this->getBusiness($request);
-
-        DB::table('bizboost_api_tokens')
-            ->where('id', $id)
-            ->where('business_id', $business->id)
-            ->delete();
-
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
+        DB::table('bizboost_api_tokens')->where('id', $id)->where('business_id', $business->id)->delete();
         return back()->with('success', 'API token revoked.');
     }
 
     public function documentation()
     {
         return Inertia::render('BizBoost/Api/Documentation');
-    }
-
-    private function getBusiness(Request $request): BizBoostBusinessModel
-    {
-        return BizBoostBusinessModel::where('user_id', $request->user()->id)->firstOrFail();
     }
 }

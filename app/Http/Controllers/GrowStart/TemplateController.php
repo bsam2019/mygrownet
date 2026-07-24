@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\GrowStart;
 
 use App\Http\Controllers\Controller;
-use App\Models\GrowStart\Template;
+use App\Domain\GrowStart\Repositories\TemplateRepositoryInterface;
 use App\Domain\GrowStart\Repositories\JourneyRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -14,21 +14,16 @@ use Inertia\Response;
 class TemplateController extends Controller
 {
     public function __construct(
+        private TemplateRepositoryInterface $templateRepo,
         private JourneyRepositoryInterface $journeyRepository
     ) {}
 
     public function index(Request $request): Response
     {
         $journey = $this->journeyRepository->findActiveByUserId($request->user()->id);
+        $countryId = $journey ? $journey->getCountryId() : null;
 
-        $query = Template::query();
-
-        // Filter by country
-        if ($journey) {
-            $query->forCountry($journey->getCountryId());
-        }
-
-        $templates = $query->orderBy('name')->get();
+        $templates = $this->templateRepo->findAll($countryId);
 
         $categories = [
             ['value' => 'business_plan', 'label' => 'Business Plan'],
@@ -46,7 +41,11 @@ class TemplateController extends Controller
 
     public function show(Request $request, int $id): Response
     {
-        $template = Template::findOrFail($id);
+        $template = $this->templateRepo->findById($id);
+
+        if (!$template) {
+            abort(404);
+        }
 
         return Inertia::render('GrowStart/Templates/Preview', [
             'template' => $template,
@@ -55,41 +54,36 @@ class TemplateController extends Controller
 
     public function download(Request $request, int $id)
     {
-        $template = Template::findOrFail($id);
+        $template = $this->templateRepo->findById($id);
+
+        if (!$template) {
+            abort(404);
+        }
+
         $journey = $this->journeyRepository->findActiveByUserId($request->user()->id);
 
-        // Check premium access
-        if ($template->is_premium && (!$journey || !$journey->isPremium())) {
+        if ($template['is_premium'] && (!$journey || !$journey->isPremium())) {
             return back()->withErrors(['access' => 'Premium subscription required.']);
         }
 
-        // Increment download count
-        $template->incrementDownloads();
+        $this->templateRepo->incrementDownloads($id);
 
-        // Return file download
-        if (Storage::exists($template->file_path)) {
-            return Storage::download($template->file_path, $template->name . '.' . $template->file_type);
+        if (Storage::exists($template['file_path'])) {
+            return Storage::download($template['file_path'], $template['name'] . '.' . $template['file_type']);
         }
 
         return back()->withErrors(['file' => 'File not found.']);
     }
 
-    // API Methods
     public function apiIndex(Request $request): JsonResponse
     {
         $journey = $this->journeyRepository->findActiveByUserId($request->user()->id);
+        $countryId = $journey ? $journey->getCountryId() : null;
 
-        $query = Template::query();
-
-        if ($request->has('category')) {
-            $query->byCategory($request->category);
-        }
-
-        if ($journey) {
-            $query->forCountry($journey->getCountryId());
-        }
-
-        $templates = $query->orderBy('name')->get();
+        $templates = $this->templateRepo->findAll(
+            $countryId,
+            $request->has('category') ? $request->category : null
+        );
 
         return response()->json(['data' => $templates]);
     }

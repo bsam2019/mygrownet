@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Repositories;
 
-use App\Domain\Reward\Repositories\AssetRepository;
-use App\Domain\Reward\ValueObjects\RewardId;
-use App\Domain\Reward\ValueObjects\AssetType;
-use App\Domain\Reward\ValueObjects\AssetValue;
-use App\Domain\MLM\ValueObjects\UserId;
-use App\Domain\MLM\ValueObjects\TeamVolumeAmount;
-use App\Models\PhysicalReward;
-use App\Models\PhysicalRewardAllocation;
+use App\Domain\GrowNet\Reward\Repositories\AssetRepository;
+use App\Domain\GrowNet\Reward\ValueObjects\RewardId;
+use App\Domain\GrowNet\Reward\ValueObjects\AssetType;
+use App\Domain\GrowNet\Reward\ValueObjects\AssetValue;
+use App\Domain\GrowNet\MLM\ValueObjects\UserId;
+use App\Domain\GrowNet\MLM\ValueObjects\TeamVolumeAmount;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalReward;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalRewardAllocation;
 use App\Models\User;
-use App\Models\TeamVolume;
-use App\Models\TierQualification;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TeamVolume;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TierQualification;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 

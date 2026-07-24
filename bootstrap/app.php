@@ -79,8 +79,6 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('web')
                 ->group(base_path('routes/employee-portal.php'));
             Route::middleware('web')
-                ->group(base_path('routes/growbiz.php'));
-            Route::middleware('web')
                 ->group(base_path('routes/growfinance.php'));
             Route::middleware('web')
                 ->group(base_path('routes/pos.php'));
@@ -167,11 +165,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Handle GrowBiz domain exceptions
-        $exceptions->render(function (\App\Domain\GrowBiz\Exceptions\GrowBizException $e, $request) {
-            return \App\Domain\GrowBiz\Exceptions\Handler::render($e, $request);
-        });
-
         // Handle 419 CSRF/session expiry — redirect to login with a message
         $exceptions->render(function (TokenMismatchException $e, $request) {
             // Detect StockFlow subdomain

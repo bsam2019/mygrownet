@@ -6,7 +6,6 @@ namespace App\Domain\Employee\Services;
 
 use App\Domain\Employee\ValueObjects\EmployeeId;
 use App\Domain\Employee\Repositories\AttendanceRepositoryInterface;
-use App\Models\Employee\EmployeeAttendance;
 use DateTimeImmutable;
 use Illuminate\Support\Collection;
 
@@ -16,12 +15,12 @@ class AttendanceService
         private AttendanceRepositoryInterface $attendanceRepository
     ) {}
 
-    public function getTodayAttendance(EmployeeId $employeeId): ?EmployeeAttendance
+    public function getTodayAttendance(EmployeeId $employeeId): ?object
     {
         return $this->attendanceRepository->findTodayForEmployee($employeeId);
     }
 
-    public function clockIn(EmployeeId $employeeId): EmployeeAttendance
+    public function clockIn(EmployeeId $employeeId): object
     {
         $today = $this->getTodayAttendance($employeeId);
 
@@ -32,7 +31,7 @@ class AttendanceService
         return $this->attendanceRepository->clockIn($employeeId);
     }
 
-    public function clockOut(EmployeeId $employeeId): EmployeeAttendance
+    public function clockOut(EmployeeId $employeeId): ?object
     {
         $today = $this->getTodayAttendance($employeeId);
 
@@ -47,7 +46,7 @@ class AttendanceService
         return $this->attendanceRepository->clockOut($employeeId);
     }
 
-    public function startBreak(EmployeeId $employeeId): EmployeeAttendance
+    public function startBreak(EmployeeId $employeeId): ?object
     {
         $today = $this->getTodayAttendance($employeeId);
 
@@ -62,7 +61,7 @@ class AttendanceService
         return $this->attendanceRepository->startBreak($employeeId);
     }
 
-    public function endBreak(EmployeeId $employeeId): EmployeeAttendance
+    public function endBreak(EmployeeId $employeeId): ?object
     {
         $today = $this->getTodayAttendance($employeeId);
 
@@ -119,7 +118,7 @@ class AttendanceService
         ];
     }
 
-    private function determineStatus(?EmployeeAttendance $attendance): string
+    private function determineStatus(?object $attendance): string
     {
         if (!$attendance || !$attendance->clock_in) {
             return 'not_clocked_in';

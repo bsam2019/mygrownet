@@ -2,100 +2,126 @@
 
 namespace App\Domain\GrowFinance\Services;
 
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceBudgetModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceExpenseModel;
-use App\Models\User;
+use App\Domain\GrowFinance\Entities\Budget;
+use App\Domain\GrowFinance\Repositories\BudgetRepositoryInterface;
+use App\Domain\GrowFinance\Repositories\ExpenseRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class BudgetService
 {
+    public function __construct(
+        private BudgetRepositoryInterface $budgetRepo,
+        private ExpenseRepositoryInterface $expenseRepo,
+    ) {}
+
     /**
      * Get all budgets for a business
      */
-    public function getForBusiness(User $user, bool $activeOnly = true): \Illuminate\Database\Eloquent\Collection
+    public function getForBusiness(int $businessId, bool $activeOnly = true): array
     {
-        $query = GrowFinanceBudgetModel::forBusiness($user->id)
-            ->with('account');
+        $budgets = $activeOnly
+            ? $this->budgetRepo->findActive($businessId)
+            : $this->budgetRepo->findByBusiness($businessId);
 
-        if ($activeOnly) {
-            $query->active();
-        }
+        usort($budgets, fn(Budget $a, Budget $b) => ($a->endDate?->getTimestamp() ?? 0) <=> ($b->endDate?->getTimestamp() ?? 0));
 
-        return $query->orderBy('end_date')->get();
+        return array_map(fn(Budget $b) => $b->toArray(), $budgets);
     }
 
     /**
      * Get current period budgets
      */
-    public function getCurrentBudgets(User $user): \Illuminate\Database\Eloquent\Collection
+    public function getCurrentBudgets(int $businessId): array
     {
-        return GrowFinanceBudgetModel::forBusiness($user->id)
-            ->active()
-            ->current()
-            ->with('account')
-            ->get();
+        return array_map(
+            fn(Budget $b) => $b->toArray(),
+            $this->budgetRepo->findCurrent($businessId)
+        );
     }
 
     /**
      * Create a new budget
      */
-    public function create(User $user, array $data): GrowFinanceBudgetModel
+    public function create(int $businessId, array $data): array
     {
         $dates = $this->calculatePeriodDates($data['period'], $data['start_date'] ?? null);
 
-        $budget = GrowFinanceBudgetModel::create([
-            'business_id' => $user->id,
-            'name' => $data['name'],
-            'category' => $data['category'] ?? null,
-            'account_id' => $data['account_id'] ?? null,
-            'period' => $data['period'],
-            'start_date' => $dates['start'],
-            'end_date' => $data['end_date'] ?? $dates['end'],
-            'budgeted_amount' => $data['budgeted_amount'],
-            'alert_threshold' => $data['alert_threshold'] ?? 80,
-            'rollover_unused' => $data['rollover_unused'] ?? false,
-            'notes' => $data['notes'] ?? null,
-        ]);
+        $budget = $this->budgetRepo->save(new Budget(
+            id: null,
+            businessId: $businessId,
+            name: $data['name'],
+            category: $data['category'] ?? null,
+            accountId: $data['account_id'] ?? null,
+            period: $data['period'],
+            startDate: \DateTimeImmutable::createFromMutable($dates['start']),
+            endDate: isset($data['end_date'])
+                ? new \DateTimeImmutable($data['end_date'])
+                : \DateTimeImmutable::createFromMutable($dates['end']),
+            budgetedAmount: (float) $data['budgeted_amount'],
+            alertThreshold: (float) ($data['alert_threshold'] ?? 80),
+            rolloverUnused: (bool) ($data['rollover_unused'] ?? false),
+            notes: $data['notes'] ?? null,
+        ));
 
-        // Calculate initial spent amount
-        $this->recalculateSpent($budget);
+        $budget = $this->recalculateSpent($budget->id);
 
-        return $budget->fresh();
+        return $budget->toArray();
     }
 
     /**
      * Recalculate spent amount for a budget
      */
-    public function recalculateSpent(GrowFinanceBudgetModel $budget): void
+    public function recalculateSpent(int $budgetId): Budget
     {
-        $query = GrowFinanceExpenseModel::forBusiness($budget->business_id)
-            ->whereBetween('expense_date', [$budget->start_date, $budget->end_date]);
+        $budget = $this->budgetRepo->findById($budgetId);
+        if (!$budget) {
+            throw new \RuntimeException('Budget not found');
+        }
 
-        // Filter by category if set
+        $query = DB::table('growfinance_expenses')
+            ->where('business_id', $budget->businessId)
+            ->whereBetween('expense_date', [
+                $budget->startDate?->format('Y-m-d'),
+                $budget->endDate?->format('Y-m-d'),
+            ]);
+
         if ($budget->category) {
             $query->where('category', $budget->category);
         }
 
-        // Filter by account if set
-        if ($budget->account_id) {
-            $query->where('account_id', $budget->account_id);
+        if ($budget->accountId) {
+            $query->where('account_id', $budget->accountId);
         }
 
-        $spent = $query->sum('amount');
+        $spent = (float) $query->sum('amount');
 
-        $budget->update(['spent_amount' => $spent]);
+        return $this->budgetRepo->save(new Budget(
+            id: $budget->id,
+            businessId: $budget->businessId,
+            name: $budget->name,
+            category: $budget->category,
+            accountId: $budget->accountId,
+            period: $budget->period,
+            startDate: $budget->startDate,
+            endDate: $budget->endDate,
+            budgetedAmount: $budget->budgetedAmount,
+            spentAmount: $spent,
+            isActive: $budget->isActive,
+            rolloverUnused: $budget->rolloverUnused,
+            alertThreshold: $budget->alertThreshold,
+            notes: $budget->notes,
+            createdAt: $budget->createdAt,
+            updatedAt: null,
+        ));
     }
 
     /**
      * Recalculate all active budgets for a user
      */
-    public function recalculateAllBudgets(User $user): void
+    public function recalculateAllBudgets(int $businessId): void
     {
-        $budgets = GrowFinanceBudgetModel::forBusiness($user->id)
-            ->active()
-            ->current()
-            ->get();
+        $budgets = $this->budgetRepo->findCurrent($businessId);
 
         foreach ($budgets as $budget) {
             $this->recalculateSpent($budget);
@@ -105,39 +131,44 @@ class BudgetService
     /**
      * Get budget summary for dashboard
      */
-    public function getSummary(User $user): array
+    public function getSummary(int $businessId): array
     {
-        $budgets = $this->getCurrentBudgets($user);
+        $budgetArrays = $this->getCurrentBudgets($businessId);
 
-        $totalBudgeted = $budgets->sum('budgeted_amount');
-        $totalSpent = $budgets->sum('spent_amount');
-        $overBudget = $budgets->filter(fn($b) => $b->isOverBudget())->count();
-        $nearLimit = $budgets->filter(fn($b) => $b->isNearLimit())->count();
+        $budgets = array_map(fn(array $b) => Budget::reconstitute($b), $budgetArrays);
+
+        $totalBudgeted = array_sum(array_map(fn(Budget $b) => $b->budgetedAmount, $budgets));
+        $totalSpent = array_sum(array_map(fn(Budget $b) => $b->spentAmount, $budgets));
+        $overBudget = count(array_filter($budgets, fn(Budget $b) => $b->isOverBudget()));
+        $nearLimit = count(array_filter($budgets, fn(Budget $b) => $b->isNearLimit()));
 
         return [
-            'total_budgets' => $budgets->count(),
+            'total_budgets' => count($budgets),
             'total_budgeted' => $totalBudgeted,
             'total_spent' => $totalSpent,
             'total_remaining' => max(0, $totalBudgeted - $totalSpent),
-            'overall_percentage' => $totalBudgeted > 0 
-                ? round(($totalSpent / $totalBudgeted) * 100, 1) 
+            'overall_percentage' => $totalBudgeted > 0
+                ? round(($totalSpent / $totalBudgeted) * 100, 1)
                 : 0,
             'over_budget_count' => $overBudget,
             'near_limit_count' => $nearLimit,
-            'on_track_count' => $budgets->count() - $overBudget - $nearLimit,
+            'on_track_count' => count($budgets) - $overBudget - $nearLimit,
         ];
     }
 
     /**
      * Get budgets that need attention (over or near limit)
      */
-    public function getBudgetsNeedingAttention(User $user): \Illuminate\Database\Eloquent\Collection
+    public function getBudgetsNeedingAttention(int $businessId): array
     {
-        return GrowFinanceBudgetModel::forBusiness($user->id)
-            ->active()
-            ->current()
-            ->get()
-            ->filter(fn($b) => $b->isOverBudget() || $b->isNearLimit());
+        $budgets = $this->budgetRepo->findCurrent($businessId);
+
+        $filtered = array_filter(
+            $budgets,
+            fn(Budget $b) => $b->isOverBudget() || $b->isNearLimit()
+        );
+
+        return array_map(fn(Budget $b) => $b->toArray(), $filtered);
     }
 
     /**
@@ -170,28 +201,40 @@ class BudgetService
     /**
      * Create next period budget from existing one
      */
-    public function rolloverBudget(GrowFinanceBudgetModel $budget): GrowFinanceBudgetModel
+    public function rolloverBudget(int $budgetId): array
     {
-        $nextStart = $budget->end_date->copy()->addDay();
-        $dates = $this->calculatePeriodDates($budget->period, $nextStart->toDateString());
-
-        $carryover = 0;
-        if ($budget->rollover_unused && $budget->remaining_amount > 0) {
-            $carryover = $budget->remaining_amount;
+        $budget = $this->budgetRepo->findById($budgetId);
+        if (!$budget) {
+            throw new \RuntimeException('Budget not found');
         }
 
-        return GrowFinanceBudgetModel::create([
-            'business_id' => $budget->business_id,
-            'name' => $budget->name,
-            'category' => $budget->category,
-            'account_id' => $budget->account_id,
-            'period' => $budget->period,
-            'start_date' => $dates['start'],
-            'end_date' => $dates['end'],
-            'budgeted_amount' => $budget->budgeted_amount + $carryover,
-            'alert_threshold' => $budget->alert_threshold,
-            'rollover_unused' => $budget->rollover_unused,
-            'notes' => $budget->notes,
-        ]);
+        $nextStart = $budget->startDate?->add(new \DateInterval('P1D'));
+        if (!$nextStart) {
+            throw new \RuntimeException('Budget has no start date');
+        }
+
+        $dates = $this->calculatePeriodDates($budget->period ?? 'monthly', $nextStart->format('Y-m-d'));
+
+        $carryover = 0.0;
+        if ($budget->rolloverUnused && $budget->getRemainingAmount() > 0) {
+            $carryover = $budget->getRemainingAmount();
+        }
+
+        $newBudget = $this->budgetRepo->save(new Budget(
+            id: null,
+            businessId: $budget->businessId,
+            name: $budget->name,
+            category: $budget->category,
+            accountId: $budget->accountId,
+            period: $budget->period,
+            startDate: \DateTimeImmutable::createFromMutable($dates['start']),
+            endDate: \DateTimeImmutable::createFromMutable($dates['end']),
+            budgetedAmount: $budget->budgetedAmount + $carryover,
+            alertThreshold: $budget->alertThreshold,
+            rolloverUnused: $budget->rolloverUnused,
+            notes: $budget->notes,
+        ));
+
+        return $newBudget->toArray();
     }
 }

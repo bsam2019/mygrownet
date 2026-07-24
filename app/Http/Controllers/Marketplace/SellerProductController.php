@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Marketplace;
 use App\Http\Controllers\Controller;
 use App\Domain\Marketplace\Services\SellerService;
 use App\Domain\Marketplace\Services\ProductService;
+use App\Infrastructure\Persistence\Eloquent\Marketplace\MarketplaceSellerMedia;
 use App\Services\ImageProcessingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -31,7 +32,7 @@ class SellerProductController extends Controller
             'category_id' => $request->category,
         ];
 
-        $products = $this->productService->getBySeller($seller->id, $filters, 20);
+        $products = $this->productService->getBySeller($seller['id'], $filters, 20);
         $categories = $this->productService->getCategories();
 
         return Inertia::render('Marketplace/Seller/Products/Index', [
@@ -52,11 +53,11 @@ class SellerProductController extends Controller
             return redirect()->route('marketplace.seller.register');
         }
 
-        if (!$seller->canAcceptOrders()) {
-            $message = $seller->kyc_status === 'pending' 
+        if (!($seller['is_active'] && $seller['kyc_status'] === 'approved')) {
+            $message = $seller['kyc_status'] === 'pending'
                 ? 'Your account is under review. You can add products once your verification is approved.'
                 : 'Your account must be verified before adding products.';
-            
+
             return redirect()->route('marketplace.seller.products.index')
                 ->withErrors(['seller' => $message]);
         }
@@ -74,11 +75,10 @@ class SellerProductController extends Controller
     {
         $seller = $this->sellerService->getByUserId($request->user()->id);
 
-        if (!$seller || !$seller->canAcceptOrders()) {
+        if (!$seller || !($seller['is_active'] && $seller['kyc_status'] === 'approved')) {
             abort(403);
         }
 
-        // Log incoming request for debugging
         \Log::info('Product store request', [
             'has_files' => $request->hasFile('images'),
             'media_ids' => $request->media_ids,
@@ -93,51 +93,44 @@ class SellerProductController extends Controller
             'compare_price' => 'nullable|numeric|min:1|max:1000000',
             'stock_quantity' => 'required|integer|min:0|max:10000',
             'images' => 'nullable|array|max:8',
-            'images.*' => 'image|max:5120', // Removed dimensions validation - handled at media library upload
+            'images.*' => 'image|max:5120',
             'media_ids' => 'nullable|array|max:8',
             'media_ids.*' => 'integer|exists:marketplace_seller_media,id',
         ]);
 
-        // Build images array from both sources
         $images = [];
-        
-        // Add images from media library references first (already processed during upload)
+
         if (!empty($validated['media_ids'])) {
-            $mediaItems = \App\Models\Marketplace\MarketplaceSellerMedia::whereIn('id', $validated['media_ids'])
-                ->where('seller_id', $seller->id)
+            $mediaItems = MarketplaceSellerMedia::whereIn('id', $validated['media_ids'])
+                ->where('seller_id', $seller['id'])
                 ->get();
-            
+
             foreach ($mediaItems as $media) {
                 $images[] = $media->path;
             }
         }
-        
-        // Process new uploaded images
+
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
-                // Check if this is a cropped image from the editor (already validated)
                 $originalName = $file->getClientOriginalName();
                 $isCroppedImage = str_starts_with($originalName, 'cropped_');
-                
-                // Only validate dimensions for direct uploads (not cropped images)
+
                 if (!$isCroppedImage) {
                     $validation = $this->imageService->validateDimensions($file, 500, 500);
                     if (!$validation['valid']) {
                         return back()->withErrors(['images' => $validation['message']]);
                     }
                 }
-                
-                // Upload the image
+
                 $images[] = $this->imageService->uploadRaw($file);
             }
         }
-        
-        // Ensure at least one image is provided
+
         if (empty($images)) {
             return back()->withErrors(['images' => 'At least one product image is required.']);
         }
 
-        $product = $this->productService->create($seller->id, [
+        $product = $this->productService->create($seller['id'], [
             'name' => $validated['name'],
             'category_id' => $validated['category_id'],
             'description' => $validated['description'],
@@ -156,7 +149,7 @@ class SellerProductController extends Controller
         $seller = $this->sellerService->getByUserId($request->user()->id);
         $product = $this->productService->getById($id);
 
-        if (!$seller || !$product || $product->seller_id !== $seller->id) {
+        if (!$seller || !$product || $product['seller_id'] !== $seller['id']) {
             abort(404);
         }
 
@@ -173,7 +166,7 @@ class SellerProductController extends Controller
         $seller = $this->sellerService->getByUserId($request->user()->id);
         $product = $this->productService->getById($id);
 
-        if (!$seller || !$product || $product->seller_id !== $seller->id) {
+        if (!$seller || !$product || $product['seller_id'] !== $seller['id']) {
             abort(404);
         }
 
@@ -185,58 +178,49 @@ class SellerProductController extends Controller
             'compare_price' => 'nullable|numeric|min:1|max:1000000',
             'stock_quantity' => 'required|integer|min:0|max:10000',
             'images' => 'nullable|array|max:8',
-            'images.*' => 'image|max:5120', // Removed dimensions validation - handled at media library upload
+            'images.*' => 'image|max:5120',
             'existing_images' => 'nullable|array|max:8',
             'existing_images.*' => 'string',
             'media_ids' => 'nullable|array|max:8',
             'media_ids.*' => 'integer|exists:marketplace_seller_media,id',
         ]);
 
-        // Start with existing images that weren't removed
         $existingImages = $request->input('existing_images', []);
-        
-        // Ensure it's an array and filter out invalid entries
+
         if (!is_array($existingImages)) {
             $existingImages = $existingImages ? [$existingImages] : [];
         }
-        
-        // Filter to only valid string paths (not objects or empty strings)
+
         $images = array_filter($existingImages, function ($img) {
             return is_string($img) && !empty($img) && $img !== '[object Object]';
         });
 
-        // Add new uploaded images (validate and upload raw)
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
-                // Check if this is a cropped image from the editor (already validated)
                 $originalName = $file->getClientOriginalName();
                 $isCroppedImage = str_starts_with($originalName, 'cropped_');
-                
-                // Only validate dimensions for direct uploads (not cropped images)
+
                 if (!$isCroppedImage) {
                     $validation = $this->imageService->validateDimensions($file, 500, 500);
                     if (!$validation['valid']) {
                         return back()->withErrors(['images' => $validation['message']]);
                     }
                 }
-                
-                // Upload the image
+
                 $images[] = $this->imageService->uploadRaw($file);
             }
         }
-        
-        // Add images from media library references (already processed during upload)
+
         if (!empty($request->media_ids)) {
-            $mediaItems = \App\Models\Marketplace\MarketplaceSellerMedia::whereIn('id', $request->media_ids)
-                ->where('seller_id', $seller->id)
+            $mediaItems = MarketplaceSellerMedia::whereIn('id', $request->media_ids)
+                ->where('seller_id', $seller['id'])
                 ->get();
-            
+
             foreach ($mediaItems as $media) {
                 $images[] = $media->path;
             }
         }
 
-        // Ensure at least one image
         if (empty($images)) {
             return back()->withErrors(['images' => 'At least one product image is required.']);
         }
@@ -249,7 +233,7 @@ class SellerProductController extends Controller
             'compare_price' => isset($validated['compare_price']) && $validated['compare_price'] ? (int) ($validated['compare_price'] * 100) : null,
             'stock_quantity' => $validated['stock_quantity'],
             'images' => array_values($images),
-            'status' => in_array($product->status, ['rejected', 'changes_requested']) ? 'pending' : $product->status,
+            'status' => in_array($product['status'], ['rejected', 'changes_requested']) ? 'pending' : $product['status'],
         ]);
 
         return redirect()->route('marketplace.seller.products.index')
@@ -261,7 +245,7 @@ class SellerProductController extends Controller
         $seller = $this->sellerService->getByUserId($request->user()->id);
         $product = $this->productService->getById($id);
 
-        if (!$seller || !$product || $product->seller_id !== $seller->id) {
+        if (!$seller || !$product || $product['seller_id'] !== $seller['id']) {
             abort(404);
         }
 
@@ -271,23 +255,20 @@ class SellerProductController extends Controller
             ->with('success', 'Product deleted.');
     }
 
-    /**
-     * Submit an appeal for a rejected product
-     */
     public function appeal(Request $request, int $id)
     {
         $seller = $this->sellerService->getByUserId($request->user()->id);
         $product = $this->productService->getById($id);
 
-        if (!$seller || !$product || $product->seller_id !== $seller->id) {
+        if (!$seller || !$product || $product['seller_id'] !== $seller['id']) {
             abort(404);
         }
 
-        if ($product->status !== 'rejected') {
+        if ($product['status'] !== 'rejected') {
             return back()->withErrors(['appeal' => 'Only rejected products can be appealed.']);
         }
 
-        if ($product->appeal_message) {
+        if ($product['appeal_message']) {
             return back()->withErrors(['appeal' => 'This product has already been appealed.']);
         }
 
@@ -303,20 +284,12 @@ class SellerProductController extends Controller
         return back()->with('success', 'Appeal submitted. Our team will review your product again.');
     }
 
-    /**
-     * Process product images based on current phase configuration
-     * Returns array of image paths, or throws validation error
-     * 
-     * Note: Images from media library are already processed, so we only
-     * process truly new uploads (not cropped images from the editor)
-     */
     private function processProductImages(array $files, $seller): array
     {
         $phase = config('marketplace.images.processing_phase', 'phase2');
         $images = [];
 
         foreach ($files as $file) {
-            // Validate minimum dimensions (400x400)
             $validation = $this->imageService->validateDimensions($file, 400, 400);
             if (!$validation['valid']) {
                 throw new \Illuminate\Validation\ValidationException(
@@ -325,18 +298,14 @@ class SellerProductController extends Controller
                 );
             }
 
-            // Check if this is a cropped image from the editor (already optimized)
-            // Cropped images have specific naming pattern: cropped_*.jpg
             $originalName = $file->getClientOriginalName();
             $isCroppedImage = str_starts_with($originalName, 'cropped_');
-            
-            // If it's a cropped image, just upload without additional processing
+
             if ($isCroppedImage) {
                 $images[] = $this->imageService->uploadRaw($file);
                 continue;
             }
 
-            // Process new uploads based on phase
             $result = match ($phase) {
                 'mvp' => [
                     'original' => $this->imageService->uploadRaw($file),
@@ -345,11 +314,11 @@ class SellerProductController extends Controller
                 'phase3' => $this->imageService->uploadWithBackgroundRemoval(
                     $file,
                     'marketplace/products',
-                    $seller->trust_level === 'top' || $seller->trust_level === 'trusted'
+                    is_array($seller) ? ($seller['trust_level'] === 'top' || $seller['trust_level'] === 'trusted') : ($seller->trust_level === 'top' || $seller->trust_level === 'trusted')
                 ),
                 'phase4' => $this->imageService->uploadAdvanced($file, 'marketplace/products', [
                     'optimize' => true,
-                    'remove_background' => $seller->trust_level === 'top',
+                    'remove_background' => is_array($seller) ? $seller['trust_level'] === 'top' : $seller->trust_level === 'top',
                     'add_watermark' => config('marketplace.images.watermark.enabled', false),
                     'enhance' => config('marketplace.images.enhancement.enabled', false),
                     'is_featured' => false,
@@ -359,7 +328,6 @@ class SellerProductController extends Controller
                 ],
             };
 
-            // Store the primary image path (use 'medium' for display, 'original' as fallback)
             $images[] = $result['medium'] ?? $result['original'];
         }
 

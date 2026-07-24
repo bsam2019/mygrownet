@@ -73,6 +73,47 @@ final class Goal
         );
     }
 
+    public static function reconstitute(array $data): self
+    {
+        $instance = new self(
+            $data['employee_id'],
+            $data['title'],
+            $data['category'],
+            $data['start_date'],
+            $data['due_date'],
+            $data['description'] ?? null,
+            $data['milestones'] ?? []
+        );
+        $instance->id = $data['id'] ?? 0;
+        $instance->progress = $data['progress'] ?? 0;
+        $instance->status = $data['status'] ?? GoalStatus::pending();
+        $instance->completedAt = $data['completed_at'] ?? null;
+        $instance->approvedBy = $data['approved_by'] ?? null;
+        $instance->createdAt = $data['created_at'] ?? new DateTimeImmutable();
+        $instance->updatedAt = $data['updated_at'] ?? new DateTimeImmutable();
+        return $instance;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'employee_id' => $this->employeeId,
+            'title' => $this->title,
+            'description' => $this->description,
+            'category' => $this->category,
+            'progress' => $this->progress,
+            'status' => $this->status,
+            'start_date' => $this->startDate,
+            'due_date' => $this->dueDate,
+            'completed_at' => $this->completedAt,
+            'milestones' => $this->milestones,
+            'approved_by' => $this->approvedBy,
+            'created_at' => $this->createdAt,
+            'updated_at' => $this->updatedAt,
+        ];
+    }
+
     public function updateProgress(int $progress): void
     {
         $this->progress = min(100, max(0, $progress));

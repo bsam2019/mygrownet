@@ -38,7 +38,7 @@ class PWASettingsController extends Controller
     public function update(Request $request)
     {
         $request->validate([
-            'pwa_default_app' => 'nullable|string|in:grownet,growbuilder,bizboost,growfinance,growbiz,marketplace,wallet,admin,dashboard',
+            'pwa_default_app' => 'nullable|string|in:grownet,growbuilder,bizboost,growfinance,marketplace,wallet,admin,dashboard',
         ]);
 
         $user = auth()->user();

@@ -7,8 +7,10 @@ use App\Application\Ubumi\UseCases\CreateCheckIn\CreateCheckInCommand;
 use App\Application\Ubumi\UseCases\CreateCheckIn\CreateCheckInHandler;
 use App\Domain\Ubumi\Repositories\CheckInRepositoryInterface;
 use App\Domain\Ubumi\Repositories\PersonRepositoryInterface;
-use App\Domain\Ubumi\ValueObjects\PersonId;
+use App\Domain\Ubumi\Repositories\FamilyRepositoryInterface;
+use App\Domain\Ubumi\Services\AlertService;
 use App\Domain\Ubumi\ValueObjects\FamilyId;
+use App\Domain\Ubumi\ValueObjects\PersonId;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -18,7 +20,8 @@ class CheckInController extends Controller
         private readonly CreateCheckInHandler $createCheckInHandler,
         private readonly CheckInRepositoryInterface $checkInRepository,
         private readonly PersonRepositoryInterface $personRepository,
-        private readonly \App\Domain\Ubumi\Repositories\FamilyRepositoryInterface $familyRepository
+        private readonly FamilyRepositoryInterface $familyRepository,
+        private readonly AlertService $alertService
     ) {}
 
     /**
@@ -157,17 +160,7 @@ class CheckInController extends Controller
         }
 
         // Get active alerts
-        $alerts = \Illuminate\Support\Facades\DB::table('ubumi_alerts')
-            ->where('family_id', $family->getId()->toString())
-            ->where('status', 'pending')
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(fn($alert) => [
-                'id' => $alert->id,
-                'message' => $alert->message,
-                'created_at' => $alert->created_at,
-            ])
-            ->toArray();
+        $alerts = $this->alertService->getPendingAlertsByFamily(FamilyId::fromString($family->getId()->toString()));
 
         return Inertia::render('Ubumi/CheckIns/FamilyDashboard', [
             'family' => [
@@ -186,14 +179,7 @@ class CheckInController extends Controller
      */
     public function acknowledgeAlert(string $alertId)
     {
-        \Illuminate\Support\Facades\DB::table('ubumi_alerts')
-            ->where('id', $alertId)
-            ->update([
-                'status' => 'acknowledged',
-                'acknowledged_by' => auth()->id(),
-                'acknowledged_at' => now(),
-                'updated_at' => now(),
-            ]);
+        $this->alertService->acknowledgeAlert($alertId, auth()->id());
 
         return back()->with('success', 'Alert acknowledged');
     }

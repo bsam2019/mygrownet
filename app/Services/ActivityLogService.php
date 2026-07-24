@@ -20,8 +20,8 @@ class ActivityLogService
                 ->with(['user', 'loggable'])
                 ->when(isset($filters['type']), function (Builder $query) use ($filters) {
                     match ($filters['type']) {
-                        'investments' => $query->where('loggable_type', 'App\\Models\\Investment'),
-                        'withdrawals' => $query->where('loggable_type', 'App\\Models\\Withdrawal'),
+                        'investments' => $query->where('loggable_type', 'App\Models\Investment'),
+                        'withdrawals' => $query->where('loggable_type', 'App\Models\Withdrawal'),
                         'users' => $query->whereIn('action', ['register', 'login', 'profile_update']),
                         default => null
                     };
@@ -54,8 +54,8 @@ class ActivityLogService
                 ->with(['user', 'loggable'])
                 ->when(isset($filters['type']), function (Builder $query) use ($filters) {
                     match ($filters['type']) {
-                        'investments' => $query->where('loggable_type', 'App\\Models\\Investment'),
-                        'withdrawals' => $query->where('loggable_type', 'App\\Models\\Withdrawal'),
+                        'investments' => $query->where('loggable_type', 'App\Models\Investment'),
+                        'withdrawals' => $query->where('loggable_type', 'App\Models\Withdrawal'),
                         'users' => $query->whereIn('action', ['register', 'login', 'profile_update']),
                         default => null
                     };
@@ -63,7 +63,7 @@ class ActivityLogService
                 ->when(isset($filters['status']), function (Builder $query) use ($filters) {
                     $query->whereHasMorph(
                         'loggable',
-                        ['App\\Models\\Investment', 'App\\Models\\Withdrawal'],
+                        ['App\Models\Investment', 'App\Models\Withdrawal'],
                         function (Builder $query) use ($filters) {
                             $query->where('status', $filters['status']);
                         }

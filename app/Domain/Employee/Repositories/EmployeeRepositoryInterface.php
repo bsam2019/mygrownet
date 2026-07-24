@@ -10,14 +10,16 @@ use Illuminate\Support\Collection;
 interface EmployeeRepositoryInterface
 {
     public function findById(EmployeeId $id): ?object;
-    
+
     public function findByUserId(int $userId): ?object;
-    
+
     public function findByDepartment(int $departmentId): Collection;
-    
+
     public function findByManager(EmployeeId $managerId): Collection;
-    
+
     public function getActiveEmployees(): Collection;
-    
+
+    public function query();
+
     public function save(object $employee): void;
 }

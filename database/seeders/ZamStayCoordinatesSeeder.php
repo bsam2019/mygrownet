@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\ZamStay\ZamStayProperty;
+use App\Infrastructure\Persistence\Eloquent\ZamStay\ZamStayPropertyModel;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -31,7 +31,7 @@ class ZamStayCoordinatesSeeder extends Seeder
         ];
 
         $updated = 0;
-        ZamStayProperty::chunk(50, function ($properties) use ($coords, &$updated) {
+        ZamStayPropertyModel::chunk(50, function ($properties) use ($coords, &$updated) {
             foreach ($properties as $property) {
                 if (isset($coords[$property->location])) {
                     [$lat, $lng] = $coords[$property->location];

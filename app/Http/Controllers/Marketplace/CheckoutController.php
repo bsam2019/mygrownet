@@ -77,7 +77,7 @@ class CheckoutController extends Controller
             // Clear cart after successful order
             $this->cartService->clearCart();
 
-            return redirect()->route('marketplace.orders.payment', $order->id)
+            return redirect()->route('marketplace.orders.payment', $order['id'])
                 ->with('success', 'Order created! Please complete payment.');
 
         } catch (\Exception $e) {
@@ -89,20 +89,20 @@ class CheckoutController extends Controller
     {
         $order = $this->orderService->getById($orderId);
 
-        if (!$order || $order->buyer_id !== auth()->id()) {
+        if (!$order || $order['buyer_id'] !== auth()->id()) {
             abort(404);
         }
 
-        if ($order->status !== 'pending') {
-            return redirect()->route('marketplace.orders.show', $order->id);
+        if ($order['status'] !== 'pending') {
+            return redirect()->route('marketplace.orders.show', $order['id']);
         }
 
         return Inertia::render('Marketplace/Payment', [
             'order' => [
-                'id' => $order->id,
-                'order_number' => $order->order_number,
-                'total' => $order->total,
-                'formatted_total' => 'K' . number_format($order->total / 100, 2),
+                'id' => $order['id'],
+                'order_number' => $order['order_number'],
+                'total' => $order['total'],
+                'formatted_total' => 'K' . number_format($order['total'] / 100, 2),
             ],
         ]);
     }
@@ -115,19 +115,19 @@ class CheckoutController extends Controller
 
         $order = $this->orderService->getById($orderId);
 
-        if (!$order || $order->buyer_id !== auth()->id()) {
+        if (!$order || $order['buyer_id'] !== auth()->id()) {
             abort(404);
         }
 
-        if ($order->status !== 'pending') {
-            return redirect()->route('marketplace.orders.show', $order->id);
+        if ($order['status'] !== 'pending') {
+            return redirect()->route('marketplace.orders.show', $order['id']);
         }
 
         try {
             // In production, verify payment with payment gateway
             $this->orderService->markAsPaid($orderId, $request->payment_reference);
 
-            return redirect()->route('marketplace.orders.show', $order->id)
+            return redirect()->route('marketplace.orders.show', $order['id'])
                 ->with('success', 'Payment confirmed! The seller has been notified.');
 
         } catch (\Exception $e) {

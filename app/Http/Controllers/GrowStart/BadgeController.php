@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\GrowStart;
 
 use App\Http\Controllers\Controller;
-use App\Models\GrowStart\Badge;
+use App\Domain\GrowStart\Repositories\BadgeRepositoryInterface;
 use App\Domain\GrowStart\Repositories\JourneyRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -13,6 +13,7 @@ use Inertia\Response;
 class BadgeController extends Controller
 {
     public function __construct(
+        private BadgeRepositoryInterface $badgeRepo,
         private JourneyRepositoryInterface $journeyRepository
     ) {}
 
@@ -20,13 +21,11 @@ class BadgeController extends Controller
     {
         $journey = $this->journeyRepository->findActiveByUserId($request->user()->id);
 
-        $allBadges = Badge::all();
-        
+        $allBadges = $this->badgeRepo->findAll();
+
         $earnedBadges = collect([]);
         if ($journey) {
-            $earnedBadges = Badge::whereHas('journeys', function ($q) use ($journey) {
-                $q->where('growstart_user_badges.user_journey_id', $journey->id());
-            })->get();
+            $earnedBadges = $this->badgeRepo->findEarnedByJourneyId($journey->id());
         }
 
         $earnedBadgeIds = $earnedBadges->pluck('id')->toArray();
@@ -50,38 +49,35 @@ class BadgeController extends Controller
             ]);
         }
 
-        $earnedBadges = Badge::whereHas('journeys', function ($q) use ($journey) {
-            $q->where('user_journey_id', $journey->id());
-        })->get();
+        $earnedBadges = $this->badgeRepo->findEarnedByJourneyId($journey->id());
 
         return Inertia::render('GrowStart/Badges/Earned', [
             'badges' => $earnedBadges,
         ]);
     }
 
-    // API Methods
     public function apiIndex(Request $request): JsonResponse
     {
         $journey = $this->journeyRepository->findActiveByUserId($request->user()->id);
 
-        $allBadges = Badge::all();
-        
+        $allBadges = $this->badgeRepo->findAll();
+
         $earnedBadgeIds = [];
         if ($journey) {
-            $earnedBadgeIds = Badge::whereHas('journeys', function ($q) use ($journey) {
-                $q->where('user_journey_id', $journey->id());
-            })->pluck('id')->toArray();
+            $earnedBadgeIds = $this->badgeRepo->findEarnedByJourneyId($journey->id())
+                ->pluck('id')
+                ->toArray();
         }
 
         $badges = $allBadges->map(function ($badge) use ($earnedBadgeIds) {
             return [
-                'id' => $badge->id,
-                'name' => $badge->name,
-                'slug' => $badge->slug,
-                'description' => $badge->description,
-                'icon' => $badge->icon,
-                'points' => $badge->points,
-                'earned' => in_array($badge->id, $earnedBadgeIds),
+                'id' => $badge['id'],
+                'name' => $badge['name'],
+                'slug' => $badge['slug'],
+                'description' => $badge['description'],
+                'icon' => $badge['icon'],
+                'points' => $badge['points'],
+                'earned' => in_array($badge['id'], $earnedBadgeIds),
             ];
         });
 

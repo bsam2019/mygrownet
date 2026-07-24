@@ -11,15 +11,15 @@ use App\Domain\Employee\ValueObjects\TaskStatus;
 use App\Domain\Employee\ValueObjects\EmployeeId;
 use App\Domain\Employee\Repositories\TaskRepositoryInterface;
 use App\Domain\Employee\Exceptions\TaskException;
-use App\Models\Employee\Employee;
-use App\Models\Employee\EmployeeNotification;
+use App\Domain\Employee\Repositories\EmployeeRepositoryInterface;
 use DateTimeImmutable;
 use Illuminate\Support\Collection;
 
 class TaskManagementService
 {
     public function __construct(
-        private TaskRepositoryInterface $taskRepository
+        private TaskRepositoryInterface $taskRepository,
+        private EmployeeRepositoryInterface $employeeRepository
     ) {}
 
     public function createTask(
@@ -47,44 +47,38 @@ class TaskManagementService
 
         $this->taskRepository->save($task);
 
-        // Send notification to the assigned employee
         $this->notifyTaskAssignment($task, $assignedTo, $assignedBy);
 
         return $task;
     }
 
-    /**
-     * Send notification when a task is assigned to an employee
-     */
     private function notifyTaskAssignment(Task $task, EmployeeId $assignedTo, ?EmployeeId $assignedBy): void
     {
-        $employee = Employee::find($assignedTo->toInt());
+        $employee = $this->employeeRepository->findById($assignedTo);
         if (!$employee) {
             return;
         }
 
         $assignerName = 'System';
         if ($assignedBy) {
-            $assigner = Employee::find($assignedBy->toInt());
+            $assigner = $this->employeeRepository->findById($assignedBy);
             $assignerName = $assigner ? $assigner->full_name : 'A manager';
         }
 
-        $dueDateText = $task->getDueDate() 
+        $dueDateText = $task->getDueDate()
             ? ' Due: ' . $task->getDueDate()->format('M j, Y')
             : '';
 
-        EmployeeNotification::notify(
-            $employee,
-            'task_assigned',
-            'New Task Assigned',
-            "{$assignerName} assigned you a new task: \"{$task->getTitle()}\".{$dueDateText}",
-            [
+        $employee->notifications()->create([
+            'type' => 'task_assigned',
+            'title' => 'New Task Assigned',
+            'message' => "{$assignerName} assigned you a new task: \"{$task->getTitle()}\".{$dueDateText}",
+            'data' => [
                 'task_title' => $task->getTitle(),
                 'priority' => $task->getPriority()->getValue(),
                 'assigned_by' => $assignedBy?->toInt(),
             ],
-            route('employee.portal.tasks.index')
-        );
+        ]);
     }
 
     public function getTasksForEmployee(EmployeeId $employeeId, array $filters = []): Collection
@@ -155,7 +149,7 @@ class TaskManagementService
         array $tags = []
     ): Task {
         $task = $this->getTaskById($taskId, $employeeId);
-        
+
         $task->updateDetails($title, $description, $dueDate, $estimatedHours, $tags);
         $this->taskRepository->save($task);
 
@@ -165,7 +159,7 @@ class TaskManagementService
     public function changePriority(TaskId $taskId, EmployeeId $employeeId, string $priority): Task
     {
         $task = $this->getTaskById($taskId, $employeeId);
-        
+
         $task->changePriority(TaskPriority::fromString($priority));
         $this->taskRepository->save($task);
 
@@ -175,7 +169,7 @@ class TaskManagementService
     public function addComment(TaskId $taskId, EmployeeId $employeeId, string $comment): Task
     {
         $task = $this->getTaskById($taskId, $employeeId);
-        
+
         $task->addNotes($comment);
         $this->taskRepository->save($task);
 
@@ -204,47 +198,38 @@ class TaskManagementService
         ];
     }
 
-    /**
-     * Reassign a task to a different employee with notification
-     */
     public function reassignTask(TaskId $taskId, EmployeeId $newAssignee, ?EmployeeId $reassignedBy = null): void
     {
         $task = $this->taskRepository->findById($taskId);
-        
+
         if (!$task) {
             throw TaskException::taskNotFound($taskId->toString());
         }
 
         $oldAssignee = $task->getAssignedTo();
-        
-        // Update the task assignment in the database directly
-        \App\Models\Employee\EmployeeTask::where('id', $taskId->toInt())
-            ->update(['assigned_to' => $newAssignee->toInt()]);
 
-        // Notify the new assignee
+        $this->taskRepository->save($task);
+
         $this->notifyTaskAssignment($task, $newAssignee, $reassignedBy);
 
-        // Notify the old assignee that the task was reassigned
         if (!$oldAssignee->equals($newAssignee)) {
-            $oldEmployee = Employee::find($oldAssignee->toInt());
+            $oldEmployee = $this->employeeRepository->findById($oldAssignee);
             if ($oldEmployee) {
                 $reassignerName = 'System';
                 if ($reassignedBy) {
-                    $reassigner = Employee::find($reassignedBy->toInt());
+                    $reassigner = $this->employeeRepository->findById($reassignedBy);
                     $reassignerName = $reassigner ? $reassigner->full_name : 'A manager';
                 }
 
-                EmployeeNotification::notify(
-                    $oldEmployee,
-                    'task_reassigned',
-                    'Task Reassigned',
-                    "Your task \"{$task->getTitle()}\" has been reassigned by {$reassignerName}.",
-                    [
+                $oldEmployee->notifications()->create([
+                    'type' => 'task_reassigned',
+                    'title' => 'Task Reassigned',
+                    'message' => "Your task \"{$task->getTitle()}\" has been reassigned by {$reassignerName}.",
+                    'data' => [
                         'task_title' => $task->getTitle(),
                         'reassigned_by' => $reassignedBy?->toInt(),
                     ],
-                    null
-                );
+                ]);
             }
         }
     }

@@ -10,7 +10,7 @@ use App\Models\RaffleEntry;
 use App\Models\RecognitionEvent;
 use App\Models\Certificate;
 use App\Models\User;
-use App\Models\Achievement;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\Achievement;
 use App\Models\InvestmentTier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Carbon\Carbon;

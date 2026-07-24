@@ -2,10 +2,10 @@
 
 namespace App\Domain\BMS\Services\GrowFinanceSync;
 
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceAccountModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceExpenseModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceInvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceJournalEntryModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceAccountModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceExpenseModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceInvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceJournalEntryModel;
 use App\Infrastructure\Persistence\Eloquent\BMS\GrowFinanceSyncConfigModel;
 use App\Domain\GrowFinance\ValueObjects\AccountType;
 use Carbon\Carbon;

@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitPurchaseModel;
-use App\Models\StarterKitContentAccess;
-use App\Models\MemberAchievement;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\StarterKitContentAccess;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\MemberAchievement;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

@@ -383,7 +383,7 @@ class EarningsService
      */
     private function getReferralCountAtLevel(User $user, int $level): int
     {
-        return \App\Models\UserNetwork::where('referrer_id', $user->id)
+        return \App\Infrastructure\Persistence\Eloquent\GrowNet\UserNetwork::where('referrer_id', $user->id)
             ->where('level', $level)
             ->count();
     }

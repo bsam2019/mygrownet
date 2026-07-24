@@ -18,6 +18,6 @@ class SupportServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        $this->loadMigrationsFrom(database_path('migrations/support'));
     }
 }

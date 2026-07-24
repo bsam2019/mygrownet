@@ -37,7 +37,7 @@ class OrderController extends Controller
     {
         $order = $this->orderService->getById($id);
 
-        if (!$order || $order->buyer_id !== auth()->id()) {
+        if (!$order || $order['buyer_id'] !== auth()->id()) {
             abort(404);
         }
 
@@ -50,7 +50,7 @@ class OrderController extends Controller
     {
         $order = $this->orderService->getById($id);
 
-        if (!$order || $order->buyer_id !== auth()->id()) {
+        if (!$order || $order['buyer_id'] !== auth()->id()) {
             abort(404);
         }
 
@@ -72,7 +72,7 @@ class OrderController extends Controller
 
         $order = $this->orderService->getById($id);
 
-        if (!$order || $order->buyer_id !== auth()->id()) {
+        if (!$order || $order['buyer_id'] !== auth()->id()) {
             abort(404);
         }
 
@@ -94,7 +94,7 @@ class OrderController extends Controller
 
         $order = $this->orderService->getById($id);
 
-        if (!$order || $order->buyer_id !== auth()->id()) {
+        if (!$order || $order['buyer_id'] !== auth()->id()) {
             abort(404);
         }
 

@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\TeamVolume;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TeamVolume;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

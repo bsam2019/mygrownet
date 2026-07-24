@@ -4,7 +4,7 @@ namespace App\Application\Services\Learning;
 
 use App\Infrastructure\Persistence\Eloquent\Learning\LearningModuleModel;
 use App\Infrastructure\Persistence\Eloquent\Learning\LearningCompletionModel;
-use App\Services\LgrActivityTrackingService;
+use App\Domain\GrowNet\Services\LgrActivityTrackingService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 

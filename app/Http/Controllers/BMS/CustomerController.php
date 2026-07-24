@@ -4,6 +4,7 @@ namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
 use App\Domain\BMS\Core\Services\CustomerService;
+use App\Domain\BMS\Repositories\CustomerRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,7 +13,8 @@ use Inertia\Response;
 class CustomerController extends Controller
 {
     public function __construct(
-        private CustomerService $customerService
+        private CustomerService $customerService,
+        private CustomerRepositoryInterface $customerRepo
     ) {}
 
     public function index(Request $request): Response
@@ -106,7 +108,10 @@ class CustomerController extends Controller
 
         $userId = $request->user()->cmsUser->id;
 
-        $this->customerService->updateCustomer($customer, $validated, $userId);
+        $entity = $this->customerRepo->findById($customer->id);
+        if ($entity) {
+            $this->customerService->updateCustomer($entity, $validated, $userId);
+        }
 
         return redirect()
             ->route('bms.customers.show', $customer->id)
@@ -115,7 +120,11 @@ class CustomerController extends Controller
 
     public function destroy(CustomerModel $customer)
     {
-        // Check if customer has jobs
+        $entity = $this->customerRepo->findById($customer->id);
+        if ($entity && !$this->customerService->canDeleteCustomer($entity)) {
+            return back()->with('error', 'Cannot delete customer with existing jobs');
+        }
+
         if ($customer->jobs()->exists()) {
             return back()->with('error', 'Cannot delete customer with existing jobs');
         }
@@ -130,21 +139,19 @@ class CustomerController extends Controller
     public function uploadDocument(Request $request, CustomerModel $customer)
     {
         $request->validate([
-            'file' => 'required|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120', // 5MB max
+            'file' => 'required|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
             'document_type' => 'required|in:contract,design,quote,other',
             'description' => 'nullable|string|max:255',
         ]);
 
         $file = $request->file('file');
         $companyId = $request->user()->cmsUser->company_id;
-        
-        // Generate S3 key following the same pattern as GrowStorage
+
         $filename = $file->getClientOriginalName();
         $sanitizedFilename = preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($filename));
         $uuid = \Illuminate\Support\Str::uuid();
         $s3Key = "cms/companies/{$companyId}/customers/{$customer->id}/documents/{$uuid}_{$sanitizedFilename}";
-        
-        // Store file to S3 (DigitalOcean Spaces)
+
         \Illuminate\Support\Facades\Storage::disk('s3')->put(
             $s3Key,
             file_get_contents($file->getRealPath()),
@@ -153,13 +160,12 @@ class CustomerController extends Controller
                 'visibility' => 'private',
             ]
         );
-        
-        // Create document record
+
         $customer->documents()->create([
             'company_id' => $companyId,
             'document_type' => $request->document_type,
             'file_name' => $file->getClientOriginalName(),
-            'file_path' => $s3Key, // Store S3 key instead of public path
+            'file_path' => $s3Key,
             'file_type' => $file->getClientMimeType(),
             'file_size' => $file->getSize(),
             'description' => $request->description,
@@ -183,7 +189,6 @@ class CustomerController extends Controller
 
         $companyId = $request->user()->cmsUser->company_id;
 
-        // If setting as primary, unset other primary contacts
         if ($validated['is_primary'] ?? false) {
             $customer->contacts()->update(['is_primary' => false]);
         }
@@ -210,7 +215,6 @@ class CustomerController extends Controller
 
         $contact = $customer->contacts()->findOrFail($contactId);
 
-        // If setting as primary, unset other primary contacts
         if ($validated['is_primary'] ?? false) {
             $customer->contacts()->where('id', '!=', $contactId)->update(['is_primary' => false]);
         }

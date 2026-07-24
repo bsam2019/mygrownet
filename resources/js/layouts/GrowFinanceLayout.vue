@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
-import ToastContainer from '@/Components/GrowBiz/ToastContainer.vue';
-import GlobalLoadingBar from '@/Components/GrowBiz/GlobalLoadingBar.vue';
+import ToastContainer from '@/Components/Shared/ToastContainer.vue';
+import GlobalLoadingBar from '@/Components/Shared/GlobalLoadingBar.vue';
 import PwaInstallPrompt from '@/Components/GrowFinance/PwaInstallPrompt.vue';
 import RecordSaleModal from '@/Components/GrowFinance/RecordSaleModal.vue';
 import RecordExpenseModal from '@/Components/GrowFinance/RecordExpenseModal.vue';

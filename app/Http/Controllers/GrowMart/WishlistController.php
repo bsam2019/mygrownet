@@ -20,18 +20,18 @@ class WishlistController extends Controller
         $items = $this->wishlistService->getWishlist(auth()->id());
         $cartSummary = $this->cartService->getSummary(auth()->id());
 
-        $formatted = $items->through(fn($item) => [
-            'id' => $item->id,
-            'product_id' => $item->product_id,
-            'name' => $item->product->name,
-            'slug' => $item->product->slug,
-            'unit' => $item->product->unit,
-            'price' => $item->product->price,
-            'price_formatted' => 'K' . number_format($item->product->price / 100, 2),
-            'image' => $item->product->images->first()?->path,
-            'in_stock' => $item->product->total_stock > 0,
-            'created_at' => $item->created_at->diffForHumans(),
-        ]);
+        $formatted = array_map(fn($item) => [
+            'id' => $item['id'],
+            'product_id' => $item['product_id'],
+            'name' => $item['product']['name'] ?? 'Unknown',
+            'slug' => $item['product']['slug'] ?? '',
+            'unit' => $item['product']['unit'] ?? '',
+            'price' => $item['product']['price'] ?? 0,
+            'price_formatted' => 'K' . number_format(($item['product']['price'] ?? 0) / 100, 2),
+            'image' => $item['product']['images'][0]['path'] ?? null,
+            'in_stock' => ($item['product']['total_stock'] ?? 0) > 0,
+            'created_at' => \Carbon\Carbon::parse($item['created_at'])->diffForHumans(),
+        ], $items['data'] ?? []);
 
         return Inertia::render('GrowMart/Wishlist/Index', [
             'items' => $formatted,

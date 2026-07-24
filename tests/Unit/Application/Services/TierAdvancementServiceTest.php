@@ -7,7 +7,7 @@ use App\Application\Services\TierAdvancementService;
 use App\Application\UseCases\MLM\ProcessTierAdvancementUseCase;
 use App\Models\User;
 use App\Models\InvestmentTier;
-use App\Models\TierQualification;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TierQualification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class TierAdvancementServiceTest extends TestCase

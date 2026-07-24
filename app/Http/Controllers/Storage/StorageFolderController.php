@@ -3,74 +3,88 @@
 namespace App\Http\Controllers\Storage;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Storage\Persistence\Eloquent\StorageFolder;
-use App\Infrastructure\Storage\Persistence\Eloquent\StorageFile;
+use App\Domain\Storage\Repositories\StorageFolderRepositoryInterface;
+use App\Domain\Storage\Repositories\StorageFileRepositoryInterface;
+use App\Domain\Storage\Entities\StorageFolder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class StorageFolderController extends Controller
 {
+    public function __construct(
+        private StorageFolderRepositoryInterface $folderRepo,
+        private StorageFileRepositoryInterface $fileRepo
+    ) {}
+
     public function index(Request $request)
     {
         $parentId = $request->query('parent_id');
         $userId = auth()->id();
 
-        $folders = StorageFolder::forUser($userId)
-            ->inFolder($parentId)
-            ->orderBy('name')
-            ->get();
+        $folders = array_map(fn($f) => [
+            'id' => $f->getId(),
+            'name' => $f->getName(),
+            'parent_id' => $f->getParentId(),
+            'created_at' => null,
+            'updated_at' => null,
+        ], $this->folderRepo->findByUserId($userId, $parentId));
 
-        $files = StorageFile::forUser($userId)
-            ->inFolder($parentId)
-            ->notDeleted()
-            ->orderBy('original_name')
-            ->get();
+        $files = array_map(function ($f) {
+            return [
+                'id' => $f->getId(),
+                'original_name' => $f->getOriginalName(),
+                'extension' => $f->getExtension(),
+                'mime_type' => $f->getMimeType()->getValue(),
+                'size_bytes' => $f->getSize()->toBytes(),
+                'folder_id' => $f->getFolderId(),
+                'created_at' => null,
+                'updated_at' => null,
+            ];
+        }, $this->fileRepo->findByUserId($userId, $parentId));
 
         return response()->json([
             'folders' => $folders,
-            'files' => $files->map(function ($file) {
-                return [
-                    'id' => $file->id,
-                    'original_name' => $file->original_name,
-                    'extension' => $file->extension,
-                    'mime_type' => $file->mime_type,
-                    'size_bytes' => $file->size_bytes,
-                    'formatted_size' => $file->formatted_size,
-                    'folder_id' => $file->folder_id,
-                    'created_at' => $file->created_at,
-                    'updated_at' => $file->updated_at,
-                ];
-            }),
+            'files' => $files,
         ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'parent_id' => 'nullable|uuid|exists:storage_folders,id',
+            'parent_id' => 'nullable|string',
             'name' => 'required|string|max:255',
         ]);
 
-        // Check if folder with same name exists in parent
-        $exists = StorageFolder::forUser(auth()->id())
-            ->where('parent_id', $validated['parent_id'] ?? null)
-            ->where('name', $validated['name'])
-            ->exists();
+        $userId = auth()->id();
+        $parentId = $validated['parent_id'] ?? null;
 
-        if ($exists) {
-            return response()->json([
-                'error' => 'A folder with this name already exists'
-            ], 422);
+        $existingFolders = $this->folderRepo->findByUserId($userId, $parentId);
+        $exists = false;
+        foreach ($existingFolders as $f) {
+            if ($f->getName() === $validated['name']) {
+                $exists = true;
+                break;
+            }
         }
 
-        $folder = StorageFolder::create([
-            'id' => Str::uuid(),
-            'user_id' => auth()->id(),
-            'parent_id' => $validated['parent_id'] ?? null,
-            'name' => $validated['name'],
-        ]);
+        if ($exists) {
+            return response()->json(['error' => 'A folder with this name already exists'], 422);
+        }
 
-        return response()->json($folder, 201);
+        $folder = StorageFolder::create(
+            id: (string) Str::uuid(),
+            userId: $userId,
+            parentId: $parentId,
+            name: $validated['name']
+        );
+
+        $this->folderRepo->save($folder);
+
+        return response()->json([
+            'id' => $folder->getId(),
+            'name' => $folder->getName(),
+            'parent_id' => $folder->getParentId(),
+        ], 201);
     }
 
     public function update(Request $request, string $folderId)
@@ -79,70 +93,68 @@ class StorageFolderController extends Controller
             'name' => 'required|string|max:255',
         ]);
 
-        $folder = StorageFolder::findOrFail($folderId);
+        $folder = $this->folderRepo->findById($folderId);
 
-        if ($folder->user_id !== auth()->id()) {
+        if (!$folder || !$folder->belongsToUser(auth()->id())) {
             abort(403);
         }
 
-        // Check if folder with same name exists in parent
-        $exists = StorageFolder::forUser(auth()->id())
-            ->where('parent_id', $folder->parent_id)
-            ->where('name', $validated['name'])
-            ->where('id', '!=', $folderId)
-            ->exists();
-
-        if ($exists) {
-            return response()->json([
-                'error' => 'A folder with this name already exists'
-            ], 422);
+        $existingFolders = $this->folderRepo->findByUserId(auth()->id(), $folder->getParentId());
+        foreach ($existingFolders as $f) {
+            if ($f->getName() === $validated['name'] && $f->getId() !== $folderId) {
+                return response()->json(['error' => 'A folder with this name already exists'], 422);
+            }
         }
 
-        $folder->update($validated);
+        $folder->rename($validated['name']);
+        $this->folderRepo->save($folder);
 
-        return response()->json($folder);
+        return response()->json([
+            'id' => $folder->getId(),
+            'name' => $folder->getName(),
+            'parent_id' => $folder->getParentId(),
+        ]);
     }
 
     public function move(Request $request, string $folderId)
     {
         $validated = $request->validate([
-            'new_parent_id' => 'nullable|uuid|exists:storage_folders,id',
+            'new_parent_id' => 'nullable|string',
         ]);
 
-        $folder = StorageFolder::findOrFail($folderId);
+        $folder = $this->folderRepo->findById($folderId);
 
-        if ($folder->user_id !== auth()->id()) {
+        if (!$folder || !$folder->belongsToUser(auth()->id())) {
             abort(403);
         }
 
-        // Prevent moving folder into itself or its descendants
-        if ($this->isDescendant($validated['new_parent_id'], $folderId)) {
-            return response()->json([
-                'error' => 'Cannot move folder into itself or its descendants'
-            ], 422);
+        if ($this->isDescendant($validated['new_parent_id'] ?? null, $folderId)) {
+            return response()->json(['error' => 'Cannot move folder into itself or its descendants'], 422);
         }
 
-        $folder->update(['parent_id' => $validated['new_parent_id']]);
+        $folder->moveTo($validated['new_parent_id'] ?? null);
+        $this->folderRepo->save($folder);
 
-        return response()->json($folder);
+        return response()->json([
+            'id' => $folder->getId(),
+            'name' => $folder->getName(),
+            'parent_id' => $folder->getParentId(),
+        ]);
     }
 
     public function destroy(string $folderId)
     {
-        $folder = StorageFolder::findOrFail($folderId);
+        $folder = $this->folderRepo->findById($folderId);
 
-        if ($folder->user_id !== auth()->id()) {
+        if (!$folder || !$folder->belongsToUser(auth()->id())) {
             abort(403);
         }
 
-        // Check if folder is empty
-        if (!$folder->isEmpty()) {
-            return response()->json([
-                'error' => 'Folder must be empty before deletion'
-            ], 422);
+        if ($this->folderRepo->hasChildren($folderId) || $this->folderRepo->hasFiles($folderId)) {
+            return response()->json(['error' => 'Folder must be empty before deletion'], 422);
         }
 
-        $folder->delete();
+        $this->folderRepo->delete($folder);
 
         return response()->json(['success' => true]);
     }
@@ -157,11 +169,11 @@ class StorageFolderController extends Controller
             return true;
         }
 
-        $parent = StorageFolder::find($potentialParentId);
-        if (!$parent || !$parent->parent_id) {
+        $parent = $this->folderRepo->findById($potentialParentId);
+        if (!$parent || !$parent->getParentId()) {
             return false;
         }
 
-        return $this->isDescendant($parent->parent_id, $folderId);
+        return $this->isDescendant($parent->getParentId(), $folderId);
     }
 }

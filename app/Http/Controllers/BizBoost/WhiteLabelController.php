@@ -4,7 +4,7 @@ namespace App\Http\Controllers\BizBoost;
 
 use App\Domain\Module\Services\SubscriptionService;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
+use App\Domain\BizBoost\Services\BusinessService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,7 +13,8 @@ class WhiteLabelController extends Controller
     private const MODULE_ID = 'bizboost';
 
     public function __construct(
-        private SubscriptionService $subscriptionService
+        private SubscriptionService $subscriptionService,
+        private BusinessService $businessService,
     ) {}
 
     public function index(Request $request)
@@ -29,29 +30,20 @@ class WhiteLabelController extends Controller
             ]);
         }
 
-        $business = $this->getBusiness($request);
-        $config = json_decode($business->white_label_config ?? '{}', true);
+        $business = $this->businessService->getBusinessOrFail($user->id);
 
         return Inertia::render('BizBoost/WhiteLabel/Index', [
-            'settings' => [
-                'custom_domain' => $config['custom_domain'] ?? null,
-                'logo_url' => !empty($config['custom_logo']) ? asset('storage/' . $config['custom_logo']) : null,
-                'favicon_url' => $config['favicon_url'] ?? null,
-                'primary_color' => $config['primary_color'] ?? '#7c3aed',
-                'secondary_color' => $config['secondary_color'] ?? '#4f46e5',
-                'hide_branding' => $config['hide_powered_by'] ?? false,
-                'custom_css' => $config['custom_css'] ?? null,
-            ],
-            'hasWhiteLabelAccess' => true,
-            'previewUrl' => route('bizboost.public.business', $business->slug),
+            'business' => $business->toArray(),
         ]);
     }
 
     public function update(Request $request)
     {
         $user = $request->user();
-        if (!$this->subscriptionService->hasFeature($user, 'white_label', self::MODULE_ID)) {
-            return back()->withErrors(['access' => 'White-label requires Business tier.']);
+        $hasAccess = $this->subscriptionService->hasFeature($user, 'white_label', self::MODULE_ID);
+
+        if (!$hasAccess) {
+            return back()->with('error', 'White label feature requires a Business+ plan.');
         }
 
         $validated = $request->validate([
@@ -59,45 +51,17 @@ class WhiteLabelController extends Controller
             'secondary_color' => 'nullable|string|max:7',
             'accent_color' => 'nullable|string|max:7',
             'font_family' => 'nullable|string|max:100',
-            'logo_position' => 'nullable|in:left,center,right',
-            'hide_powered_by' => 'boolean',
-            'custom_css' => 'nullable|string|max:5000',
+            'custom_css' => 'nullable|string|max:10000',
+            'custom_js' => 'nullable|string|max:10000',
+            'show_powered_by' => 'boolean',
             'custom_domain' => 'nullable|string|max:255',
-            'favicon_url' => 'nullable|url|max:500',
-            'og_image_url' => 'nullable|url|max:500',
+            'custom_logo' => 'nullable|image|mimes:jpeg,png,jpg,webp,svg|max:2048',
+            'favicon' => 'nullable|image|mimes:ico,png,svg|max:1024',
         ]);
 
-        $business = $this->getBusiness($request);
-        $business->white_label_config = json_encode($validated);
-        $business->save();
+        $business = $this->businessService->getBusinessOrFail($user->id);
+        $this->businessService->updateBusiness($business->id, $validated);
 
-        return back()->with('success', 'White-label settings updated.');
-    }
-
-    public function uploadLogo(Request $request)
-    {
-        $user = $request->user();
-        if (!$this->subscriptionService->hasFeature($user, 'white_label', self::MODULE_ID)) {
-            return back()->withErrors(['access' => 'White-label requires Business tier.']);
-        }
-
-        $request->validate([
-            'logo' => 'required|image|max:2048',
-        ]);
-
-        $business = $this->getBusiness($request);
-        $path = $request->file('logo')->store('bizboost/logos', 'public');
-
-        $config = json_decode($business->white_label_config ?? '{}', true);
-        $config['custom_logo'] = $path;
-        $business->white_label_config = json_encode($config);
-        $business->save();
-
-        return back()->with('success', 'Logo uploaded.');
-    }
-
-    private function getBusiness(Request $request): BizBoostBusinessModel
-    {
-        return BizBoostBusinessModel::where('user_id', $request->user()->id)->firstOrFail();
+        return back()->with('success', 'White label settings updated.');
     }
 }

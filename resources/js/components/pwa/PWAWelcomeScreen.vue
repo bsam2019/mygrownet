@@ -5,7 +5,7 @@ import AppLogoIcon from '@/components/AppLogoIcon.vue';
 
 interface Props {
     /** Module name for branding */
-    module?: 'mygrownet' | 'bizboost' | 'growbiz' | 'growfinance';
+    module?: 'mygrownet' | 'bizboost' | 'growfinance';
     /** Auto-dismiss delay in milliseconds */
     duration?: number;
     /** Session storage key to track if shown */
@@ -42,13 +42,6 @@ const moduleConfig = computed(() => {
             tagline: 'Boost Your Business Growth',
             gradient: 'from-violet-600 via-purple-500 to-fuchsia-600',
             accentColor: 'text-violet-200',
-            logoColor: 'text-white'
-        },
-        growbiz: {
-            name: 'GrowBiz',
-            tagline: 'Manage Your Team Efficiently',
-            gradient: 'from-emerald-600 via-green-500 to-teal-600',
-            accentColor: 'text-emerald-200',
             logoColor: 'text-white'
         },
         growfinance: {

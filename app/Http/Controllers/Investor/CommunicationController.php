@@ -133,11 +133,8 @@ class CommunicationController extends Controller
         }
 
         $investorId = $investor->getId();
-        $investorAccount = \App\Models\Investor\InvestorAccount::find($investorId);
 
-        $myFeedback = $investorAccount 
-            ? $this->communicationService->getInvestorFeedback($investorAccount->id)
-            : collect();
+        $myFeedback = $this->communicationService->getInvestorFeedback($investorId);
 
         return Inertia::render('Investor/Feedback', [
             'investor' => [

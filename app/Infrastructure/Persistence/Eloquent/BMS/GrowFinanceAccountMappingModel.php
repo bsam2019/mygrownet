@@ -2,7 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Eloquent\BMS;
 
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceAccountModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceAccountModel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 

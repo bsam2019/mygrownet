@@ -5,6 +5,7 @@ namespace App\Http\Controllers\GrowMart;
 use App\Http\Controllers\Controller;
 use App\Domain\GrowMart\Services\OrderService;
 use App\Domain\GrowMart\Services\CartService;
+use App\Domain\GrowMart\Repositories\OrderRepositoryInterface;
 use App\Domain\Payment\Gateways\NOWPaymentsGateway;
 use App\Domain\Payment\DTOs\CryptoPaymentRequest;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ class PaymentController extends Controller
     public function __construct(
         private readonly OrderService $orderService,
         private readonly CartService $cartService,
+        private readonly OrderRepositoryInterface $orderRepository,
         private readonly NOWPaymentsGateway $nowPayments,
     ) {}
 
@@ -71,7 +73,7 @@ class PaymentController extends Controller
                 'status' => 'pending',
                 'payment_method' => $validated['payment_method'],
                 'payment_reference' => $validated['payment_reference'],
-                'payment_submitted_at' => now(),
+                'payment_submitted_at' => now()->toDateTimeString(),
                 'payment_status' => 'pending_verification',
             ];
 
@@ -82,11 +84,11 @@ class PaymentController extends Controller
                 $updates['payment_notes'] = $validated['notes'];
             }
 
-            $order->update($updates);
+            $this->orderRepository->update($order['id'], $updates);
 
             session()->forget('growmart.checkout');
 
-            return redirect()->route('growmart.orders.show', $order->id)
+            return redirect()->route('growmart.orders.show', $order['id'])
                 ->with('success', 'Order placed! Payment submitted for verification. We will confirm your payment shortly.');
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
@@ -107,33 +109,33 @@ class PaymentController extends Controller
         try {
             $order = $this->orderService->createOrder(auth()->id(), $checkoutData);
 
-            $order->update(['payment_method' => 'crypto']);
+            $this->orderRepository->update($order['id'], ['payment_method' => 'crypto']);
 
-            $amountInKw = $order->total / 100;
+            $amountInKw = $order['total'] / 100;
             $response = $this->nowPayments->createCryptoInvoice(new CryptoPaymentRequest(
                 amount: $amountInKw,
                 currency: 'ZMW',
-                reference: "GM-{$order->id}",
+                reference: "GM-{$order['id']}",
                 customerEmail: auth()->user()?->email,
-                description: "GrowMart Order #{$order->order_number}"
+                description: "GrowMart Order #{$order['order_number']}"
             ));
 
             if ($response->success) {
-                $order->update([
-                    'payment_details' => array_merge($order->payment_details ?? [], [
-                        'nowpayments_invoice_id' => $response->transactionId,
-                        'nowpayments_invoice_url' => $response->rawResponse['invoice_url'] ?? null,
-                        'nowpayments_pay_address' => $response->rawResponse['pay_address'] ?? null,
-                        'nowpayments_pay_amount' => $response->rawResponse['pay_amount'] ?? null,
-                        'nowpayments_pay_currency' => $response->rawResponse['pay_currency'] ?? null,
-                        'nowpayments_price_amount' => $response->rawResponse['price_amount'] ?? null,
-                        'nowpayments_price_currency' => $response->rawResponse['price_currency'] ?? null,
-                        'nowpayments_created_at' => now()->toIso8601String(),
-                    ]),
+                $paymentDetails = array_merge($order['payment_details'] ?? [], [
+                    'nowpayments_invoice_id' => $response->transactionId,
+                    'nowpayments_invoice_url' => $response->rawResponse['invoice_url'] ?? null,
+                    'nowpayments_pay_address' => $response->rawResponse['pay_address'] ?? null,
+                    'nowpayments_pay_amount' => $response->rawResponse['pay_amount'] ?? null,
+                    'nowpayments_pay_currency' => $response->rawResponse['pay_currency'] ?? null,
+                    'nowpayments_price_amount' => $response->rawResponse['price_amount'] ?? null,
+                    'nowpayments_price_currency' => $response->rawResponse['price_currency'] ?? null,
+                    'nowpayments_created_at' => now()->toIso8601String(),
                 ]);
 
+                $this->orderRepository->update($order['id'], ['payment_details' => $paymentDetails]);
+
                 Log::info('GrowMart crypto invoice created', [
-                    'order_id' => $order->id,
+                    'order_id' => $order['id'],
                     'invoice_id' => $response->transactionId,
                     'invoice_url' => $response->rawResponse['invoice_url'] ?? null,
                 ]);
@@ -142,7 +144,7 @@ class PaymentController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'order_id' => $order->id,
+                    'order_id' => $order['id'],
                     'invoice_url' => $response->rawResponse['invoice_url'] ?? null,
                     'pay_address' => $response->rawResponse['pay_address'] ?? null,
                     'pay_amount' => $response->rawResponse['pay_amount'] ?? null,
@@ -152,11 +154,11 @@ class PaymentController extends Controller
             }
 
             Log::error('GrowMart crypto invoice creation failed', [
-                'order_id' => $order->id,
+                'order_id' => $order['id'],
                 'message' => $response->message,
             ]);
 
-            $order->update(['status' => 'cancelled']);
+            $this->orderRepository->update($order['id'], ['status' => 'cancelled']);
 
             return response()->json([
                 'success' => false,

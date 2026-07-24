@@ -4,48 +4,35 @@ namespace App\Http\Controllers\BizBoost;
 
 use App\Http\Controllers\Controller;
 use App\Domain\Module\Services\SubscriptionService;
-use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
-use App\Infrastructure\Persistence\Eloquent\BizBoostTemplateModel;
+use App\Domain\BizBoost\Services\BusinessService;
+use App\Domain\BizBoost\Repositories\TemplateRepositoryInterface;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class IndustryKitController extends Controller
 {
     public function __construct(
-        private SubscriptionService $subscriptionService
+        private SubscriptionService $subscriptionService,
+        private BusinessService $businessService,
+        private TemplateRepositoryInterface $templateRepo,
     ) {}
 
-    public function index(Request $request): Response
+    public function index(Request $request)
     {
-        $business = $this->getBusiness($request);
-        
-        // Check if user has industry_kits feature
-        $hasAccess = $this->subscriptionService->hasFeature(
-            $request->user(), 'industry_kits', 'bizboost'
-        );
-
-        // Get available industry kits
-        $industryKits = $this->getIndustryKits();
-
-        // Get user's current industry
-        $currentIndustry = $business->industry;
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
+        $hasAccess = $this->subscriptionService->hasFeature($request->user(), 'industry_kits', 'bizboost');
 
         return Inertia::render('BizBoost/IndustryKits/Index', [
-            'industryKits' => $industryKits,
-            'currentIndustry' => $currentIndustry,
+            'industryKits' => $this->getIndustryKits(),
+            'currentIndustry' => $business->industry,
             'hasAccess' => $hasAccess,
         ]);
     }
 
-    public function show(Request $request, string $industry): Response
+    public function show(Request $request, string $industry)
     {
-        $business = $this->getBusiness($request);
-        
-        // Check access
-        $hasAccess = $this->subscriptionService->hasFeature(
-            $request->user(), 'industry_kits', 'bizboost'
-        );
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
+        $hasAccess = $this->subscriptionService->hasFeature($request->user(), 'industry_kits', 'bizboost');
 
         if (!$hasAccess) {
             return Inertia::render('BizBoost/FeatureUpgradeRequired', [
@@ -56,46 +43,33 @@ class IndustryKitController extends Controller
         }
 
         $kit = $this->getIndustryKit($industry);
-
         if (!$kit) {
             abort(404, 'Industry kit not found.');
         }
 
-        // Get templates for this industry
-        $templates = BizBoostTemplateModel::where('industry', $industry)
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->get();
+        $templates = $this->templateRepo->findByBusiness($business->id);
 
         return Inertia::render('BizBoost/IndustryKits/Show', [
             'kit' => $kit,
             'templates' => $templates,
-            'business' => $business,
+            'business' => $business->toArray(),
         ]);
     }
 
     public function applyKit(Request $request, string $industry)
     {
-        $business = $this->getBusiness($request);
-        
-        // Check access
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
+
         if (!$this->subscriptionService->hasFeature($request->user(), 'industry_kits', 'bizboost')) {
             return back()->with('error', 'Industry Kits require Basic plan or higher.');
         }
 
-        // Validate the industry exists
         $kit = $this->getIndustryKit($industry);
         if (!$kit) {
             return back()->with('error', 'Invalid industry kit selected.');
         }
 
-        // Update business industry
-        $business->update(['industry' => $industry]);
-
-        // Also update the business profile if it exists
-        if ($business->profile) {
-            $business->profile->touch();
-        }
+        $this->businessService->updateBusiness($business->id, ['industry' => $industry]);
 
         return redirect()->route('bizboost.industry-kits.show', $industry)
             ->with('success', "Industry kit '{$kit['name']}' applied successfully! Your templates and suggestions are now customized for your business.");
@@ -323,8 +297,5 @@ class IndustryKitController extends Controller
         return collect($kits)->firstWhere('id', $industry);
     }
 
-    private function getBusiness(Request $request): BizBoostBusinessModel
-    {
-        return BizBoostBusinessModel::where('user_id', $request->user()->id)->firstOrFail();
-    }
+    
 }

@@ -32,7 +32,7 @@ class Benefit extends Model
     public function starterKits(): BelongsToMany
     {
         return $this->belongsToMany(
-            \App\Models\StarterKitPurchase::class,
+            \App\Infrastructure\Persistence\Eloquent\GrowNet\StarterKitPurchase::class,
             'starter_kit_benefits',
             'benefit_id',
             'starter_kit_id'

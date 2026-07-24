@@ -5,54 +5,34 @@ namespace App\Http\Controllers\BizBoost;
 use App\Domain\BizBoost\Services\OrderNotificationService;
 use App\Domain\BizBoost\Services\WhatsAppCatalogService;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
-use App\Infrastructure\Persistence\Eloquent\BizBoostIntegrationModel;
-use App\Infrastructure\Persistence\Eloquent\BizBoostOrderModel;
-use App\Infrastructure\Persistence\Eloquent\BizBoostOrderItemModel;
-use App\Infrastructure\Persistence\Eloquent\BizBoostProductModel;
+use App\Domain\BizBoost\Services\BusinessService;
+use App\Domain\BizBoost\Repositories\ProductRepositoryInterface;
+use App\Domain\BizBoost\Repositories\IntegrationRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class ShopController extends Controller
 {
+    public function __construct(
+        private BusinessService $businessService,
+        private ProductRepositoryInterface $productRepo,
+        private IntegrationRepositoryInterface $integrationRepo,
+    ) {}
+
     public function shopPage(Request $request, string $slug)
     {
-        $business = BizBoostBusinessModel::where('slug', $slug)
-            ->where('is_active', true)
-            ->with('profile')
-            ->firstOrFail();
-
-        $categories = $business->products()
-            ->where('is_active', true)
-            ->whereNotNull('category')
-            ->distinct()
-            ->pluck('category')
-            ->toArray();
-
-        $query = $business->products()
-            ->where('is_active', true)
-            ->with('images');
-
-        if ($request->category) {
-            $query->where('category', $request->category);
-        }
-        if ($request->search) {
-            $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', "%{$request->search}%")
-                  ->orWhere('description', 'like', "%{$request->search}%");
-            });
+        $business = $this->businessService->findBusinessBySlug($slug);
+        if (!$business || !$business->isActive) {
+            abort(404);
         }
 
-        $products = $query->orderBy('is_featured', 'desc')
-            ->orderBy('sort_order')
-            ->paginate(20)
-            ->withQueryString();
-
+        $categories = $this->productRepo->getCategories($business->id);
+        $products = $this->productRepo->findActiveByBusiness($business->id, $request->only(['category', 'search']));
         $cart = session()->get('cart_' . $slug, []);
 
         return Inertia::render('BizBoost/Public/Shop', [
-            'business' => $business->load('profile'),
+            'business' => $business->toArray(),
             'products' => $products,
             'categories' => $categories,
             'cart' => $cart,
@@ -62,33 +42,22 @@ class ShopController extends Controller
 
     public function productDetail(string $slug, int $productId)
     {
-        $business = BizBoostBusinessModel::where('slug', $slug)
-            ->where('is_active', true)
-            ->firstOrFail();
+        $business = $this->businessService->findBusinessBySlug($slug);
+        if (!$business || !$business->isActive) {
+            abort(404);
+        }
 
-        $product = $business->products()
-            ->where('is_active', true)
-            ->with('images')
-            ->findOrFail($productId);
+        $product = $this->productRepo->findById($productId);
+        if (!$product) {
+            abort(404);
+        }
 
-        $related = $business->products()
-            ->where('is_active', true)
-            ->where('id', '!=', $productId)
-            ->where(function ($q) use ($product) {
-                if ($product->category) {
-                    $q->where('category', $product->category);
-                }
-            })
-            ->with('images')
-            ->inRandomOrder()
-            ->take(4)
-            ->get();
-
+        $related = $this->productRepo->findActiveByBusiness($business->id, ['exclude' => $productId]);
         $cart = session()->get('cart_' . $slug, []);
 
         return Inertia::render('BizBoost/Public/ProductDetail', [
-            'business' => $business->load('profile'),
-            'product' => $product,
+            'business' => $business->toArray(),
+            'product' => $product->toArray(),
             'relatedProducts' => $related,
             'cart' => $cart,
         ]);
@@ -108,18 +77,20 @@ class ShopController extends Controller
         if (isset($cart[$productId])) {
             $cart[$productId]['quantity'] += $quantity;
         } else {
-            $product = BizBoostProductModel::findOrFail($productId);
+            $product = $this->productRepo->findById($productId);
+            if (!$product) {
+                return back()->with('error', 'Product not found.');
+            }
             $cart[$productId] = [
                 'id' => $product->id,
                 'name' => $product->name,
-                'price' => $product->sale_price ?? $product->price,
-                'image_url' => $product->image_url,
+                'price' => $product->salePrice ?? $product->price,
+                'image_url' => $product->imageUrl,
                 'quantity' => $quantity,
             ];
         }
 
         session()->put('cart_' . $slug, $cart);
-
         return back()->with('success', 'Item added to cart.');
     }
 
@@ -132,37 +103,33 @@ class ShopController extends Controller
 
         $cart = session()->get('cart_' . $slug, []);
         $productId = $request->product_id;
-        $quantity = $request->quantity;
 
-        if ($quantity < 1) {
+        if ($request->quantity < 1) {
             unset($cart[$productId]);
         } else {
-            $cart[$productId]['quantity'] = $quantity;
+            $cart[$productId]['quantity'] = $request->quantity;
         }
 
         session()->put('cart_' . $slug, $cart);
-
         return back();
     }
 
     public function checkoutPage(Request $request, string $slug)
     {
-        $business = BizBoostBusinessModel::where('slug', $slug)
-            ->where('is_active', true)
-            ->with('profile')
-            ->firstOrFail();
+        $business = $this->businessService->findBusinessBySlug($slug);
+        if (!$business || !$business->isActive) {
+            abort(404);
+        }
 
         $cart = session()->get('cart_' . $slug, []);
-
         if (empty($cart)) {
-            return redirect()->route('bizboost.public.shop', $slug)
-                ->with('error', 'Your cart is empty.');
+            return redirect()->route('bizboost.public.shop', $slug)->with('error', 'Your cart is empty.');
         }
 
         $subtotal = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
 
         return Inertia::render('BizBoost/Public/Checkout', [
-            'business' => $business->load('profile'),
+            'business' => $business->toArray(),
             'cart' => $cart,
             'subtotal' => $subtotal,
             'delivery_fee' => 0,
@@ -180,12 +147,12 @@ class ShopController extends Controller
             'payment_method' => 'required|string|in:airtel_money,mtn_money,cash_on_delivery,bank_transfer',
         ]);
 
-        $business = BizBoostBusinessModel::where('slug', $slug)
-            ->where('is_active', true)
-            ->firstOrFail();
+        $business = $this->businessService->findBusinessBySlug($slug);
+        if (!$business || !$business->isActive) {
+            abort(404);
+        }
 
         $cart = session()->get('cart_' . $slug, []);
-
         if (empty($cart)) {
             return back()->with('error', 'Your cart is empty.');
         }
@@ -193,7 +160,7 @@ class ShopController extends Controller
         $subtotal = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
 
         $order = DB::transaction(function () use ($business, $cart, $subtotal, $validated) {
-            $order = BizBoostOrderModel::create([
+            $orderId = DB::table('bizboost_orders')->insertGetId([
                 'business_id' => $business->id,
                 'customer_name' => $validated['customer_name'],
                 'customer_phone' => $validated['customer_phone'],
@@ -208,63 +175,64 @@ class ShopController extends Controller
                 'payment_status' => 'pending',
                 'order_status' => 'pending',
                 'source' => 'direct_link',
-                'meta' => ['cart_snapshot' => $cart],
+                'meta' => json_encode(['cart_snapshot' => $cart]),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
             foreach ($cart as $item) {
-                BizBoostOrderItemModel::create([
-                    'order_id' => $order->id,
+                DB::table('bizboost_order_items')->insert([
+                    'order_id' => $orderId,
                     'product_id' => $item['id'],
                     'product_name' => $item['name'],
                     'unit_price' => $item['price'],
                     'quantity' => $item['quantity'],
                     'subtotal' => $item['price'] * $item['quantity'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]);
             }
 
-            return $order;
+            return $orderId;
         });
 
         session()->forget('cart_' . $slug);
 
-        // Send WhatsApp confirmation
         try {
-            app(OrderNotificationService::class)->sendOrderConfirmation($order);
+            app(OrderNotificationService::class)->sendOrderConfirmation(['id' => $order]);
         } catch (\Exception $e) {
-            // Notification failure shouldn't block order placement
         }
 
-        return redirect()->route('bizboost.public.order-confirmation', [
-            'slug' => $slug,
-            'order' => $order->id,
-        ]);
+        return redirect()->route('bizboost.public.order-confirmation', ['slug' => $slug, 'order' => $order]);
     }
 
     public function orderConfirmation(string $slug, int $orderId)
     {
-        $business = BizBoostBusinessModel::where('slug', $slug)
-            ->where('is_active', true)
-            ->firstOrFail();
+        $business = $this->businessService->findBusinessBySlug($slug);
+        if (!$business || !$business->isActive) {
+            abort(404);
+        }
 
-        $order = BizBoostOrderModel::where('business_id', $business->id)
-            ->with('items')
-            ->findOrFail($orderId);
+        $order = DB::table('bizboost_orders')->where('id', $orderId)->where('business_id', $business->id)->first();
+        if (!$order) {
+            abort(404);
+        }
+
+        $items = DB::table('bizboost_order_items')->where('order_id', $orderId)->get();
 
         return Inertia::render('BizBoost/Public/OrderConfirmation', [
-            'business' => $business->load('profile'),
+            'business' => $business->toArray(),
             'order' => $order,
+            'items' => $items,
         ]);
     }
 
-    /**
-     * Business owner: view orders.
-     */
     public function orders(Request $request)
     {
-        $business = $this->getBusiness($request);
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
 
-        $orders = $business->orders()
-            ->with('items')
+        $orders = DB::table('bizboost_orders')
+            ->where('business_id', $business->id)
             ->when($request->status, fn($q, $s) => $q->where('order_status', $s))
             ->when($request->payment_status, fn($q, $s) => $q->where('payment_status', $s))
             ->when($request->search, fn($q, $s) => $q->where(function ($q2) use ($s) {
@@ -277,11 +245,11 @@ class ShopController extends Controller
             ->withQueryString();
 
         $stats = [
-            'pending' => $business->orders()->where('order_status', 'pending')->count(),
-            'confirmed' => $business->orders()->where('order_status', 'confirmed')->count(),
-            'processing' => $business->orders()->where('order_status', 'processing')->count(),
-            'delivered' => $business->orders()->where('order_status', 'delivered')->count(),
-            'cancelled' => $business->orders()->where('order_status', 'cancelled')->count(),
+            'pending' => DB::table('bizboost_orders')->where('business_id', $business->id)->where('order_status', 'pending')->count(),
+            'confirmed' => DB::table('bizboost_orders')->where('business_id', $business->id)->where('order_status', 'confirmed')->count(),
+            'processing' => DB::table('bizboost_orders')->where('business_id', $business->id)->where('order_status', 'processing')->count(),
+            'delivered' => DB::table('bizboost_orders')->where('business_id', $business->id)->where('order_status', 'delivered')->count(),
+            'cancelled' => DB::table('bizboost_orders')->where('business_id', $business->id)->where('order_status', 'cancelled')->count(),
         ];
 
         return Inertia::render('BizBoost/Shop/Orders', [
@@ -293,46 +261,41 @@ class ShopController extends Controller
 
     public function updateOrderStatus(Request $request, int $id)
     {
-        $business = $this->getBusiness($request);
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
 
         $validated = $request->validate([
             'order_status' => 'required|string|in:pending,confirmed,processing,delivered,cancelled',
             'payment_status' => 'nullable|string|in:pending,paid,failed,refunded',
         ]);
 
-        $order = $business->orders()->findOrFail($id);
-        $order->update($validated);
-
+        $update = $validated;
         if ($validated['order_status'] === 'delivered') {
-            $order->update(['delivered_at' => now()]);
+            $update['delivered_at'] = now();
         }
-        if ($validated['payment_status'] === 'paid' && !$order->paid_at) {
-            $order->update(['paid_at' => now()]);
+        if ($validated['payment_status'] === 'paid') {
+            $update['paid_at'] = now();
         }
 
-        // Send WhatsApp status update
+        DB::table('bizboost_orders')->where('id', $id)->where('business_id', $business->id)->update($update + ['updated_at' => now()]);
+
         try {
-            app(OrderNotificationService::class)->sendOrderStatusUpdate($order);
+            app(OrderNotificationService::class)->sendOrderStatusUpdate(['id' => $id]);
         } catch (\Exception $e) {
-            // Notification failure shouldn't block status update
         }
 
-        return back()->with('success', "Order #{$order->order_number} updated.");
+        return back()->with('success', "Order #{$id} updated.");
     }
 
-    /**
-     * WhatsApp Catalog management for business owners.
-     */
     public function catalogSettings(Request $request)
     {
-        $business = $this->getBusiness($request);
-        $integration = BizBoostIntegrationModel::where('business_id', $business->id)
-            ->where('provider', 'whatsapp')
-            ->first();
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
+        $integration = $this->integrationRepo->findByBusiness($business->id, ['platform' => 'whatsapp']);
 
+        $firstIntegration = !empty($integration) ? $integration[0] : null;
         $catalogStatus = null;
-        if ($integration) {
-            $service = new WhatsAppCatalogService($integration);
+
+        if ($firstIntegration) {
+            $service = new WhatsAppCatalogService($firstIntegration);
             try {
                 $catalogStatus = $service->getCatalogStatus();
                 if ($catalogStatus['connected']) {
@@ -344,30 +307,28 @@ class ShopController extends Controller
         }
 
         return Inertia::render('BizBoost/Shop/CatalogSettings', [
-            'hasWhatsAppIntegration' => $integration !== null,
-            'whatsappPhone' => $integration?->provider_page_name,
+            'hasWhatsAppIntegration' => $firstIntegration !== null,
+            'whatsappPhone' => $firstIntegration?->accountName,
             'catalogStatus' => $catalogStatus,
         ]);
     }
 
     public function createCatalog(Request $request)
     {
-        $business = $this->getBusiness($request);
-        $integration = BizBoostIntegrationModel::where('business_id', $business->id)
-            ->where('provider', 'whatsapp')
-            ->where('status', 'active')
-            ->firstOrFail();
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
+        $integrationData = $this->integrationRepo->findByBusiness($business->id, ['platform' => 'whatsapp', 'status' => 'active']);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
+        if (empty($integrationData)) {
+            abort(404);
+        }
 
+        $validated = $request->validate(['name' => 'required|string|max:255']);
+        $integration = $integrationData[0];
         $service = new WhatsAppCatalogService($integration);
 
         try {
             $result = $service->createCatalog($validated['name']);
             $service->connectCatalogToWaba();
-
             return back()->with('success', 'WhatsApp catalog created and connected.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
@@ -376,23 +337,20 @@ class ShopController extends Controller
 
     public function syncCatalog(Request $request)
     {
-        $business = $this->getBusiness($request);
-        $integration = BizBoostIntegrationModel::where('business_id', $business->id)
-            ->where('provider', 'whatsapp')
-            ->where('status', 'active')
-            ->firstOrFail();
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
+        $integrationData = $this->integrationRepo->findByBusiness($business->id, ['platform' => 'whatsapp', 'status' => 'active']);
 
-        $service = new WhatsAppCatalogService($integration);
+        if (empty($integrationData)) {
+            abort(404);
+        }
+
+        $service = new WhatsAppCatalogService($integrationData[0]);
 
         try {
             $results = $service->syncAllProducts();
             $successCount = count(array_filter($results, fn($r) => $r['success']));
             $failCount = count($results) - $successCount;
-
-            return back()->with(
-                $failCount > 0 ? 'warning' : 'success',
-                "Catalog sync completed. {$successCount} synced, {$failCount} failed."
-            );
+            return back()->with($failCount > 0 ? 'warning' : 'success', "Catalog sync completed. {$successCount} synced, {$failCount} failed.");
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -400,31 +358,20 @@ class ShopController extends Controller
 
     public function disconnectCatalog(Request $request)
     {
-        $business = $this->getBusiness($request);
-        $integration = BizBoostIntegrationModel::where('business_id', $business->id)
-            ->where('provider', 'whatsapp')
-            ->where('status', 'active')
-            ->firstOrFail();
+        $business = $this->businessService->getBusinessOrFail($request->user()->id);
+        $integrationData = $this->integrationRepo->findByBusiness($business->id, ['platform' => 'whatsapp', 'status' => 'active']);
 
-        $service = new WhatsAppCatalogService($integration);
+        if (empty($integrationData)) {
+            abort(404);
+        }
+
+        $service = new WhatsAppCatalogService($integrationData[0]);
 
         try {
             $service->disconnectCatalogFromWaba();
-
-            $integration->update([
-                'catalog_id' => null,
-                'whatsapp_catalog_settings' => null,
-            ]);
-
             return back()->with('success', 'Catalog disconnected from WhatsApp.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
-    }
-
-    private function getBusiness(Request $request): BizBoostBusinessModel
-    {
-        return BizBoostBusinessModel::where('user_id', $request->user()->id)
-            ->firstOrFail();
     }
 }

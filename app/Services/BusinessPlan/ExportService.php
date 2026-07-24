@@ -389,102 +389,102 @@ HTML;
         $legalStructure = $this->rtfEscape($plan->legal_structure ?? 'N/A');
 
         // RTF document structure
-        $rtf = "{\\rtf1\\ansi\\deff0\n";
+        $rtf = "{\\rtf1\ansi\deff0\n";
         $rtf .= "{\\fonttbl{\\f0 Arial;}{\\f1 Times New Roman;}}\n";
-        $rtf .= "{\\colortbl;\\red37\\green99\\blue235;\\red29\\green78\\blue216;}\n";
-        $rtf .= "\\viewkind4\\uc1\\pard\\sa200\\sl276\\slmult1\\lang9\\f0\\fs28\n\n";
+        $rtf .= "{\\colortbl;\\red37\green99\blue235;\\red29\green78\blue216;}\n";
+        $rtf .= "\\viewkind4\uc1\pard\sa200\sl276\slmult1\lang9\f0\fs28\n\n";
 
         // Title
-        $rtf .= "{\\b\\fs48\\cf1 {$businessName}}\\par\n";
+        $rtf .= "{\\b\fs48\cf1 {$businessName}}\\par\n";
         $rtf .= "\\fs22 {\\b Industry:} {$industry} | {\\b Location:} {$city}, {$country}\\par\n";
-        $rtf .= "{\\b Legal Structure:} {$legalStructure}\\par\\par\n\n";
+        $rtf .= "{\\b Legal Structure:} {$legalStructure}\\par\par\n\n";
 
         // Section 1: Executive Summary
-        $rtf .= "{\\b\\fs32\\cf2 1. Executive Summary}\\par\n";
-        $rtf .= "{\\b\\fs24 Mission Statement}\\par\n";
-        $rtf .= $this->rtfEscape($plan->mission_statement ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Vision Statement}\\par\n";
-        $rtf .= $this->rtfEscape($plan->vision_statement ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Background}\\par\n";
-        $rtf .= $this->rtfEscape($plan->background ?? 'Not provided') . "\\par\\par\n\n";
+        $rtf .= "{\\b\fs32\cf2 1. Executive Summary}\\par\n";
+        $rtf .= "{\\b\fs24 Mission Statement}\\par\n";
+        $rtf .= $this->rtfEscape($plan->mission_statement ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Vision Statement}\\par\n";
+        $rtf .= $this->rtfEscape($plan->vision_statement ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Background}\\par\n";
+        $rtf .= $this->rtfEscape($plan->background ?? 'Not provided') . "\\par\par\n\n";
 
         // Section 2: Problem & Solution
-        $rtf .= "{\\b\\fs32\\cf2 2. Problem & Solution}\\par\n";
-        $rtf .= "{\\b\\fs24 Problem Statement}\\par\n";
-        $rtf .= $this->rtfEscape($plan->problem_statement ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Our Solution}\\par\n";
-        $rtf .= $this->rtfEscape($plan->solution_description ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Competitive Advantage}\\par\n";
-        $rtf .= $this->rtfEscape($plan->competitive_advantage ?? 'Not provided') . "\\par\\par\n\n";
+        $rtf .= "{\\b\fs32\cf2 2. Problem & Solution}\\par\n";
+        $rtf .= "{\\b\fs24 Problem Statement}\\par\n";
+        $rtf .= $this->rtfEscape($plan->problem_statement ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Our Solution}\\par\n";
+        $rtf .= $this->rtfEscape($plan->solution_description ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Competitive Advantage}\\par\n";
+        $rtf .= $this->rtfEscape($plan->competitive_advantage ?? 'Not provided') . "\\par\par\n\n";
 
         // Section 3: Products & Services
-        $rtf .= "{\\b\\fs32\\cf2 3. Products & Services}\\par\n";
-        $rtf .= $this->rtfEscape($plan->product_description ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Key Features}\\par\n";
-        $rtf .= $this->rtfEscape($plan->product_features ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Pricing Strategy}\\par\n";
-        $rtf .= $this->rtfEscape($plan->pricing_strategy ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Unique Selling Points}\\par\n";
-        $rtf .= $this->rtfEscape($plan->unique_selling_points ?? 'Not provided') . "\\par\\par\n\n";
+        $rtf .= "{\\b\fs32\cf2 3. Products & Services}\\par\n";
+        $rtf .= $this->rtfEscape($plan->product_description ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Key Features}\\par\n";
+        $rtf .= $this->rtfEscape($plan->product_features ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Pricing Strategy}\\par\n";
+        $rtf .= $this->rtfEscape($plan->pricing_strategy ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Unique Selling Points}\\par\n";
+        $rtf .= $this->rtfEscape($plan->unique_selling_points ?? 'Not provided') . "\\par\par\n\n";
 
         // Section 4: Market Analysis
-        $rtf .= "{\\b\\fs32\\cf2 4. Market Analysis}\\par\n";
-        $rtf .= "{\\b\\fs24 Target Market}\\par\n";
-        $rtf .= $this->rtfEscape($plan->target_market ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Customer Demographics}\\par\n";
-        $rtf .= $this->rtfEscape($plan->customer_demographics ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Market Size}\\par\n";
-        $rtf .= $this->rtfEscape($plan->market_size ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Competitive Analysis}\\par\n";
-        $rtf .= $this->rtfEscape($plan->competitive_analysis ?? 'Not provided') . "\\par\\par\n\n";
+        $rtf .= "{\\b\fs32\cf2 4. Market Analysis}\\par\n";
+        $rtf .= "{\\b\fs24 Target Market}\\par\n";
+        $rtf .= $this->rtfEscape($plan->target_market ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Customer Demographics}\\par\n";
+        $rtf .= $this->rtfEscape($plan->customer_demographics ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Market Size}\\par\n";
+        $rtf .= $this->rtfEscape($plan->market_size ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Competitive Analysis}\\par\n";
+        $rtf .= $this->rtfEscape($plan->competitive_analysis ?? 'Not provided') . "\\par\par\n\n";
 
         // Section 5: Marketing & Sales
-        $rtf .= "{\\b\\fs32\\cf2 5. Marketing & Sales Strategy}\\par\n";
-        $rtf .= "{\\b\\fs24 Marketing Channels}\\par\n";
-        $rtf .= $this->rtfEscape($plan->marketing_channels ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Branding Approach}\\par\n";
-        $rtf .= $this->rtfEscape($plan->branding_approach ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Sales Channels}\\par\n";
-        $rtf .= $this->rtfEscape($plan->sales_channels ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Customer Retention}\\par\n";
-        $rtf .= $this->rtfEscape($plan->customer_retention ?? 'Not provided') . "\\par\\par\n\n";
+        $rtf .= "{\\b\fs32\cf2 5. Marketing & Sales Strategy}\\par\n";
+        $rtf .= "{\\b\fs24 Marketing Channels}\\par\n";
+        $rtf .= $this->rtfEscape($plan->marketing_channels ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Branding Approach}\\par\n";
+        $rtf .= $this->rtfEscape($plan->branding_approach ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Sales Channels}\\par\n";
+        $rtf .= $this->rtfEscape($plan->sales_channels ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Customer Retention}\\par\n";
+        $rtf .= $this->rtfEscape($plan->customer_retention ?? 'Not provided') . "\\par\par\n\n";
 
         // Section 6: Operations
-        $rtf .= "{\\b\\fs32\\cf2 6. Operations Plan}\\par\n";
-        $rtf .= "{\\b\\fs24 Daily Operations}\\par\n";
-        $rtf .= $this->rtfEscape($plan->daily_operations ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Staff & Roles}\\par\n";
-        $rtf .= $this->rtfEscape($plan->staff_roles ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Equipment & Tools}\\par\n";
-        $rtf .= $this->rtfEscape($plan->equipment_tools ?? 'Not provided') . "\\par\\par\n\n";
+        $rtf .= "{\\b\fs32\cf2 6. Operations Plan}\\par\n";
+        $rtf .= "{\\b\fs24 Daily Operations}\\par\n";
+        $rtf .= $this->rtfEscape($plan->daily_operations ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Staff & Roles}\\par\n";
+        $rtf .= $this->rtfEscape($plan->staff_roles ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Equipment & Tools}\\par\n";
+        $rtf .= $this->rtfEscape($plan->equipment_tools ?? 'Not provided') . "\\par\par\n\n";
 
         // Section 7: Financials
-        $rtf .= "{\\b\\fs32\\cf2 7. Financial Plan}\\par\n";
+        $rtf .= "{\\b\fs32\cf2 7. Financial Plan}\\par\n";
         $rtf .= "{\\b Startup Costs:} K" . $this->formatNumber($plan->startup_costs) . "\\par\n";
         $rtf .= "{\\b Monthly Operating Costs:} K" . $this->formatNumber($plan->monthly_operating_costs) . "\\par\n";
         $rtf .= "{\\b Expected Monthly Revenue:} K" . $this->formatNumber($plan->expected_monthly_revenue) . "\\par\n";
         $rtf .= "{\\b Monthly Profit:} K" . $this->formatNumber($monthlyProfit) . "\\par\n";
         $rtf .= "{\\b Profit Margin:} {$profitMargin}%\\par\n";
-        $rtf .= "{\\b Break-Even Point:} {$breakEven} " . ($breakEven !== '∞' ? 'months' : '') . "\\par\\par\n\n";
+        $rtf .= "{\\b Break-Even Point:} {$breakEven} " . ($breakEven !== '∞' ? 'months' : '') . "\\par\par\n\n";
 
         // Section 8: Risk Analysis
-        $rtf .= "{\\b\\fs32\\cf2 8. Risk Analysis}\\par\n";
-        $rtf .= "{\\b\\fs24 Key Risks}\\par\n";
-        $rtf .= $this->rtfEscape($plan->key_risks ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Mitigation Strategies}\\par\n";
-        $rtf .= $this->rtfEscape($plan->mitigation_strategies ?? 'Not provided') . "\\par\\par\n\n";
+        $rtf .= "{\\b\fs32\cf2 8. Risk Analysis}\\par\n";
+        $rtf .= "{\\b\fs24 Key Risks}\\par\n";
+        $rtf .= $this->rtfEscape($plan->key_risks ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Mitigation Strategies}\\par\n";
+        $rtf .= $this->rtfEscape($plan->mitigation_strategies ?? 'Not provided') . "\\par\par\n\n";
 
         // Section 9: Implementation
-        $rtf .= "{\\b\\fs32\\cf2 9. Implementation Roadmap}\\par\n";
-        $rtf .= "{\\b\\fs24 Timeline}\\par\n";
-        $rtf .= $this->rtfEscape($plan->timeline ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Key Milestones}\\par\n";
-        $rtf .= $this->rtfEscape($plan->milestones ?? 'Not provided') . "\\par\\par\n";
-        $rtf .= "{\\b\\fs24 Responsibilities}\\par\n";
-        $rtf .= $this->rtfEscape($plan->responsibilities ?? 'Not provided') . "\\par\\par\n\n";
+        $rtf .= "{\\b\fs32\cf2 9. Implementation Roadmap}\\par\n";
+        $rtf .= "{\\b\fs24 Timeline}\\par\n";
+        $rtf .= $this->rtfEscape($plan->timeline ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Key Milestones}\\par\n";
+        $rtf .= $this->rtfEscape($plan->milestones ?? 'Not provided') . "\\par\par\n";
+        $rtf .= "{\\b\fs24 Responsibilities}\\par\n";
+        $rtf .= $this->rtfEscape($plan->responsibilities ?? 'Not provided') . "\\par\par\n\n";
 
         // Footer
-        $rtf .= "\\par\\par\n";
+        $rtf .= "\\par\par\n";
         $rtf .= "{\\i Document Generated: " . ($plan->created_at ? $plan->created_at->format('F d, Y') : date('F d, Y')) . "}\\par\n";
         $rtf .= "{\\i Powered by: MyGrowNet Business Plan Generator}\\par\n";
 

@@ -61,7 +61,7 @@ class GiftService
     private function isInDownline(User $gifter, User $recipient): bool
     {
         // Check if recipient is in gifter's downline using UserNetwork table
-        return \App\Models\UserNetwork::where('referrer_id', $gifter->id)
+        return \App\Infrastructure\Persistence\Eloquent\GrowNet\UserNetwork::where('referrer_id', $gifter->id)
             ->where('user_id', $recipient->id)
             ->where('level', '<=', 7)
             ->exists();
@@ -89,7 +89,7 @@ class GiftService
 
     private function getWalletBalance(User $user): int
     {
-        $walletService = app(\App\Services\WalletService::class);
+        $walletService = app(\App\Domain\GrowNet\Services\WalletService::class);
         return (int) $walletService->calculateBalance($user);
     }
 }

@@ -33,16 +33,6 @@ class FinancialModulesSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'code' => 'growbiz',
-                'name' => 'GrowBiz',
-                'description' => 'Task & Staff Management + HR - Task management, team collaboration, and HR for SMEs',
-                'is_revenue_module' => true,
-                'is_active' => true,
-                'display_order' => 20,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
                 'code' => 'growbuilder',
                 'name' => 'GrowBuilder',
                 'description' => 'Website Builder - Build professional websites with AI-powered content',

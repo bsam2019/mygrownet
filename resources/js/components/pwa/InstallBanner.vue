@@ -4,7 +4,7 @@ import { usePWA } from '@/composables/usePWA';
 import { XMarkIcon, DevicePhoneMobileIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/outline';
 
 interface Props {
-    module?: 'bizboost' | 'growbiz' | 'growfinance' | 'mygrownet';
+    module?: 'bizboost' | 'growfinance' | 'mygrownet';
     position?: 'top' | 'bottom';
 }
 
@@ -35,14 +35,6 @@ const moduleConfig = computed(() => {
             hoverClass: 'hover:bg-violet-700',
             textClass: 'text-violet-600',
             description: 'Install BizBoost for quick access to your marketing console'
-        },
-        growbiz: {
-            name: 'GrowBiz',
-            color: 'emerald',
-            bgClass: 'bg-emerald-600',
-            hoverClass: 'hover:bg-emerald-700',
-            textClass: 'text-emerald-600',
-            description: 'Install GrowBiz for quick access to your business management'
         },
         growfinance: {
             name: 'GrowFinance',

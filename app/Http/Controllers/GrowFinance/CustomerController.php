@@ -4,7 +4,7 @@ namespace App\Http\Controllers\GrowFinance;
 
 use App\Domain\Module\Services\SubscriptionService;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\GrowFinanceCustomerModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceCustomerModel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

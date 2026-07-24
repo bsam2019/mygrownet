@@ -12,13 +12,14 @@ use App\Infrastructure\Persistence\Eloquent\VentureBuilder\VentureShareTransferM
 use App\Infrastructure\Persistence\Eloquent\VentureBuilder\VentureResolutionModel;
 use App\Models\Receipt;
 use App\Services\ReceiptService;
-use App\Services\VentureBuilder\VentureCacheService;
-use App\Services\VentureBuilder\VentureService;
-use App\Services\VentureBuilder\VentureInvestmentService;
-use App\Services\VentureBuilder\VentureKycService;
-use App\Services\VentureBuilder\VentureLockInService;
-use App\Services\VentureBuilder\VentureShareTransferService;
-use App\Services\VentureBuilder\VentureVoteService;
+use App\Domain\VentureBuilder\Services\VentureCacheService;
+use App\Domain\VentureBuilder\Services\VentureService;
+use App\Domain\VentureBuilder\Services\VentureInvestmentService;
+use App\Domain\VentureBuilder\Services\VentureKycService;
+use App\Domain\VentureBuilder\Services\VentureLockInService;
+use App\Domain\VentureBuilder\Services\VentureShareTransferService;
+use App\Domain\VentureBuilder\Services\VentureVoteService;
+use App\Domain\VentureBuilder\Services\VentureDividendService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -123,7 +124,7 @@ class VentureController extends Controller
         }
 
         // KYC check for larger investments
-        $kycIssues = $this->kycService->canInvest(auth()->user(), $request->amount);
+        $kycIssues = $this->kycService->canInvest(auth()->id(), $request->amount, auth()->user()?->toArray());
         if (!empty($kycIssues)) {
             return back()->with('error', implode(' ', $kycIssues));
         }
@@ -142,17 +143,17 @@ class VentureController extends Controller
         try {
             if ($request->payment_method === 'wallet') {
                 $investment = $this->investmentService->processWalletInvestment(
-                    auth()->user(),
-                    $venture,
+                    auth()->id(),
+                    $venture->id,
                     $request->amount
                 );
 
-                return redirect()->route('mygrownet.ventures.investment-success', $investment->id)
+                return redirect()->route('mygrownet.ventures.investment-success', $investment['id'])
                     ->with('success', 'Investment successful! You are now a shareholder.');
             } else {
                 $investment = $this->investmentService->initiateMobileMoneyInvestment(
-                    auth()->user(),
-                    $venture,
+                    auth()->id(),
+                    $venture->id,
                     $request->amount
                 );
 
@@ -162,8 +163,8 @@ class VentureController extends Controller
                             'amount' => $request->amount,
                             'type' => 'venture_investment',
                             'description' => "Investment in {$venture->title}",
-                            'reference_id' => $investment->id,
-                            'return_url' => route('mygrownet.ventures.investment-success', $investment->id),
+                            'reference_id' => $investment['id'],
+                            'return_url' => route('mygrownet.ventures.investment-success', $investment['id']),
                         ]
                     ]);
             }

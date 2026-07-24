@@ -8,7 +8,7 @@ use App\Application\UseCases\MLM\ProcessCommissionsUseCase;
 use App\Application\UseCases\MLM\ProcessTierAdvancementUseCase;
 use App\Models\User;
 use App\Models\InvestmentTier;
-use App\Models\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 

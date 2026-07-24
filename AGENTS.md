@@ -12,11 +12,42 @@
 ### Canonical Migration Folders
 | Folder | Module | Loaded By | Status |
 |---|---|---|---|
-| `core/` | Platform Core (orgs, apps, org_id FK) | `CoreServiceProvider` | ✅ Active |
-| `zamstay/` | ZamStay | `ZamStayServiceProvider` | ✅ Active |
-| `prime_edge/` | PrimeEdge | (check ServiceProvider) | ⚠️ Legacy — guard removed Phase 8a, table dropped Phase 8e, no users ever existed |
-| (root) | StockFlow, CMS, BizBoost, GrowBuilder, GrowMart, GrowBiz, Employee, etc. | Laravel auto-loader | ⚠️ Legacy — migrate to subfolders later |
-| `core/` | BizBoost, GrowBiz, BizDocs, QuickInvoice company stubs | `CoreServiceProvider` | ✅ New — `organization_id` FK columns added Jul 2026 |
+| `agency/` | Agency | `AgencyServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `bizboost/` | BizBoost | `BizBoostServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `bizdocs/` | BizDocs | `BizDocsServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `bms/` | BMS (formerly CMS — companies, jobs, invoices, HR, payroll, etc.) | `BmsServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `construction/` | Construction (production, installation, quality, safety, fleet) | `ConstructionServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `contract/` | Contracts | `ContractServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `core/` | Platform Core (orgs, apps, users, auth, system, core FK columns) | `CoreServiceProvider` | ✅ Active |
+| `email_marketing/` | Email Marketing | `EmailMarketingServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `employee/` | Employee (HR, portal, payroll, recruitment) | `EmployeeDomainServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `geopamu/` | GeoPamu Blog | `GeoPamuServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `growbuilder/` | GrowBuilder (sites, commerce, media, AI usage, payments) | `GrowBuilderServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `growfinance/` | GrowFinance core (accounts, invoices, customers, budgets, etc.) | `GrowFinanceServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `growmarket/` | GrowMart (products, orders, cart, inventory, coupons) | `GrowMartServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `grownet/` | GrowNet (MLM, memberships, tiers, starter kits, commissions, rewards) | `GrowNetServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `growstart/` | GrowStart | `GrowStartServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `growstream/` | GrowStream | `GrowStreamServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `inventory/` | Inventory (standalone, cross-module) | `InventoryServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `investor/` | Investor (accounts, rounds, dividends, documents, legal) | `InvestorServiceProvider` / `InvestorDomainServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `learning/` | Learning system | `LearningServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `lifeplus/` | LifePlus | `LifeplusServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `marketplace/` | Marketplace | `MarketplaceServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `module/` | Module system (tiers, features, discounts, offers) | `ModuleServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `notification/` | Notifications, Messages | `NotificationServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `prime_edge/` | PrimeEdge | `PrimeEdgeServiceProvider` | ⚠️ Legacy — guard removed Phase 8a, table dropped Phase 8e |
+| `quickinvoice/` | QuickInvoice | `QuickInvoiceServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `stockflow/` | StockFlow | `StockFlowServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `storage/` | Storage | `StorageServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `support/` | Support tickets | `SupportServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `transaction/` | Transactions, payment logs | `TransactionServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `ubumi/` | Ubumi | `UbumiServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `venturebuilder/` | Venture Builder (ventures, investments, BGF, shares) | `VentureBuilderServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `wedding/` | Wedding | `WeddingServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `withdrawal/` | Withdrawals | `WithdrawalServiceProvider` | ✅ Active — migrated Jul 2026 |
+| `zamstay/` | ZamStay | `ZamStayServiceProvider` | ✅ Active — migrated Jul 2026 |
+
+**Status key:** ✅ = fully wired, ⚠️ = exists but not yet registered with `loadMigrationsFrom()`
 
 **Rule:** Before creating `database/migrations/{name}/`, check this table. If the module already has a folder, use it. If root, create a new folder with the exact module slug. Register via ServiceProvider. **Never** use a different name for the same module (e.g. `stock-audit/` instead of `stockflow/`, or `platform/` instead of `core/`).
 
@@ -286,3 +317,52 @@ The `primeedge` and `stockflow` guards have been removed (no real users ever exi
 | `web` | `users` | **Only** authentication system — all apps target this |
 
 **Phase 8 (MyGrow Identity & Centralized Authentication)** built `auth.mygrownet.com` as the shared identity gateway. All applications redirect to `auth.mygrownet.com/login` via `RedirectToMyGrowIdentity` middleware (per-app kill switch in `config/platform.php`). StockFlow login routes now act as signed HMAC redirect proxies. Sanctum needs installation for token minting to work.
+
+## GrowNet DDD Refactoring (Completed Jul 2026)
+GrowNet was refactored from scattered code (25 controllers in `MyGrowNet/`, services in `app/Services/`, model in `Domain/GrowNet/Models/`) into a proper DDD bounded context:
+
+### Architecture
+```
+app/Domain/GrowNet/
+├── ValueObjects/       MemberId, Money, Percentage, ReferralCode, CommissionLevel (enum),
+│                       MembershipTier (enum), SubscriptionStatus (enum), VerificationLevel (enum),
+│                       NetworkLevel
+├── Entities/           Member (rich domain entity), Commission, Referral, TeamVolume, TierUpgrade,
+│                       StarterKit, LoyaltyPoints
+├── Repositories/       MemberRepositoryInterface, CommissionRepositoryInterface,
+│                       ReferralRepositoryInterface, TeamVolumeRepositoryInterface,
+│                       TierUpgradeRepositoryInterface, StarterKitRepositoryInterface,
+│                       LoyaltyPointsRepositoryInterface
+├── Services/           MemberService, DashboardService, TierAdvancementService
+└── Exceptions/         GrowNetException, MemberNotFoundException, InsufficientFundsException,
+                        TierUpgradeException, ReferralException
+
+app/Infrastructure/
+├── Persistence/Eloquent/GrowNet/     MemberModel (moved from Domain, now table `grow_net_users`)
+└── Persistence/Repositories/GrowNet/ 7 Eloquent repository implementations
+
+app/Http/Controllers/GrowNet/          Refactored thin controllers (DashboardController migrated)
+app/Providers/GrowNetServiceProvider   DI bindings for repository interfaces + singleton services
+```
+
+### Key Changes
+- **`GrowNetUser` model** → `MemberModel` in `Infrastructure/Persistence/Eloquent/GrowNet/` (same table `grow_net_users`)
+- **`User::growNetData()` relationship** updated to point to new `MemberModel`
+- **`MyGrowNet\DashboardController`** → `GrowNet\DashboardController` — business logic extracted to domain services
+- **`MyGrowNetTierAdvancementService`** → `Domain/GrowNet/Services/TierAdvancementService`
+- **GrowNetServiceProvider** registered in `bootstrap/providers.php`
+- **Routes** updated to use new controller namespace
+
+### Repository Bindings
+| Interface | Implementation |
+|---|---|
+| `MemberRepositoryInterface` | `EloquentMemberRepository` |
+| `CommissionRepositoryInterface` | `EloquentCommissionRepository` |
+| `ReferralRepositoryInterface` | `EloquentReferralRepository` |
+| `TeamVolumeRepositoryInterface` | `EloquentTeamVolumeRepository` |
+| `TierUpgradeRepositoryInterface` | `EloquentTierUpgradeRepository` |
+| `StarterKitRepositoryInterface` | `EloquentStarterKitRepository` |
+| `LoyaltyPointsRepositoryInterface` | `EloquentLoyaltyPointsRepository` |
+
+### Remaining Controllers (not yet refactored — still in `MyGrowNet/`)
+The remaining 24 controllers in `app/Http/Controllers/MyGrowNet/` still directly query Eloquent models. Future work: migrate them to use domain services/repositories.

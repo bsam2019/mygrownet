@@ -27,7 +27,7 @@ class SellerOrderController extends Controller
             'status' => $request->status,
         ];
 
-        $orders = $this->orderService->getBySeller($seller->id, $filters, 20);
+        $orders = $this->orderService->getBySeller($seller['id'], $filters, 20);
 
         return Inertia::render('Marketplace/Seller/Orders/Index', [
             'orders' => $orders,
@@ -42,7 +42,7 @@ class SellerOrderController extends Controller
         $seller = $this->sellerService->getByUserId($request->user()->id);
         $order = $this->orderService->getById($id);
 
-        if (!$seller || !$order || $order->seller_id !== $seller->id) {
+        if (!$seller || !$order || $order['seller_id'] !== $seller['id']) {
             abort(404);
         }
 
@@ -56,7 +56,7 @@ class SellerOrderController extends Controller
         $seller = $this->sellerService->getByUserId($request->user()->id);
         $order = $this->orderService->getById($id);
 
-        if (!$seller || !$order || $order->seller_id !== $seller->id) {
+        if (!$seller || !$order || $order['seller_id'] !== $seller['id']) {
             abort(404);
         }
 
@@ -79,7 +79,7 @@ class SellerOrderController extends Controller
         $seller = $this->sellerService->getByUserId($request->user()->id);
         $order = $this->orderService->getById($id);
 
-        if (!$seller || !$order || $order->seller_id !== $seller->id) {
+        if (!$seller || !$order || $order['seller_id'] !== $seller['id']) {
             abort(404);
         }
 
@@ -108,7 +108,7 @@ class SellerOrderController extends Controller
         $seller = $this->sellerService->getByUserId($request->user()->id);
         $order = $this->orderService->getById($id);
 
-        if (!$seller || !$order || $order->seller_id !== $seller->id) {
+        if (!$seller || !$order || $order['seller_id'] !== $seller['id']) {
             abort(404);
         }
 
