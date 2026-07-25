@@ -171,16 +171,11 @@ return [
         App\Providers\AuthServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-        App\Providers\EmployeeDomainServiceProvider::class, // Re-enabled for employee functionality
         App\Providers\AnnouncementServiceProvider::class,
-        App\Providers\SupportServiceProvider::class,
-        App\Providers\EmailMarketingServiceProvider::class,
-        App\Providers\WeddingServiceProvider::class,
-        App\Providers\GrowFinanceServiceProvider::class,
         App\Providers\ModuleSubscriptionServiceProvider::class, // Centralized module subscription services
         App\Providers\PaymentServiceProvider::class, // Payment gateway integration
+        App\Providers\WeddingServiceProvider::class,
         App\Providers\ZamStayServiceProvider::class, // ZamStay module
-        App\Providers\LifeplusServiceProvider::class, // LifePlus module
         App\Providers\InvestmentServiceProvider::class, // Investment module
         App\Providers\StockFlowServiceProvider::class, // StockFlow module
         App\Providers\CoreServiceProvider::class, // Platform Core (organizations, applications, etc.)

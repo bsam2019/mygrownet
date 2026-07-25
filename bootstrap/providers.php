@@ -45,4 +45,8 @@ return [
     App\Providers\LifeplusServiceProvider::class,
     App\Providers\InvestmentServiceProvider::class,
     App\Providers\InventoryServiceProvider::class,
+    App\Providers\CoreServiceProvider::class,
+    App\Providers\StockFlowServiceProvider::class,
+    App\Providers\WeddingServiceProvider::class,
+    App\Providers\ZamStayServiceProvider::class,
 ];
