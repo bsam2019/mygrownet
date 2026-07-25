@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\GrowFinance;
 
 use App\Domain\GrowFinance\Services\BudgetService;
-use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\GrowFinance\ValueObjects\AccountType;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceAccountModel;
@@ -16,20 +15,11 @@ use Inertia\Response;
 class BudgetController extends Controller
 {
     public function __construct(
-        private SubscriptionService $subscriptionService,
         private BudgetService $budgetService
     ) {}
 
     public function index(Request $request): Response
     {
-        // Check if user has budget feature
-        if (!$this->subscriptionService->canPerformAction($request->user(), 'budgets')) {
-            return Inertia::render('GrowFinance/FeatureUpgradeRequired', [
-                'feature' => 'Budget Tracking',
-                'requiredTier' => 'professional',
-            ]);
-        }
-
         $businessId = $request->user()->id;
         $budgets = $this->budgetService->getForBusiness($businessId);
         $summary = $this->budgetService->getSummary($businessId);
@@ -42,13 +32,6 @@ class BudgetController extends Controller
 
     public function create(Request $request): Response
     {
-        if (!$this->subscriptionService->canPerformAction($request->user(), 'budgets')) {
-            return Inertia::render('GrowFinance/FeatureUpgradeRequired', [
-                'feature' => 'Budget Tracking',
-                'requiredTier' => 'professional',
-            ]);
-        }
-
         $businessId = $request->user()->id;
 
         $accounts = GrowFinanceAccountModel::forBusiness($businessId)
@@ -85,10 +68,6 @@ class BudgetController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        if (!$this->subscriptionService->canPerformAction($request->user(), 'budgets')) {
-            return back()->with('error', 'Budget tracking requires Professional plan or higher.');
-        }
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'nullable|string|max:100',

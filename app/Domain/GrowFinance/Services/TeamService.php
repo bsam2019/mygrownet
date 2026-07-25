@@ -4,7 +4,6 @@ namespace App\Domain\GrowFinance\Services;
 
 use App\Domain\GrowFinance\Entities\TeamMember;
 use App\Domain\GrowFinance\Repositories\TeamMemberRepositoryInterface;
-use App\Domain\Module\Services\SubscriptionService;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -12,7 +11,6 @@ use Illuminate\Support\Str;
 class TeamService
 {
     public function __construct(
-        private SubscriptionService $subscriptionService,
         private TeamMemberRepositoryInterface $teamMemberRepo,
     ) {}
 
@@ -30,36 +28,16 @@ class TeamService
 
     public function canAddTeamMember(int $ownerId): array
     {
-        $owner = User::findOrFail($ownerId);
-        $limits = $this->subscriptionService->getUserLimits($owner);
-        $maxMembers = $limits['team_members'] ?? 0;
-
-        if ($maxMembers === 0) {
-            return [
-                'allowed' => false,
-                'reason' => 'Multi-user access is available on Business plan. Please upgrade.',
-            ];
-        }
-
         $currentMembers = $this->teamMemberRepo->findByBusiness($ownerId);
         $currentCount = count(array_filter(
             $currentMembers,
             fn(TeamMember $m) => in_array($m->status, ['active', 'pending'])
         ));
 
-        if ($maxMembers !== -1 && $currentCount >= $maxMembers) {
-            return [
-                'allowed' => false,
-                'reason' => "Team member limit reached ({$maxMembers}). Upgrade for more seats.",
-                'used' => $currentCount,
-                'limit' => $maxMembers,
-            ];
-        }
-
         return [
             'allowed' => true,
             'used' => $currentCount,
-            'limit' => $maxMembers,
+            'limit' => -1,
         ];
     }
 

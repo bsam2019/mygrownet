@@ -2,7 +2,6 @@
 
 namespace App\Domain\GrowFinance\Services;
 
-use App\Domain\Module\Services\SubscriptionService;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -12,10 +11,6 @@ class ReceiptStorageService
 {
     private const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'pdf'];
     private const MAX_FILE_SIZE_MB = 10;
-
-    public function __construct(
-        private SubscriptionService $subscriptionService
-    ) {}
 
     /**
      * Upload a receipt file
@@ -41,24 +36,12 @@ class ReceiptStorageService
             ];
         }
 
-        // Check subscription storage limit
-        $storageCheck = $this->subscriptionService->canUploadReceipt($user, $fileSizeBytes);
-        if (!$storageCheck['allowed']) {
-            return [
-                'success' => false,
-                'error' => $storageCheck['reason'],
-            ];
-        }
-
         // Generate unique filename
         $filename = Str::uuid() . '.' . $extension;
         $path = "growfinance/receipts/{$user->id}/{$type}/{$filename}";
 
         // Store file
         Storage::disk('local')->put($path, file_get_contents($file->getRealPath()));
-
-        // Clear storage cache
-        $this->subscriptionService->clearUsageCache($user);
 
         return [
             'success' => true,
@@ -81,7 +64,6 @@ class ReceiptStorageService
 
         if (Storage::disk('local')->exists($path)) {
             Storage::disk('local')->delete($path);
-            $this->subscriptionService->clearUsageCache($user);
             return true;
         }
 

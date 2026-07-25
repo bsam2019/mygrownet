@@ -1,770 +1,574 @@
-﻿# Workspace Implementation Plan
+﻿# MyGrowNet Platform Integration Architecture — Implementation Plan
+
+> **Status:** Active  
+> **Version:** 1.0  
+> **Aligns with:** `PLATFORM_INTEGRATION_ARCHITECTURE.md` v9.0  
+> **Objective:** Incrementally build the platform integration layer defined in the architecture document
+
+---
 
 ## Overview
 
-This document translates the WORKSPACE_ARCHITECTURE.md into a concrete Laravel implementation plan. Follow the phase order strictly — each phase depends on the previous.
+This plan breaks down the architecture into **9 phases** ordered by dependency and risk. Each phase produces a working, deployable system. Nothing is built before it is needed.
+
+### Phases at a Glance
+
+| Phase | Name | Duration | Dependency |
+|-------|------|----------|------------|
+| 0 | Foundation Audit & Remediation | 2 weeks | None |
+| 1 | Platform Core & Runtime Layer | 4 weeks | Phase 0 |
+| 2 | Event Infrastructure | 3 weeks | Phase 1 |
+| 3 | Integration Contracts | 4 weeks | Phase 1 |
+| 4 | Platform Services | 4 weeks | Phase 1 |
+| 5 | Operational Readiness | 3 weeks | Phases 2–4 |
+| 6 | Data Governance & Tenant Isolation | 3 weeks | Phase 1 |
+| 7 | Reliable Event Delivery (v2) | 3 weeks | Phase 2 |
+| 8 | Independent Deployment Readiness | 4 weeks | Phases 2–7 |
+
+**Total estimated duration:** ~30 weeks (incremental, many phases can overlap)
 
 ---
 
-## Phase 1: Database Foundation
+## Phase 0: Foundation Audit & Remediation
 
-### Migration 1: Enhance `applications` table
+**Duration:** 2 weeks  
+**Dependency:** None  
+**Goal:** Understand current state, fix blocking issues, establish patterns
 
-```php
-Schema::table('applications', function (Blueprint $table) {
-    $table->string('category')->after('slug'); // business | consumer | shared
-    $table->string('access_model')->after('category'); // customer | organization_members | both
-    $table->string('context_support')->after('access_model'); // personal | organization | both
-    $table->boolean('requires_organization_context')->default(false)->after('context_support');
-    $table->boolean('subscription_required')->default(true)->after('requires_organization_context');
-    $table->string('lifecycle')->default('active')->after('subscription_required'); // active | legacy | retired
-    $table->string('operational_status')->default('online')->after('lifecycle'); // online | maintenance | disabled
-    $table->foreignId('replacement_app_id')->nullable()->constrained('applications')->after('operational_status');
-    $table->date('migration_deadline')->nullable()->after('replacement_app_id');
-    $table->boolean('is_visible')->default(true)->after('migration_deadline');
-});
-```
+### Tasks
 
-### Migration 2: Create `organization_members` table
+| # | Task | Deliverable | Owner |
+|---|------|-------------|-------|
+| 0.1 | Audit all cross-module `DB::table()` and `DB::connection()` calls | Report of violations | Platform team |
+| 0.2 | Audit all cross-module Eloquent model imports | Report of violations | Platform team |
+| 0.3 | Audit all `app(Service::class)` calls across module boundaries | Report of violations | Platform team |
+| 0.4 | Verify every module has its own ServiceProvider with `loadMigrationsFrom()` | Module registry checklist | Platform team |
+| 0.5 | Verify no module migration touches another module's tables | Migration scope audit | Platform team |
+| 0.6 | Document current event usage (Laravel events, listeners, dispatches) | Event inventory | Platform team |
+| 0.7 | Document current integration patterns (direct calls, observers, webhooks) | Integration pattern map | Platform team |
+| 0.8 | Create `CONTRIBUTING.md` with integration rules (Rule 1–10 from §16) | Developer guidelines | Platform team |
 
-```php
-Schema::create('organization_members', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('organization_id')->constrained('organizations')->cascadeOnDelete();
-    $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-    $table->string('role'); // owner | admin | accountant | manager | employee | viewer
-    $table->string('status')->default('active'); // active | invited | suspended
-    $table->json('permissions')->nullable();
-    $table->timestamps();
-    $table->unique(['organization_id', 'user_id']);
-});
-```
+### Success Criteria
 
-### Migration 3: Create `organization_applications` table
-
-```php
-Schema::create('organization_applications', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('organization_id')->constrained('organizations')->cascadeOnDelete();
-    $table->foreignId('application_id')->constrained('applications')->cascadeOnDelete();
-    $table->foreignId('plan_id')->nullable()->constrained('plans');
-    $table->string('status')->default('active'); // active | trial | suspended | cancelled
-    $table->timestamp('starts_at')->nullable();
-    $table->timestamp('expires_at')->nullable();
-    $table->timestamps();
-    $table->unique(['organization_id', 'application_id']);
-});
-```
-
-### Migration 4: Create `application_installations` table
-
-```php
-Schema::create('application_installations', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('organization_id')->constrained('organizations')->cascadeOnDelete();
-    $table->foreignId('application_id')->constrained('applications')->cascadeOnDelete();
-    $table->string('status')->default('provisioning'); // provisioning | active | suspended
-    $table->json('settings')->nullable();
-    $table->timestamps();
-    $table->unique(['organization_id', 'application_id']);
-});
-```
-
-### Migration 5: Create `user_application_subscriptions` table
-
-```php
-Schema::create('user_application_subscriptions', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-    $table->foreignId('application_id')->constrained('applications')->cascadeOnDelete();
-    $table->foreignId('plan_id')->nullable()->constrained('plans');
-    $table->string('status')->default('active'); // active | trial | cancelled
-    $table->timestamp('expires_at')->nullable();
-    $table->timestamps();
-    $table->unique(['user_id', 'application_id']);
-});
-```
-
-### Migration 6: Create `domains` table
-
-```php
-Schema::create('domains', function (Blueprint $table) {
-    $table->id();
-    $table->string('domain')->unique();
-    $table->string('type'); // application | organization | platform
-    $table->foreignId('application_id')->nullable()->constrained('applications');
-    $table->foreignId('organization_id')->nullable()->constrained('organizations');
-    $table->string('route_path')->default('/');
-    $table->boolean('is_active')->default(true);
-    $table->timestamps();
-});
-```
-
-### Migration 7: Create `organization_invitations` table
-
-```php
-Schema::create('organization_invitations', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('organization_id')->constrained('organizations')->cascadeOnDelete();
-    $table->foreignId('invited_user_id')->nullable()->constrained('users');
-    $table->string('email')->nullable();
-    $table->string('role');
-    $table->string('token')->unique();
-    $table->timestamp('expires_at');
-    $table->string('status')->default('pending'); // pending | accepted | expired | revoked
-    $table->timestamps();
-});
-```
-
-### Migration 8: Create `application_roles` table
-
-```php
-Schema::create('application_roles', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('application_id')->constrained('applications')->cascadeOnDelete();
-    $table->string('role_name');
-    $table->json('permissions');
-    $table->timestamps();
-    $table->unique(['application_id', 'role_name']);
-});
-```
-
-### Migration 9: Create `feature_flags` table
-
-```php
-Schema::create('feature_flags', function (Blueprint $table) {
-    $table->id();
-    $table->string('name');
-    $table->foreignId('application_id')->nullable()->constrained('applications');
-    $table->boolean('enabled')->default(false);
-    $table->json('rules')->nullable();
-    $table->timestamps();
-});
-```
-
-### Migration 10: Create `platform_roles` table
-
-```php
-Schema::create('platform_roles', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-    $table->string('role'); // super_admin | support | finance | developer
-    $table->json('permissions')->nullable();
-    $table->timestamps();
-    $table->unique(['user_id', 'role']);
-});
-```
-
-### Migration 11: Create `activity_logs` table
-
-```php
-Schema::create('activity_logs', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('user_id')->constrained('users');
-    $table->foreignId('organization_id')->nullable()->constrained('organizations');
-    $table->foreignId('application_id')->nullable()->constrained('applications');
-    $table->string('action');
-    $table->string('model_type')->nullable();
-    $table->unsignedBigInteger('model_id')->nullable();
-    $table->json('old_values')->nullable();
-    $table->json('new_values')->nullable();
-    $table->string('ip_address')->nullable();
-    $table->timestamps();
-    $table->index(['organization_id', 'application_id', 'created_at']);
-});
-```
-
-### Migration 12: Create `user_profiles` table
-
-```php
-Schema::create('user_profiles', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-    $table->string('first_name')->nullable();
-    $table->string('last_name')->nullable();
-    $table->string('phone')->nullable();
-    $table->string('avatar')->nullable();
-    $table->string('country')->nullable();
-    $table->string('timezone')->nullable();
-    $table->string('language')->default('en');
-    $table->timestamps();
-});
-```
+- All cross-module violations are documented in a tracking issue
+- Every module's migration folder is verified against the Canonical Migration Folders table
+- Integration rules are published and shared with the team
 
 ---
 
-## Phase 1: Services
+## Phase 1: Platform Core & Runtime Layer
 
-### DomainResolverService
+**Duration:** 4 weeks  
+**Dependency:** Phase 0  
+**Goal:** Establish Platform Core as the identity/org/auth authority and deploy the Runtime Layer
 
-```php
-class DomainResolverService
-{
-    public function resolve(string $host): DomainResolution
-    {
-        // 1. Exact match in domains table
-        // 2. Registered application domain
-        // 3. Registered organization domain
-        // 4. Platform domain (mygrownet.com)
-        // 5. 404
+### 1.1 Platform Core Consolidation
 
-        $domain = Domain::where('domain', $host)->where('is_active', true)->first();
+| # | Task | Deliverable |
+|---|------|-------------|
+| 1.1.1 | Move `User` model into `App\Domain\Core` (keep Eloquent in Infrastructure) | Core user entity |
+| 1.1.2 | Move `Organization`, `OrganizationMember` models into Core | Core org entities |
+| 1.1.3 | Move `Application` model into Core | Core app entity |
+| 1.1.4 | Create `App\Domain\Core\Services\IdentityService` | Identity service |
+| 1.1.5 | Create `App\Domain\Core\Services\OrganizationService` | Org service |
+| 1.1.6 | Create `App\Domain\Core\Services\ApplicationService` | App service |
+| 1.1.7 | Remove cross-module model references (BMS → Core User, etc.) | Clean imports |
+| 1.1.8 | Create `App\Domain\Core\Exceptions\` base exceptions | Exception base |
 
-        if (!$domain) {
-            throw new DomainNotFoundException("No registered domain: {$host}");
-        }
+### 1.2 PlatformContext
 
-        return new DomainResolution(
-            type: $domain->type,
-            application: $domain->application,
-            organization: $domain->organization,
-            route: $domain->route_path
-        );
-    }
-}
-```
+| # | Task | Deliverable |
+|---|------|-------------|
+| 1.2.1 | Create `PlatformContext` class with all fields (traceId, requestId, userId, organizationId, applicationId, installationId, workspaceId, locale, timezone) | PlatformContext value object |
+| 1.2.2 | Create middleware `ResolvePlatformContext` that builds context from request | Middleware |
+| 1.2.3 | Inject PlatformContext into all controllers via `SetPlatformContext` middleware | Context injection |
+| 1.2.4 | Add PlatformContext to Inertia shared data | Frontend availability |
+| 1.2.5 | Create `PlatformContextFacade` or helper for queue/CLI access | Context resolver |
+| 1.2.6 | Document how to access context in services, jobs, commands | Developer docs |
 
-### ContextResolverService
+### 1.3 Application Runtime Infrastructure
 
-```php
-class ContextResolverService
-{
-    public function resolve(?User $user, ?string $domainType, ?Organization $orgHint = null): WorkspaceContext
-    {
-        // Returns current context from session, domain, or user preferences
-        // Priority: session > domain hint > user preference > default
+| # | Task | Deliverable |
+|---|------|-------------|
+| 1.3.1 | Formalize `ResolveDomainContext` middleware (`§5`) | Runtime middleware |
+| 1.3.2 | Create `SetPlatformContext` middleware (`§5`) | Runtime middleware |
+| 1.3.3 | Ensure `DetectSubdomain` feeds into DomainResolution | Subdomain → context |
+| 1.3.4 | Create `TenantAwareRepository` base class with automatic `organization_id` scoping (`§18`) | Repository base |
+| 1.3.5 | Document Application Runtime Layer as a distinct concern | Runtime docs |
 
-        $context = new WorkspaceContext();
+### 1.4 Application Manifest Prototype
 
-        if (!$user) {
-            return $context->setType('guest');
-        }
+| # | Task | Deliverable |
+|---|------|-------------|
+| 1.4.1 | Define manifest array schema (all fields from §4.5) | Schema definition |
+| 1.4.2 | Create `ModuleDiscovery` service that collects manifests from ServiceProviders | Discovery service |
+| 1.4.3 | Have 2–3 modules (StockFlow, BMS, GrowFinance) publish initial manifests | Manifest examples |
 
-        // Check session first
-        if ($cached = session('workspace_context')) {
-            return $context->fromArray($cached);
-        }
+### Success Criteria
 
-        // Domain-based resolution
-        if ($domainType === 'organization' && $orgHint) {
-            return $context->setOrganization($orgHint);
-        }
-
-        // User preference or default
-        return $this->resolveDefault($user);
-    }
-
-    public function switchContext(User $user, string $type, ?int $organizationId = null): WorkspaceContext
-    {
-        // Validate switch
-        if ($type === 'organization') {
-            $membership = OrganizationMember::where('user_id', $user->id)
-                ->where('organization_id', $organizationId)
-                ->where('status', 'active')
-                ->firstOrFail();
-        }
-
-        $context = new WorkspaceContext();
-        $context->setType($type);
-        if ($organizationId) {
-            $context->setOrganization(Organization::findOrFail($organizationId));
-        }
-
-        session(['workspace_context' => $context->toArray()]);
-
-        return $context;
-    }
-}
-```
-
-### ApplicationAccessService
-
-```php
-class ApplicationAccessService
-{
-    public function getAvailableApps(User $user, WorkspaceContext $context): Collection
-    {
-        if ($context->isPersonal()) {
-            return $this->getPersonalApps($user);
-        }
-
-        return $this->getOrganizationApps($user, $context->organization);
-    }
-
-    protected function getPersonalApps(User $user): Collection
-    {
-        return Application::where('is_active', true)
-            ->whereIn('context_support', ['personal', 'both'])
-            ->where(function ($q) use ($user) {
-                // Default consumer apps (no subscription needed)
-                $q->where('access_model', 'customer')
-                  // Or user has a subscription
-                  ->orWhereHas('userSubscriptions', fn($q) => $q->where('user_id', $user->id));
-            })
-            ->where('lifecycle', '!=', 'retired')
-            ->where('operational_status', 'online')
-            ->get()
-            ->groupBy('category');
-    }
-
-    protected function getOrganizationApps(User $user, Organization $org): Collection
-    {
-        return Application::where('is_active', true)
-            ->whereIn('context_support', ['organization', 'both'])
-            ->whereHas('installations', fn($q) => $q->where('organization_id', $org->id)->where('status', 'active'))
-            ->where('lifecycle', '!=', 'retired')
-            ->where('operational_status', 'online')
-            ->get()
-            ->groupBy('category');
-    }
-
-    public function canAccess(User $user, Application $app, WorkspaceContext $context): bool
-    {
-        // Implementation of the security chain
-        // User → Membership → Subscription → Role → Data
-    }
-}
-```
-
-### OrganizationAccessService
-
-```php
-class OrganizationAccessService
-{
-    public function getAccessibleOrganizations(User $user): Collection
-    {
-        return Organization::whereHas('members', fn($q) => $q->where('user_id', $user->id)->where('status', 'active'))
-            ->get();
-    }
-
-    public function getUserRole(User $user, Organization $org): ?string
-    {
-        return OrganizationMember::where('user_id', $user->id)
-            ->where('organization_id', $org->id)
-            ->value('role');
-    }
-
-    public function validateMembership(User $user, Organization $org): bool
-    {
-        return OrganizationMember::where('user_id', $user->id)
-            ->where('organization_id', $org->id)
-            ->where('status', 'active')
-            ->exists();
-    }
-}
-```
-
-### App Launch Contract
-
-```php
-class AppLaunchService
-{
-    public function buildPayload(Application $app, WorkspaceContext $context, User $user): array
-    {
-        return [
-            'application' => $app->slug,
-            'context_type' => $context->type,
-            'organization_id' => $context->organization?->id,
-            'organization_slug' => $context->organization?->slug,
-            'user_id' => $user->id,
-            'permissions' => $this->getPermissions($user, $app, $context),
-            'installation_id' => $context->organization?->installations
-                ->where('application_id', $app->id)->first()?->id,
-            'installation_settings' => $context->organization?->installations
-                ->where('application_id', $app->id)->first()?->settings,
-        ];
-    }
-
-    public function launch(Application $app, WorkspaceContext $context, User $user): RedirectResponse
-    {
-        $payload = $this->buildPayload($app, $context, $user);
-
-        // Encode payload in session or signed URL for the destination app
-        session(['app_launch_payload' => $payload]);
-
-        return redirect()->away($app->url);
-    }
-}
-```
+- PlatformContext flows through every request, event, and queue job
+- No application imports Core models from outside Core
+- ModuleDiscovery can enumerate installed modules and their manifests
+- TenantAwareRepository is ready for use
 
 ---
 
-## Phase 2: Middleware
+## Phase 2: Event Infrastructure
 
-### ResolveDomainContext (global middleware)
+**Duration:** 3 weeks  
+**Dependency:** Phase 1 (needs PlatformContext)  
+**Goal:** Deploy the event envelope, event bus, and first domain events
 
-```php
-class ResolveDomainContext
-{
-    public function handle(Request $request, Closure $next)
-    {
-        $resolver = app(DomainResolverService::class);
-        $contextResolver = app(ContextResolverService::class);
+### 2.1 Event Envelope & Bus
 
-        try {
-            $resolution = $resolver->resolve($request->getHost());
-            $request->attributes->set('domain_resolution', $resolution);
+| # | Task | Deliverable |
+|---|------|-------------|
+| 2.1.1 | Create `PlatformEvent` class with all envelope fields (§10.1) | Envelope class |
+| 2.1.2 | Create `EventDispatcher` service that auto-injects PlatformContext | Dispatch service |
+| 2.1.3 | Add `event_version`, `correlation_id`, `causation_id` to envelope | Full metadata |
+| 2.1.4 | Adopt dot-notation event naming with version (`bms.invoice.created.v1`) | Naming convention |
+| 2.1.5 | Update Laravel `EventServiceProvider` or create custom bus | Bus registration |
 
-            // Resolve context from domain + session
-            $context = $contextResolver->resolve(
-                user: $request->user(),
-                domainType: $resolution->type,
-                orgHint: $resolution->organization
-            );
-            $request->attributes->set('workspace_context', $context);
-        } catch (DomainNotFoundException $e) {
-            abort(404);
-        }
+### 2.2 Event Ownership Registry
 
-        return $next($request);
-    }
-}
-```
+| # | Task | Deliverable |
+|---|------|-------------|
+| 2.2.1 | Create `EventOwnershipRegistry` with mapping from §10.5 | Registry |
+| 2.2.2 | Add validation: only the owning module may dispatch an event | Guard |
+| 2.2.3 | Log ownership violations with stack traces | Monitoring |
 
-### EnsureOrganizationAccess (route middleware)
+### 2.3 First Domain Events
 
-```php
-class EnsureOrganizationAccess
-{
-    public function handle(Request $request, Closure $next)
-    {
-        $context = $request->attributes->get('workspace_context');
+| # | Task | Deliverable |
+|---|------|-------------|
+| 2.3.1 | `OrganizationCreated` — Platform Core lifecycle event | Event + listener |
+| 2.3.2 | `ApplicationEnabled` — Platform Core lifecycle event | Event + listener |
+| 2.3.3 | `InvoiceCreated` — BMS domain event | Event + listener |
+| 2.3.4 | `GoodsReceived` — StockFlow domain event | Event + listener |
+| 2.3.5 | `PaymentReceived` — GrowFinance domain event | Event + listener |
+| 2.3.6 | Move all existing event listeners to consuming module's ServiceProvider | Listener ownership |
 
-        if ($context->isOrganization()) {
-            $user = $request->user();
-            $org = $context->organization;
+### 2.4 Event Naming Migration
 
-            $isMember = app(OrganizationAccessService::class)
-                ->validateMembership($user, $org);
+| # | Task | Deliverable |
+|---|------|-------------|
+| 2.4.1 | Rename existing events to dot-notation with v1 | Migration script |
+| 2.4.2 | Add backward-compatible aliases for old event names | BC layer |
+| 2.4.3 | Update all `->dispatch()` calls to use new names | Code update |
 
-            abort_unless($isMember, 403, 'Not a member of this organization');
-        }
+### Success Criteria
 
-        return $next($request);
-    }
-}
-```
-
-### EnsureApplicationAccess (route middleware)
-
-```php
-class EnsureApplicationAccess
-{
-    public function handle(Request $request, Closure $next)
-    {
-        $context = $request->attributes->get('workspace_context');
-        $user = $request->user();
-
-        // Resolve application from route or domain
-        $app = $request->attributes->get('domain_resolution')?->application;
-
-        if ($app && $app->requires_organization_context && $context->isPersonal()) {
-            abort(403, 'This application requires an organization context');
-        }
-
-        if ($app && !app(ApplicationAccessService::class)->canAccess($user, $app, $context)) {
-            abort(403, 'No access to this application');
-        }
-
-        return $next($request);
-    }
-}
-```
-
-### SetPlatformContext (global middleware, runs after ResolveDomainContext)
-
-```php
-class SetPlatformContext
-{
-    public function handle(Request $request, Closure $next)
-    {
-        // Share context with Inertia for Vue
-        if (function_exists('inertia')) {
-            $context = $request->attributes->get('workspace_context');
-            $user = $request->user();
-
-            if ($user && $context) {
-                inertia()->share('workspace', [
-                    'context' => $context->toArray(),
-                    'apps' => fn() => app(ApplicationAccessService::class)
-                        ->getAvailableApps($user, $context),
-                    'organizations' => fn() => app(OrganizationAccessService::class)
-                        ->getAccessibleOrganizations($user),
-                ]);
-            }
-        }
-
-        return $next($request);
-    }
-}
-```
+- Events carry full envelope with version, correlationId, causationId
+- Event ownership registry prevents unauthorized publishing
+- At least 5 events are flowing through the new envelope
+- Listeners are owned by consuming modules
 
 ---
 
-## Phase 2: Controllers
+## Phase 3: Integration Contracts
 
-### WorkspaceController
+**Duration:** 4 weeks  
+**Dependency:** Phase 1 (needs PlatformContext + Core)  
+**Goal:** Deploy the IntegrationRegistry, IntegrationGuard, and first contracts
 
-```php
-class WorkspaceController extends Controller
-{
-    public function __construct(
-        private ApplicationAccessService $appAccess,
-        private OrganizationAccessService $orgAccess,
-        private ContextResolverService $contextResolver,
-    ) {}
+### 3.1 IntegrationRegistry
 
-    public function index(Request $request)
-    {
-        $user = $request->user();
-        $context = $request->attributes->get('workspace_context');
+| # | Task | Deliverable |
+|---|------|-------------|
+| 3.1.1 | Create `IntegrationRegistry` service that resolves contracts by capability | Registry |
+| 3.1.2 | Create base `ProviderContract` interface in Core (§13.1) | Base contract |
+| 3.1.3 | Create `ContractResolver` that uses manifests to find implementations | Resolver |
+| 3.1.4 | Register contract implementations in each module's ServiceProvider | DI wiring |
 
-        return Inertia::render('Workspace/Index', [
-            'context' => $context->toArray(),
-            'apps' => $this->appAccess->getAvailableApps($user, $context),
-            'organizations' => $this->orgAccess->getAccessibleOrganizations($user),
-            'user' => $user->only('id', 'name', 'email'),
-        ]);
-    }
+### 3.2 IntegrationGuard
 
-    public function switchContext(Request $request)
-    {
-        $validated = $request->validate([
-            'type' => 'required|in:personal,organization',
-            'organization_id' => 'required_if:type,organization|integer|exists:organizations,id',
-        ]);
+| # | Task | Deliverable |
+|---|------|-------------|
+| 3.2.1 | Create `IntegrationGuard` service (§14.1) | Guard |
+| 3.2.2 | Implement authorization checks: authenticated, org member, app active, permission, feature flag | Auth chain |
+| 3.2.3 | Return explicit denial before contract implementation is reached | Fail-fast |
+| 3.2.4 | Log all authorization failures | Audit trail |
 
-        $context = $this->contextResolver->switchContext(
-            $request->user(),
-            $validated['type'],
-            $validated['organization_id'] ?? null
-        );
+### 3.3 First Contracts
 
-        return redirect()->route('workspace');
-    }
-}
-```
+| # | Task | Deliverable |
+|---|------|-------------|
+| 3.3.1 | `NotificationProvider` in Core\Contracts (platform-wide) | Interface + BMS impl |
+| 3.3.2 | `MediaProvider` in Core\Contracts (platform-wide) | Interface + Storage impl |
+| 3.3.3 | `InventoryProvider` in StockFlow\Contracts | Interface + impl |
+| 3.3.4 | `AccountingProvider` in GrowFinance\Contracts | Interface + impl |
+| 3.3.5 | Replace existing direct service calls with contract-based resolution | Migration |
 
-### OrganizationWorkspaceController
+### 3.4 Contract Compatibility Rules
 
-```php
-class OrganizationWorkspaceController extends Controller
-{
-    public function __construct(
-        private ApplicationAccessService $appAccess,
-        private OrganizationAccessService $orgAccess,
-    ) {}
+| # | Task | Deliverable |
+|---|------|-------------|
+| 3.4.1 | Document compatible vs breaking changes in CONTRIBUTING.md (§13.7) | Developer docs |
+| 3.4.2 | Add CI lint check: contract interface changes must be reviewed | CI check |
+| 3.4.3 | Create contract versioning convention (InventoryProviderV2 pattern) | Versioning guide |
 
-    public function show(Request $request, string $slug)
-    {
-        $org = Organization::where('slug', $slug)->firstOrFail();
-        $user = $request->user();
+### Success Criteria
 
-        // Validate membership
-        $this->orgAccess->validateMembership($user, $org);
-
-        // Set organization context
-        $context = app(ContextResolverService::class)->switchContext(
-            $user, 'organization', $org->id
-        );
-
-        return Inertia::render('Workspace/Organization', [
-            'organization' => $org,
-            'apps' => $this->appAccess->getAvailableApps($user, $context),
-            'members' => $org->members()->with('user.profile')->get(),
-            'context' => $context->toArray(),
-        ]);
-    }
-}
-```
+- IntegrationRegistry resolves 4+ contracts by capability name
+- IntegrationGuard enforces all security checks before contract execution
+- No direct `app(Service::class)` calls remain between modules
+- Compatibility rules are documented and enforced in CI
 
 ---
 
-## Phase 2: Vue Components
+## Phase 4: Platform Services
 
-### Component Tree
+**Duration:** 4 weeks  
+**Dependency:** Phase 1 (needs Core + Runtime)  
+**Goal:** Deploy ApplicationProvisioningService, FeatureFlagService, HealthService, CapabilityRegistry
 
-```
-resources/js/
-  Layouts/
-    WorkspaceLayout.vue         ← shared layout for both workspaces
-  Pages/
-    Workspace/
-      Index.vue                 ← Platform Workspace (/workspace)
-      Organization.vue          ← Organization Workspace (/org/{slug})
-  Components/
-    Workspace/
-      ContextSwitcher.vue       ← "Working as: [Personal ▼]"
-      AppGrid.vue               ← categorized app tiles
-      AppTile.vue               ← single app icon + name
-      OrganizationList.vue      ← organizations section
-      OrganizationCard.vue      ← single org card
-      GlobalAppSwitcher.vue     ← cross-subdomain flyout menu
-      LegacyAppBadge.vue        ← migration status badge for legacy apps
-      IntendedAppHighlight.vue  ← auto-highlight for application-first entry
-```
+### 4.1 ApplicationProvisioningService
 
-### Data Flow
+| # | Task | Deliverable |
+|---|------|-------------|
+| 4.1.1 | Create `ApplicationProvisioningService` with full lifecycle (§4.1) | Service |
+| 4.1.2 | Implement `enable()` method with provisioning pipeline | Enable flow |
+| 4.1.3 | Implement `disable()` method with teardown | Disable flow |
+| 4.1.4 | Fire `ApplicationEnabled` / `ApplicationDisabled` lifecycle events | Events |
+| 4.1.5 | Create provisioning state machine (installing → configuring → active → disabled) | State machine |
 
-```
-Inertia page load:
-  workspace.context       → WorkspaceLayout → ContextSwitcher
-  workspace.apps          → AppGrid → AppTile
-  workspace.organizations → OrganizationList → OrganizationCard
-```
+### 4.2 CapabilityRegistry
 
-### Key Inertia Shared Data (from SetPlatformContext middleware)
+| # | Task | Deliverable |
+|---|------|-------------|
+| 4.2.1 | Create `CapabilityRegistry` that indexes manifests by capability (§4.4) | Registry |
+| 4.2.2 | Implement `findProviders(capability): ContractInterface[]` | Capability lookup |
+| 4.2.3 | Implement `hasCapability(application, capability): bool` | Capability check |
 
-```typescript
-interface WorkspaceShared {
-    context: {
-        type: 'personal' | 'organization';
-        organization_id: number | null;
-        organization_slug: string | null;
-        organization_name: string | null;
-        application_id: number | null;
-    };
-    apps: {
-        business: App[];
-        consumer: App[];
-        shared: App[];
-    };
-    organizations: Organization[];
-}
-```
+### 4.3 FeatureFlagService
 
----
+| # | Task | Deliverable |
+|---|------|-------------|
+| 4.3.1 | Create `FeatureFlagService` (§4.7) | Service |
+| 4.3.2 | Create `feature_flags` database table | Migration |
+| 4.3.3 | Implement `isEnabled(flag, context): bool` with org-level overrides | Flag resolution |
+| 4.3.4 | Integrate with IntegrationGuard (reject if flag disabled) | Guard integration |
 
-## Phase 2: Routes
+### 4.4 HealthService
 
-### web.php
+| # | Task | Deliverable |
+|---|------|-------------|
+| 4.4.1 | Create `HealthService` interface with 5 states (§4.8) | Interface |
+| 4.4.2 | Create `HealthStatus` enum (Healthy, Degraded, Maintenance, Unavailable, Offline) | Enum |
+| 4.4.3 | Implement local health checks (database, queue, service availability) | Local checks |
+| 4.4.4 | Expose `/health` endpoint per application | Health endpoint |
+| 4.4.5 | Create health dashboard view for platform administrators | Dashboard |
 
-```php
-// Context switching
-Route::post('/workspace/switch-context', [WorkspaceController::class, 'switchContext'])
-    ->name('workspace.switch-context')
-    ->middleware('auth');
+### 4.5 Application Manifest Adoption
 
-// Platform Workspace
-Route::get('/workspace', [WorkspaceController::class, 'index'])
-    ->name('workspace')
-    ->middleware('auth');
+| # | Task | Deliverable |
+|---|------|-------------|
+| 4.5.1 | All modules publish complete manifests (§4.5) | Full manifest coverage |
+| 4.5.2 | Add `platform_versions` constraint to each manifest | Version constraint |
+| 4.5.3 | Add `permissions`, `settings`, `health_checks` to manifests | Enhanced manifest |
+| 4.5.4 | Validate manifests at boot time (ModuleDiscovery validation) | Boot validation |
 
-// Legacy redirect
-Route::redirect('/dashboard', '/workspace', 301);
+### Success Criteria
 
-// Organization Workspace
-Route::get('/org/{slug}', [OrganizationWorkspaceController::class, 'show'])
-    ->name('workspace.organization')
-    ->middleware(['auth', 'ensure.organization.access']);
-
-// Diagnostic
-Route::get('/_platform/workspace', function (DomainResolverService $resolver) {
-    return response()->json($resolver->resolve(request()->getHost()));
-});
-```
-
-### Kernel.php Middleware Registration
-
-```php
-// Global
-'web' => [
-    // ... existing middleware ...
-    \App\Http\Middleware\ResolveDomainContext::class,
-    \App\Http\Middleware\SetPlatformContext::class,
-],
-
-// Route
-'ensure.organization.access' => \App\Http\Middleware\EnsureOrganizationAccess::class,
-'ensure.application.access' => \App\Http\Middleware\EnsureApplicationAccess::class,
-```
+- Full application lifecycle (enable → configure → active → disable) works
+- Feature flags can toggle behavior per organization
+- Health dashboard shows all applications with their status
+- Every module publishes a validated manifest
 
 ---
 
-## Phase 3: Application Migration
+## Phase 5: Operational Readiness
 
-### Step 1: Add `organization_id` to existing business app tables
+**Duration:** 3 weeks  
+**Dependency:** Phases 2–4 (needs events, contracts, services running)  
+**Goal:** Deploy observability, alerting, error taxonomy, retry/queue policies
 
-- StockFlow: alias `sa_company_id` → standardize to `organization_id`
-- BMS: use existing `cms_companies.id` mapping
+### 5.1 Integration Observability
 
-### Step 2: Seed `applications` registry
+| # | Task | Deliverable |
+|---|------|-------------|
+| 5.1.1 | Create integration monitoring dashboard (§16.1) | Dashboard |
+| 5.1.2 | Track events published/failed per hour | Metrics |
+| 5.1.3 | Track retry queue depth and dead letter queue count | Metrics |
+| 5.1.4 | Track average event processing time | Metrics |
+| 5.1.5 | Track contract call success rate and slowest calls | Metrics |
 
-```php
-DB::table('applications')->insert([
-    [
-        'name' => 'GrowNet',
-        'slug' => 'grownet',
-        'category' => 'consumer',
-        'access_model' => 'customer',
-        'context_support' => 'personal',
-        'requires_organization_context' => false,
-        'subscription_required' => false,
-        'lifecycle' => 'active',
-        'operational_status' => 'online',
-        'is_visible' => true,
-    ],
-    // ... all 13 apps from the inventory
-]);
-```
+### 5.2 Dead Letter Handling
 
-### Step 3: Seed `domains` table
+| # | Task | Deliverable |
+|---|------|-------------|
+| 5.2.1 | Create failed event storage (dead letter queue) | DLQ |
+| 5.2.2 | Implement event replay from dead letter queue | Replay |
+| 5.2.3 | Add admin UI for viewing and replaying failed events | Admin UI |
+| 5.2.4 | Configure alerting thresholds (§16.3) | Alerts |
 
-```php
-DB::table('domains')->insert([
-    ['domain' => 'mygrownet.com', 'type' => 'platform'],
-    ['domain' => 'grownet.mygrownet.com', 'type' => 'application', 'application_id' => 1],
-    ['domain' => 'finance.mygrownet.com', 'type' => 'application', 'application_id' => 5],
-    // ... all domains from the subdomain registry
-]);
-```
+### 5.3 Retry & Queue Policy Enforcement
 
-### Step 4: Migrate GrowNet.vue
+| # | Task | Deliverable |
+|---|------|-------------|
+| 5.3.1 | Implement retry with exponential backoff (§15.1) | Retry logic |
+| 5.3.2 | Configure dead letter queue with 7-day retention (§15.2) | DLQ config |
+| 5.3.3 | Set listener timeout to 60 seconds (§15.3) | Timeout config |
+| 5.3.4 | Configure separate queue per application (§15.2) | Queue isolation |
 
-- Extract workspace logic from `GrowNet.vue` into `Workspace/Index.vue`
-- GrowNet.vue becomes GrowNet's own dashboard (accessible via `grownet.mygrownet.com`)
-- Remove all wallet/earnings/investment data from workspace page
+### 5.4 Error Taxonomy Adoption
+
+| # | Task | Deliverable |
+|---|------|-------------|
+| 5.4.1 | Create base exception classes in `App\Domain\Core\Exceptions\` (§21.1) | Exception classes |
+| 5.4.2 | Audit existing exceptions and migrate to standard types | Migration |
+| 5.4.3 | Add retry behavior mapping (validation → no retry, transient → retry) | Retry mapping |
+| 5.4.4 | Document error taxonomy in CONTRIBUTING.md | Developer docs |
+
+### 5.5 Alerting
+
+| # | Task | Deliverable |
+|---|------|-------------|
+| 5.5.1 | Configure >5% failure rate alert | Alert |
+| 5.5.2 | Configure dead letter queue non-empty alert | Alert |
+| 5.5.3 | Configure listener offline >5min alert | Alert |
+| 5.5.4 | Configure queue backlog >1000 alert | Alert |
+
+### Success Criteria
+
+- Dashboard shows live integration metrics for all modules
+- Dead letter queue captures and replays failed events
+- All modules use the standard error taxonomy
+- Alerts fire for all defined threshold violations
 
 ---
 
-## Phase 3: Cleanup
+## Phase 6: Data Governance & Tenant Isolation
 
-### Deprecations
+**Duration:** 3 weeks  
+**Dependency:** Phase 1 (needs PlatformContext + TenantAwareRepository)  
+**Goal:** Harden tenant isolation, enforce data ownership, deploy config hierarchy
 
-- Remove `DashboardController@index` after workspace is stable
-- Remove all `route('dashboard')` references (already done, verify)
-- Replace hardcoded module/company logic with Application Registry queries
+### 6.1 Tenant Isolation Hardening
 
-### Legacy Apps
+| # | Task | Deliverable |
+|---|------|-------------|
+| 6.1.1 | Audit every query for `organization_id` scope | Query audit |
+| 6.1.2 | Fix unscoped queries (add missing `where organization_id = ?`) | Fixes |
+| 6.1.3 | Add `organization_id` to queue job serialization | Queue scope |
+| 6.1.4 | Add organization prefix to cache keys | Cache isolation |
+| 6.1.5 | Ensure background jobs restore PlatformContext before execution | Job middleware |
+| 6.1.6 | Document tenant isolation rules in CONTRIBUTING.md (§18) | Developer docs |
 
-- Keep Quick Invoice in registry with `lifecycle: legacy`, `is_visible: false` for new users
-- Existing users see it via `user_application_subscriptions` check
-- After BizDocs stabilizes: migration assistant → retire
+### 6.2 Data Ownership Enforcement
+
+| # | Task | Deliverable |
+|---|------|-------------|
+| 6.2.1 | Audit all `INSERT`, `UPDATE`, `DELETE` statements against ownership table (§17.1) | Write audit |
+| 6.2.2 | Fix violations (move writes to owning module) | Fixes |
+| 6.2.3 | Add CI check: new migration must not touch another module's table | CI check |
+| 6.2.4 | Create reporting database user with read-only access to all tables | Reporting access |
+
+### 6.3 Configuration Strategy
+
+| # | Task | Deliverable |
+|---|------|-------------|
+| 6.3.1 | Create `platform_settings` table for platform-level config | Migration |
+| 6.3.2 | Create `organization_settings` table for org-level config | Migration |
+| 6.3.3 | Create `application_settings` table for app-level config | Migration |
+| 6.3.4 | Create `SettingsResolver` service with hierarchical resolution (§20.3) | Service |
+| 6.3.5 | Migrate existing config values to the new hierarchy | Migration |
+
+### 6.4 Anti-Corruption Layer Pattern
+
+| # | Task | Deliverable |
+|---|------|-------------|
+| 6.4.1 | Document ACL pattern in CONTRIBUTING.md (§19) | Developer docs |
+| 6.4.2 | Create ACL directory structure template | Template |
+| 6.4.3 | Refactor existing Stripe/PayPal integrations into ACL pattern | Refactor |
+| 6.4.4 | Wrap external exceptions in `IntegrationException` | Exception wrapping |
+
+### Success Criteria
+
+- Every query is scoped by organization_id
+- No module writes to another module's tables
+- Configuration is resolved hierarchically (Platform → Org → App → User)
+- External integrations use the ACL pattern
 
 ---
 
-## Implementation Order Summary
+## Phase 7: Reliable Event Delivery (v2)
+
+**Duration:** 3 weeks  
+**Dependency:** Phase 2 (needs events running)  
+**Goal:** Deploy Transactional Outbox, Inbox Pattern, Event Replay
+
+### 7.1 Transactional Outbox
+
+| # | Task | Deliverable |
+|---|------|-------------|
+| 7.1.1 | Create outbox table migration per module (`{module}_event_outbox`) | Migration |
+| 7.1.2 | Create `OutboxService` that inserts events atomically with business transaction | Service |
+| 7.1.3 | Create outbox worker that publishes pending events | Worker/command |
+| 7.1.4 | Implement outbox cleanup (archive published events older than 7 days) | Cleanup |
+| 7.1.5 | Add monitoring: outbox queue depth per module | Metrics |
+
+### 7.2 Inbox Pattern (Idempotent Processing)
+
+| # | Task | Deliverable |
+|---|------|-------------|
+| 7.2.1 | Create inbox table migration per module (`{module}_event_inbox`) | Migration |
+| 7.2.2 | Create `InboxService` that checks/saves event_id before processing | Service |
+| 7.2.3 | Implement idempotency guard in base event listener | Base listener |
+| 7.2.4 | Add monitoring: duplicate event rate | Metrics |
+
+### 7.3 Event Replay
+
+| # | Task | Deliverable |
+|---|------|-------------|
+| 7.3.1 | Create `EventReplayService` with date range + event name filter | Service |
+| 7.3.2 | Create artisan command: `platform:replay-events {--from=} {--event=}` | Command |
+| 7.3.3 | Add admin UI for event replay | Admin UI |
+| 7.3.4 | Document replay procedure in runbook | Runbook |
+
+### 7.4 Outbox Adoption (Financial Events First)
+
+| # | Task | Deliverable |
+|---|------|-------------|
+| 7.4.1 | Wire outbox for `bms.invoice.*` events (required per §11.4) | Adoption |
+| 7.4.2 | Wire outbox for `stockflow.goods_received.*` (required) | Adoption |
+| 7.4.3 | Wire outbox for `growfinance.payment.*` (required) | Adoption |
+| 7.4.4 | Wire inbox for consuming modules (GrowFinance listens to invoices, etc.) | Adoption |
+
+### Success Criteria
+
+- Financial events use outbox (no lost events on crash)
+- Idempotent processing prevents duplicate event handling
+- Admin can replay events by date range and event name
+- All "Required" events from §11.4 use the outbox
+
+---
+
+## Phase 8: Independent Deployment Readiness
+
+**Duration:** 4 weeks  
+**Dependency:** Phases 2–7  
+**Goal:** Validate that every module can be extracted as an independent service
+
+### 8.1 Contract Versioning Exercise
+
+| # | Task | Deliverable |
+|---|------|-------------|
+| 8.1.1 | Introduce breaking change to one contract (e.g., InventoryProviderV2) | Versioned contract |
+| 8.1.2 | Add v2 alongside v1 with both implementations | Coexistence |
+| 8.1.3 | Verify IntegrationRegistry resolves correct version per consumer | Registry test |
+| 8.1.4 | Document contract versioning playbook | Playbook |
+
+### 8.2 Remote Contract Resolution (Design)
+
+| # | Task | Deliverable |
+|---|------|-------------|
+| 8.2.1 | Design remote contract resolution flow (HTTP client → Gateway → Implementation) | Design doc |
+| 8.2.2 | Create HTTP client implementation of one contract (e.g., `InventoryProviderHttpImpl`) | HTTP impl |
+| 8.2.3 | Create API Gateway design for contract routing | Gateway design |
+| 8.2.4 | Benchmark local vs remote contract resolution | Benchmark |
+
+### 8.3 Event Transport (Design)
+
+| # | Task | Deliverable |
+|---|------|-------------|
+| 8.3.1 | Design cross-process event transport (RabbitMQ/SQS adapter) | Design doc |
+| 8.3.2 | Create event serializer for remote transport | Serializer |
+| 8.3.3 | Design event subscription discovery for remote listeners | Subscription design |
+
+### 8.4 Extraction Dry Run
+
+| # | Task | Deliverable |
+|---|------|-------------|
+| 8.4.1 | Extract one module (e.g., StockFlow) to separate directory | Extraction |
+| 8.4.2 | Verify all integration points use contracts/events only | Verification |
+| 8.4.3 | Document what changes if deployed independently (configuration only) | Extraction docs |
+| 8.4.4 | Identify remaining coupling issues and create remediation plan | Gap analysis |
+
+### 8.5 Final Governance
+
+| # | Task | Deliverable |
+|---|------|-------------|
+| 8.5.1 | Create ADR template and repository | ADR process |
+| 8.5.2 | Hold architecture review of all modules | Review |
+| 8.5.3 | Update `CONTRIBUTING.md` with all rules from §§14–21 | Final guidelines |
+| 8.5.4 | Create `ARCHITECTURE_CHECKS.md` for automated CI enforcement | CI checks |
+
+### Success Criteria
+
+- One module can be extracted and verified with no domain logic changes
+- Contract versioning works end-to-end with consumer coexistence
+- Remote transport is designed and ready for implementation
+- All integration rules are documented and enforced in CI
+
+---
+
+## Dependency Graph
 
 ```
-Week 1-2: Phase 1 (Database + Services)
-  - All 12 migrations
-  - DomainResolverService, ContextResolverService
-  - ApplicationAccessService, OrganizationAccessService
-  - AppLaunchService
-
-Week 3: Phase 2 (Middleware + Controllers)
-  - ResolveDomainContext, EnsureOrganizationAccess
-  - EnsureApplicationAccess, SetPlatformContext
-  - WorkspaceController, OrganizationWorkspaceController
-
-Week 4: Phase 2 (Vue)
-  - WorkspaceLayout, ContextSwitcher, AppGrid
-  - Workspace/Index.vue, Workspace/Organization.vue
-  - GlobalAppSwitcher component
-
-Week 5: Phase 3 (Migration)
-  - Seed applications + domains + org_members data
-  - Migrate GrowNet.vue workspace logic out
-  - Standardize organization_id across business apps
-  - Run tests
+Phase 0 (Audit)
+    │
+    ▼
+Phase 1 (Core + Runtime)
+    │
+    ├──────────────────┐
+    ▼                  ▼
+Phase 2 (Events)   Phase 3 (Contracts)   Phase 4 (Platform Services)
+    │                  │                       │
+    └────────┬─────────┘                       │
+             ▼                                 │
+       Phase 5 (Operations) ◄──────────────────┘
+             │
+             ▼
+       Phase 6 (Data Governance)
+             │
+             ▼
+       Phase 7 (Reliable Events v2)
+             │
+             ▼
+       Phase 8 (Independent Deployment)
 ```
+
+Phases 2, 3, and 4 can run **concurrently** after Phase 1 is complete. Phase 5 requires all three. Phases 6 and 7 build on earlier work and can partially overlap.
+
+---
+
+## Risk Register
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| Existing direct DB calls missed in audit | Medium | High | Strangler pattern — wrap after discovery |
+| Team resists event ownership rules | Low | Medium | Document in CONTRIBUTING.md, enforce in CI |
+| Phase 7 (outbox) adds latency to event dispatch | Low | Medium | Benchmark before/after; async worker mitigates |
+| Contract versioning becomes complex | Medium | Low | Start with simple v1/v2 coexistence; iterate |
+| Modules cannot be extracted without changes | Medium | High | Identify in Phase 8 dry run; fix coupling iteratively |
+| Developer friction from new patterns | Medium | Medium | Pair programming sessions, ADR reviews, gradual adoption |
+
+---
+
+## Quick Wins (Weeks 1–2)
+
+These can be started immediately without blocking on other phases:
+
+1. **PlatformContext middleware** — Define the class, add to middleware stack. No other changes needed.
+2. **Event naming convention** — Start using `module.entity.action.v1` in new events.
+3. **TenantAwareRepository** — Create the base class; modules adopt it incrementally.
+4. **Error taxonomy classes** — Create the 8 exception types; modules start using them.
+5. **Data ownership table** — Publish the §17.1 table as a reference; no code changes needed.
+6. **ADRs** — Create ADR files for the 7 decisions in §24.
+
+---
+
+## Measuring Progress
+
+| Metric | Target | When |
+|--------|--------|------|
+| Cross-module direct DB calls | 0 | Phase 3 |
+| Cross-module Eloquent imports | 0 | Phase 3 |
+| Events using new envelope | 100% | Phase 2 complete |
+| Contracts resolved via IntegrationRegistry | 100% of defined contracts | Phase 3 complete |
+| Modules with published manifests | 100% | Phase 4 complete |
+| Queries scoped by organization_id | 100% | Phase 6 complete |
+| Financial events using outbox | 100% | Phase 7 complete |
+| Integration dashboard showing all apps | Operational | Phase 5 complete |
+| Modules verified extractable | ≥1 | Phase 8 complete |

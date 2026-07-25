@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\GrowFinance;
 
 use App\Domain\GrowFinance\Services\PdfInvoiceService;
-use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\GrowFinance\ValueObjects\InvoiceStatus;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceCustomerModel;
@@ -18,7 +17,6 @@ use Inertia\Response;
 class InvoiceController extends Controller
 {
     public function __construct(
-        private SubscriptionService $subscriptionService,
         private PdfInvoiceService $pdfService
     ) {}
     public function index(Request $request): Response
@@ -34,13 +32,9 @@ class InvoiceController extends Controller
 
         $invoices = $query->latest('invoice_date')->paginate(20);
 
-        // Get invoice usage for limit banner
-        $invoiceUsage = $this->subscriptionService->canCreateInvoice($request->user());
-
         return Inertia::render('GrowFinance/Invoices/Index', [
             'invoices' => $invoices,
             'currentStatus' => $status,
-            'invoiceUsage' => $invoiceUsage,
         ]);
     }
 
@@ -70,12 +64,6 @@ class InvoiceController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        // Check subscription limits
-        $check = $this->subscriptionService->canCreateInvoice($request->user());
-        if (!$check['allowed']) {
-            return back()->with('error', 'You\'ve reached your monthly invoice limit. Please upgrade your plan to create more invoices.');
-        }
-
         $validated = $request->validate([
             'customer_id' => 'nullable|exists:growfinance_customers,id',
             'invoice_date' => 'required|date',
@@ -126,9 +114,6 @@ class InvoiceController extends Controller
                 ]);
             }
         });
-
-        // Clear usage cache after creating invoice
-        $this->subscriptionService->clearUsageCache($request->user());
 
         return redirect()->route('growfinance.invoices.index')
             ->with('success', 'Invoice created successfully!');
@@ -282,15 +267,10 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Download invoice as PDF (Professional+ feature)
+     * Download invoice as PDF
      */
     public function downloadPdf(Request $request, int $id)
     {
-        // Check if user has PDF export feature
-        if (!$this->subscriptionService->canPerformAction($request->user(), 'pdf_export')) {
-            return back()->with('error', 'PDF export is available on Professional plan and above. Please upgrade to access this feature.');
-        }
-
         $businessId = $request->user()->id;
         $invoice = GrowFinanceInvoiceModel::forBusiness($businessId)
             ->with(['customer', 'items'])
@@ -304,11 +284,6 @@ class InvoiceController extends Controller
      */
     public function previewPdf(Request $request, int $id)
     {
-        // Check if user has PDF export feature
-        if (!$this->subscriptionService->canPerformAction($request->user(), 'pdf_export')) {
-            return back()->with('error', 'PDF preview is available on Professional plan and above.');
-        }
-
         $businessId = $request->user()->id;
         $invoice = GrowFinanceInvoiceModel::forBusiness($businessId)
             ->with(['customer', 'items'])

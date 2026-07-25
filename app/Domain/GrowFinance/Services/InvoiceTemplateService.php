@@ -4,7 +4,6 @@ namespace App\Domain\GrowFinance\Services;
 
 use App\Domain\GrowFinance\Entities\InvoiceTemplate;
 use App\Domain\GrowFinance\Repositories\InvoiceTemplateRepositoryInterface;
-use App\Domain\Module\Services\SubscriptionService;
 use App\Models\User;
 use DateTimeImmutable;
 use Illuminate\Support\Str;
@@ -12,7 +11,6 @@ use Illuminate\Support\Str;
 class InvoiceTemplateService
 {
     public function __construct(
-        private SubscriptionService $subscriptionService,
         private InvoiceTemplateRepositoryInterface $templateRepo
     ) {}
 
@@ -40,31 +38,12 @@ class InvoiceTemplateService
      */
     public function canCreateTemplate(User $user): array
     {
-        $limits = $this->subscriptionService->getUserLimits($user);
-        $maxTemplates = $limits['invoice_templates'] ?? 0;
-
-        if ($maxTemplates === 0) {
-            return [
-                'allowed' => false,
-                'reason' => 'Custom invoice templates are available on Professional plan and above.',
-            ];
-        }
-
         $currentCount = count($this->templateRepo->findActive($user->id));
-
-        if ($maxTemplates !== -1 && $currentCount >= $maxTemplates) {
-            return [
-                'allowed' => false,
-                'reason' => "Template limit reached ({$maxTemplates}). Upgrade for unlimited templates.",
-                'used' => $currentCount,
-                'limit' => $maxTemplates,
-            ];
-        }
 
         return [
             'allowed' => true,
             'used' => $currentCount,
-            'limit' => $maxTemplates,
+            'limit' => -1,
         ];
     }
 

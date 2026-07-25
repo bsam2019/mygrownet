@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\GrowFinance;
 
-use App\Domain\Module\Services\SubscriptionService;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceCustomerModel;
 use Illuminate\Http\RedirectResponse;
@@ -12,10 +11,6 @@ use Inertia\Response;
 
 class CustomerController extends Controller
 {
-    public function __construct(
-        private SubscriptionService $subscriptionService
-    ) {}
-
     public function index(Request $request): Response
     {
         $businessId = $request->user()->id;
@@ -25,12 +20,8 @@ class CustomerController extends Controller
             ->orderBy('name')
             ->paginate(20);
 
-        // Get customer usage for limit banner
-        $customerUsage = $this->subscriptionService->canAddCustomer($request->user());
-
         return Inertia::render('GrowFinance/Customers/Index', [
             'customers' => $customers,
-            'customerUsage' => $customerUsage,
         ]);
     }
 
@@ -41,12 +32,6 @@ class CustomerController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        // Check subscription limits
-        $check = $this->subscriptionService->canAddCustomer($request->user());
-        if (!$check['allowed']) {
-            return back()->with('error', 'You\'ve reached your customer limit. Please upgrade your plan to add more customers.');
-        }
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',

@@ -7,7 +7,6 @@ use App\Domain\GrowFinance\Entities\RecurringTransaction;
 use App\Domain\GrowFinance\Repositories\ExpenseRepositoryInterface;
 use App\Domain\GrowFinance\Repositories\RecurringTransactionRepositoryInterface;
 use App\Domain\GrowFinance\ValueObjects\PaymentMethod;
-use App\Domain\Module\Services\SubscriptionService;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -15,7 +14,6 @@ use Illuminate\Support\Facades\Log;
 class RecurringTransactionService
 {
     public function __construct(
-        private SubscriptionService $subscriptionService,
         private RecurringTransactionRepositoryInterface $recurringTransactionRepo,
         private ExpenseRepositoryInterface $expenseRepo,
     ) {}
@@ -72,16 +70,6 @@ class RecurringTransactionService
                     continue;
                 }
 
-                $check = $this->subscriptionService->canIncrement($user, 'transactions_per_month', 'growfinance');
-                if (!$check['allowed']) {
-                    $errors[] = [
-                        'id' => $recurring->id,
-                        'description' => $recurring->description,
-                        'error' => $check['reason'] ?? 'Transaction limit reached',
-                    ];
-                    continue;
-                }
-
                 DB::transaction(function () use ($recurring, $user, &$processed) {
                     if ($recurring->type === 'expense') {
                         $this->createExpenseFromRecurring($recurring);
@@ -129,8 +117,6 @@ class RecurringTransactionService
                         'amount' => $recurring->amount,
                     ];
                 });
-
-                $this->subscriptionService->clearCache($user, 'growfinance');
 
             } catch (\Exception $e) {
                 Log::error('Failed to process recurring transaction', [

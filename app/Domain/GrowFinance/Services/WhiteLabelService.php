@@ -4,7 +4,6 @@ namespace App\Domain\GrowFinance\Services;
 
 use App\Domain\GrowFinance\Entities\WhiteLabel;
 use App\Domain\GrowFinance\Repositories\WhiteLabelRepositoryInterface;
-use App\Domain\Module\Services\SubscriptionService;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +16,6 @@ class WhiteLabelService
     private const DEFAULT_ACCENT_COLOR = '#059669';
 
     public function __construct(
-        private SubscriptionService $subscriptionService,
         private WhiteLabelRepositoryInterface $whiteLabelRepo,
     ) {}
 
@@ -46,15 +44,6 @@ class WhiteLabelService
 
     public function canUseWhiteLabel(int $userId): array
     {
-        $user = User::findOrFail($userId);
-
-        if (!$this->subscriptionService->canPerformAction($user, 'white_label')) {
-            return [
-                'allowed' => false,
-                'reason' => 'White-label features are available on Business plan. Please upgrade.',
-            ];
-        }
-
         return ['allowed' => true];
     }
 

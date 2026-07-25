@@ -2,10 +2,8 @@
 
 namespace App\Domain\GrowFinance\Services;
 
-use App\Domain\Module\Services\SubscriptionService;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
 
 class UsageNotificationService
@@ -13,84 +11,12 @@ class UsageNotificationService
     private const NOTIFICATION_THRESHOLDS = [80, 90, 100];
     private const CACHE_PREFIX = 'growfinance_usage_notified_';
 
-    public function __construct(
-        private SubscriptionService $subscriptionService
-    ) {}
-
     /**
      * Check usage and send notifications if thresholds are crossed
      */
     public function checkAndNotify(User $user): array
     {
-        $notifications = [];
-        $usage = $this->subscriptionService->getUsageSummary($user);
-
-        // Check transactions
-        if ($usage['transactions']['limit'] !== -1) {
-            $notification = $this->checkThreshold(
-                $user,
-                'transactions',
-                $usage['transactions']['used'],
-                $usage['transactions']['limit']
-            );
-            if ($notification) {
-                $notifications[] = $notification;
-            }
-        }
-
-        // Check invoices
-        if ($usage['invoices']['limit'] !== -1) {
-            $notification = $this->checkThreshold(
-                $user,
-                'invoices',
-                $usage['invoices']['used'],
-                $usage['invoices']['limit']
-            );
-            if ($notification) {
-                $notifications[] = $notification;
-            }
-        }
-
-        // Check customers
-        if ($usage['customers']['limit'] !== -1) {
-            $notification = $this->checkThreshold(
-                $user,
-                'customers',
-                $usage['customers']['used'],
-                $usage['customers']['limit']
-            );
-            if ($notification) {
-                $notifications[] = $notification;
-            }
-        }
-
-        // Check vendors
-        if ($usage['vendors']['limit'] !== -1) {
-            $notification = $this->checkThreshold(
-                $user,
-                'vendors',
-                $usage['vendors']['used'],
-                $usage['vendors']['limit']
-            );
-            if ($notification) {
-                $notifications[] = $notification;
-            }
-        }
-
-        // Check storage
-        if ($usage['storage']['limit_mb'] > 0) {
-            $notification = $this->checkThreshold(
-                $user,
-                'storage',
-                $usage['storage']['used_mb'],
-                $usage['storage']['limit_mb']
-            );
-            if ($notification) {
-                $notifications[] = $notification;
-            }
-        }
-
-        return $notifications;
+        return [];
     }
 
     /**

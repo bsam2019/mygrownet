@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\GrowFinance;
 
 use App\Domain\GrowFinance\Services\ReceiptStorageService;
-use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\GrowFinance\ValueObjects\AccountType;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceAccountModel;
@@ -18,7 +17,6 @@ use Inertia\Response;
 class ExpenseController extends Controller
 {
     public function __construct(
-        private SubscriptionService $subscriptionService,
         private ReceiptStorageService $receiptService
     ) {}
 
@@ -37,13 +35,9 @@ class ExpenseController extends Controller
             ->filter()
             ->values();
 
-        // Get transaction usage for limit banner
-        $transactionUsage = $this->subscriptionService->canCreateTransaction($request->user());
-
         return Inertia::render('GrowFinance/Expenses/Index', [
             'expenses' => $expenses,
             'categories' => $categories,
-            'transactionUsage' => $transactionUsage,
         ]);
     }
 
@@ -83,12 +77,6 @@ class ExpenseController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        // Check subscription limits
-        $check = $this->subscriptionService->canCreateTransaction($request->user());
-        if (!$check['allowed']) {
-            return back()->with('error', 'You\'ve reached your monthly transaction limit. Please upgrade your plan to record more expenses.');
-        }
-
         $validated = $request->validate([
             'account_id' => 'required|exists:growfinance_accounts,id',
             'vendor_id' => 'nullable|exists:growfinance_vendors,id',
@@ -130,9 +118,6 @@ class ExpenseController extends Controller
             ...collect($validated)->except('receipt')->toArray(),
             ...$receiptData,
         ]);
-
-        // Clear usage cache
-        $this->subscriptionService->clearUsageCache($request->user());
 
         return redirect()->route('growfinance.expenses.index')
             ->with('success', 'Expense recorded successfully!');

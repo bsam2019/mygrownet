@@ -4,7 +4,6 @@ namespace App\Http\Controllers\GrowFinance;
 
 use App\Domain\GrowFinance\Services\AccountingService;
 use App\Domain\GrowFinance\Services\PdfReportService;
-use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\GrowFinance\ValueObjects\AccountType;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceAccountModel;
@@ -22,7 +21,6 @@ class ReportsController extends Controller
 {
     public function __construct(
         private AccountingService $accountingService,
-        private SubscriptionService $subscriptionService,
         private PdfReportService $pdfReportService
     ) {}
     public function profitLoss(Request $request): Response
@@ -57,14 +55,6 @@ class ReportsController extends Controller
 
     public function balanceSheet(Request $request): Response
     {
-        // Check if user can access this report
-        if (!$this->subscriptionService->canAccessReport($request->user(), 'balance-sheet')) {
-            return Inertia::render('GrowFinance/Reports/UpgradeRequired', [
-                'reportName' => 'Balance Sheet',
-                'requiredTier' => 'basic',
-            ]);
-        }
-
         $businessId = $request->user()->id;
         $asOfDate = $request->get('as_of_date', Carbon::now()->format('Y-m-d'));
 
@@ -188,14 +178,6 @@ class ReportsController extends Controller
 
     public function trialBalance(Request $request): Response
     {
-        // Check if user can access this report
-        if (!$this->subscriptionService->canAccessReport($request->user(), 'trial-balance')) {
-            return Inertia::render('GrowFinance/Reports/UpgradeRequired', [
-                'reportName' => 'Trial Balance',
-                'requiredTier' => 'basic',
-            ]);
-        }
-
         $businessId = $request->user()->id;
         $asOfDate = $request->get('as_of_date', Carbon::now()->format('Y-m-d'));
 
@@ -212,14 +194,6 @@ class ReportsController extends Controller
 
     public function generalLedger(Request $request): Response
     {
-        // Check if user can access this report
-        if (!$this->subscriptionService->canAccessReport($request->user(), 'general-ledger')) {
-            return Inertia::render('GrowFinance/Reports/UpgradeRequired', [
-                'reportName' => 'General Ledger',
-                'requiredTier' => 'basic',
-            ]);
-        }
-
         $businessId = $request->user()->id;
         $accountId = $request->get('account_id');
         $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));

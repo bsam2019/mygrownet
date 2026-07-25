@@ -2,29 +2,17 @@
 
 namespace App\Domain\GrowFinance\Services;
 
-use App\Domain\Module\Services\SubscriptionService;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 
 class PdfReportService
 {
-    public function __construct(
-        private SubscriptionService $subscriptionService
-    ) {}
-
     /**
      * Check if user can export PDF reports
      */
     public function canExportPdf(User $user): array
     {
-        if (!$this->subscriptionService->canPerformAction($user, 'pdf_export')) {
-            return [
-                'allowed' => false,
-                'reason' => 'PDF export is available on Professional plan and above.',
-            ];
-        }
-
         return ['allowed' => true];
     }
 

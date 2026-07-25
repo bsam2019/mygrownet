@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\GrowFinance;
 
 use App\Domain\GrowFinance\Services\RecurringTransactionService;
-use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\GrowFinance\ValueObjects\AccountType;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceAccountModel;
@@ -18,20 +17,11 @@ use Inertia\Response;
 class RecurringController extends Controller
 {
     public function __construct(
-        private SubscriptionService $subscriptionService,
         private RecurringTransactionService $recurringService
     ) {}
 
     public function index(Request $request): Response
     {
-        // Check if user has recurring feature
-        if (!$this->subscriptionService->canPerformAction($request->user(), 'recurring_transactions')) {
-            return Inertia::render('GrowFinance/FeatureUpgradeRequired', [
-                'feature' => 'Recurring Transactions',
-                'requiredTier' => 'professional',
-            ]);
-        }
-
         $recurring = $this->recurringService->getForBusiness($request->user());
         $upcoming = $this->recurringService->getUpcoming($request->user(), 14);
 
@@ -43,13 +33,6 @@ class RecurringController extends Controller
 
     public function create(Request $request): Response
     {
-        if (!$this->subscriptionService->canPerformAction($request->user(), 'recurring_transactions')) {
-            return Inertia::render('GrowFinance/FeatureUpgradeRequired', [
-                'feature' => 'Recurring Transactions',
-                'requiredTier' => 'professional',
-            ]);
-        }
-
         $businessId = $request->user()->id;
 
         $accounts = GrowFinanceAccountModel::forBusiness($businessId)
@@ -99,10 +82,6 @@ class RecurringController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        if (!$this->subscriptionService->canPerformAction($request->user(), 'recurring_transactions')) {
-            return back()->with('error', 'Recurring transactions require Professional plan or higher.');
-        }
-
         $validated = $request->validate([
             'type' => 'required|in:expense,income',
             'description' => 'required|string|max:255',

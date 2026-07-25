@@ -4,7 +4,6 @@ namespace App\Domain\GrowFinance\Services;
 
 use App\Domain\GrowFinance\Entities\ApiToken;
 use App\Domain\GrowFinance\Repositories\ApiTokenRepositoryInterface;
-use App\Domain\Module\Services\SubscriptionService;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -12,7 +11,6 @@ use Illuminate\Support\Str;
 class ApiTokenService
 {
     public function __construct(
-        private SubscriptionService $subscriptionService,
         private ApiTokenRepositoryInterface $apiTokenRepo,
     ) {}
 
@@ -44,13 +42,6 @@ class ApiTokenService
      */
     public function canCreateToken(User $user): array
     {
-        if (!$this->subscriptionService->canPerformAction($user, 'api_access')) {
-            return [
-                'allowed' => false,
-                'reason' => 'API access is available on Business plan. Please upgrade.',
-            ];
-        }
-
         return ['allowed' => true];
     }
 
