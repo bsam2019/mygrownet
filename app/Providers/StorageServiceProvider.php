@@ -11,6 +11,8 @@ use App\Infrastructure\Storage\Persistence\Repositories\EloquentStorageSubscript
 use App\Infrastructure\Storage\Persistence\Repositories\EloquentFileShareRepository;
 use App\Domain\Storage\Repositories\StorageSubscriptionRepositoryInterface;
 use App\Domain\Storage\Repositories\FileShareRepositoryInterface;
+use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\Core\Services\ModuleDiscovery;
 
 class StorageServiceProvider extends ServiceProvider
 {
@@ -25,5 +27,17 @@ class StorageServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations/storage'));
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'storage',
+            name: 'Storage',
+            version: '1.0.0',
+            category: 'shared',
+            description: 'Cloud file storage with folders, file sharing, and subscription plans',
+            supportsSubdomain: true,
+            capabilities: ['file_storage', 'file_sharing', 'storage_subscriptions'],
+            permissions: ['manage_files', 'manage_folders', 'manage_shares'],
+        ));
     }
 }

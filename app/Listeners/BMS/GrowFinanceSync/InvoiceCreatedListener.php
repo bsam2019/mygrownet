@@ -2,6 +2,8 @@
 
 namespace App\Listeners\BMS\GrowFinanceSync;
 
+use App\Domain\Core\Listeners\InboxAware;
+use App\Domain\Core\Services\InboxService;
 use App\Events\BMS\InvoiceCreated;
 use App\Domain\BMS\Services\GrowFinanceSync\GrowFinanceSyncService;
 use App\Jobs\BMS\GrowFinanceSync\SyncInvoiceToGrowFinanceJob;
@@ -11,40 +13,40 @@ use Illuminate\Support\Facades\Log;
 
 class InvoiceCreatedListener implements ShouldQueue
 {
-    use InteractsWithQueue;
+    use InteractsWithQueue, InboxAware;
 
-    /**
-     * Create the event listener.
-     */
     public function __construct(
-        private GrowFinanceSyncService $syncService
+        private GrowFinanceSyncService $syncService,
+        private InboxService $inbox,
     ) {}
 
-    /**
-     * Handle the event.
-     */
     public function handle(InvoiceCreated $event): void
     {
-        $invoice = $event->invoice;
+        $this->processWithInbox(
+            eventId: (string) $event->invoice->id,
+            eventName: 'bms.invoice.created.v1',
+            payload: ['invoice_id' => $event->invoice->id, 'company_id' => $event->invoice->company_id],
+            publisher: 'bms',
+            handler: function (array $payload) use ($event) {
+                $invoice = $event->invoice;
 
-        // Check if GrowFinance module is enabled for this company
-        if (!$this->syncService->isSyncEnabled($invoice->company_id)) {
-            Log::debug("GrowFinance sync not enabled for company {$invoice->company_id}, skipping invoice sync");
-            return;
-        }
+                if (!$this->syncService->isSyncEnabled($invoice->company_id)) {
+                    Log::debug("GrowFinance sync not enabled for company {$invoice->company_id}, skipping invoice sync");
+                    return;
+                }
 
-        // Dispatch job with 5-second delay for stability
-        SyncInvoiceToGrowFinanceJob::dispatch($invoice->id)
-            ->delay(now()->addSeconds(5));
+                SyncInvoiceToGrowFinanceJob::dispatch($invoice->id)
+                    ->delay(now()->addSeconds(5));
 
-        Log::info("Dispatched GrowFinance sync job for invoice #{$invoice->id}");
+                Log::info("Dispatched GrowFinance sync job for invoice #{$invoice->id}");
+            },
+        );
     }
 
-    /**
-     * Handle a job failure.
-     */
     public function failed(InvoiceCreated $event, \Throwable $exception): void
     {
+        $this->inbox->markFailed((string) $event->invoice->id);
+
         Log::error("Failed to dispatch GrowFinance sync for invoice #{$event->invoice->id}", [
             'error' => $exception->getMessage(),
         ]);

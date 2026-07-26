@@ -6,6 +6,8 @@ use App\Domain\Investor\Repositories\InvestorInquiryRepositoryInterface;
 use App\Domain\Investor\Repositories\InvestorAccountRepositoryInterface;
 use App\Infrastructure\Persistence\Repositories\Investor\EloquentInvestorInquiryRepository;
 use App\Infrastructure\Persistence\Repositories\Investor\EloquentInvestorAccountRepository;
+use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\Core\Services\ModuleDiscovery;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -149,5 +151,17 @@ class InvestorServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations/investor'));
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'investor',
+            name: 'Investor',
+            version: '1.0.0',
+            category: 'business',
+            description: 'Investor relations platform with accounts, rounds, dividends, documents, and surveys',
+            capabilities: ['investor_management', 'fundraising', 'dividends', 'investor_communication'],
+            permissions: ['manage_investors', 'manage_rounds', 'manage_dividends', 'manage_documents'],
+            settings: ['default_currency', 'round_types'],
+        ));
     }
 }

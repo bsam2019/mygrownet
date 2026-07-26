@@ -2,9 +2,7 @@
 
 namespace App\Services;
 
-use App\Infrastructure\Persistence\Eloquent\BMS\BudgetModel;
-use App\Infrastructure\Persistence\Eloquent\BMS\BudgetItemModel;
-use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Domain\BMS\Core\Services\BmsDataService;
 use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -12,37 +10,32 @@ use Illuminate\Support\Facades\DB;
 class BudgetComparisonService
 {
     private const PLATFORM_COMPANY_NAME = 'MyGrowNet Platform';
-    
-    /**
-     * Get MyGrowNet Platform company ID
-     */
+
+    public function __construct(
+        private BmsDataService $bmsData,
+    ) {}
+
     private function getPlatformCompanyId(): ?int
     {
-        return CompanyModel::where('name', self::PLATFORM_COMPANY_NAME)->value('id');
+        $company = $this->bmsData->findCompanyByName(self::PLATFORM_COMPANY_NAME);
+        return $company?->id;
     }
-    
-    /**
-     * Get active budget for the specified period
-     */
+
     public function getActiveBudget(string $period = 'month', ?string $customStartDate = null, ?string $customEndDate = null): ?array
     {
         $companyId = $this->getPlatformCompanyId();
         if (!$companyId) {
             return null;
         }
-        
+
         $dates = $this->getPeriodDates($period, $customStartDate, $customEndDate);
-        
-        $budget = BudgetModel::where('company_id', $companyId)
-            ->where('status', 'active')
-            ->forPeriod($dates['start'], $dates['end'])
-            ->with('items')
-            ->first();
-            
+
+        $budget = $this->bmsData->getActiveBudget($companyId, $dates['start'], $dates['end']);
+
         if (!$budget) {
             return null;
         }
-        
+
         return [
             'id' => $budget->id,
             'name' => $budget->name,
@@ -60,27 +53,23 @@ class BudgetComparisonService
             ])->toArray(),
         ];
     }
-    
-    /**
-     * Get actual expenses from transactions for the period
-     */
+
     public function getActualExpenses(string $period = 'month', ?string $customStartDate = null, ?string $customEndDate = null, ?int $moduleId = null): array
     {
         $dates = $this->getPeriodDates($period, $customStartDate, $customEndDate);
-        
+
         $query = Transaction::whereBetween('created_at', [$dates['start'], $dates['end']])
             ->whereIn('transaction_type', $this->getExpenseTypes())
             ->where('status', 'completed');
-            
-        // Filter by module if provided
+
         if ($moduleId) {
             $query->where('module_id', $moduleId);
         }
-        
+
         $expenses = $query->select('transaction_type', DB::raw('SUM(amount) as total'))
             ->groupBy('transaction_type')
             ->get();
-            
+
         $result = [];
         foreach ($expenses as $expense) {
             $category = $this->mapTransactionTypeToCategory($expense->transaction_type);
@@ -89,30 +78,26 @@ class BudgetComparisonService
             }
             $result[$category] += abs($expense->total);
         }
-        
+
         return $result;
     }
-    
-    /**
-     * Get actual revenue from transactions for the period
-     */
+
     public function getActualRevenue(string $period = 'month', ?string $customStartDate = null, ?string $customEndDate = null, ?int $moduleId = null): array
     {
         $dates = $this->getPeriodDates($period, $customStartDate, $customEndDate);
-        
+
         $query = Transaction::whereBetween('created_at', [$dates['start'], $dates['end']])
             ->whereIn('transaction_type', $this->getRevenueTypes())
             ->where('status', 'completed');
-            
-        // Filter by module if provided
+
         if ($moduleId) {
             $query->where('module_id', $moduleId);
         }
-        
+
         $revenue = $query->select('transaction_type', DB::raw('SUM(amount) as total'))
             ->groupBy('transaction_type')
             ->get();
-            
+
         $result = [];
         foreach ($revenue as $rev) {
             $category = $this->mapTransactionTypeToCategory($rev->transaction_type);
@@ -121,17 +106,14 @@ class BudgetComparisonService
             }
             $result[$category] += abs($rev->total);
         }
-        
+
         return $result;
     }
-    
-    /**
-     * Compare budget vs actual for the period
-     */
+
     public function compareActualVsBudget(string $period = 'month', ?string $customStartDate = null, ?string $customEndDate = null, ?int $moduleId = null): array
     {
         $budget = $this->getActiveBudget($period, $customStartDate, $customEndDate);
-        
+
         if (!$budget) {
             return [
                 'has_budget' => false,
@@ -140,31 +122,29 @@ class BudgetComparisonService
                 'dates' => $this->getPeriodDates($period, $customStartDate, $customEndDate),
             ];
         }
-        
+
         $actualExpenses = $this->getActualExpenses($period, $customStartDate, $customEndDate, $moduleId);
         $actualRevenue = $this->getActualRevenue($period, $customStartDate, $customEndDate, $moduleId);
-        
-        // Process budget items
+
         $comparisons = [];
         $totalBudgeted = 0;
         $totalActual = 0;
-        
+
         foreach ($budget['items'] as $item) {
             $category = $item['category'];
             $budgetedAmount = $item['budgeted_amount'];
             $itemType = $item['item_type'];
-            
-            // Get actual amount based on item type
+
             $actualAmount = 0;
             if ($itemType === 'expense') {
                 $actualAmount = $actualExpenses[$category] ?? 0;
             } elseif ($itemType === 'revenue') {
                 $actualAmount = $actualRevenue[$category] ?? 0;
             }
-            
+
             $variance = $actualAmount - $budgetedAmount;
             $percentageUsed = $budgetedAmount > 0 ? ($actualAmount / $budgetedAmount) * 100 : 0;
-            
+
             $comparisons[] = [
                 'category' => $category,
                 'item_type' => $itemType,
@@ -175,12 +155,11 @@ class BudgetComparisonService
                 'status' => $this->getVarianceStatus($variance, $itemType, $percentageUsed),
                 'notes' => $item['notes'],
             ];
-            
+
             $totalBudgeted += $budgetedAmount;
             $totalActual += $actualAmount;
         }
-        
-        // Check for actual expenses not in budget
+
         $unbudgetedExpenses = [];
         foreach ($actualExpenses as $category => $amount) {
             $inBudget = collect($budget['items'])->contains('category', $category);
@@ -191,7 +170,7 @@ class BudgetComparisonService
                 ];
             }
         }
-        
+
         return [
             'has_budget' => true,
             'budget' => $budget,
@@ -207,26 +186,23 @@ class BudgetComparisonService
             ],
         ];
     }
-    
-    /**
-     * Get budget performance metrics
-     */
+
     public function getBudgetPerformanceMetrics(string $period = 'month', ?string $customStartDate = null, ?string $customEndDate = null, ?int $moduleId = null): array
     {
         $comparison = $this->compareActualVsBudget($period, $customStartDate, $customEndDate, $moduleId);
-        
+
         if (!$comparison['has_budget']) {
             return [
                 'has_budget' => false,
                 'message' => $comparison['message'],
             ];
         }
-        
+
         $overBudgetCount = 0;
         $underBudgetCount = 0;
         $onTrackCount = 0;
         $criticalOverages = [];
-        
+
         foreach ($comparison['comparisons'] as $item) {
             if ($item['status'] === 'over_budget') {
                 $overBudgetCount++;
@@ -239,7 +215,7 @@ class BudgetComparisonService
                 $onTrackCount++;
             }
         }
-        
+
         return [
             'has_budget' => true,
             'period' => $period,
@@ -254,21 +230,18 @@ class BudgetComparisonService
             'summary' => $comparison['summary'],
         ];
     }
-    
-    /**
-     * Get budget trend data for charts
-     */
+
     public function getBudgetTrends(string $period = 'month', int $periods = 6, ?string $customStartDate = null, ?string $customEndDate = null, ?int $moduleId = null): array
     {
         $trends = [];
         $currentDate = Carbon::now();
-        
+
         for ($i = $periods - 1; $i >= 0; $i--) {
             $periodDate = $this->getPeriodStartDate($period, $i);
             $periodLabel = $this->getPeriodLabel($period, $periodDate);
-            
+
             $comparison = $this->compareActualVsBudget($period, $customStartDate, $customEndDate, $moduleId);
-            
+
             $trends[] = [
                 'period' => $periodLabel,
                 'budgeted' => $comparison['summary']['total_budgeted'] ?? 0,
@@ -276,17 +249,13 @@ class BudgetComparisonService
                 'variance' => $comparison['summary']['total_variance'] ?? 0,
             ];
         }
-        
+
         return $trends;
     }
-    
-    /**
-     * Get variance status
-     */
+
     private function getVarianceStatus(float $variance, string $itemType, float $percentageUsed): string
     {
         if ($itemType === 'expense') {
-            // For expenses, over budget is bad
             if ($percentageUsed > 100) {
                 return 'over_budget';
             } elseif ($percentageUsed >= 90) {
@@ -295,32 +264,27 @@ class BudgetComparisonService
                 return 'under_budget';
             }
         } else {
-            // For revenue, under budget is bad
             if ($percentageUsed < 90) {
                 return 'under_budget';
             } elseif ($percentageUsed >= 100) {
-                return 'over_budget'; // Good for revenue
+                return 'over_budget';
             } else {
                 return 'on_track';
             }
         }
     }
-    
-    /**
-     * Get period dates
-     */
+
     private function getPeriodDates(string $period, ?string $customStartDate = null, ?string $customEndDate = null): array
     {
-        // If custom dates are provided, use them
         if ($period === 'custom' && $customStartDate && $customEndDate) {
             return [
                 'start' => $customStartDate,
                 'end' => $customEndDate,
             ];
         }
-        
+
         $now = Carbon::now();
-        
+
         return match($period) {
             'today' => [
                 'start' => $now->copy()->startOfDay()->format('Y-m-d'),
@@ -348,14 +312,11 @@ class BudgetComparisonService
             ],
         };
     }
-    
-    /**
-     * Get period start date for trends
-     */
+
     private function getPeriodStartDate(string $period, int $periodsAgo): Carbon
     {
         $now = Carbon::now();
-        
+
         return match($period) {
             'week' => $now->copy()->subWeeks($periodsAgo)->startOfWeek(),
             'month' => $now->copy()->subMonths($periodsAgo)->startOfMonth(),
@@ -364,10 +325,7 @@ class BudgetComparisonService
             default => $now->copy()->subMonths($periodsAgo)->startOfMonth(),
         };
     }
-    
-    /**
-     * Get period label for display
-     */
+
     private function getPeriodLabel(string $period, Carbon $date): string
     {
         return match($period) {
@@ -378,14 +336,10 @@ class BudgetComparisonService
             default => $date->format('M Y'),
         };
     }
-    
-    /**
-     * Get expense transaction types
-     */
+
     private function getExpenseTypes(): array
     {
         return [
-            // Platform operational expenses (from CMS)
             'marketing_expense',
             'office_expense',
             'travel_expense',
@@ -394,58 +348,38 @@ class BudgetComparisonService
             'professional_fees',
             'utilities_expense',
             'general_expense',
-            
-            // Member payouts (platform expenses)
-            'commission_earned',      // Commissions paid to members
-            'profit_share',           // Profit sharing paid to members
-            'lgr_earned',            // LGR rewards paid to members
-            'lgr_manual_award',      // Manual LGR awards paid to members
-            'withdrawal',            // Withdrawals processed
-            'loan_disbursement',     // Loans given to members
-            'shop_credit_allocation', // Shop credits allocated
-            
-            // Refunds and reversals
-            'loan_repayment',        // Actually revenue, but tracked separately
+            'commission_earned',
+            'profit_share',
+            'lgr_earned',
+            'lgr_manual_award',
+            'withdrawal',
+            'loan_disbursement',
+            'shop_credit_allocation',
+            'loan_repayment',
         ];
     }
-    
-    /**
-     * Get revenue transaction types
-     */
+
     private function getRevenueTypes(): array
     {
         return [
-            // Product sales (actual revenue)
             'starter_kit_purchase' => 'Starter Kits',
             'starter_kit_upgrade' => 'Starter Kit Upgrades',
             'starter_kit_gift' => 'Starter Kit Gifts',
             'shop_purchase' => 'Shop Sales',
             'marketplace_purchase' => 'Marketplace Sales',
             'learning_pack_purchase' => 'Learning Packs',
-            
-            // Service payments (actual revenue)
             'subscription_payment' => 'Subscriptions',
             'workshop_payment' => 'Workshops',
             'coaching_payment' => 'Coaching',
             'service_payment' => 'Services',
             'growbuilder_payment' => 'GrowBuilder',
-            
-            // Loan repayments (money coming back - revenue)
             'loan_repayment' => 'Loan Repayments',
-            
-            // NOTE: wallet_topup and deposit are NOT included here!
-            // They are liabilities (money owed to users) until spent on products/services
-            // Only when users spend wallet balance on products/services does it become revenue
         ];
     }
-    
-    /**
-     * Map transaction type to budget category
-     */
+
     private function mapTransactionTypeToCategory(string $transactionType): string
     {
         return match($transactionType) {
-            // Platform operational expenses
             'marketing_expense' => 'Marketing',
             'office_expense' => 'Office Expenses',
             'travel_expense' => 'Travel',
@@ -454,34 +388,24 @@ class BudgetComparisonService
             'professional_fees' => 'Professional Services',
             'utilities_expense' => 'Utilities',
             'general_expense' => 'General Expenses',
-            
-            // Member payouts (platform expenses)
             'commission_earned' => 'Commissions',
             'profit_share' => 'Profit Sharing',
             'lgr_earned', 'lgr_manual_award' => 'LGR Awards',
             'withdrawal' => 'Withdrawals',
             'loan_disbursement' => 'Loan Disbursements',
             'shop_credit_allocation' => 'Shop Credits',
-            
-            // Product sales (revenue)
             'starter_kit_purchase' => 'Starter Kits',
             'starter_kit_upgrade' => 'Starter Kit Upgrades',
             'starter_kit_gift' => 'Starter Kit Gifts',
             'shop_purchase' => 'Shop Sales',
             'marketplace_purchase' => 'Marketplace Sales',
             'learning_pack_purchase' => 'Learning Packs',
-            
-            // Service payments (revenue)
             'subscription_payment' => 'Subscriptions',
             'workshop_payment' => 'Workshops',
             'coaching_payment' => 'Coaching',
             'service_payment' => 'Services',
             'growbuilder_payment' => 'GrowBuilder',
-            
-            // Loan repayments (revenue)
             'loan_repayment' => 'Loan Repayments',
-            
-            // Default fallback
             default => ucwords(str_replace('_', ' ', $transactionType)),
         };
     }

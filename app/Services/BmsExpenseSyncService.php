@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Domain\BMS\Core\Services\BmsDataService;
 use App\Domain\Transaction\Enums\TransactionType;
 use App\Domain\Transaction\Enums\TransactionStatus;
 use App\Infrastructure\Persistence\Eloquent\BMS\ExpenseModel;
@@ -11,26 +12,19 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
-/**
- * BMS Expense Sync Service
- * 
- * Syncs approved BMS expenses to the transactions table
- * for unified financial reporting.
- */
 class BmsExpenseSyncService
 {
-    /**
-     * Sync an approved expense to transactions
-     */
+    public function __construct(
+        private BmsDataService $bmsData,
+    ) {}
+
     public function syncExpenseToTransaction(ExpenseModel $expense): ?Transaction
     {
-        // Only sync approved expenses
         if ($expense->approval_status !== 'approved') {
             Log::info("Expense {$expense->id} not approved, skipping sync");
             return null;
         }
 
-        // Check if already synced
         if ($this->isAlreadySynced($expense->id)) {
             Log::info("Expense {$expense->id} already synced");
             return $this->getExistingTransaction($expense->id);
@@ -38,21 +32,18 @@ class BmsExpenseSyncService
 
         DB::beginTransaction();
         try {
-            // Create sync log entry
             $syncLog = CmsSyncLog::create([
                 'cms_entity_type' => 'expense',
                 'cms_entity_id' => $expense->id,
                 'sync_status' => 'pending',
             ]);
 
-            // Map expense category to transaction type
             $transactionType = $this->mapExpenseCategoryToTransactionType($expense);
 
-            // Create transaction
             $transaction = Transaction::create([
                 'user_id' => $expense->recordedBy->user_id ?? null,
                 'transaction_type' => $transactionType,
-                'amount' => -abs($expense->amount), // Negative for expenses
+                'amount' => -abs($expense->amount),
                 'status' => TransactionStatus::COMPLETED->value,
                 'description' => $this->buildTransactionDescription($expense),
                 'transaction_source' => 'cms_expense',
@@ -64,7 +55,6 @@ class BmsExpenseSyncService
                 'updated_at' => now(),
             ]);
 
-            // Update sync log
             $syncLog->update([
                 'transaction_id' => $transaction->id,
                 'sync_status' => 'synced',
@@ -80,7 +70,6 @@ class BmsExpenseSyncService
         } catch (Exception $e) {
             DB::rollBack();
 
-            // Log the error
             if (isset($syncLog)) {
                 $syncLog->update([
                     'sync_status' => 'failed',
@@ -94,9 +83,6 @@ class BmsExpenseSyncService
         }
     }
 
-    /**
-     * Check if expense is already synced
-     */
     public function isAlreadySynced(int $expenseId): bool
     {
         return CmsSyncLog::where('cms_entity_type', 'expense')
@@ -105,9 +91,6 @@ class BmsExpenseSyncService
             ->exists();
     }
 
-    /**
-     * Get existing transaction for synced expense
-     */
     public function getExistingTransaction(int $expenseId): ?Transaction
     {
         $syncLog = CmsSyncLog::where('cms_entity_type', 'expense')
@@ -118,12 +101,8 @@ class BmsExpenseSyncService
         return $syncLog?->transaction;
     }
 
-    /**
-     * Map CMS expense category to transaction type
-     */
     private function mapExpenseCategoryToTransactionType(ExpenseModel $expense): string
     {
-        // Map common expense categories to transaction types
         $categoryMappings = [
             'marketing' => TransactionType::MARKETING_EXPENSE->value,
             'advertising' => TransactionType::MARKETING_EXPENSE->value,
@@ -140,25 +119,19 @@ class BmsExpenseSyncService
 
         $categoryName = strtolower($expense->category->name ?? '');
 
-        // Check for exact match
         if (isset($categoryMappings[$categoryName])) {
             return $categoryMappings[$categoryName];
         }
 
-        // Check for partial match
         foreach ($categoryMappings as $keyword => $type) {
             if (str_contains($categoryName, $keyword)) {
                 return $type;
             }
         }
 
-        // Default to general expense
         return TransactionType::GENERAL_EXPENSE->value;
     }
 
-    /**
-     * Build transaction description from expense
-     */
     private function buildTransactionDescription(ExpenseModel $expense): string
     {
         $parts = [
@@ -173,19 +146,11 @@ class BmsExpenseSyncService
         return implode(' - ', array_filter($parts));
     }
 
-    /**
-     * Get module ID for expense (if applicable)
-     */
     private function getModuleIdForExpense(ExpenseModel $expense): ?int
     {
-        // For now, return null
-        // In future, could map expenses to specific modules
         return null;
     }
 
-    /**
-     * Retry failed syncs
-     */
     public function retryFailedSyncs(): array
     {
         $failedSyncs = CmsSyncLog::where('cms_entity_type', 'expense')
@@ -200,8 +165,8 @@ class BmsExpenseSyncService
 
         foreach ($failedSyncs as $syncLog) {
             try {
-                $expense = ExpenseModel::find($syncLog->cms_entity_id);
-                
+                $expense = $this->bmsData->findExpense($syncLog->cms_entity_id);
+
                 if (!$expense) {
                     $syncLog->update([
                         'sync_error' => 'Expense not found',
@@ -222,9 +187,6 @@ class BmsExpenseSyncService
         return $results;
     }
 
-    /**
-     * Get sync statistics
-     */
     public function getSyncStatistics(): array
     {
         return [

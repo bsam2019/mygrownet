@@ -4,7 +4,6 @@ namespace App\Http\Controllers\POS;
 
 use App\Http\Controllers\Controller;
 use App\Domain\POS\Services\POSService;
-use App\Domain\Inventory\Services\InventoryService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -17,12 +16,10 @@ use Inertia\Inertia;
 class POSController extends Controller
 {
     protected POSService $posService;
-    protected InventoryService $inventoryService;
 
-    public function __construct(POSService $posService, InventoryService $inventoryService)
+    public function __construct(POSService $posService)
     {
         $this->posService = $posService->forModule('pos');
-        $this->inventoryService = $inventoryService->forModule('pos');
     }
 
     /**
@@ -49,13 +46,11 @@ class POSController extends Controller
         $currentShift = $this->posService->getCurrentShift();
         $quickProducts = $this->posService->getQuickProducts();
         $settings = $this->posService->getSettings();
-        $inventoryItems = $this->inventoryService->getItems(['is_active' => true]);
 
         return Inertia::render('POS/Terminal', [
             'currentShift' => $currentShift,
             'quickProducts' => $quickProducts,
             'settings' => $settings,
-            'inventoryItems' => $inventoryItems,
         ]);
     }
 
@@ -105,7 +100,7 @@ class POSController extends Controller
             'items.*.product_name' => 'required|string',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
-            'items.*.inventory_item_id' => 'nullable|exists:inventory_items,id',
+            'items.*.inventory_item_id' => 'nullable|integer',
             'items.*.discount' => 'nullable|numeric|min:0',
             'payment_method' => 'required|in:cash,mobile_money,card,credit,split',
             'amount_paid' => 'required|numeric|min:0',
@@ -224,12 +219,10 @@ class POSController extends Controller
     {
         $settings = $this->posService->getSettings();
         $quickProducts = $this->posService->getQuickProducts();
-        $inventoryItems = $this->inventoryService->getItems(['is_active' => true]);
 
         return Inertia::render('POS/Settings', [
             'settings' => $settings,
             'quickProducts' => $quickProducts,
-            'inventoryItems' => $inventoryItems,
         ]);
     }
 
@@ -266,7 +259,7 @@ class POSController extends Controller
     {
         $validated = $request->validate([
             'product_ids' => 'required|array',
-            'product_ids.*' => 'exists:inventory_items,id',
+            'product_ids.*' => 'integer|exists:pos_quick_products,id',
         ]);
 
         $this->posService->syncQuickProducts($validated['product_ids']);

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\GrowNet;
 use App\Http\Controllers\Controller;
 use App\Models\LGR\LgrSetting;
 use App\Application\Notification\UseCases\SendNotificationUseCase;
-use App\Services\IdempotencyService;
+use App\Domain\Core\Services\IdempotencyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -59,9 +59,8 @@ class LgrTransferController extends Controller
         // Generate idempotency key based on user, amount, and timestamp (rounded to minute)
         $timestamp = floor(time() / 60) * 60; // Round to nearest minute
         $idempotencyKey = $this->idempotencyService->generateKey(
-            $user->id,
             'lgr_transfer',
-            ['amount' => $amount, 'timestamp' => $timestamp]
+            ['user_id' => $user->id, 'amount' => $amount, 'timestamp' => $timestamp]
         );
         
         // Check if this exact transfer was already completed recently

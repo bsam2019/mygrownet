@@ -19,6 +19,8 @@ use App\Domain\GrowStart\Repositories\BadgeRepositoryInterface;
 use App\Domain\GrowStart\Repositories\ProviderRepositoryInterface;
 use App\Domain\GrowStart\Repositories\IndustryRepositoryInterface;
 use App\Domain\GrowStart\Repositories\CountryRepositoryInterface;
+use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\Core\Services\ModuleDiscovery;
 
 class GrowStartServiceProvider extends ServiceProvider
 {
@@ -38,7 +40,18 @@ class GrowStartServiceProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(database_path('migrations/growstart'));
 
-        // Load GrowStart routes
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'growstart',
+            name: 'GrowStart',
+            version: '1.0.0',
+            category: 'business',
+            description: 'Business startup journeys with tasks, stages, badges, and industry presets',
+            capabilities: ['journey_management', 'task_management', 'badges', 'onboarding'],
+            permissions: ['manage_journeys', 'manage_tasks', 'manage_templates'],
+            settings: ['default_industry'],
+        ));
+
         $this->loadRoutesFrom(base_path('routes/growstart.php'));
     }
 }

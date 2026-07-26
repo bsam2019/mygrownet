@@ -241,4 +241,28 @@ return [
             'use_jti'       => env('IDENTITY_JWT_USE_JTI', true),
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Queue Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Per-application queue isolation, listener timeouts, and retry policies.
+    |
+    */
+    'queue' => [
+        'default_queue' => 'default',
+        'listener_timeout' => (int) env('PLATFORM_LISTENER_TIMEOUT', 60),
+        'retry_attempts' => (int) env('PLATFORM_RETRY_ATTEMPTS', 3),
+        'dlq_retention_days' => (int) env('PLATFORM_DLQ_RETENTION_DAYS', 7),
+
+        'per_application' => [
+            'stockflow'   => 'queue-stockflow',
+            'growfinance' => 'queue-growfinance',
+            'bms'         => 'queue-bms',
+            'growmart'    => 'queue-growmart',
+            'grownet'     => 'queue-grownet',
+            'employee'    => 'queue-employee',
+        ],
+    ],
 ];

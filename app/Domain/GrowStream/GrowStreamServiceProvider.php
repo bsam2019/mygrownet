@@ -13,6 +13,8 @@ use App\Domain\GrowStream\Infrastructure\Providers\VideoProviderInterface;
 use App\Domain\GrowStream\Infrastructure\Providers\VideoProviderFactory;
 use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoCategoryRepositoryInterface;
+use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\Core\Services\ModuleDiscovery;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoSeriesRepositoryInterface;
 use App\Domain\GrowStream\Repositories\WatchHistoryRepositoryInterface;
@@ -84,6 +86,18 @@ class GrowStreamServiceProvider extends ServiceProvider
                 \App\Domain\GrowStream\Presentation\Console\Commands\GrowStreamStatsCommand::class,
             ]);
         }
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'growstream',
+            name: 'GrowStream',
+            version: '1.0.0',
+            category: 'consumer',
+            description: 'Video streaming platform with creator profiles, categories, and analytics',
+            capabilities: ['video_streaming', 'media_management', 'analytics'],
+            permissions: ['manage_videos', 'manage_creators', 'view_analytics'],
+            settings: ['max_upload_size', 'encoding_profile'],
+        ));
     }
 
     /**

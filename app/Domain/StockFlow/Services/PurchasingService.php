@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\StockFlow\Services;
 
+use App\Domain\Core\Services\OutboxService;
 use App\Domain\StockFlow\Entities\PurchaseOrder;
 use App\Domain\StockFlow\Entities\PurchaseOrderItem;
 use App\Domain\StockFlow\Entities\StockMovement;
@@ -23,7 +24,6 @@ use App\Domain\StockFlow\ValueObjects\Money;
 use App\Domain\StockFlow\ValueObjects\MovementType;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
 use Throwable;
 
 class PurchasingService
@@ -34,6 +34,7 @@ class PurchasingService
         private StockMovementRepositoryInterface $movementRepository,
         private SupplierRepositoryInterface $supplierRepository,
         private StockLevelProjector $stockLevelProjector,
+        private OutboxService $outbox,
     ) {}
 
     public function createPurchaseOrder(int $companyId, array $data): PurchaseOrder
@@ -134,14 +135,19 @@ class PurchasingService
             $order->receive();
             $this->poRepository->save($order);
 
-            // Dispatch domain event
-            Event::dispatch(new PurchaseOrderReceived(
-                companyId: $companyId,
-                purchaseOrderId: $purchaseOrderId,
-                orderNumber: $order->getOrderNumber(),
-                receivedBy: $userId,
-                items: $eventItems,
-            ));
+            // Dispatch domain event via outbox
+            $this->outbox->insert(
+                eventName: 'stockflow.goods_received.v1',
+                payload: [
+                    'company_id' => $companyId,
+                    'purchase_order_id' => $purchaseOrderId,
+                    'order_number' => $order->getOrderNumber(),
+                    'received_by' => $userId,
+                    'items' => $eventItems,
+                ],
+                context: ['company_id' => $companyId],
+                publisher: 'stockflow',
+            );
         });
     }
 

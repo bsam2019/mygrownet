@@ -37,11 +37,6 @@ class POSSaleItemModel extends Model
         return $this->belongsTo(POSSaleModel::class, 'sale_id');
     }
 
-    public function inventoryItem(): BelongsTo
-    {
-        return $this->belongsTo(InventoryItemModel::class, 'inventory_item_id');
-    }
-
     public function getProfitAttribute(): float
     {
         return ($this->unit_price - $this->cost_price) * $this->quantity;

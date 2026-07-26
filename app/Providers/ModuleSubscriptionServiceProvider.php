@@ -4,12 +4,18 @@ namespace App\Providers;
 
 use App\Domain\BizBoost\Services\BizBoostUsageProvider;
 use App\Domain\Module\Contracts\ModuleUsageProviderInterface;
+use App\Domain\Module\Contracts\SubscriptionProvider;
+use App\Domain\Module\Contracts\SubscriptionManagementProvider;
+use App\Domain\Module\Contracts\TierProvider;
 use App\Domain\Module\Repositories\ModuleRepositoryInterface;
 use App\Domain\Module\Repositories\ModuleSubscriptionRepositoryInterface;
 use App\Domain\Module\Services\ModuleAccessService;
 use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\Module\Services\TierConfigurationService;
 use App\Domain\Module\Services\UsageLimitService;
+use App\Infrastructure\Contracts\Module\SubscriptionManagementProviderImpl;
+use App\Infrastructure\Contracts\Module\SubscriptionProviderImpl;
+use App\Infrastructure\Contracts\Module\TierProviderImpl;
 use App\Infrastructure\Persistence\Repositories\ConfigBasedModuleRepository;
 use App\Infrastructure\Persistence\Repositories\EloquentModuleSubscriptionRepository;
 use Illuminate\Support\ServiceProvider;
@@ -45,6 +51,11 @@ class ModuleSubscriptionServiceProvider extends ServiceProvider
 
         // Register usage providers
         $this->app->singleton(BizBoostUsageProvider::class);
+
+        // Register integration contracts
+        $this->app->singleton(SubscriptionProvider::class, SubscriptionProviderImpl::class);
+        $this->app->singleton(TierProvider::class, TierProviderImpl::class);
+        $this->app->singleton(SubscriptionManagementProvider::class, SubscriptionManagementProviderImpl::class);
 
         // Tag all usage providers for easy collection
         $this->app->tag([

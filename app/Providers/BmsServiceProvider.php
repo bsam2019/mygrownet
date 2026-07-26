@@ -30,6 +30,8 @@ use App\Domain\BMS\Repositories\RoleRepositoryInterface;
 use App\Domain\BMS\Repositories\SubcontractorRepositoryInterface;
 use App\Domain\BMS\Repositories\VendorRepositoryInterface;
 use App\Domain\BMS\Repositories\WorkerRepositoryInterface;
+use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\Core\Services\ModuleDiscovery;
 use App\Infrastructure\Persistence\Repositories\BMS\EloquentAssetRepository;
 use App\Infrastructure\Persistence\Repositories\BMS\EloquentBranchRepository;
 use App\Infrastructure\Persistence\Repositories\BMS\EloquentCmsUserRepository;
@@ -106,5 +108,23 @@ class BmsServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations/bms'));
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'bms',
+            name: 'BMS (Business Management)',
+            version: '1.0.0',
+            category: 'business',
+            description: 'Companies, jobs, invoices, HR, payroll, and business operations',
+            entrypoint: '/cms',
+            supportsSubdomain: true,
+            capabilities: ['invoicing', 'payments', 'hr', 'payroll', 'project_management'],
+            permissions: ['manage_companies', 'manage_invoices', 'manage_employees', 'manage_payroll'],
+            settings: ['default_currency', 'invoice_prefix', 'tax_rate', 'payment_terms_days'],
+            events: [
+                \App\Events\BMS\InvoiceCreated::class,
+                \App\Events\BMS\InvoicePaid::class,
+            ],
+        ));
     }
 }

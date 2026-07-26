@@ -110,6 +110,199 @@ The following checks should be automated:
 4. **Event ownership check** — fail if event dispatched from non-owning module
 5. **Contract check** — all cross-module service resolution goes through IntegrationRegistry
 
+### Contract Versioning Convention
+
+Integration contracts follow `MAJOR.MINOR` versioning (no PATCH).
+
+**Rules:**
+1. Interfaces are versioned via class name: `InventoryProvider` (v1), `InventoryProviderV2` (v2).
+2. **MAJOR** change: method signature change, removal, or semantic behavior change.
+3. **MINOR** change: adding a new method or optional parameter (backward-compatible).
+4. Deprecate old interfaces with `@deprecated` PHPDoc.
+5. Consumers declare contract dependency in their manifest under `contracts`.
+6. Providers implement all active contract versions until consumers migrate.
+7. Backward compatibility window: at least one release cycle after deprecation.
+
+**Contract change checklist:**
+- [ ] Breaking change? → New interface name
+- [ ] Backward-compatible? → Add method to existing interface
+- [ ] Consumers notified? → File tracking issue
+- [ ] Old interface deprecated? → Add `@deprecated` PHPDoc
+- [ ] Manifest updated? → Consumer and provider manifests reflect correct class
+
+**CI enforcement (expanded):**
+6. **Contract interface change detection** — changes trigger Platform Core team review
+7. **Circular dependency detection** — verify no module dependency cycles
+
+**Contract catalog:**
+
+| Contract | Version | Provider Module | Deprecated |
+|---|---|---|---|
+| `IdentityProvider` | v1 | Platform Core | No |
+| `NotificationProvider` | v1 | Platform Core | No |
+| `MediaProvider` | v1 | Platform Core | No |
+| `InventoryProvider` | v1 | StockFlow | No |
+| `AccountingProvider` | v1 | GrowFinance | No |
+
+---
+
+## Error Taxonomy
+
+All platform exceptions live in `App\Domain\Core\Exceptions\`.
+
+### Interface Hierarchy
+
+| Interface | Meaning | Behavior |
+|---|---|---|
+| `RetryableExceptionInterface` | Temporary failure, safe to retry | ContractInvoker auto-retries with exponential backoff |
+| `NonRetryableExceptionInterface` | Permanent failure, retrying won't help | ContractInvoker throws immediately without retry |
+
+### Exception Classes & Retryability
+
+| Exception | Default HTTP | Retryable? | Retry Delay (ms) |
+|---|---|---|---|
+| `TransientException` | 500 | ✅ Retryable | 100 × 2^(attempt-1) |
+| `ServiceUnavailableException` | 503 | ✅ Retryable | 5000 × 2^(attempt-1) |
+| `IntegrationException` | 502 | ✅ Retryable | 1000 × 2^(attempt-1) |
+| `ConcurrencyException` | 409 | ✅ Retryable | 100 × 2^(attempt-1) |
+| `AuthorizationException` | 403 | ❌ Non-retryable | — |
+| `ValidationException` | 422 | ❌ Non-retryable | — |
+| `ConfigurationException` | 500 | ❌ Non-retryable | — |
+| `NotFoundException` | 404 | ❌ Non-retryable | — |
+| `ProvisioningException` | — | ❌ Non-retryable | — |
+
+### Creating a New Exception
+
+```php
+// If retryable:
+class MyRetryableException extends \RuntimeException implements RetryableExceptionInterface
+{
+    public function retryDelayMs(int $attempt): int
+    {
+        return (int) (1000 * pow(2, $attempt - 1));
+    }
+}
+
+// If non-retryable:
+class MyNonRetryableException extends \RuntimeException implements NonRetryableExceptionInterface {}
+```
+
+---
+
+## Tenant Isolation & Data Ownership
+
+### Organization ID Scoping Rule
+Every row in a tenant-scoped table **must** have an `organization_id` (or module-equivalent tenant column) populated. Queries **must** filter by the current organization context.
+
+```php
+// ❌ BAD — retrieves data from all tenants
+$invoices = InvoiceModel::where('status', 'paid')->get();
+
+// ✅ GOOD — scoped to current tenant
+$invoices = InvoiceModel::where('organization_id', $orgId)
+    ->where('status', 'paid')
+    ->get();
+```
+
+### Using TenantAwareRepository
+For repositories, extend `App\Domain\Core\Repositories\TenantAwareRepository`:
+
+```php
+class EloquentInvoiceRepository extends TenantAwareRepository implements InvoiceRepositoryInterface
+{
+    protected Model $model;
+
+    public function __construct(PlatformContextResolver $resolver)
+    {
+        parent::__construct($resolver);
+        $this->model = new InvoiceModel();
+    }
+
+    protected function getTable(): string { return 'invoices'; }
+
+    public function findForOrganization(int $id): ?Invoice
+    {
+        return $this->findForTenant($id);
+    }
+}
+```
+
+### Queue Job Isolation
+Queue jobs must carry `platformContext` in their serialized data. Attach the `RestoreTenantContext` middleware to restore context on job execution:
+
+```php
+// In a job class:
+public $platformContext;
+
+public function __construct(array $data)
+{
+    $this->platformContext = app(PlatformContextResolver::class)->current()->toArray();
+    $this->data = $data;
+}
+
+// Configure middleware:
+public function middleware(): array
+{
+    return [new RestoreTenantContext];
+}
+```
+
+### Cache Key Isolation
+Always prefix cache keys with the organization ID using `CacheKeyHelper`:
+
+```php
+// ❌ BAD — cache collision across tenants
+Cache::put('invoice_summary', $data, 3600);
+
+// ✅ GOOD — isolated by tenant
+$key = app(CacheKeyHelper::class)->prefixed('invoice_summary');
+Cache::put($key, $data, 3600);
+```
+
+### Data Ownership
+The `DataOwnershipRegistry` maps tables to owning modules. Cross-module queries without using the owning module's contract is a violation (Rule 1-3). To add a new table to the registry, update `DataOwnershipRegistry::registerDefaults()`. Use `platform:audit-tenant-scoping` to detect unscoped rows.
+
+---
+
+## CI Enforcement
+
+The `ARCHITECTURE_CHECKS.md` file in the repository root defines 10 automated checks to enforce architecture rules. All checks should run in CI on every PR.
+
+1. **No cross-module DB::table()** — grep violation
+2. **No cross-module Eloquent imports** — grep violation
+3. **All cross-module resolution via IntegrationRegistry** — grep for `app(Service::class)` across modules
+4. **Migration scope** — tables modified only by owning module
+5. **Event ownership** — events dispatched only by owning module
+6. **Contract interface changes** — flag for Platform Core review
+7. **Circular dependencies** — module dependency graph validation
+8. **Tenant scoping** — all rows have organization_id
+9. **Manifest validation** — all modules publish valid manifests
+10. **No cross-module events in controllers** — controllers must use services
+
+## ADR Process
+
+Architecture Decision Records (ADRs) document significant architectural decisions. Use the template at `docs/adr/TEMPLATE.md`.
+
+### When to Write an ADR
+- Adding a new integration contract
+- Changing a contract interface (breaking change)
+- Adding a new cross-module communication pattern
+- Changing tenant isolation strategy
+- Adding a new infrastructure dependency (cache, queue, database)
+- Any decision that affects multiple modules
+
+### ADR States
+- **Proposed** — under review
+- **Accepted** — approved and implemented
+- **Deprecated** — still in use but should not be used for new work
+- **Superseded** — replaced by a newer ADR
+
+### ADR Workflow
+1. Copy `docs/adr/TEMPLATE.md` to `docs/adr/ADR-NNN.md`
+2. Fill in Context, Decision, Alternatives, Consequences
+3. Submit for review in PR
+4. Once accepted, update implementation to match
+
 ---
 
 ## Quick Reference
@@ -122,3 +315,5 @@ The following checks should be automated:
 | Add a column to another module's table | File ADR, get approval, migrate in Core | Core platform refactoring workflow |
 | Resolve a service within your module | Constructor injection | `class MyService { public function __construct(private OwnRepo $repo) }` |
 | Register a ServiceProvider | `bootstrap/providers.php` | Laravel 11+ convention |
+| Document an architecture decision | ADR template at `docs/adr/TEMPLATE.md` | Copy to `docs/adr/ADR-NNN.md` |
+| Run architecture CI checks locally | See `ARCHITECTURE_CHECKS.md` | 10 checks documented |

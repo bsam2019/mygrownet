@@ -26,6 +26,8 @@ use App\Infrastructure\Persistence\Repositories\Employee\EloquentNotificationRep
 use App\Infrastructure\Persistence\Repositories\Employee\EloquentPositionRepository;
 use App\Infrastructure\Persistence\Repositories\Employee\EloquentSupportTicketRepository;
 use App\Infrastructure\Persistence\Repositories\Employee\EloquentTrainingRepository;
+use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\Core\Services\ModuleDiscovery;
 
 class EmployeeDomainServiceProvider extends ServiceProvider
 {
@@ -47,5 +49,18 @@ class EmployeeDomainServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations/employee'));
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'employee',
+            name: 'Employee',
+            version: '1.0.0',
+            category: 'business',
+            description: 'HR, employee portal, payroll, recruitment, and performance management',
+            supportsSubdomain: false,
+            capabilities: ['hr', 'employee_portal', 'payroll', 'recruitment', 'performance'],
+            permissions: ['manage_employees', 'manage_payroll', 'manage_recruitment', 'manage_training'],
+            settings: ['payroll_cycle', 'leave_policy', 'working_hours'],
+        ));
     }
 }

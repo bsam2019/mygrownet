@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Domain\VentureBuilder\Repositories\CategoryRepositoryInterface;
+use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\Core\Services\ModuleDiscovery;
 use App\Domain\VentureBuilder\Repositories\DividendRepositoryInterface;
 use App\Domain\VentureBuilder\Repositories\DocumentRepositoryInterface;
 use App\Domain\VentureBuilder\Repositories\InvestmentRepositoryInterface;
@@ -62,5 +64,17 @@ class VentureBuilderServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations/venturebuilder'));
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'venturebuilder',
+            name: 'Venture Builder',
+            version: '1.0.0',
+            category: 'business',
+            description: 'Venture co-investment platform with investments, shareholders, dividends, and voting',
+            supportsSubdomain: true,
+            capabilities: ['venture_capital', 'investments', 'shareholder_management', 'dividends'],
+            permissions: ['manage_ventures', 'manage_investments', 'manage_shareholders', 'manage_votes'],
+        ));
     }
 }

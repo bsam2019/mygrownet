@@ -2,47 +2,33 @@
 
 namespace App\Services;
 
+use App\Domain\BMS\Core\Services\BmsDataService;
 use App\Domain\BMS\Core\Services\LoanAccountingService;
-use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
 use App\Infrastructure\Persistence\Eloquent\BMS\LoanReceivableModel;
 use App\Infrastructure\Persistence\Eloquent\BMS\LoanRepaymentModel;
 use App\Models\User;
 use Carbon\Carbon;
 
-/**
- * Platform Loan Service
- * 
- * Wrapper service for admin dashboard to access CMS loan functionality
- * specifically for MyGrowNet Platform company loans.
- * 
- * This ensures admin dashboard uses CMS infrastructure without affecting
- * other CMS clients.
- */
 class PlatformLoanService
 {
     private const PLATFORM_COMPANY_NAME = 'MyGrowNet Platform';
-    
+
     public function __construct(
-        private LoanAccountingService $loanAccountingService
+        private LoanAccountingService $loanAccountingService,
+        private BmsDataService $bmsData,
     ) {}
-    
-    /**
-     * Get MyGrowNet Platform company ID
-     */
+
     private function getPlatformCompanyId(): int
     {
-        $company = CompanyModel::where('name', self::PLATFORM_COMPANY_NAME)->first();
-        
+        $company = $this->bmsData->findCompanyByName(self::PLATFORM_COMPANY_NAME);
+
         if (!$company) {
             throw new \Exception('MyGrowNet Platform company not found. Please run MyGrowNetPlatformCompanySeeder.');
         }
-        
+
         return $company->id;
     }
-    
-    /**
-     * Disburse loan to platform member
-     */
+
     public function disburseLoan(
         User $user,
         float $principalAmount,
@@ -53,7 +39,7 @@ class PlatformLoanService
         ?int $approvedBy = null
     ): LoanReceivableModel {
         $companyId = $this->getPlatformCompanyId();
-        
+
         return $this->loanAccountingService->disburseLoan(
             companyId: $companyId,
             user: $user,
@@ -65,21 +51,17 @@ class PlatformLoanService
             approvedBy: $approvedBy
         );
     }
-    
-    /**
-     * Record loan repayment
-     */
+
     public function recordRepayment(
         LoanReceivableModel $loan,
         float $paymentAmount,
         ?string $paymentMethod = 'wallet',
         ?string $notes = null
     ): LoanRepaymentModel {
-        // Verify loan belongs to platform company
         if ($loan->company_id !== $this->getPlatformCompanyId()) {
             throw new \Exception('Loan does not belong to MyGrowNet Platform.');
         }
-        
+
         return $this->loanAccountingService->recordRepayment(
             loan: $loan,
             paymentAmount: $paymentAmount,
@@ -87,178 +69,107 @@ class PlatformLoanService
             notes: $notes
         );
     }
-    
-    /**
-     * Get all platform loans
-     */
+
     public function getAllLoans(string $status = 'all'): \Illuminate\Database\Eloquent\Collection
     {
         $companyId = $this->getPlatformCompanyId();
-        
-        $query = LoanReceivableModel::forCompany($companyId)
-            ->with(['user', 'repayments', 'schedules'])
-            ->orderBy('created_at', 'desc');
-        
-        if ($status !== 'all') {
-            $query->where('status', $status);
-        }
-        
-        return $query->get();
+
+        return $this->bmsData->getLoansForCompany($companyId);
     }
-    
-    /**
-     * Get loans query builder (for filtering and pagination)
-     */
+
     public function getLoansQuery(): \Illuminate\Database\Eloquent\Builder
     {
         $companyId = $this->getPlatformCompanyId();
-        
-        return LoanReceivableModel::forCompany($companyId);
+
+        return $this->bmsData->getLoansQueryForCompany($companyId);
     }
-    
-    /**
-     * Get total loans count
-     */
+
     public function getTotalLoansCount(): int
     {
         $companyId = $this->getPlatformCompanyId();
-        
-        return LoanReceivableModel::forCompany($companyId)->count();
+
+        return $this->bmsData->getLoansQueryForCompany($companyId)->count();
     }
-    
-    /**
-     * Get active loans count
-     */
+
     public function getActiveLoansCount(): int
     {
         $companyId = $this->getPlatformCompanyId();
-        
-        return LoanReceivableModel::forCompany($companyId)
+
+        return $this->bmsData->getLoansQueryForCompany($companyId)
             ->where('status', 'active')
             ->count();
     }
-    
-    /**
-     * Get total outstanding balance
-     */
+
     public function getTotalOutstanding(): float
     {
         $companyId = $this->getPlatformCompanyId();
-        
-        return (float) LoanReceivableModel::forCompany($companyId)
+
+        return (float) $this->bmsData->getLoansQueryForCompany($companyId)
             ->where('status', 'active')
             ->sum('outstanding_balance');
     }
-    
-    /**
-     * Get overdue loans count
-     */
+
     public function getOverdueLoansCount(): int
     {
         $companyId = $this->getPlatformCompanyId();
-        
-        return LoanReceivableModel::forCompany($companyId)
+
+        return $this->bmsData->getLoansQueryForCompany($companyId)
             ->overdue()
             ->count();
     }
-    
-    /**
-     * Get defaulted loans count
-     */
+
     public function getDefaultedLoansCount(): int
     {
         $companyId = $this->getPlatformCompanyId();
-        
-        return LoanReceivableModel::forCompany($companyId)
+
+        return $this->bmsData->getLoansQueryForCompany($companyId)
             ->where('status', 'defaulted')
             ->count();
     }
-    
-    /**
-     * Get loan by ID (platform loans only)
-     */
+
     public function getLoanById(int $loanId): ?LoanReceivableModel
     {
         $companyId = $this->getPlatformCompanyId();
-        
-        return LoanReceivableModel::forCompany($companyId)
-            ->with(['user', 'repayments', 'schedules'])
-            ->find($loanId);
+
+        return $this->bmsData->findLoanById($companyId, $loanId);
     }
-    
-    /**
-     * Get loans for specific user
-     */
+
     public function getUserLoans(int $userId): \Illuminate\Database\Eloquent\Collection
     {
         $companyId = $this->getPlatformCompanyId();
-        
-        return LoanReceivableModel::forCompany($companyId)
-            ->where('user_id', $userId)
-            ->with(['repayments', 'schedules'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+
+        return $this->bmsData->getUserLoansForCompany($companyId, $userId);
     }
-    
-    /**
-     * Get balance sheet data for platform
-     */
+
     public function getBalanceSheetData(?Carbon $asOfDate = null): array
     {
         $companyId = $this->getPlatformCompanyId();
-        
+
         return $this->loanAccountingService->getBalanceSheetData($companyId, $asOfDate);
     }
-    
-    /**
-     * Get cash flow data for platform
-     */
+
     public function getCashFlowData(Carbon $startDate, Carbon $endDate): array
     {
         $companyId = $this->getPlatformCompanyId();
-        
+
         return $this->loanAccountingService->getCashFlowData($companyId, $startDate, $endDate);
     }
-    
-    /**
-     * Get loan aging report
-     */
+
     public function getAgingReport(): array
     {
         $companyId = $this->getPlatformCompanyId();
-        
-        $loans = LoanReceivableModel::forCompany($companyId)
-            ->where('status', 'active')
-            ->get();
-        
+
+        $loans = $this->bmsData->getLoansForCompany($companyId)
+            ->where('status', 'active');
+
         $aging = [
-            'current' => [
-                'count' => 0,
-                'amount' => 0,
-                'loans' => [],
-            ],
-            '30_days' => [
-                'count' => 0,
-                'amount' => 0,
-                'loans' => [],
-            ],
-            '60_days' => [
-                'count' => 0,
-                'amount' => 0,
-                'loans' => [],
-            ],
-            '90_days' => [
-                'count' => 0,
-                'amount' => 0,
-                'loans' => [],
-            ],
-            'default' => [
-                'count' => 0,
-                'amount' => 0,
-                'loans' => [],
-            ],
+            'current' => ['count' => 0, 'amount' => 0, 'loans' => []],
+            '30_days' => ['count' => 0, 'amount' => 0, 'loans' => []],
+            '60_days' => ['count' => 0, 'amount' => 0, 'loans' => []],
+            '90_days' => ['count' => 0, 'amount' => 0, 'loans' => []],
+            'default' => ['count' => 0, 'amount' => 0, 'loans' => []],
         ];
-        
+
         foreach ($loans as $loan) {
             $category = $loan->risk_category;
             $aging[$category]['count']++;
@@ -272,25 +183,22 @@ class PlatformLoanService
                 'next_payment_date' => $loan->next_payment_date?->format('Y-m-d'),
             ];
         }
-        
+
         return $aging;
     }
-    
-    /**
-     * Get loan portfolio summary
-     */
+
     public function getPortfolioSummary(): array
     {
         $companyId = $this->getPlatformCompanyId();
-        
-        $allLoans = LoanReceivableModel::forCompany($companyId)->get();
+
+        $allLoans = $this->bmsData->getLoansForCompany($companyId);
         $activeLoans = $allLoans->where('status', 'active');
-        
+
         $totalDisbursed = $allLoans->sum('principal_amount');
         $totalOutstanding = $activeLoans->sum('outstanding_balance');
         $totalRepaid = $allLoans->sum('amount_paid');
         $totalInterestEarned = $allLoans->sum('interest_paid');
-        
+
         return [
             'total_loans' => $allLoans->count(),
             'active_loans' => $activeLoans->count(),
@@ -301,47 +209,30 @@ class PlatformLoanService
             'total_repaid' => $totalRepaid,
             'total_interest_earned' => $totalInterestEarned,
             'repayment_rate' => $totalDisbursed > 0 ? ($totalRepaid / $totalDisbursed) * 100 : 0,
-            'default_rate' => $allLoans->count() > 0 
-                ? ($allLoans->where('status', 'defaulted')->count() / $allLoans->count()) * 100 
+            'default_rate' => $allLoans->count() > 0
+                ? ($allLoans->where('status', 'defaulted')->count() / $allLoans->count()) * 100
                 : 0,
         ];
     }
-    
-    /**
-     * Update risk categories for all platform loans
-     */
+
     public function updateAllRiskCategories(): void
     {
         $companyId = $this->getPlatformCompanyId();
-        
+
         $this->loanAccountingService->updateAllRiskCategories($companyId);
     }
-    
-    /**
-     * Get overdue loans
-     */
+
     public function getOverdueLoans(): \Illuminate\Database\Eloquent\Collection
     {
         $companyId = $this->getPlatformCompanyId();
-        
-        return LoanReceivableModel::forCompany($companyId)
-            ->overdue()
-            ->with(['user'])
-            ->orderBy('days_overdue', 'desc')
-            ->get();
+
+        return $this->bmsData->getOverdueLoansForCompany($companyId);
     }
-    
-    /**
-     * Get loans by risk category
-     */
+
     public function getLoansByRisk(string $riskCategory): \Illuminate\Database\Eloquent\Collection
     {
         $companyId = $this->getPlatformCompanyId();
-        
-        return LoanReceivableModel::forCompany($companyId)
-            ->byRisk($riskCategory)
-            ->with(['user'])
-            ->orderBy('outstanding_balance', 'desc')
-            ->get();
+
+        return $this->bmsData->getLoansByRiskForCompany($companyId, $riskCategory);
     }
 }

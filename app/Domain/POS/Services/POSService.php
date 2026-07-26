@@ -2,8 +2,6 @@
 
 namespace App\Domain\POS\Services;
 
-use App\Domain\Inventory\Entities\InventoryItem;
-use App\Domain\Inventory\Repositories\InventoryItemRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\POSShiftModel;
 use App\Infrastructure\Persistence\Eloquent\POSSaleModel;
 use App\Infrastructure\Persistence\Eloquent\POSSaleItemModel;
@@ -23,9 +21,7 @@ class POSService
     protected string $moduleContext = 'pos';
     protected ?int $userId = null;
 
-    public function __construct(
-        private InventoryItemRepositoryInterface $itemRepository,
-    ) {}
+    public function __construct() {}
 
     /**
      * Set the module context for all operations
@@ -61,8 +57,7 @@ class POSService
     public function startShift(array $data): POSShiftModel
     {
         $userId = $this->getUserId();
-        
-        // Check for existing open shift
+
         $existingShift = POSShiftModel::where('user_id', $userId)
             ->where('module_context', $this->moduleContext)
             ->where('status', 'open')
@@ -155,7 +150,6 @@ class POSService
         $shift = $this->getCurrentShift();
 
         return DB::transaction(function () use ($data, $userId, $shift) {
-            // Create sale
             $sale = POSSaleModel::create([
                 'user_id' => $userId,
                 'shift_id' => $shift?->id,
@@ -173,13 +167,12 @@ class POSService
                 'currency' => $data['currency'] ?? 'ZMW',
             ]);
 
-            // Add items
             $subtotal = 0;
             $itemCount = 0;
 
             foreach ($data['items'] as $item) {
                 $itemTotal = ($item['quantity'] * $item['unit_price']) - ($item['discount'] ?? 0);
-                
+
                 POSSaleItemModel::create([
                     'sale_id' => $sale->id,
                     'inventory_item_id' => $item['inventory_item_id'] ?? null,
@@ -196,14 +189,8 @@ class POSService
 
                 $subtotal += $itemTotal;
                 $itemCount += $item['quantity'];
-
-                // Update inventory if tracking enabled
-                if (isset($item['inventory_item_id']) && $this->shouldTrackInventory()) {
-                    $this->decrementStock($item['inventory_item_id'], $item['quantity'], $sale->id);
-                }
             }
 
-            // Calculate totals
             $discountAmount = $data['discount_amount'] ?? 0;
             $taxAmount = $data['tax_amount'] ?? 0;
             $totalAmount = $subtotal - $discountAmount + $taxAmount;
@@ -222,7 +209,6 @@ class POSService
                 'completed_at' => now(),
             ]);
 
-            // Update shift totals
             if ($shift) {
                 $this->updateShiftTotals($shift, $sale);
             }
@@ -289,20 +275,11 @@ class POSService
             ->firstOrFail();
 
         return DB::transaction(function () use ($sale, $reason) {
-            // Restore inventory
-            foreach ($sale->items as $item) {
-                if ($item->inventory_item_id && $this->shouldTrackInventory()) {
-                    $this->incrementStock($item->inventory_item_id, $item->quantity, $sale->id, 'void');
-                }
-            }
-
-            // Update sale status
             $sale->update([
                 'status' => 'voided',
                 'notes' => $sale->notes . "\n[VOIDED] " . ($reason ?? 'No reason provided'),
             ]);
 
-            // Update shift totals if applicable
             if ($sale->shift_id) {
                 $shift = POSShiftModel::find($sale->shift_id);
                 if ($shift && $shift->status === 'open') {
@@ -359,29 +336,27 @@ class POSService
     }
 
     /**
-     * Sync quick products with inventory
+     * Sync quick products from provided product IDs
      */
     public function syncQuickProducts(array $productIds): void
     {
         $userId = $this->getUserId();
 
-        // Remove existing
         POSQuickProductModel::where('user_id', $userId)
             ->where('module_context', $this->moduleContext)
             ->delete();
 
-        // Add new
-        $items = array_filter(
-            array_map(fn($id) => $this->itemRepository->findByIdForUser((int) $id, $userId), $productIds)
-        );
+        $products = POSQuickProductModel::whereIn('id', $productIds)
+            ->where('user_id', $userId)
+            ->get();
 
-        foreach ($items as $index => $item) {
+        foreach ($products as $index => $product) {
             POSQuickProductModel::create([
                 'user_id' => $userId,
                 'module_context' => $this->moduleContext,
-                'inventory_item_id' => $item->id,
-                'name' => $item->name,
-                'price' => $item->sellingPrice,
+                'inventory_item_id' => $product->inventory_item_id,
+                'name' => $product->name,
+                'price' => $product->price,
                 'sort_order' => $index,
             ]);
         }
@@ -430,7 +405,6 @@ class POSService
             ->where('status', 'completed')
             ->get();
 
-        // Daily breakdown
         $dailyStats = [];
         for ($i = 0; $i < 7; $i++) {
             $date = $startOfWeek->copy()->addDays($i);
@@ -475,12 +449,6 @@ class POSService
         return "SL-{$prefix}-{$date}-{$random}";
     }
 
-    protected function shouldTrackInventory(): bool
-    {
-        $settings = $this->getSettings();
-        return $settings->track_inventory ?? true;
-    }
-
     protected function updateShiftTotals(POSShiftModel $shift, POSSaleModel $sale): void
     {
         $shift->increment('total_sales', $sale->total_amount);
@@ -507,29 +475,5 @@ class POSService
             'total_card_sales' => $sales->where('payment_method', 'card')->sum('total_amount'),
             'transaction_count' => $sales->count(),
         ]);
-    }
-
-    protected function decrementStock(int $itemId, float $quantity, int $saleId): void
-    {
-        $item = $this->itemRepository->findById($itemId);
-        if ($item && $item->trackStock) {
-            $updated = InventoryItem::reconstitute([
-                ...$item->toArray(),
-                'current_stock' => $item->currentStock - (int) $quantity,
-            ]);
-            $this->itemRepository->save($updated);
-        }
-    }
-
-    protected function incrementStock(int $itemId, float $quantity, int $saleId, string $reason): void
-    {
-        $item = $this->itemRepository->findById($itemId);
-        if ($item && $item->trackStock) {
-            $updated = InventoryItem::reconstitute([
-                ...$item->toArray(),
-                'current_stock' => $item->currentStock + (int) $quantity,
-            ]);
-            $this->itemRepository->save($updated);
-        }
     }
 }

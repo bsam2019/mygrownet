@@ -6,7 +6,7 @@ namespace App\Domain\StockFlow\Services;
 
 use App\Domain\StockFlow\Entities\Item;
 use App\Domain\StockFlow\Entities\StockMovement;
-use App\Domain\StockFlow\Events\StockAdjusted;
+use App\Domain\Core\Services\OutboxService;
 use App\Domain\StockFlow\Exceptions\OperationFailedException;
 use App\Domain\StockFlow\Repositories\ItemRepositoryInterface;
 use App\Domain\StockFlow\Repositories\StockMovementRepositoryInterface;
@@ -19,7 +19,6 @@ use App\Domain\StockFlow\ValueObjects\BinId;
 use App\Domain\StockFlow\ValueObjects\Money;
 use App\Domain\StockFlow\ValueObjects\MovementType;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
 use Throwable;
 
 class InventoryService
@@ -29,6 +28,7 @@ class InventoryService
         private StockMovementRepositoryInterface $movementRepository,
         private StockLevelProjector $stockLevelProjector,
         private LotRepositoryInterface $lotRepository,
+        private OutboxService $outbox,
     ) {}
 
     public function createItem(int $companyId, array $data): Item
@@ -149,16 +149,21 @@ class InventoryService
             // Rebuild stock level projection from ledger
             $this->stockLevelProjector->rebuildForItem($companyId, $itemId);
 
-            // Dispatch domain event
-            Event::dispatch(new StockAdjusted(
-                companyId: $companyId,
-                itemId: $itemId,
-                reason: $reason,
-                quantityBefore: $qtyBefore,
-                quantityAfter: $newQuantity,
-                adjustmentType: $type,
-                adjustedBy: $userId,
-            ));
+            // Dispatch domain event via outbox
+            $this->outbox->insert(
+                eventName: 'stockflow.stock.adjusted.v1',
+                payload: [
+                    'company_id' => $companyId,
+                    'item_id' => $itemId,
+                    'reason' => $reason,
+                    'quantity_before' => $qtyBefore,
+                    'quantity_after' => $newQuantity,
+                    'adjustment_type' => $type,
+                    'adjusted_by' => $userId,
+                ],
+                context: ['company_id' => $companyId],
+                publisher: 'stockflow',
+            );
 
             // Return fresh item with updated projection
             return $this->itemRepository->findById(ItemId::fromInt($itemId));

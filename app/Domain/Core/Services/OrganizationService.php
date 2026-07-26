@@ -12,6 +12,10 @@ use Illuminate\Support\Str;
 
 class OrganizationService
 {
+    public function __construct(
+        private readonly EventDispatcher $eventDispatcher,
+    ) {}
+
     public function create(array $data): Organization
     {
         $data['uuid'] ??= (string) Str::uuid();
@@ -34,16 +38,29 @@ class OrganizationService
 
     public function addMember(Organization $org, User $user, ?string $status = 'active'): OrganizationMember
     {
-        return $org->members()->create([
+        $member = $org->members()->create([
             'user_id' => $user->id,
             'status' => $status ?? 'active',
             'joined_at' => now(),
         ]);
+
+        $this->eventDispatcher->dispatch('platform.organization.member_added.v1', [
+            'organization_id' => $org->id,
+            'user_id' => $user->id,
+            'role' => $member->role ?? 'member',
+        ]);
+
+        return $member;
     }
 
     public function removeMember(Organization $org, User $user): void
     {
         $org->members()->where('user_id', $user->id)->delete();
+
+        $this->eventDispatcher->dispatch('platform.organization.member_removed.v1', [
+            'organization_id' => $org->id,
+            'user_id' => $user->id,
+        ]);
     }
 
     public function getMembers(Organization $org): Collection

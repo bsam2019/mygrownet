@@ -8,6 +8,8 @@ use App\Domain\Wedding\Repositories\WeddingVendorRepositoryInterface;
 use App\Domain\Wedding\Repositories\WeddingRsvpRepositoryInterface;
 use App\Domain\Wedding\Repositories\WeddingGuestRepositoryInterface;
 use App\Domain\Wedding\Repositories\WeddingTemplateRepositoryInterface;
+use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\Core\Services\ModuleDiscovery;
 use App\Infrastructure\Persistence\Repositories\Wedding\EloquentWeddingEventRepository;
 use App\Infrastructure\Persistence\Repositories\Wedding\EloquentWeddingVendorRepository;
 use App\Infrastructure\Persistence\Repositories\Wedding\EloquentWeddingRsvpRepository;
@@ -48,5 +50,17 @@ class WeddingServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations/wedding'));
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'wedding',
+            name: 'Wedding',
+            version: '1.0.0',
+            category: 'consumer',
+            description: 'Wedding website builder with RSVP, guest management, and templates',
+            supportsSubdomain: true,
+            capabilities: ['wedding_planning', 'website_builder', 'guest_management'],
+            permissions: ['manage_weddings', 'manage_guests', 'manage_templates'],
+        ));
     }
 }

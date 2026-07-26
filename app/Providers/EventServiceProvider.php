@@ -76,20 +76,20 @@ class EventServiceProvider extends ServiceProvider
         ],
 
         // StockFlow Domain Events
-        \App\Domain\StockFlow\Events\SaleCompleted::class => [
+        'stockflow.sale.completed.v1' => [
             [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onSaleCompleted'],
         ],
-        \App\Domain\StockFlow\Events\StockAdjusted::class => [
+        'stockflow.stock.adjusted.v1' => [
             [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onStockAdjusted'],
+        ],
+        'stockflow.count.finalized.v1' => [
+            [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onStockCountFinalized'],
+        ],
+        'stockflow.cash.discrepancy.v1' => [
+            [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onCashDiscrepancyDetected'],
         ],
         \App\Domain\StockFlow\Events\PurchaseOrderReceived::class => [
             [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onPurchaseOrderReceived'],
-        ],
-        \App\Domain\StockFlow\Events\StockCountFinalized::class => [
-            [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onStockCountFinalized'],
-        ],
-        \App\Domain\StockFlow\Events\CashDiscrepancyDetected::class => [
-            [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onCashDiscrepancyDetected'],
         ],
 
         // Platform Core Events
@@ -101,6 +101,18 @@ class EventServiceProvider extends ServiceProvider
         \App\Domain\Core\Events\OrganizationArchived::class => [
             \App\Domain\StockFlow\Listeners\SyncOrganizationToCompany::class,
             \App\Domain\BMS\Listeners\SyncOrganizationToBmsCompany::class,
+            \App\Domain\Core\Listeners\SyncOrganizationToApplicationInstallations::class,
+        ],
+        \App\Domain\Core\Events\OrganizationMemberRemoved::class => [
+            \App\Domain\Core\Listeners\SyncOrganizationToApplicationInstallations::class,
+        ],
+
+        // Application Lifecycle Events
+        \App\Domain\Core\Events\ApplicationEnabled::class => [
+            \App\Domain\StockFlow\Listeners\SyncOrganizationToCompany::class,
+            \App\Domain\Core\Listeners\SyncOrganizationToApplicationInstallations::class,
+        ],
+        \App\Domain\Core\Events\ApplicationDisabled::class => [
             \App\Domain\Core\Listeners\SyncOrganizationToApplicationInstallations::class,
         ],
     ];

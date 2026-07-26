@@ -617,4 +617,8 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
         Route::get('/', [\App\Http\Controllers\Admin\WithdrawalLimitController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\Admin\WithdrawalLimitController::class, 'update'])->name('update');
     });
+
+    // Integration Dashboard
+    Route::get('/integration-dashboard', [\App\Http\Controllers\Admin\IntegrationDashboardController::class, 'index'])
+        ->name('integration-dashboard');
 });

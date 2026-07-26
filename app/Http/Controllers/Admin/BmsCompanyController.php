@@ -13,7 +13,6 @@ class BmsCompanyController extends Controller
     {
         $query = CompanyModel::query()->with('users');
 
-        // Search
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -23,17 +22,14 @@ class BmsCompanyController extends Controller
             });
         }
 
-        // Filter by subscription type
         if ($request->filled('subscription_type')) {
             $query->where('subscription_type', $request->subscription_type);
         }
 
-        // Filter by status
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // Filter expiring soon
         if ($request->boolean('expiring_soon')) {
             $query->where('subscription_type', 'complimentary')
                 ->whereNotNull('complimentary_until')
@@ -42,7 +38,6 @@ class BmsCompanyController extends Controller
 
         $companies = $query->latest()->paginate(20)->withQueryString();
 
-        // Add computed properties
         $companies->getCollection()->transform(function ($company) {
             return [
                 'id' => $company->id,
@@ -108,7 +103,6 @@ class BmsCompanyController extends Controller
             'status' => 'required|in:active,suspended',
         ]);
 
-        // If changing to complimentary, require expiration date
         if ($validated['subscription_type'] === 'complimentary' && empty($validated['complimentary_until'])) {
             return back()->withErrors([
                 'complimentary_until' => 'Expiration date is required for complimentary access.',

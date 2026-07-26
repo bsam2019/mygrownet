@@ -11,6 +11,7 @@ use App\Domain\GrowFinance\Repositories\AccountRepositoryInterface;
 use App\Domain\GrowFinance\Repositories\JournalEntryRepositoryInterface;
 use App\Domain\GrowFinance\Repositories\JournalLineRepositoryInterface;
 use App\Domain\GrowFinance\ValueObjects\AccountType;
+use App\Domain\Core\Services\OutboxService;
 use Illuminate\Support\Facades\DB;
 
 class AccountingService
@@ -19,6 +20,7 @@ class AccountingService
         private AccountRepositoryInterface $accountRepo,
         private JournalEntryRepositoryInterface $journalEntryRepo,
         private JournalLineRepositoryInterface $journalLineRepo,
+        private readonly OutboxService $outbox,
     ) {}
 
     public function initializeChartOfAccounts(int $businessId): void
@@ -76,6 +78,18 @@ class AccountingService
                     updatedAt: null,
                 ));
             }
+
+            $this->outbox->insert(
+                eventName: 'growfinance.journal.created.v1',
+                payload: [
+                    'business_id' => $businessId,
+                    'journal_id' => $entry->id,
+                    'entry_number' => $entryNumber,
+                    'description' => $description,
+                ],
+                context: ['business_id' => $businessId],
+                publisher: 'growfinance',
+            );
 
             return $entry->toArray();
         });
@@ -142,6 +156,19 @@ class AccountingService
                 createdAt: $entry->createdAt,
                 updatedAt: null,
             ));
+
+            $this->outbox->insert(
+                eventName: 'growfinance.journal.created.v1',
+                payload: [
+                    'business_id' => $entry->businessId,
+                    'journal_id' => $entry->id,
+                    'entry_number' => $entry->entryNumber,
+                    'description' => $entry->description,
+                    'is_posted' => true,
+                ],
+                context: ['business_id' => $entry->businessId],
+                publisher: 'growfinance',
+            );
 
             return true;
         });

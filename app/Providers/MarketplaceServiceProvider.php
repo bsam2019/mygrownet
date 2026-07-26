@@ -14,6 +14,8 @@ use App\Infrastructure\Persistence\Repositories\Marketplace\EloquentOrderReposit
 use App\Infrastructure\Persistence\Repositories\Marketplace\EloquentCategoryRepository;
 use App\Infrastructure\Persistence\Repositories\Marketplace\EloquentPayoutRepository;
 use App\Infrastructure\Persistence\Repositories\Marketplace\EloquentEscrowRepository;
+use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\Core\Services\ModuleDiscovery;
 use Illuminate\Support\ServiceProvider;
 
 class MarketplaceServiceProvider extends ServiceProvider
@@ -31,5 +33,17 @@ class MarketplaceServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations/marketplace'));
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'marketplace',
+            name: 'Marketplace',
+            version: '1.0.0',
+            category: 'business',
+            description: 'Multi-vendor marketplace with sellers, products, orders, payouts, and escrow',
+            supportsSubdomain: true,
+            capabilities: ['marketplace', 'multi_vendor', 'escrow', 'payouts'],
+            permissions: ['manage_sellers', 'manage_products', 'manage_orders', 'manage_payouts'],
+        ));
     }
 }

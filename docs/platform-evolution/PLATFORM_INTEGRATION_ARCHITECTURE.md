@@ -1,7 +1,7 @@
 # MyGrowNet Platform Integration Architecture
 
 > **Status:** Architecture Reference  
-> **Version:** 9.0  
+> **Version:** 10.1  
 > **Applies to:** All MyGrowNet platform applications and modules
 
 ---
@@ -9,38 +9,57 @@
 ## Table of Contents
 
 1. [Architectural Principles](#1-architectural-principles)
- 2. [Platform Core — Governance and Infrastructure Layer](#2-platform-core--governance-and-infrastructure-layer)
+2. [Platform Core — Governance and Platform Services](#2-platform-core--governance-and-platform-services)
 3. [Three Types of Integration](#3-three-types-of-integration)
     - [Type 1: Platform Services](#type-1-platform-services)
     - [Type 2: Platform Events](#type-2-platform-events)
     - [Type 3: Integration Contracts](#type-3-integration-contracts)
- 4. [Platform Integration Layer](#4-platform-integration-layer)
-
-   - [ApplicationProvisioningService](#41-applicationprovisioningservice)
-   - [EventBus](#42-eventbus)
-   - [IntegrationRegistry](#43-integrationregistry)
-   - [ModuleDiscovery & Capability Registry](#44-modulediscovery--capability-registry)
-   - [Application Manifest](#45-application-manifest)
-   - [ServiceContracts](#46-servicecontracts)
-   - [FeatureFlagService](#47-featureflagservice)
-   - [HealthService](#48-healthservice)
-5. [Application Runtime Layer](#5-application-runtime-layer)
+4. [Platform Integration Services](#4-platform-integration-services)
+    - [ApplicationProvisioningService & ApplicationLifecycleService](#41-applicationprovisioningservice--applicationlifecycleservice)
+    - [EventBus](#42-eventbus)
+    - [IntegrationRegistry](#43-integrationregistry)
+    - [IntegrationGuard](#44-integrationguard)
+    - [ModuleDiscovery & Capability Registry](#45-modulediscovery--capability-registry)
+    - [Application Manifest](#46-application-manifest)
+    - [ServiceContracts](#47-servicecontracts)
+    - [FeatureFlagService](#48-featureflagservice)
+    - [HealthService](#49-healthservice)
+5. [Application Runtime Infrastructure](#5-application-runtime-infrastructure)
 6. [Module Lifecycle](#6-module-lifecycle)
 7. [PlatformContext](#7-platformcontext)
-8. [Dependency Rules](#8-dependency-rules)
-9. [Standard Platform Events](#9-standard-platform-events)
-10. [Integration Examples](#10-integration-examples)
-    - [Application Provisioning](#101-application-provisioning)
-    - [Invoice Processing](#102-invoice-processing)
-    - [Inventory Accounting](#103-inventory-accounting)
-    - [GrowFinance Full Invoice Lifecycle](#104-growfinance-full-invoice-lifecycle)
-11. [Platform Contracts](#11-platform-contracts)
-12. [Integration Security](#12-integration-security)
-13. [Integration Policies](#13-integration-policies)
-14. [Integration Rules](#14-integration-rules)
-22. [Future Vision](#22-future-vision)
-23. [Migration Strategy](#23-migration-strategy)
-24. [Architectural Decision Records](#24-architectural-decision-records)
+8. [Platform SDK](#8-platform-sdk)
+9. [Dependency Rules](#9-dependency-rules)
+10. [Standard Platform Events](#10-standard-platform-events)
+    - [Event Envelope](#101-event-envelope)
+    - [Platform Lifecycle Events](#102-platform-lifecycle-events-owned-by-platform-core)
+    - [Integration Events](#103-integration-events)
+    - [Domain Events](#104-domain-events-owned-by-applications)
+    - [Failure Events](#105-failure-events)
+    - [Subscription Rules](#106-subscription-rules)
+    - [Event Ownership Registry](#107-event-ownership-registry)
+    - [Event Stability](#108-event-stability)
+11. [Reliable Event Delivery](#11-reliable-event-delivery)
+12. [Integration Examples](#12-integration-examples)
+    - [Application Provisioning](#121-application-provisioning)
+    - [Invoice Processing](#122-invoice-processing)
+    - [Inventory Accounting](#123-inventory-accounting)
+    - [GrowFinance Full Invoice Lifecycle](#124-growfinance-full-invoice-lifecycle)
+13. [Platform Contracts](#13-platform-contracts)
+14. [Integration Security](#14-integration-security)
+15. [Integration Policies](#15-integration-policies)
+16. [Integration Observability](#16-integration-observability)
+    - [Non-Negotiable Platform Rules](#164-non-negotiable-platform-rules)
+17. [Data Ownership](#17-data-ownership)
+18. [Multi-tenant Data Isolation](#18-multi-tenant-data-isolation)
+19. [Anti-Corruption Layers](#19-anti-corruption-layers)
+20. [Failure & Resilience](#20-failure--resilience)
+21. [Platform Configuration Strategy](#21-platform-configuration-strategy)
+22. [Error Taxonomy & Concurrency Policy](#22-error-taxonomy--concurrency-policy)
+23. [Future Vision](#23-future-vision)
+24. [Migration Strategy](#24-migration-strategy)
+25. [Architectural Decision Records](#25-architectural-decision-records)
+26. [Architecture Enforcement](#26-architecture-enforcement)
+27. [Architecture Evolution](#27-architecture-evolution)
 
 ---
 
@@ -171,11 +190,32 @@ Some entities are referenced by multiple applications. These must have a single 
 | Domain logic | HR, projects, jobs | Inventory, audits | Accounting, budgets | MLM, commissions | Products, orders |
 | Events | `InvoiceCreated` | `GoodsReceived` | `PaymentReceived` | `CommissionAwarded` | `OrderPlaced` |
 
-### 1.5 Communication via Platform-Managed Mechanisms
+### 1.5 Platform Core Never Contains Business Logic
+
+The Platform Core owns platform concerns — identity, organizations, permissions, applications, workspace, settings, audit, notifications, and integration infrastructure. It never contains business domain logic such as inventory calculations, accounting rules, pricing algorithms, HR workflows, or commission structures.
+
+```
+Platform Core owns:
+  ✓ Users, organizations, roles
+  ✓ Application registry and installations
+  ✓ Integration infrastructure (EventBus, IntegrationRegistry, manifests)
+  ✓ Platform services (FeatureFlagService, HealthService)
+
+Platform Core never owns:
+  ✗ Inventory levels, stock movements, valuations
+  ✗ Chart of accounts, journal entries, financial reports
+  ✗ Customer records, sales orders, invoices
+  ✗ Products, pricing, discounts
+  ✗ Commissions, tiers, referral networks
+```
+
+**Why this matters:** Business logic embedded in Platform Core creates deployment coupling — every business change requires a platform redeployment. It also makes Platform Core fragile, because a bug in a business feature can break platform-wide services like authentication or workspace.
+
+### 1.6 Communication via Platform-Managed Mechanisms
 
 Applications never communicate through direct implementation dependencies. All cross-application communication uses platform-managed integration mechanisms such as contracts, events, and runtime services. The Platform Core manages the registry, security, identity, and integration infrastructure — it does not act as a mandatory relay for every message.
 
-### 1.6 Application Boundary
+### 1.7 Application Boundary
 
 Every application on the MyGrowNet platform follows a consistent boundary structure. This makes future extraction, testing, and independent deployment predictable.
 
@@ -231,11 +271,35 @@ StockFlow
 - **Integration API** — Used by the IntegrationRegistry for remote contract resolution (future, distributed stage). Implements the same interface as the local contract.
 - **External API** — Consumed by third parties, mobile apps, external integrations. Must be versioned (`v1`, `v2`) and documented. Rate-limited and API-key authenticated.
 
+### 1.8 Application Replaceability
+
+Applications may be removed, replaced, or independently deployed without requiring changes to other applications that consume only their published contracts.
+
+```
+Before:
+  BMS depends on StockFlow InventoryProvider interface
+            │
+            ▼
+     StockFlow (current provider)
+
+After:
+  BMS depends on StockFlow InventoryProvider interface (same interface)
+            │
+            ▼
+     External ERP (new provider, same contract)
+```
+
+This principle governs all integration decisions:
+- Contracts are owned by the consuming application's domain, not by the provider — the provider merely implements them.
+- If StockFlow is replaced, the new system implements `InventoryProvider` and BMS never changes.
+- If a consumer adds a new integration, it depends only on a contract interface, not on the providing application's existence.
+- The IntegrationRegistry and CapabilityRegistry exist specifically to make this possible — applications resolve capabilities, not application names.
+
 ---
 
-## 2. Platform Core — Governance and Infrastructure Layer
+## 2. Platform Core — Governance and Platform Services
 
-The Platform Core is the governance layer and infrastructure provider of MyGrowNet. It provides the services that all applications share — identity, organizations, permissions, application registry, event infrastructure, contract discovery, and runtime context. It does not act as a mandatory relay for every message; applications communicate directly through events and contracts, with the Platform Core governing the mechanisms.
+The Platform Core is the governance layer of MyGrowNet. It provides the domain services (identity, organizations, permissions, applications, workspace) and the integration services (provisioning, events, contracts, discovery) that all applications share. It does not act as a mandatory relay for every message; applications communicate directly through events and contracts, with the Platform Core governing the mechanisms. Shared infrastructure (auth adapters, tenancy middleware, routing) lives in the separate Runtime Infrastructure layer.
 
 ```
               MyGrowNet Platform
@@ -251,12 +315,13 @@ The Platform Core is the governance layer and infrastructure provider of MyGrowN
 │  │  Audit            Notifications                  │   │
 │  └──────────────────────────────────────────────────┘   │
 │                                                           │
-│  Infrastructure Services (may evolve independently):     │
+│  Platform Services (may evolve independently):         │
 │  ┌──────────────────────────────────────────────────┐   │
 │  │  ApplicationProvisioningService    EventBus       │   │
-│  │  IntegrationRegistry              ModuleDiscovery │   │
-│  │  CapabilityRegistry               ServiceContracts│   │
-│  │  FeatureFlagService               HealthService   │   │
+│  │  ApplicationLifecycleService     ModuleDiscovery │   │
+│  │  IntegrationRegistry              ServiceContracts│   │
+│  │  CapabilityRegistry               FeatureFlagService│   │
+│  │  HealthService                                      │
 │  └──────────────────────────────────────────────────┘   │
 └──────────────────────────────────────────────────────────┘
                           │
@@ -292,7 +357,7 @@ The Platform Core is the governance layer and infrastructure provider of MyGrowN
 
 ## 3. Three Types of Integration
 
-Cross-application communication takes exactly three forms. It is critical to keep them clearly separated: **Platform Services** are owned by the Platform Core; **Integration Contracts** are owned by individual applications.
+Cross-application communication takes exactly three forms. It is critical to keep them clearly separated: **Platform Services** are owned by the Platform Core; **Platform Events** are owned by either Core (lifecycle) or applications (domain); **Integration Contracts** are owned by individual applications.
 
 ---
 
@@ -408,9 +473,9 @@ $products = $inventory->getItems($context);
 
 ---
 
-## 4. Platform Integration Layer
+## 4. Platform Integration Services
 
-The Platform Core provides the following Integration services. Each is a peer capability alongside Identity, Organizations, Workspace, Notifications, and Audit.
+The Platform Core provides the following Platform Services. Each is a peer capability alongside Identity, Organizations, Workspace, Notifications, and Audit.
 
 ```
 Platform Core — Domain Layer
@@ -423,9 +488,10 @@ Platform Core — Domain Layer
 ├── Settings
 └── Audit
 
-Platform Core — Infrastructure Services
+Platform Core — Platform Services
 │
 ├── ApplicationProvisioningService
+├── ApplicationLifecycleService
 ├── EventBus
 ├── IntegrationRegistry
 ├── ModuleDiscovery
@@ -445,22 +511,24 @@ Application Runtime Layer
 └── Event Transport           (future, distributed stage)
 ```
 
-### 4.1 ApplicationProvisioningService
+### 4.1 ApplicationProvisioningService & ApplicationLifecycleService
 
-Responsible for the lifecycle of application installations within an organization.
+Application provisioning and lifecycle management are two distinct concerns split across two services to keep each focused.
+
+#### ApplicationProvisioningService
+
+Responsible for the initial provisioning of an application installation within an organization. Its responsibility ends once the application reaches the Active state.
 
 **Responsibilities:**
 
 - Installing an application for an organization
-- Running provisioning workflows
-- Firing lifecycle events at each state transition
+- Running provisioning workflows (creating default resources, initializing settings)
+- Firing provisioning events at each state transition
 
-**Provisioning states:**
-
-Some applications (especially GrowFinance) may spend significant time provisioning resources. The service tracks granular states:
+**Per-organization provisioning states (terminal: Active).** This state machine begins only after the module itself is already `Registered` at the platform level (§6) — it tracks one organization's installation of an already-available application, not the module's presence in the codebase:
 
 ```
-  Not Installed
+  Not Installed (for this organization)
        │
        ▼
   Installing ──► ApplicationInstalling Event
@@ -472,26 +540,16 @@ Some applications (especially GrowFinance) may spend significant time provisioni
   Configuring ──► ApplicationConfiguring Event
        │
        ▼
-    Ready
+  Ready              ← Provisioning complete, awaiting activation (no event fires; see §6)
        │
        ▼
   Activating ──► ApplicationEnabled Event
        │
        ▼
-   Active
-       │
-       ├──► Maintenance ──► MaintenanceMode Event
-       │        │
-       │        ▼
-       │     Active (restored)
-       │
-       ├──► Suspended ──► ApplicationDisabled Event
-       │        │
-       │        ▼
-       │     Active (re-enabled)
-       │
-       └──► Archived (terminal)
+    Active        ← Provisioning complete, ApplicationLifecycleService takes over
 ```
+
+Some applications (especially GrowFinance) may spend significant time in Provisioning or Configuring. The service tracks these granular states so the workspace UI can show progress.
 
 **Example — StockFlow provisioned:**
 
@@ -510,9 +568,46 @@ StockFlow (reacts to ApplicationEnabled):
     creates inventory preferences
 ```
 
+#### ApplicationLifecycleService
+
+Responsible for ongoing lifecycle management after an application is provisioned. It handles state transitions that may occur days, months, or years after initial setup.
+
+**Responsibilities:**
+
+- Putting an application into maintenance mode
+- Coordinating application upgrades and migrations
+- Suspending/re-enabling an application
+- Archiving an application (terminal state)
+- Firing lifecycle events at each transition
+
+**Lifecycle states (from Active):**
+
+```
+    Active
+       │
+       ├──► Maintenance ──► ApplicationMaintenance Event
+       │        │
+       │        ▼
+       │   Updating ──► ApplicationUpdating Event    (schema migrations, data transformations)
+       │        │
+       │        ▼
+       │     Active (upgrade complete)
+       │
+       ├──► Suspended ──► ApplicationDisabled Event
+       │        │
+       │        ▼
+       │     Active (re-enabled)
+       │
+       └──► Archived (terminal) ──► ApplicationArchived Event
+```
+
+**Updating state:** Large applications (GrowFinance, BMS) may require multi-phase upgrades involving schema migrations, data transformations, or reindexing. The Updating state signals that the application is temporarily unavailable for upgrade procedures, distinct from maintenance (planned downtime) or suspension (billing/access issues).
+
+**Key distinction:** ApplicationProvisioningService runs once per installation (Not Installed → Active), scoped to a single organization. ApplicationLifecycleService handles all subsequent transitions for that same organization's installation (Active → Maintenance → Updating → Active, Active → Archived, etc.). The two services never overlap in state responsibility. Neither service manages the module-level `Installed`/`Registered` states described in §6, which happen once for the platform as a whole, not per organization.
+
 ### 4.2 EventBus
 
-The central communication backbone for asynchronous integration.
+Platform event dispatch infrastructure for asynchronous integration.
 
 **Responsibilities:**
 
@@ -555,6 +650,7 @@ Separate from the registry, the IntegrationGuard handles all authorization check
 - Checking that the target application is enabled and active
 - Validating the caller has the required permissions for the specific contract
 - Enforcing feature flags and tenant isolation
+- Rate limiting (future, remote contract calls)
 
 **Relationship:**
 
@@ -570,8 +666,13 @@ IntegrationGuard
     ├── Application status
     ├── Permission validation
     ├── Feature flag check
-    └── Tenant isolation
+    ├── Tenant isolation
+    └── Rate limiting (future)
 ```
+
+**Scope boundary:** IntegrationGuard owns authorization only — authentication, organization membership, application status, permission checks, and feature flags. It does not own resilience concerns (circuit breaking, retries, timeouts) — those live in a separate resilience layer (§20) that wraps contract calls after the Guard has authorized them. This separation exists for the same reason IntegrationGuard was split out of IntegrationRegistry in the first place: neither service should accumulate unrelated responsibilities.
+
+**Implementation note:** IntegrationGuard is exposed to applications as `MyGrowNet\Platform\Sdk\Integration\IntegrationGuard` (§8.1) — applications only ever import it from the SDK namespace, never from `App\Domain\Core` directly. In the current modular monolith, the SDK class is a thin wrapper around the actual Platform Core implementation (per §8's stage-specific implementation rule); at the distributed stage the SDK class becomes an interface backed by remote transport, with no change required in calling code.
 
 **Example flow:**
 
@@ -584,12 +685,17 @@ $providerClass = $registry->resolve(InventoryProvider::class);
 $guard = app(IntegrationGuard::class);
 $guard->authorize($context, $providerClass);
 
-// Safe to use the provider
-$inventory = app($providerClass);
-$stock = $inventory->getStockLevel($context, $itemId);
+// ResilienceMiddleware wraps the call with circuit breaker and retry logic
+$invoker = app(ContractInvoker::class);
+$result = $invoker->callWithCircuitBreaker(
+    provider: $providerClass,
+    method: 'getStockLevel',
+    args: [$context, $itemId],
+    fallback: fn() => 0
+);
 ```
 
-### 4.4 ModuleDiscovery & Capability Registry
+### 4.5 ModuleDiscovery & Capability Registry
 
 Responsible for introspecting installed modules and exposing their capabilities.
 
@@ -633,6 +739,7 @@ $discovery = app(ModuleDiscovery::class);
 $capabilities = $discovery->capabilities('stockflow');
 // Returns: ['inventory', 'warehouses', 'suppliers', 'purchasing', 'auditing', 'stock_transfers']
 
+// CapabilityRegistry: admin/tooling only — never called from business code:
 $registry = app(CapabilityRegistry::class);
 $contractClass = $registry->findProvider('inventory');
 // Returns InventoryProvider::class (the interface, regardless of which module implements it)
@@ -643,6 +750,21 @@ $stock = $inventory->getStockLevel($context, $itemId);
 ```
 
 BMS never needs to know "is StockFlow installed?" — it asks "can this organization provide inventory?" and gets an answer regardless of which application powers it. In ten years StockFlow could be replaced with a different inventory system and BMS would never change.
+
+**Capabilities vs Contracts — critical distinction:**
+
+| Concept | Purpose | Used By | Example |
+|---------|---------|---------|---------|
+| **Capability** | Discovery — answers "who provides X?" | Integration layer, ModuleDiscovery, CapabilityRegistry | `'inventory'`, `'accounting'` |
+| **Contract** | Business logic — typed PHP interface | Business code, service classes, controllers | `InventoryProvider::class` |
+
+**Rules:**
+1. Business code **never** uses capability strings. A controller never does `$registry->findProvider('inventory')`. It depends on the contract interface directly.
+2. Capability strings are used only by the integration layer (ModuleDiscovery, CapabilityRegistry, manifest) for registration and discovery.
+3. Contract interfaces must implement `capability(): string` to enable the registry to map them back to their capability without hardcoding.
+4. If an organization lacks the required capability, the IntegrationGuard rejects the call — the business code is unaware of which application provides the contract.
+
+**Registry boundary:** CapabilityRegistry is a read-only discovery index — it answers "which application(s) provide capability X?" for tooling such as the Application Catalog and admin dashboards. It is never called from business code. Business code always resolves contracts through `IntegrationRegistry::resolve(ContractInterface::class)`. CapabilityRegistry is populated from the same manifests as IntegrationRegistry but serves a purely informational role; it does not perform contract binding.
 
 ```
 Today:
@@ -662,7 +784,7 @@ Future:
  StockFlow     External ERP
 ```
 
-### 4.5 Application Manifest
+### 4.6 Application Manifest
 
 Every application publishes a manifest declaring its identity, capabilities, contracts, and events. This manifest is consumed by ModuleDiscovery at boot time.
 
@@ -677,7 +799,8 @@ return [
     'category' => 'business',
     'type' => 'tenant',
     'description' => 'Inventory management, purchasing, and auditing',
-    'platform_versions' => ['>=2.0', '<4.0'],   // Platform compatibility constraint
+    'min_platform_version' => '2.0',             // Minimum platform version required
+    'max_platform_version' => '3.x',             // Maximum platform version supported (x = any minor)
 
     // Entry
     'entrypoint' => '/stock-audit',
@@ -735,14 +858,14 @@ return [
         InvoiceCreated::class,       // BMS domain event
     ],
 
-    // Capabilities this application depends on (for deployment validation)
-    'dependencies' => [
+    // Capabilities this application requires (for deployment validation)
+    'required_capabilities' => [
         'notifications',
         'media',
     ],
 
-    // Other applications this application optionally integrates with
-    'optional_dependencies' => [
+    // Capabilities this application optionally integrates with
+    'optional_capabilities' => [
         'search',
         'ai_services',
     ],
@@ -751,7 +874,25 @@ return [
 
 The Platform Core aggregates all manifests and uses them to power the IntegrationRegistry, CapabilityRegistry, and Application Catalog. The Workspace builds itself entirely from manifests — no hardcoded application list.
 
-### 4.6 ServiceContracts
+**Contract versioning in the manifest:**
+
+Contracts included in the manifest should specify a version constraint to indicate compatibility:
+
+```php
+'contracts' => [
+    InventoryProvider::class => '^1',   // MAJOR version constraint
+    SupplierProvider::class  => '^2',
+],
+```
+
+Versioning rules:
+- Contracts use semantic versioning (MAJOR.MINOR) — see §13.7/§13.8 for the full policy
+- Consumers declare MAJOR constraints in their own manifests under `dependencies` (e.g., `^1`)
+- A MAJOR version change (e.g., 1 → 2) means breaking changes — consumers must update
+- The IntegrationRegistry validates version constraints at boot time
+- The Platform Core maintains a version compatibility matrix for all registered contracts
+
+### 4.7 ServiceContracts
 
 The Platform Core provides base abstractions for integration contracts. Individual contracts are defined in the owning application's own namespace.
 
@@ -793,7 +934,7 @@ interface ProviderContract
 }
 ```
 
-### 4.7 FeatureFlagService
+### 4.8 FeatureFlagService
 
 Feature flags let Platform Core release capabilities gradually — per organization, per user, or globally.
 
@@ -817,7 +958,7 @@ interface FeatureFlagService
 - Emergency kill switches for problematic capabilities
 - Per-organization feature tiers based on subscription plan
 
-### 4.8 HealthService
+### 4.9 HealthService
 
 Exposes the operational status of every installed application.
 
@@ -853,8 +994,8 @@ enum HealthStatus
 
 **Health check modes:**
 
-- **Local mode** — checks the module's internal status within the same process (service available, queue depth, last heartbeat)
-- **Remote mode** — (future) checks a live HTTP endpoint: `https://stockflow.mygrownet.com/health`
+- **Local mode (current)** — checks the module's internal status within the same process (service available, queue depth, last heartbeat). This is the only mode available in the current modular monolith.
+- **Remote mode (future, distributed stage)** — checks a live HTTP endpoint: `https://stockflow.mygrownet.com/health`. Only the `Offline` status is meaningful in this mode.
 
 ```
 Application Health
@@ -903,60 +1044,63 @@ MyGrowNet Platform
 
 ## 6. Module Lifecycle
 
-Every application on the MyGrowNet platform progresses through a defined lifecycle managed by Platform Core.
+Every application on the MyGrowNet platform progresses through a defined lifecycle managed by Platform Core. **This lifecycle has two distinct scopes that are easy to conflate:**
+
+- **Module-level states** (`Installed`, `Registered`) happen **once per platform**, when the module's code is deployed and boots. They are managed by ModuleDiscovery and do not repeat per organization.
+- **Per-organization states** (`Installing` through `Archived`) happen **once per organization**, every time an organization enables the application. They are managed by ApplicationProvisioningService and ApplicationLifecycleService, as detailed in §4.1. A single `Registered` module can simultaneously have many organizations at different points in the per-organization state machine (e.g., Org A `Active`, Org B `Suspended`, Org C not yet `Installed`).
 
 ```
-Installed
+Installed                                    ← module-level, once per platform
     │
     ▼
-Registered
+Registered                                   ← module-level, once per platform
     │
     ▼
-Installing ──► ApplicationInstalling Event
-    │
-    ▼
-Provisioning ──► ApplicationProvisioning Event
-    │
-    ▼
-Configuring ──► ApplicationConfiguring Event
-    │
-    ▼
-   Ready
-    │
-    ▼
-Activating ──► ApplicationEnabled Event
-    │
-    ▼
-  Active
-    │
-    ├──► Maintenance ──► MaintenanceMode Event
-    │        │
-    │        ▼
-    │     Active (restored)
-    │
-    ├──► Suspended ──► ApplicationDisabled Event
-    │        │
-    │        ▼
-    │     Active (re-enabled)
-    │
-    └──► Archived (terminal)
+Installing ──► ApplicationInstalling Event   ─┐
+    │                                          │
+    ▼                                          │
+Provisioning ──► ApplicationProvisioning Event │
+    │                                          │  per-organization,
+    ▼                                          │  repeats for every
+Configuring ──► ApplicationConfiguring Event   │  organization that
+    │                                          │  enables this module
+    ▼                                          │
+   Ready                                       │
+    │                                          │
+    ▼                                          │
+Activating ──► ApplicationEnabled Event        │
+    │                                          │
+    ▼                                          │
+  Active                                       │
+    │                                          │
+    ├──► Maintenance ──► MaintenanceMode Event │
+    │        │                                 │
+    │        ▼                                 │
+    │     Active (restored)                    │
+    │                                          │
+    ├──► Suspended ──► ApplicationDisabled Event│
+    │        │                                 │
+    │        ▼                                 │
+    │     Active (re-enabled)                  │
+    │                                          │
+    └──► Archived (terminal)                  ─┘
 ```
 
 ### Lifecycle States
 
-| State | Meaning | Managed By |
-|-------|---------|------------|
-| **Installed** | Module exists in the codebase, migrations have run | ModuleDiscovery |
-| **Registered** | Module has booted and published its manifest | ModuleDiscovery |
-| **Installing** | Platform Core is beginning the installation workflow | ApplicationProvisioningService |
-| **Provisioning** | Platform Core is allocating resources (may take minutes) | ApplicationProvisioningService |
-| **Configuring** | Application is applying organization-specific settings | ApplicationProvisioningService |
-| **Ready** | Provisioning complete, awaiting activation | ApplicationProvisioningService |
-| **Activating** | Final activation workflow running | ApplicationProvisioningService |
-| **Active** | Fully operational for the organization | ApplicationProvisioningService |
-| **Maintenance** | Temporarily unavailable (upgrades, data migration) | Platform Core |
-| **Suspended** | Disabled (license expiry, admin action, payment failure) | ApplicationProvisioningService |
-| **Archived** | Permanently disabled for the organization | ApplicationProvisioningService |
+| State | Scope | Meaning | Managed By |
+|-------|-------|---------|------------|
+| **Installed** | Module (once) | Module exists in the codebase, migrations have run | ModuleDiscovery |
+| **Registered** | Module (once) | Module has booted and published its manifest | ModuleDiscovery |
+| **Installing** | Per-organization | Platform Core is beginning the installation workflow | ApplicationProvisioningService |
+| **Provisioning** | Per-organization | Platform Core is allocating resources (may take minutes) | ApplicationProvisioningService |
+| **Configuring** | Per-organization | Application is applying organization-specific settings | ApplicationProvisioningService |
+| **Ready** | Per-organization | Provisioning complete, awaiting activation | ApplicationProvisioningService |
+| **Activating** | Per-organization | Final activation workflow running | ApplicationProvisioningService |
+| **Active** | Per-organization | Fully operational for the organization | ApplicationProvisioningService (initial) / ApplicationLifecycleService (thereafter) |
+| **Maintenance** | Per-organization | Temporarily unavailable (upgrades, data migration) | ApplicationLifecycleService |
+| **Suspended** | Per-organization | Disabled (license expiry, admin action, payment failure) | ApplicationLifecycleService |
+| **Archived** | Per-organization | Permanently disabled for the organization | ApplicationLifecycleService |
 
 ### What the Lifecycle Enables
 
@@ -1053,7 +1197,12 @@ class StockFlowInventoryProvider implements InventoryProvider
 
 ## 8. Platform SDK
 
-The Platform SDK is a lightweight PHP library that every application uses to interact with the Platform Core. It provides a consistent, type-safe developer experience without requiring applications to know the internal structure of the Platform Core. The SDK is the **public programming surface** — applications depend only on the SDK, and the SDK hides whether the implementation is local (modular monolith) or remote (distributed services).
+The Platform SDK is a lightweight PHP library that every application uses to interact with the Platform Core. Applications depend on the SDK, never directly on `App\Domain\Core`. The SDK is the **public programming surface** — it provides a consistent, type-safe developer experience without requiring applications to know the internal structure of the Platform Core.
+
+**Stage-specific implementation:**
+
+- **Modular monolith (current):** The SDK's classes are actual implementations within `App\Domain\Core`. Applications import from the SDK namespace, not from Core internals.
+- **Distributed stage (future):** The SDK becomes an external Composer package. Its classes become interface-only contracts backed by HTTP or message-based transport. Applications upgrade the package version, and no domain code changes.
 
 ### 8.1 What the SDK Provides
 
@@ -1116,9 +1265,17 @@ class InventoryService
 
 The SDK ensures that `PlatformContext` is always available (injected automatically by the Application Runtime Infrastructure), and events are automatically wrapped in the standard envelope with context attached. Applications never import directly from `App\Domain\Core` — they consume the SDK.
 
-In the current monolithic stage, the SDK's classes are actual implementations in `App\Domain\Core`. In the independent-deployment stage, the SDK becomes a Composer package with interface-only contracts backed by HTTP or message-based transport.
+### 8.3 SDK Compatibility Rules
 
-### 8.3 SDK Benefits
+| Rule | Detail |
+|------|--------|
+| **Applications depend only on the SDK** | No application imports from `App\Domain\Core`, `App\Providers`, or any Laravel-internal namespace. The SDK is the single point of dependency |
+| **Platform Core may change internally** | As long as the SDK interface remains stable, Core internals can be refactored, replaced, or extracted without affecting applications |
+| **SDK follows semantic versioning** | MAJOR = breaking change (interface or behavior change), MINOR = compatible addition, PATCH = bug fix |
+| **Breaking SDK changes require a MAJOR version** | All consumers must explicitly upgrade. The old MAJOR version remains available during the deprecation window |
+| **Applications declare their SDK version** | In the manifest as `sdk_version` (e.g., `'^1.0'`). The IntegrationRegistry validates compatibility at boot |
+
+### 8.4 SDK Benefits
 
 - **Stable API surface** — Applications depend on SDK interfaces, not Platform Core internals
 - **Future-proof transport** — In the monolith, SDK calls are local method calls. When services split, the SDK switches transparently to HTTP/gRPC
@@ -1131,9 +1288,27 @@ In the current monolithic stage, the SDK's classes are actual implementations in
 
 Clear dependency direction is essential to prevent circular coupling.
 
+**Contract resolution path:** Applications never reference each other directly. Instead, they depend on contract interfaces resolved through the IntegrationRegistry:
+
 ```
-                      ┌──────────────────┐
-                      │  Platform Core    │
+BMS (consumer)
+   │
+   │   depends on InventoryProvider interface
+   ▼
+IntegrationRegistry    ← Platform Core service
+   │
+   │   resolves interface → concrete implementation
+   ▼
+StockFlow InventoryProviderImpl    ← owning application
+```
+
+The consuming application (BMS) imports only the interface from `StockFlow\Contracts\InventoryProvider`. It has no dependency on `StockFlow\InventoryProviderImpl`, `StockFlow\Entities\Item`, or any StockFlow domain class. The IntegrationRegistry is the only bridge between consumer and provider.
+
+**Application-to-application dependency direction:**
+
+```
+                       ┌──────────────────┐
+                       │  Platform Core    │
                       │                   │
                       │  Identity         │
                       │  Organizations    │
@@ -1261,7 +1436,12 @@ Shared domain artifacts in Core must remain business-neutral and stable. If a sh
 
 ## 10. Standard Platform Events
 
-Events are categorized by ownership. **Platform lifecycle events** are defined in the Platform Core. **Domain events** are defined and owned by individual applications.
+Events are categorized into four types by ownership and purpose:
+
+- **Platform Lifecycle Events** — defined in Platform Core, concern platform state (orgs, apps, users)
+- **Integration Events** — defined in Platform Core, concern cross-application integration workflows
+- **Domain Events** — defined and owned by individual applications, concern business domain concepts
+- **Failure Events** — defined in Platform Core, signal integration failures that need attention
 
 ### 10.1 Event Envelope
 
@@ -1271,8 +1451,7 @@ Every event published on the MyGrowNet platform follows a standard envelope. Thi
 class PlatformEvent
 {
     public readonly string $eventId;
-    public readonly string $eventName;
-    public readonly string $eventVersion;       // e.g. '1.0', '2.0'
+    public readonly string $eventName;           // version is embedded here, e.g. 'bms.invoice.created.v1'
     public readonly string $publisher;           // e.g. 'bms', 'stockflow'
     public readonly DateTimeImmutable $occurredAt;
     public readonly string $correlationId;       // traces entire event chain
@@ -1285,8 +1464,7 @@ class PlatformEvent
 **Fields explained:**
 
 - `eventId` — Globally unique identifier for this specific event instance
-- `eventName` — Dot-notation name with version: `invoice.created.v1`, `stock.goods_received.v2`
-- `eventVersion` — Schema version: `1.0`, `2.0`. Incremented when the payload structure changes
+- `eventName` — Dot-notation name with version: `bms.invoice.created.v1`, `stockflow.goods_received.v2`. The event version is embedded in the name and is the single source of truth — there is no separate `eventVersion` field, which avoids the two ever drifting out of sync
 - `publisher` — Application ID of the publisher (e.g., `bms`, `stockflow`, `platform-core`)
 - `occurredAt` — Timestamp of when the event happened in the publisher's local time
 - `correlationId` — Shared across all events triggered by a single root operation. If a user creates an invoice and that triggers a payment, a journal entry, and a notification, all four events share the same `correlationId`
@@ -1312,7 +1490,6 @@ growfinance.payment.received.v1
 {
     "event_id": "evt_a1b2c3",
     "event_name": "bms.invoice.created.v1",
-    "event_version": "1.0",
     "publisher": "bms",
     "occurred_at": "2026-07-24T10:00:00Z",
     "correlation_id": "corr_xyz789",
@@ -1343,13 +1520,29 @@ These events concern the platform itself — application installations, organiza
 | `ApplicationConfiguring` | Platform Core | Application settings are being applied |
 | `ApplicationEnabled` | Platform Core | An application is now active for an organization |
 | `ApplicationDisabled` | Platform Core | An application was disabled |
+| `ApplicationMaintenance` | Platform Core | An application entered maintenance mode |
+| `ApplicationArchived` | Platform Core | An application was permanently archived |
 | `OrganizationCreated` | Platform Core | A new organization was registered |
 | `OrganizationArchived` | Platform Core | An organization was archived |
 | `OrganizationMemberAdded` | Platform Core | A user joined an organization |
 | `OrganizationMemberRemoved` | Platform Core | A user was removed from an organization |
 | `UserRegistered` | Platform Core | A new user registered on the platform |
 
-### 10.3 Domain Events (owned by applications)
+### 10.3 Integration Events (owned by Platform Core)
+
+These events concern cross-application data synchronization, contract resolution, and integration workflows. They are defined in the Platform Core because they involve coordination between applications.
+
+| Event | Published By | Meaning |
+|-------|-------------|---------|
+| `ContractResolved` | Platform Core | An integration contract was resolved to a provider |
+| `ContractFailed` | Platform Core | Contract resolution failed — provider unavailable |
+| `SyncRequested` | Application | An application requested data synchronization |
+| `SyncCompleted` | Application | Data synchronization completed successfully |
+| `SyncFailed` | Application | Data synchronization failed |
+
+Integration events are used by the IntegrationRegistry and IntegrationGuard to track cross-application dependencies and detect integration health issues. The Integration Observability layer (§16) consumes these events for monitoring.
+
+### 10.4 Domain Events (owned by applications)
 
 These events concern business domain concepts. They are defined in each application's own namespace, not in the Platform Core.
 
@@ -1401,118 +1594,101 @@ These events concern business domain concepts. They are defined in each applicat
 | `CustomerCreated` | A new customer record was created |
 | `CustomerUpdated` | Customer details changed |
 
-### 10.4 Subscription Rules
+### 10.5 Failure Events (owned by Platform Core)
+
+These events signal integration failures that require human attention. They are distinct from domain events because they concern the integration infrastructure itself rather than business operations.
+
+| Event | Published By | Meaning |
+|-------|-------------|---------|
+| `ContractTimeout` | Platform Core | An integration contract call exceeded its timeout |
+| `ContractCircuitBroken` | Platform Core | A circuit breaker opened for a failing provider |
+| `EventDeliveryFailed` | EventBus | An event could not be delivered after retries |
+| `ProviderUnhealthy` | HealthService | A health check provider returned an unhealthy status |
+
+Failure events always route to the platform's alerting system in addition to any listeners. They should trigger incident response procedures.
+
+### 10.6 Subscription Rules
 
 - An application subscribes **only** to events it needs
 - Subscriptions are declared in the module's ServiceProvider
 - Listeners should be **idempotent** — processing an event twice produces the same result
 - A listener failure never crashes the publisher (use queued listeners)
 
-### 10.5 Event Ownership Registry
+### 10.7 Event Ownership Registry
 
 Every event on the platform has exactly one owner. Only the owner may publish that event. This prevents two applications from publishing events with the same meaning but different payloads.
 
-| Event | Owner | Since |
+**Note on the "Rollout Milestone" column:** this column tracks the order in which each event was *introduced to production*, for historical/audit purposes. It is intentionally a separate numbering scheme from the "Phase 1–4" implementation order in §23 and the "Step 1–6" migration sequence in §24 — those describe *how the architecture is being built*, while the milestones below describe *when a specific event started being published*. Do not assume `Rollout Milestone 3` corresponds to `§23 Phase 3`; consult §23/§24 directly for the architecture rollout sequence.
+
+| Event | Owner | Rollout Milestone |
 |-------|-------|-------|
-| `platform.organization.created.v1` | Platform Core | — |
-| `platform.organization.member_added.v1` | Platform Core | — |
-| `platform.application.enabled.v1` | Platform Core | — |
-| `platform.application.disabled.v1` | Platform Core | — |
-| `bms.invoice.created.v1` | BMS | Phase 3 |
-| `bms.invoice.paid.v1` | BMS | Phase 3 |
-| `bms.employee.created.v1` | BMS | Phase 4 |
-| `stockflow.purchase_order.created.v1` | StockFlow | Phase 3 |
-| `stockflow.goods_received.v1` | StockFlow | Phase 3 |
-| `stockflow.stock.adjusted.v1` | StockFlow | Phase 4 |
-| `growfinance.payment.received.v1` | GrowFinance | Phase 3 |
-| `growfinance.journal.created.v1` | GrowFinance | Phase 4 |
-| `growmart.order.placed.v1` | GrowMart | Phase 4 |
-| `growmart.order.shipped.v1` | GrowMart | Phase 5 |
-| `grownet.commission.awarded.v1` | GrowNet | Phase 5 |
-| `crm.customer.created.v1` | CRM (future) | Phase 5 |
+| `platform.organization.created.v1` | Platform Core | M0 (initial) |
+| `platform.organization.member_added.v1` | Platform Core | M0 (initial) |
+| `platform.application.enabled.v1` | Platform Core | M0 (initial) |
+| `platform.application.disabled.v1` | Platform Core | M0 (initial) |
+| `platform.application.maintenance.v1` | Platform Core | M1 |
+| `platform.application.archived.v1` | Platform Core | M1 |
+| `platform.contract.resolved.v1` | Platform Core | M1 |
+| `platform.contract.failed.v1` | Platform Core | M1 |
+| `platform.failure.circuit_broken.v1` | Platform Core | M1 |
+| `bms.invoice.created.v1` | BMS | M2 |
+| `bms.invoice.paid.v1` | BMS | M2 |
+| `bms.employee.created.v1` | BMS | M3 |
+| `stockflow.purchase_order.created.v1` | StockFlow | M2 |
+| `stockflow.goods_received.v1` | StockFlow | M2 |
+| `stockflow.stock.adjusted.v1` | StockFlow | M3 |
+| `growfinance.payment.received.v1` | GrowFinance | M2 |
+| `growfinance.journal.created.v1` | GrowFinance | M3 |
+| `growmart.order.placed.v1` | GrowMart | M3 |
+| `growmart.order.shipped.v1` | GrowMart | M4 |
+| `grownet.commission.awarded.v1` | GrowNet | M4 |
+| `crm.customer.created.v1` | CRM (future) | M4 |
 
 **Rule:** If an application needs to announce an event with the same business meaning as an existing event, it subscribes to the existing event rather than publishing its own. If the meaning differs, it must use a different event name (e.g., `stockflow.goods_received.v1` vs `bms.goods_received.v1` — but the latter is unlikely to be needed since goods receiving belongs to StockFlow).
 
+### 10.8 Event Stability
+
+Events carry different stability guarantees depending on their category:
+
+| Category | Stability | Backward Compatibility | Versioning |
+|----------|-----------|----------------------|------------|
+| Platform Lifecycle Events | **Stable** | Fully backward compatible within a MAJOR platform version | `platform.*` events are versioned with the platform. Breaking changes only at platform MAJOR release |
+| Integration Events | **Stable** | Fully backward compatible within a MAJOR platform version | Same as platform lifecycle events |
+| Domain Events | **Stable within MAJOR version** | Backward compatible within the owning application's MAJOR version. Breaking changes increment the event version in the event name (e.g., `bms.invoice.created.v1` → `.v2`) | Version is part of the event name. Consumers pin to a specific version |
+| Failure Events | **Stable** | Fully backward compatible within a MAJOR platform version | Same as platform lifecycle events |
+
+**Rules:**
+
+1. **Never rename or remove a published event field** without incrementing the event version. Consumers may depend on any field.
+2. **Adding optional fields** is backward compatible. Consumers that ignore unknown fields continue working.
+3. **Removing or renaming fields** requires a new event version. The old version continues to be published for the deprecation window.
+4. **Event version is part of the event name** (`bms.invoice.created.v1`). Consumers subscribe to a specific version and are not automatically upgraded.
+5. **Platform lifecycle events** change only with the platform MAJOR version. Applications can rely on them between platform upgrades.
+
 ---
 
-## 11. Reliable Event Delivery *(v2 — design ready, not yet implemented)*
+## 11. Reliable Event Delivery
 
-Financial systems such as GrowFinance require guaranteed event delivery — a published event must never be lost, even if the publishing process crashes after committing its database transaction. This section describes the reliability patterns that will be introduced as the platform matures.
+*Full design for outbox, inbox, replay, and event reliability is documented in [`FUTURE_VISION.md`](FUTURE_VISION.md#1-reliable-event-delivery). This section describes the current state and interim mitigations.*
 
-### 11.1 Transactional Outbox
+### 11.1 Current State
 
-Instead of publishing an event directly inside a database transaction, the pattern is:
+Financial and inventory events currently have no crash-safe delivery guarantee. The outbox pattern (transactional outbox + inbox + replay) is designed but not yet implemented.
 
-```
-Application
-       │
-       ▼
-   1. Begin transaction
-        ├── Insert business record (e.g., invoice)
-        ├── Insert event record into outbox table
-   2. Commit transaction                    ← If crash occurs here, no event is lost
-   3. Worker reads outbox table             ← Separate process, survives crashes
-        └── Publish event to EventBus
-   4. Mark outbox record as published
-```
+**Interim mitigation:** A nightly reconciliation job comparing published events against business records partially covers this gap. This note should be removed once the outbox is live for these event types.
 
-This guarantees that an event is never published before its business record is committed, and never lost after commit.
+### 11.2 Failure Behavior Summary
 
-**Outbox table schema (in each application's database):**
+A quick reference for how each integration mechanism behaves on failure:
 
-```sql
-CREATE TABLE {app}_event_outbox (
-    id              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    event_name      VARCHAR(255) NOT NULL,
-    event_payload   JSON NOT NULL,
-    context         JSON NOT NULL,
-    status          ENUM('pending', 'published', 'failed') DEFAULT 'pending',
-    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    published_at    TIMESTAMP NULL,
-    attempts        TINYINT UNSIGNED DEFAULT 0
-);
-```
+| Mechanism | On Failure | Retry Strategy | Consumer Impact |
+|-----------|-----------|----------------|-----------------|
+| **Integration Contracts** (synchronous) | Exception propagates to caller | Circuit breaker (§20.1), retry with backoff (§20.2) | Caller receives exception; fallback strategy (§20.4) applies if configured |
+| **Platform Events** (async, fire-and-forget) | Queued listener fails; event remains in queue | Automatic retry (up to 3 times with exponential backoff); then dead-letter queue | Publisher is never affected. Listener processes on next retry. After DLQ, event requires manual inspection |
+| **Integration Events** (async, fire-and-forget) | Same as Platform Events | Same retry + DLQ pattern | Same as Platform Events |
+| **Failure Events** (async, fire-and-forget) | Must not fail (dedicated high-priority queue) | Retry until successful (no max retries); alerts on repeated failure | Monitoring systems alerted immediately |
 
-In the current modular monolith, these outbox tables are in the same database as the application. In the distributed stage, each application owns its outbox independently.
-
-### 11.2 Inbox Pattern (Idempotent Processing)
-
-The receiving side uses an inbox table to guarantee at-most-once processing:
-
-```
-EventBus
-   │
-   ▼
-Listener receives event
-   │
-   ├── Check inbox: has event_id been processed?  ← Idempotency guard
-   │     └── If yes: discard
-   │
-   └── If no:
-         ├── Insert event_id into inbox table
-         ├── Process event
-         └── Commit
-```
-
-This ensures that even if the EventBus delivers the same event twice, the listener processes it exactly once.
-
-### 11.3 Event Replay
-
-Applications expose an endpoint to replay historical events from the outbox:
-
-- Platform Core provides an `EventReplayService` that accepts a date range and event name filter
-- Applications can rebuild state by replaying events they missed during downtime
-- Used for disaster recovery, data correction, and onboarding new subscribers
-
-### 11.4 When Outbox Is Required
-
-| Context | Required? | Rationale |
-|---------|-----------|-----------|
-| Financial events (invoice, payment, journal) | **Required** | Lost events cause accounting discrepancies |
-| Inventory events (stock adjustment, goods received) | **Required** | Lost events cause inventory drift |
-| Notification events | Optional | A lost notification is acceptable |
-| Audit events | Required | Audit trail must be complete |
-| Platform lifecycle events | Required | Org/application state must be consistent |
+**Key principle:** Synchronous failures (contracts) propagate to the caller who must handle or fall back. Asynchronous failures (events) are isolated — the publisher never sees the failure. Event listeners must be idempotent so retries are safe.
 
 ---
 
@@ -1656,6 +1832,8 @@ Contracts use a **domain-owned model**:
 
 Consumers import the contract interface from the owning application's namespace. This creates a clean dependency on the contract, not on the implementation. If StockFlow is later replaced, the new system implements `InventoryProvider` and consumers remain unchanged.
 
+**Capabilities vs Contracts reprise:** Capabilities (strings like `'inventory'`, `'accounting'`) exist only for discovery within ModuleDiscovery and CapabilityRegistry. Business code must never use capability strings — it depends on typed PHP interfaces. The `capability(): string` method on each contract enables the registry to map interfaces to capabilities without a hardcoded lookup table. See §4.4 for the full distinction.
+
 ### 13.1 Base Abstractions (Platform Core)
 
 ```php
@@ -1708,7 +1886,7 @@ app/Domain/GrowFinance/Infrastructure/
 | `InventoryProvider` | Stock levels, items, movements, valuations | `StockFlow\Contracts` | StockFlow |
 | `AccountingProvider` | Chart of accounts, journal entries, trial balance | `GrowFinance\Contracts` | GrowFinance |
 | `CustomerProvider` | Customer records, contacts, addresses | `Crm\Contracts` (future) | CRM module |
-| `SupplierProvider` | Supplier records, payment terms, contacts | `StockFlow\Contracts` | StockFlow |
+| `SupplierProvider` | Supplier records, payment terms, contacts | `StockFlow\Contracts` | StockFlow (interim — see §1.3; ownership moves to a future CRM/Supplier Management module) |
 | `OrderProvider` | Sales orders, order items, fulfillment status | `GrowMart\Contracts` | GrowMart |
 | `InvoiceProvider` | Invoices, billing records | `Billing\Contracts` (future) | Billing module |
 | `PaymentProvider` | Payment gateways, transactions, settlement | `Billing\Contracts` (future) | Billing module |
@@ -1829,6 +2007,48 @@ interface InventoryProviderV2
 
 Both interfaces live in the same namespace. The IntegrationRegistry resolves the appropriate version for each consumer based on the consumer's declared contract version in its manifest.
 
+**Contract versioning rules summary:**
+
+| Rule | Detail |
+|------|--------|
+| **Semantic versioning** | Contracts use MAJOR.MINOR. MAJOR = breaking change, MINOR = compatible addition |
+| **Deprecation window** | A contract version is supported for at least 6 months after a replacement is published |
+| **Consumer declares** | Each application's manifest declares contract constraints under `dependencies` (e.g., `'inventory' => '1.0'`) |
+| **Registry enforces** | IntegrationRegistry validates constraints at boot; a mismatch produces a warning, not a hard failure |
+| **Multiple versions** | Old and new versions coexist until all consumers migrate. The registry selects the matching version |
+| **No implicit downgrades** | The registry never serves a lower MAJOR version than what the consumer explicitly requires |
+
+**Deprecation flow:**
+
+1. Provider publishes `InventoryProviderV2` with new `capability()` return
+2. Provider adds `InventoryProvider::class => '1.0'` and `InventoryProviderV2::class => '2.0'` to its manifest
+3. Old consumers continue resolving `InventoryProvider::class` (v1) without changes
+4. Registry logs a deprecation notice when a v1 contract is resolved
+5. After the 6-month deprecation window, v1 is removed and remaining consumers break at boot (manifest validation fails)
+
+### 13.8 Contract Versioning Policy
+
+Central policy for contract versioning across the platform. This supersedes application-specific versioning decisions.
+
+| Aspect | Policy |
+|--------|--------|
+| **Version scheme** | Semantic versioning: `MAJOR.MINOR`. MAJOR = breaking change, MINOR = compatible addition |
+| **Platform compatibility** | Every contract declares `min_platform_version` and `max_platform_version` in its manifest (e.g., `'2.0'` and `'3.x'`). The IntegrationRegistry rejects contracts incompatible with the current platform version at boot |
+| **Deprecation window** | A MAJOR version is supported for at least 6 months after its replacement is published. During this window, both versions resolve |
+| **Transition** | After the deprecation window, the old version is removed. Consumers still declaring the old version fail at boot with a clear error message |
+| **Emergency override** | Platform administrators may extend the deprecation window per-contract for critical consumers |
+| **Contract catalog** | The IntegrationRegistry exposes a list of all available contract versions, their platform compatibility, and deprecation status at `GET /platform/contracts` |
+
+**Example platform compatibility check:**
+
+```
+Platform Version 3.5
+
+InventoryProvider v1 → supports platform >=2.0, <4.0 → available
+InventoryProvider v2 → supports platform >=3.2, <5.0 → available (preferred)
+InventoryProvider v3 → supports platform >=5.0       → not yet available
+```
+
 ---
 
 ## 14. Integration Security
@@ -1852,12 +2072,19 @@ Caller (Application A)
        ├── Verify tenant isolation (org scope)
        │
        ▼
-   IntegrationRegistry::resolve(InventoryProvider::class)
-       │
-       └── Returns provider implementation
-       │
-       ▼
-   Contract implementation (Application B)
+    IntegrationRegistry::resolve(InventoryProvider::class)
+        │
+        └── Returns provider implementation
+        │
+        ▼
+    ContractInvoker::invoke(...)
+        │
+        ├── Applies circuit breaker (§20.1)
+        ├── Wraps call in retry with backoff (§20.2)
+        ├── Catches exceptions for fallback strategy (§20.4)
+        │
+        ▼
+    Contract implementation (Application B)
 ```
 
 ### 14.2 What Is Enforced
@@ -2036,7 +2263,9 @@ When an event listener exhausts all retries:
 | Listener offline >5 minutes | Listener down | Critical |
 | Queue backlog >1000 events | Queue congestion | Warning |
 
-These rules are non-negotiable. Every developer working on MyGrowNet must follow them.
+### 16.4 Non-Negotiable Platform Rules
+
+The following ten rules are non-negotiable. Every developer working on MyGrowNet must follow them.
 
 ### Rule 1: Never Query Another Application's Database
 
@@ -2190,6 +2419,7 @@ The PlatformContext guarantees that every integration interaction carries an org
 | Caches are tenant-scoped | Cache keys prefixed with organization ID |
 | Queue messages include tenant ID | Event envelop always carries `organization_id` |
 | Contract implementations receive context | Implementation derives org from `PlatformContext`, never from raw input |
+| No new query bypasses tenant scoping | Static analysis rule (PHPStan or Rector) flags any query against a tenant-scoped table that doesn't route through `TenantAwareRepository` or include `organization_id`. Runs in CI alongside the §26.1 namespace/table-ownership checks |
 
 ### 18.2 Tenant Isolation in the Database
 
@@ -2280,11 +2510,134 @@ app/Domain/GrowFinance/Infrastructure/
 
 ---
 
-## 20. Platform Configuration Strategy
+## 20. Failure & Resilience
+
+Integration failures must be handled gracefully to prevent cascading failures across the platform. This section defines the patterns for building resilient cross-application communication.
+
+### 20.1 Circuit Breaker Pattern
+
+When an integration contract call fails repeatedly, a circuit breaker prevents further calls from overwhelming the failing provider.
+
+```
+  Closed (normal operation)
+       │
+       ├── Call succeeds → remain Closed
+       │
+       └── Call fails → increment failure count
+            │
+            └── failures > threshold → Open (tripped)
+                 │
+                 ▼
+            Open (rejecting calls immediately)
+                 │
+                 └── after timeout → Half-Open (test)
+                      │
+                      ├── Test succeeds → Closed (reset)
+                      │
+                      └── Test fails → Open (remain tripped)
+```
+
+**Configuration:**
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `failure_threshold` | 5 | Consecutive failures before opening |
+| `reset_timeout` | 30 seconds | Time before transitioning to Half-Open |
+| `half_open_max_calls` | 1 | Calls allowed in Half-Open state |
+
+**Implementation responsibility:** A dedicated `ContractInvoker` (or `ResilienceMiddleware`) wraps contract calls with circuit breaker and retry logic, invoked after `IntegrationGuard::authorize()` succeeds. Individual applications do not implement circuit breakers themselves, and `IntegrationGuard` does not implement resilience logic — it only decides whether the call is allowed to proceed.
+
+```php
+$guard->authorize($context, InventoryProvider::class);
+
+$result = $invoker->callWithCircuitBreaker(
+    provider: InventoryProvider::class,
+    method: 'getStockLevel',
+    args: [$context, $itemId],
+    fallback: fn() => 0  // Return 0 if circuit is open
+);
+```
+
+### 20.2 Retry Policy
+
+Not all failures are equal. The retry behavior depends on the exception type:
+
+| Exception | Retry Policy | Backoff | Max Retries |
+|-----------|-------------|---------|-------------|
+| `ConcurrencyException` | Retry immediately | None | 3 |
+| `TransientException` | Retry with backoff | Exponential (100ms, 200ms, 400ms) | 3 |
+| `IntegrationException` | Retry with backoff | Exponential (1s, 2s, 4s) | 3 |
+| `ServiceUnavailableException` | Retry with backoff | Exponential (5s, 10s, 20s) | 3 |
+| `ValidationException` | Never retry | — | 0 |
+| `AuthorizationException` | Never retry | — | 0 |
+| `NotFoundException` | Never retry | — | 0 |
+
+Retries are handled by the ContractInvoker (resilience layer), not by individual application code or by IntegrationGuard.
+
+### 20.3 Timeouts
+
+Every cross-application contract call must have a timeout to prevent resource exhaustion.
+
+| Call Type | Default Timeout |
+|-----------|----------------|
+| In-process (monolith) | 30 seconds |
+| Local queue | 60 seconds |
+| Remote HTTP (future) | 10 seconds |
+
+If a contract call exceeds the timeout, the ContractInvoker throws a `TransientException` and logs a `ContractTimeout` failure event.
+
+### 20.4 Fallback Strategies
+
+When an integration contract is unavailable, the consuming application should degrade gracefully rather than failing entirely.
+
+| Scenario | Fallback Strategy |
+|----------|------------------|
+| Inventory provider unavailable | Show cached stock levels with a "may be stale" warning |
+| Accounting provider unavailable | Queue the journal entry for later posting; show "pending" status |
+| Notification provider unavailable | Log the notification; retry on next request |
+| Customer provider unavailable | Show basic customer info from local cache; disable detailed view |
+
+Fallbacks are declared in the manifest under `fallbacks`:
+
+```php
+'fallbacks' => [
+    'inventory' => [
+        'strategy' => 'cache',
+        'ttl' => 300,      // 5 minutes
+        'stale_warning' => true,
+    ],
+    'accounting' => [
+        'strategy' => 'queue',
+        'retry_interval' => 60,
+    ],
+],
+```
+
+### 20.5 Failure Event Propagation
+
+When an integration failure cannot be resolved through retries or fallbacks, the system must escalate:
+
+1. ContractInvoker fires a failure event (see §10.5 Failure Events)
+2. HealthService records the degraded/unavailable status
+3. If the provider remains unhealthy beyond a threshold, an alert routes to the operations team
+4. The workspace UI shows a degraded status badge for the affected capability
+
+**Failure escalation thresholds:**
+
+| Severity | Condition | Action |
+|----------|-----------|--------|
+| Warning | Transient failure, retry succeeded | Log only |
+| Degraded | Circuit breaker opened | Log + health status update |
+| Critical | Provider down > 5 minutes | Log + alert |
+| Outage | Multiple providers down | Log + alert + incident response |
+
+---
+
+## 21. Platform Configuration Strategy
 
 As the platform grows, configuration exists at multiple levels. A clear hierarchy prevents settings conflicts and inconsistent behavior.
 
-### 20.1 Configuration Hierarchy
+### 21.1 Configuration Hierarchy
 
 ```
 Platform-wide defaults
@@ -2298,7 +2651,7 @@ User preferences
 
 Each level inherits from the level above and may override specific values.
 
-### 20.2 Level Ownership
+### 21.2 Level Ownership
 
 | Level | Owner | Examples | Stored In |
 |-------|-------|----------|-----------|
@@ -2307,7 +2660,7 @@ Each level inherits from the level above and may override specific values.
 | Application | Application Admin | StockFlow low stock threshold, GrowFinance fiscal year | `application_settings` table |
 | User | User | Preferred language, notification preferences, dashboard layout | `user_settings` table |
 
-### 20.3 Configuration Resolution
+### 21.3 Configuration Resolution
 
 ```php
 // Resolution order: User → Application → Organization → Platform
@@ -2315,15 +2668,15 @@ $threshold = $settings->resolve('stockflow.low_stock_threshold', $context);
 // Returns user-level value if set, otherwise app-level, otherwise org-level, otherwise platform default
 ```
 
-### 20.4 Configuration as Code
+### 21.4 Configuration as Code
 
 Critical configuration (feature flags, integration endpoints, timeouts) is defined in code and deployed through the normal release process. Non-critical configuration (user preferences, display settings) may be changed at runtime through admin interfaces.
 
 ---
 
-## 21. Error Taxonomy & Concurrency Policy
+## 22. Error Taxonomy & Concurrency Policy
 
-### 21.1 Standard Error Categories
+### 22.1 Standard Error Categories
 
 Every application uses these exception types so that the IntegrationGuard, retry policies, and logging have consistent behavior:
 
@@ -2351,7 +2704,7 @@ class ConfigurationException extends \RuntimeException {}
 class TransientException extends \RuntimeException {}
 ```
 
-### 21.2 Concurrency Policy
+### 22.2 Concurrency Policy
 
 Financial and inventory operations require strict concurrency controls to prevent duplicate or lost data.
 
@@ -2409,9 +2762,11 @@ class PaymentHandler
 
 ---
 
-## 22. Future Vision
+## 23. Future Vision
 
 This architecture positions MyGrowNet to support any number of applications while keeping each one independent.
+
+> **Terminology note:** This document uses three distinct, non-interchangeable sequencing schemes. Do not conflate them: **Stages** (§27, below, and `FUTURE_VISION.md` §2) describe the platform's overall deployment topology (Modular Monolith → Platform Integration Services → Distributed Services → Independent Deployments). **Phases** (this section, §23) describe the build-out order for integration *capabilities* within Stage 1–2 (Foundation → Runtime Layer → Events → Contracts). **Migration Steps** (§24) describe the code-level refactor sequence for the *existing* codebase (extracting boundaries, moving models, removing direct DB access, etc.) and were renamed from "Phase" to "Step" specifically to avoid collision with this section's numbering. Neither Phases nor Migration Steps correspond to the "Rollout Milestone" labels used in the Event Ownership Registry (§10.7).
 
 ### Supported Applications
 
@@ -2430,7 +2785,7 @@ This architecture positions MyGrowNet to support any number of applications whil
 | Document Management | File storage, versioning | Contracts |
 | AI Services | Recommendations, predictions, automation | Contracts |
 
-> **Important:** Independent deployment, distributed services, and API Gateway are future capabilities described in this roadmap. The current implementation priority is strong module boundaries inside a single Laravel application. Prematurely building distributed infrastructure before module boundaries are mature will create unnecessary complexity. Follow the implementation order in §22.
+> **Important:** Independent deployment, distributed services, and API Gateway are future capabilities described in this roadmap. The current implementation priority is strong module boundaries inside a single Laravel application. Prematurely building distributed infrastructure before module boundaries are mature will create unnecessary complexity. Follow the implementation order in §23.
 
 ### Evolution Roadmap
 
@@ -2445,7 +2800,7 @@ Stage 1 — Modular Monolith (Current)
   Application Runtime Layer exists (DetectSubdomain, ResolveDomainContext, SetPlatformContext).
   Migration is ongoing — some cross-module references remain to be extracted.
 
-Stage 2 — Platform Integration Layer (Target — Next 6 months)
+Stage 2 — Platform Integration Services (Target — Next 6 months)
 
   Application manifests published by every module.
   ModuleDiscovery and CapabilityRegistry operational.
@@ -2456,26 +2811,12 @@ Stage 2 — Platform Integration Layer (Target — Next 6 months)
   Application Runtime Layer is formalized.
   All contracts live in their owning application's namespace.
 
-Stage 3 — Distributed Services (Target — Next 12 months)
-
-  EventBus can dispatch across process boundaries via event transport layer.
-  Contracts are resolved through an API Gateway or Service Registry.
-  HealthService monitors live endpoints.
-  IntegrationRegistry supports remote providers.
-  Heavy applications (GrowFinance, StockFlow) can run in separate processes.
-
-Stage 4 — Independent Deployments (Target — Next 18+ months)
-
-  Any application can be deployed as an independent service.
-  Communication switches from in-memory to network transport transparently.
-  Zero domain logic changes in consuming applications (infrastructure configuration
-  changes such as provider endpoint URLs are expected).
-  New applications can be added without redeploying the Platform Core.
+*Stages 3–4 (Distributed Services, Independent Deployments) are documented in [`FUTURE_VISION.md`](FUTURE_VISION.md#2-evolution-roadmap).*
 ```
 
 ### Recommended Implementation Order
 
-Not everything should be built immediately. The following order is conservative — each phase enables the next without over-engineering.
+Not everything should be built immediately. The following order is conservative — each phase enables the next without over-engineering. These are the **only** "Phase 1–4" labels used in this document; the Migration Strategy in §24 uses "Step 1–6" instead, precisely so the two sequences are never confused.
 
 **Phase 1 — Platform Core Foundation (in progress)**
 
@@ -2487,11 +2828,14 @@ Already working:
 - Workspace routing
 - Permissions
 
-**Phase 2 — Runtime Layer (next)**
+**Phase 2 — Runtime Layer & Platform Integration Services (next)**
 
 - PlatformContext middleware
 - Application resolver (DetectSubdomain, ResolveDomainContext)
 - Manifest registry (applications publish their manifests)
+- CapabilityRegistry (read-only discovery index for tooling)
+- FeatureFlagService (gradual rollout, beta gating, kill switches)
+- HealthService (operational status monitoring)
 - Documentation of the Runtime Layer as a distinct concern
 
 **Phase 3 — Events (incremental)**
@@ -2503,7 +2847,7 @@ Start with the events already in use:
 - `InvoiceCreated`
 - `PaymentReceived`
 
-Add domain events as new integration patterns emerge. Do not create 50 events upfront.
+Add domain events as new integration patterns emerge, on the timeline tracked in the Event Ownership Registry (§10.7). Do not create 50 events upfront.
 
 **Phase 4 — Contracts (incremental)**
 
@@ -2516,15 +2860,7 @@ Start with the contracts that have the most integration value:
 
 Add contracts as applications need to communicate. Each contract lives in the owning application's namespace.
 
-**Phase 5 — Advanced Platform Services (later)**
-
-Only after Phases 1-4 are stable:
-
-- CapabilityRegistry
-- FeatureFlagService
-- Health monitoring
-- API Gateway for remote contract resolution
-- Event transport for cross-process dispatch
+*Advanced platform services beyond this four-phase plan — API Gateway for remote contract resolution and cross-process event transport — are documented in [`FUTURE_VISION.md`](FUTURE_VISION.md#3-advanced-platform-services), and land in Stage 3, not as a numbered "Phase 5" of this list.*
 
 ### Key Architectural Decisions
 
@@ -2537,43 +2873,43 @@ Only after Phases 1-4 are stable:
 | Capability-based lookup (not app-name lookup) | Allows replacing applications without changing consumers |
 | Application Runtime Layer | Separates infrastructure concerns from domain logic |
 
-## 23. Migration Strategy
+## 24. Migration Strategy
 
-This document describes the target architecture. MyGrowNet already exists as a Laravel application — the migration from current code to this architecture must be incremental.
+This document describes the target architecture. MyGrowNet already exists as a Laravel application — the migration from current code to this architecture must be incremental. **The steps below are numbered "Step," not "Phase," so they are never confused with the "Phase 1–4" implementation order in §23 — the two sequences run concurrently and describe different things (§23 = which integration capability to build next; this section = how to refactor the existing codebase to get there).**
 
-### Phase 1: Extract Module Boundaries (in progress)
+### Step 1: Extract Module Boundaries (in progress)
 
 - Define bounded contexts for each application
 - Move domain logic into `app/Domain/{Module}/` namespaces
 - Separate Eloquent models into `app/Infrastructure/Persistence/Eloquent/{Module}/`
 - Ensure each module has its own ServiceProvider
 
-### Phase 2: Move Shared Models into Platform Core
+### Step 2: Move Shared Models into Platform Core
 
 - User, Organization, Application models belong in Platform Core
 - Remove cross-module model references (BMS should not import StockFlow models)
 - Create initial `app/Domain/Core/` namespace with identity and organization services
 
-### Phase 3: Remove Direct Database Access
+### Step 3: Remove Direct Database Access
 
 - Identify all `DB::table('sa_*')` or `DB::connection('growfinance')` patterns
 - Replace with Integration Contracts or Platform Events
 - Enforce the rule: no application reads another application's tables
 
-### Phase 4: Introduce Domain Events
+### Step 4: Introduce Domain Events
 
 - Start with lifecycle events (OrganizationCreated, ApplicationEnabled)
 - Add domain events as integration patterns emerge (InvoiceCreated, GoodsReceived)
 - Move event listeners to the consuming application's ServiceProvider
 
-### Phase 5: Introduce Stable Integration Contracts
+### Step 5: Introduce Stable Integration Contracts
 
 - Define `InventoryProvider` in `StockFlow\Contracts`, `AccountingProvider` in `GrowFinance\Contracts`, `CustomerProvider` in `CRM\Contracts`
 - Platform Core provides only the base `ProviderContract` and contract discovery infrastructure
 - Implement in the owning application's infrastructure layer
 - Replace direct `app(Service::class)` cross-module calls with contract-based resolution
 
-### Phase 6: Extract Independent Applications (future)
+### Step 6: Extract Independent Applications (future)
 
 - When module boundaries are mature and all communication uses contracts/events
 - Extract applications into separate deployable units
@@ -2581,7 +2917,7 @@ This document describes the target architecture. MyGrowNet already exists as a L
 
 ### Migration Principles
 
-- **No big bang rewrites.** Each phase produces a working application.
+- **No big bang rewrites.** Each step produces a working application.
 - **The monolith stays working.** Contracts and events are introduced alongside existing code, not replacing it all at once.
 - **Strangler pattern.** Old direct access patterns are wrapped by contracts, then the direct path is removed.
 - **Backward compatibility.** Existing API endpoints and data formats remain unchanged during migration.
@@ -2594,7 +2930,7 @@ This architecture document defines the path to that goal.
 
 ---
 
-## 24. Architectural Decision Records
+## 25. Architectural Decision Records
 
 The following ADRs document key architectural decisions made during the design of this platform. Each ADR records the context, the decision, and the rationale. As the platform evolves, new ADRs should be added and existing ones may be superseded.
 
@@ -2667,3 +3003,82 @@ The following ADRs document key architectural decisions made during the design o
 | **Context** | Domain logic was mixed with HTTP concerns, subdomain resolution, and framework middleware. |
 | **Decision** | An Application Runtime Layer sits between Platform Core and applications, handling subdomain routing, context resolution, and framework integration. |
 | **Consequences** | Domain logic remains pure. Runtime concerns can evolve independently. Applications are framework-agnostic at the domain level. |
+
+### ADR-008: CapabilityRegistry as Read-Only Discovery Index
+
+| Attribute | Value |
+|-----------|-------|
+| **Status** | Accepted |
+| **Date** | 2026-07-25 |
+| **Context** | Earlier design allowed CapabilityRegistry to serve as both a discovery index and a contract binding mechanism. This created two paths to resolve providers — one typed (IntegrationRegistry) and one string-based (CapabilityRegistry). Business code could accidentally depend on capability strings, creating a fragile lookup that breaks on string changes. |
+| **Decision** | CapabilityRegistry is scoped to read-only discovery — it answers "which application(s) provide capability X?" for tooling (Application Catalog, admin dashboards). It is never called from business code. Business code always resolves contracts through `IntegrationRegistry::resolve(ContractInterface::class)`. Capability strings exist only within ModuleDiscovery, CapabilityRegistry, and the manifest layer. |
+| **Consequences** | Two clear layers: discovery (informational, for tooling) vs resolution (operational, for business code). String-based coupling is eliminated from the business domain. Developers must use typed PHP interfaces, not capability lookups, in service/controller code. |
+
+### ADR-009: IntegrationGuard and ContractInvoker as Separate Concerns
+
+| Attribute | Value |
+|-----------|-------|
+| **Status** | Accepted |
+| **Date** | 2026-07-25 |
+| **Context** | The original IntegrationGuard handled both authorization checks and contract invocation (resilience, retries, circuit breaker). This conflated security with operational concerns, making it impossible to retry a call without re-checking authorization, and impossible to bypass authorization (for internal/trusted callers) while keeping resilience. |
+| **Decision** | Split into two services: IntegrationGuard (authorization — gate/bouncer semantics, validates context and permissions) and ContractInvoker (operational — circuit breaker, retry with backoff, fallback strategies, exception wrapping). IntegrationGuard is called first; if authorized, ContractInvoker handles the actual invocation with resilience patterns. Internal callers in trusted contexts can call ContractInvoker directly if pre-authorized. |
+| **Consequences** | Authorization and resilience can vary independently. Internal trusted callers can skip authorization while retaining resilience. Each concern has its own configuration, testing surface, and failure semantics. The authorization flow diagram (§14.1) reflects the two-step pipeline. |
+
+---
+
+## 26. Architecture Enforcement
+
+The architecture rules in this document are enforceable through CI automation, code review, and tooling. This section defines the specific checks that must pass before any change reaches production.
+
+### 26.1 Automated Checks (CI Pipeline)
+
+| Check | Enforcement | Failure Action |
+|-------|------------|----------------|
+| **Manifest validation** | Every application's manifest is validated against the schema at boot. Missing or malformed manifests produce a startup error | CI fails |
+| **Namespace import rules** | A static analysis rule prevents any application from importing classes from another application's `Domain\`, `Entities\`, `Infrastructure\`, or `Models\` namespace | CI fails |
+| **Contract backward compatibility** | When a contract interface changes, a diff check determines whether the change is breaking (per §13.7). If breaking, the manifest version must increment the MAJOR | CI warning (+6 month deprecation clock starts) |
+| **Dependency direction** | A dependency graph check ensures no application depends on another application's domain layer. Only Platform Core, Runtime Infrastructure, and SDK namespaces are valid dependencies | CI fails |
+| **Table ownership** | A database migration check ensures no application creates or modifies tables outside its designated prefix namespace (e.g., BMS must only touch `cms_*`, StockFlow only `sa_*`) | CI fails |
+| **Event name uniqueness** | The Event Ownership Registry (§10.7) is checked at boot. Two applications publishing the same event name produce a startup error | CI fails |
+| **Unscoped tenant query** | Static analysis flags any direct query builder or Eloquent call against a tenant-scoped table that bypasses `TenantAwareRepository` | CI fails |
+
+### 26.2 Manual Enforcement (Code Review)
+
+| Rule | How to Enforce |
+|------|---------------|
+| No `DB::table('sa_*')` in BMS code | Review all cross-module database access. Exception only through Integration Contracts |
+| No direct `app(Service::class)` calls to another application | Review all service resolution. Must go through IntegrationRegistry or manifest listener registration |
+| Event listeners are registered in the consuming application's ServiceProvider | Verify listener registration is in the consuming module, not in the publisher |
+| Capability strings are never used in business code | Capability strings (`'inventory'`, `'accounting'`) are for discovery only. Business code uses typed interfaces |
+
+### 26.3 Tooling Recommendations
+
+| Tool | Purpose |
+|------|---------|
+| PHPStan (level max) | Detect namespace violations, missing type hints, and contract implementation mismatches |
+| Custom Rector rule | Automatically flag cross-module imports and suggest IntegrationRegistry alternatives |
+| Deployment pre-check | `php artisan platform:validate-manifests` — validates all manifests before deployment |
+| Database migration linter | Custom script checking table prefix ownership per migration file |
+
+### 26.4 Enforcement During Migration
+
+During the migration from the current monolithic codebase to the target architecture, some rules are temporarily relaxed:
+
+| Rule | Temporarily Relaxed? | Until |
+|------|---------------------|-------|
+| No application imports another application's namespace | ✅ Relaxed for known legacy references | All refs removed (tracked in PHASE0_AUDIT_SUMMARY.md) |
+| No cross-module DB table access | ✅ Relaxed for documented exceptions | Contract wrappers deployed |
+| All events use the standard envelope | ✅ Relaxed for existing events | Event migration complete (§24 Step 4) |
+| All manifests are complete | ✅ Relaxed for non-migrated modules | Module migration complete |
+
+Relaxed rules are tracked in the audit report and must have an explicit migration plan. New code must always follow the target rules.
+
+---
+
+## 27. Architecture Evolution
+
+This architecture follows a staged evolution plan. Each stage enables the next without requiring a rewrite. Understanding this evolution explains why certain abstractions (SDK, IntegrationRegistry, EventBus, manifests) exist even though everything currently runs in one Laravel application.
+
+The full evolution roadmap (Stages 1–4, Federated Platform) is documented in [`FUTURE_VISION.md`](FUTURE_VISION.md#2-evolution-roadmap). The current focus is Stage 1 (Modular Monolith) and Stage 2 (Platform Integration Services) as described in §23.
+
+**Key insight:** The architecture is designed so that each stage is a configuration change, not a code rewrite. The contract interfaces, event envelopes, PlatformContext, and manifest schema remain the same across all stages. Only the transport layer changes.

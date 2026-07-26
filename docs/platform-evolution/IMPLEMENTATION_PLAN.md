@@ -1,8 +1,8 @@
 ﻿# MyGrowNet Platform Integration Architecture — Implementation Plan
 
 > **Status:** Active  
-> **Version:** 1.0  
-> **Aligns with:** `PLATFORM_INTEGRATION_ARCHITECTURE.md` v9.0  
+> **Version:** 1.1  
+> **Aligns with:** `PLATFORM_INTEGRATION_ARCHITECTURE.md` v10.1  
 > **Objective:** Incrementally build the platform integration layer defined in the architecture document
 
 ---
@@ -100,7 +100,7 @@ This plan breaks down the architecture into **9 phases** ordered by dependency a
 
 | # | Task | Deliverable |
 |---|------|-------------|
-| 1.4.1 | Define manifest array schema (all fields from §4.5) | Schema definition |
+| 1.4.1 | Define manifest array schema (all fields from §4.6) | Schema definition |
 | 1.4.2 | Create `ModuleDiscovery` service that collects manifests from ServiceProviders | Discovery service |
 | 1.4.3 | Have 2–3 modules (StockFlow, BMS, GrowFinance) publish initial manifests | Manifest examples |
 
@@ -133,7 +133,7 @@ This plan breaks down the architecture into **9 phases** ordered by dependency a
 
 | # | Task | Deliverable |
 |---|------|-------------|
-| 2.2.1 | Create `EventOwnershipRegistry` with mapping from §10.5 | Registry |
+| 2.2.1 | Create `EventOwnershipRegistry` with mapping from §10.7 | Registry |
 | 2.2.2 | Add validation: only the owning module may dispatch an event | Guard |
 | 2.2.3 | Log ownership violations with stack traces | Monitoring |
 
@@ -180,14 +180,19 @@ This plan breaks down the architecture into **9 phases** ordered by dependency a
 | 3.1.3 | Create `ContractResolver` that uses manifests to find implementations | Resolver |
 | 3.1.4 | Register contract implementations in each module's ServiceProvider | DI wiring |
 
-### 3.2 IntegrationGuard
+### 3.2 IntegrationGuard & ContractInvoker
+
+Per ADR-009, authorization and resilience are separate concerns:
 
 | # | Task | Deliverable |
 |---|------|-------------|
-| 3.2.1 | Create `IntegrationGuard` service (§14.1) | Guard |
+| 3.2.1 | Create `IntegrationGuard` service (§14.1) — authorization only | Guard |
 | 3.2.2 | Implement authorization checks: authenticated, org member, app active, permission, feature flag | Auth chain |
 | 3.2.3 | Return explicit denial before contract implementation is reached | Fail-fast |
 | 3.2.4 | Log all authorization failures | Audit trail |
+| 3.2.5 | Create `ContractInvoker` service — circuit breaker, retry, fallback (§20) | Invoker |
+| 3.2.6 | Wire ContractInvoker into IntegrationGuard's authorized path (guard → invoker → impl) | Pipeline |
+| 3.2.7 | Allow trusted internal callers to bypass IntegrationGuard but retain ContractInvoker | Bypass support |
 
 ### 3.3 First Contracts
 
@@ -216,11 +221,11 @@ This plan breaks down the architecture into **9 phases** ordered by dependency a
 
 ---
 
-## Phase 4: Platform Services
+## Phase 4: Platform Integration Services
 
 **Duration:** 4 weeks  
 **Dependency:** Phase 1 (needs Core + Runtime)  
-**Goal:** Deploy ApplicationProvisioningService, FeatureFlagService, HealthService, CapabilityRegistry
+**Goal:** Deploy ApplicationProvisioningService, CapabilityRegistry, FeatureFlagService, HealthService (architecture doc §23 Phase 2 items)
 
 ### 4.1 ApplicationProvisioningService
 
@@ -236,7 +241,7 @@ This plan breaks down the architecture into **9 phases** ordered by dependency a
 
 | # | Task | Deliverable |
 |---|------|-------------|
-| 4.2.1 | Create `CapabilityRegistry` that indexes manifests by capability (§4.4) | Registry |
+| 4.2.1 | Create `CapabilityRegistry` that indexes manifests by capability (§4.5) | Registry |
 | 4.2.2 | Implement `findProviders(capability): ContractInterface[]` | Capability lookup |
 | 4.2.3 | Implement `hasCapability(application, capability): bool` | Capability check |
 
@@ -244,7 +249,7 @@ This plan breaks down the architecture into **9 phases** ordered by dependency a
 
 | # | Task | Deliverable |
 |---|------|-------------|
-| 4.3.1 | Create `FeatureFlagService` (§4.7) | Service |
+| 4.3.1 | Create `FeatureFlagService` (§4.8) | Service |
 | 4.3.2 | Create `feature_flags` database table | Migration |
 | 4.3.3 | Implement `isEnabled(flag, context): bool` with org-level overrides | Flag resolution |
 | 4.3.4 | Integrate with IntegrationGuard (reject if flag disabled) | Guard integration |
@@ -253,7 +258,7 @@ This plan breaks down the architecture into **9 phases** ordered by dependency a
 
 | # | Task | Deliverable |
 |---|------|-------------|
-| 4.4.1 | Create `HealthService` interface with 5 states (§4.8) | Interface |
+| 4.4.1 | Create `HealthService` interface with 5 states (§4.9) | Interface |
 | 4.4.2 | Create `HealthStatus` enum (Healthy, Degraded, Maintenance, Unavailable, Offline) | Enum |
 | 4.4.3 | Implement local health checks (database, queue, service availability) | Local checks |
 | 4.4.4 | Expose `/health` endpoint per application | Health endpoint |
@@ -263,8 +268,8 @@ This plan breaks down the architecture into **9 phases** ordered by dependency a
 
 | # | Task | Deliverable |
 |---|------|-------------|
-| 4.5.1 | All modules publish complete manifests (§4.5) | Full manifest coverage |
-| 4.5.2 | Add `platform_versions` constraint to each manifest | Version constraint |
+| 4.5.1 | All modules publish complete manifests (§4.6) | Full manifest coverage |
+| 4.5.2 | Add `min_platform_version` and `max_platform_version` constraints to each manifest | Version constraint |
 | 4.5.3 | Add `permissions`, `settings`, `health_checks` to manifests | Enhanced manifest |
 | 4.5.4 | Validate manifests at boot time (ModuleDiscovery validation) | Boot validation |
 
@@ -315,7 +320,7 @@ This plan breaks down the architecture into **9 phases** ordered by dependency a
 
 | # | Task | Deliverable |
 |---|------|-------------|
-| 5.4.1 | Create base exception classes in `App\Domain\Core\Exceptions\` (§21.1) | Exception classes |
+| 5.4.1 | Create base exception classes in `App\Domain\Core\Exceptions\` (§22.1) | Exception classes |
 | 5.4.2 | Audit existing exceptions and migrate to standard types | Migration |
 | 5.4.3 | Add retry behavior mapping (validation → no retry, transient → retry) | Retry mapping |
 | 5.4.4 | Document error taxonomy in CONTRIBUTING.md | Developer docs |
@@ -371,7 +376,7 @@ This plan breaks down the architecture into **9 phases** ordered by dependency a
 | 6.3.1 | Create `platform_settings` table for platform-level config | Migration |
 | 6.3.2 | Create `organization_settings` table for org-level config | Migration |
 | 6.3.3 | Create `application_settings` table for app-level config | Migration |
-| 6.3.4 | Create `SettingsResolver` service with hierarchical resolution (§20.3) | Service |
+| 6.3.4 | Create `SettingsResolver` service with hierarchical resolution (§21.3) | Service |
 | 6.3.5 | Migrate existing config values to the new hierarchy | Migration |
 
 ### 6.4 Anti-Corruption Layer Pattern
@@ -430,7 +435,7 @@ This plan breaks down the architecture into **9 phases** ordered by dependency a
 
 | # | Task | Deliverable |
 |---|------|-------------|
-| 7.4.1 | Wire outbox for `bms.invoice.*` events (required per §11.4) | Adoption |
+| 7.4.1 | Wire outbox for `bms.invoice.*` events (required per FUTURE_VISION.md §1.4) | Adoption |
 | 7.4.2 | Wire outbox for `stockflow.goods_received.*` (required) | Adoption |
 | 7.4.3 | Wire outbox for `growfinance.payment.*` (required) | Adoption |
 | 7.4.4 | Wire inbox for consuming modules (GrowFinance listens to invoices, etc.) | Adoption |
@@ -440,7 +445,7 @@ This plan breaks down the architecture into **9 phases** ordered by dependency a
 - Financial events use outbox (no lost events on crash)
 - Idempotent processing prevents duplicate event handling
 - Admin can replay events by date range and event name
-- All "Required" events from §11.4 use the outbox
+- All "Required" events from FUTURE_VISION.md §1.4 use the outbox
 
 ---
 
@@ -513,11 +518,11 @@ Phase 1 (Core + Runtime)
     │
     ├──────────────────┐
     ▼                  ▼
-Phase 2 (Events)   Phase 3 (Contracts)   Phase 4 (Platform Services)
+Phase 2 (Events)   Phase 3 (Contracts)   Phase 4 (Platform Integration Svc)
     │                  │                       │
     └────────┬─────────┘                       │
-             ▼                                 │
-       Phase 5 (Operations) ◄──────────────────┘
+              ▼                                 │
+        Phase 5 (Operations) ◄──────────────────┘
              │
              ▼
        Phase 6 (Data Governance)
@@ -530,6 +535,8 @@ Phase 2 (Events)   Phase 3 (Contracts)   Phase 4 (Platform Services)
 ```
 
 Phases 2, 3, and 4 can run **concurrently** after Phase 1 is complete. Phase 5 requires all three. Phases 6 and 7 build on earlier work and can partially overlap.
+
+**Note on Phase 2 vs architecture doc's "Phase 2":** The architecture document (§23) numbers its build-out phases 1–4 (Foundation, Runtime Layer & Platform Integration Services, Events, Contracts). This implementation plan splits the architecture doc's Phase 2 across its own Phase 1 (Runtime Layer) and Phase 4 (Platform Integration Services) for practical work breakdown. The two numbering schemes describe the same ordering — just different grouping granularity.
 
 ---
 
@@ -555,7 +562,7 @@ These can be started immediately without blocking on other phases:
 3. **TenantAwareRepository** — Create the base class; modules adopt it incrementally.
 4. **Error taxonomy classes** — Create the 8 exception types; modules start using them.
 5. **Data ownership table** — Publish the §17.1 table as a reference; no code changes needed.
-6. **ADRs** — Create ADR files for the 7 decisions in §24.
+6. **ADRs** — Create ADR files for the 9 decisions in §25 (ADR-001 through ADR-009).
 
 ---
 

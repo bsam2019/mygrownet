@@ -144,7 +144,7 @@ class VerifyPaymentUseCase
     private function completeStarterKitPurchase(\App\Models\User $user, $payment): void
     {
         try {
-            $starterKitService = app(\App\Domain\GrowNet\Services\StarterKitService::class);
+            $starterKitProvider = app(\App\Domain\Core\Services\IntegrationRegistry::class)->resolve(\App\Domain\GrowNet\Contracts\StarterKitProvider::class);
             
             // Determine tier based on payment amount
             $amount = $payment->amount()->value();
@@ -163,7 +163,7 @@ class VerifyPaymentUseCase
             ]);
             
             // Grant access, add credit, create unlocks
-            $starterKitService->completePurchase($purchase);
+            $starterKitProvider->completePurchase($purchase);
             
             \Log::info('Starter Kit purchase completed via payment verification', [
                 'user_id' => $user->id,
@@ -211,8 +211,8 @@ class VerifyPaymentUseCase
         $sponsor->incrementReferralCount();
         
         // Use matrix service to find next available position
-        $matrixService = app(\App\Domain\GrowNet\Reward\Services\ReferralMatrixService::class);
-        $availablePosition = $matrixService->findNextAvailablePosition($sponsor);
+        $referralProvider = app(\App\Domain\Core\Services\IntegrationRegistry::class)->resolve(\App\Domain\GrowNet\Contracts\ReferralProvider::class);
+        $availablePosition = $referralProvider->findNextAvailablePosition($sponsor);
         
         if ($availablePosition) {
             \App\Infrastructure\Persistence\Eloquent\GrowNet\MatrixPosition::create([

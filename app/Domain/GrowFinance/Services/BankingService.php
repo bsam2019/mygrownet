@@ -10,6 +10,7 @@ use App\Domain\GrowFinance\Entities\JournalLine;
 use App\Domain\GrowFinance\Repositories\AccountRepositoryInterface;
 use App\Domain\GrowFinance\Repositories\JournalEntryRepositoryInterface;
 use App\Domain\GrowFinance\Repositories\JournalLineRepositoryInterface;
+use App\Domain\Core\Services\OutboxService;
 use Illuminate\Support\Facades\DB;
 
 class BankingService
@@ -18,6 +19,7 @@ class BankingService
         private AccountRepositoryInterface $accountRepo,
         private JournalEntryRepositoryInterface $journalEntryRepo,
         private JournalLineRepositoryInterface $journalLineRepo,
+        private readonly OutboxService $outbox,
     ) {}
 
     public function recordDeposit(
@@ -114,6 +116,18 @@ class BankingService
                 updatedAt: null,
             ));
 
+            $this->outbox->insert(
+                eventName: 'growfinance.journal.created.v1',
+                payload: [
+                    'business_id' => $businessId,
+                    'journal_id' => $entry->id,
+                    'entry_number' => $entryNumber,
+                    'description' => $description,
+                ],
+                context: ['business_id' => $businessId],
+                publisher: 'growfinance',
+            );
+
             return $entry->toArray();
         });
     }
@@ -208,6 +222,18 @@ class BankingService
                 updatedAt: null,
             ));
 
+            $this->outbox->insert(
+                eventName: 'growfinance.journal.created.v1',
+                payload: [
+                    'business_id' => $businessId,
+                    'journal_id' => $entry->id,
+                    'entry_number' => $entryNumber,
+                    'description' => $description,
+                ],
+                context: ['business_id' => $businessId],
+                publisher: 'growfinance',
+            );
+
             return $entry->toArray();
         });
     }
@@ -300,6 +326,18 @@ class BankingService
                 createdAt: $toAccount->createdAt,
                 updatedAt: null,
             ));
+
+            $this->outbox->insert(
+                eventName: 'growfinance.journal.created.v1',
+                payload: [
+                    'business_id' => $businessId,
+                    'journal_id' => $entry->id,
+                    'entry_number' => $entryNumber,
+                    'description' => $description,
+                ],
+                context: ['business_id' => $businessId],
+                publisher: 'growfinance',
+            );
 
             return $entry->toArray();
         });

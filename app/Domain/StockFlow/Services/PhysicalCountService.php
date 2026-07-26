@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\StockFlow\Services;
 
+use App\Domain\Core\Services\OutboxService;
 use App\Domain\StockFlow\Entities\PhysicalCount;
 use App\Domain\StockFlow\Entities\Audit;
 use App\Domain\StockFlow\Entities\AuditItem;
 use App\Domain\StockFlow\Entities\StockMovement;
-use App\Domain\StockFlow\Events\StockCountFinalized;
 use App\Domain\StockFlow\Exceptions\OperationFailedException;
 use App\Domain\StockFlow\Repositories\PhysicalCountRepositoryInterface;
 use App\Domain\StockFlow\Repositories\ItemRepositoryInterface;
@@ -26,7 +26,6 @@ use App\Domain\StockFlow\ValueObjects\MovementType;
 use App\Domain\StockFlow\ValueObjects\AuditStatus;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
 use Throwable;
 
 class PhysicalCountService
@@ -39,6 +38,7 @@ class PhysicalCountService
         private BinRepositoryInterface $binRepository,
         private StockMovementRepositoryInterface $movementRepository,
         private StockLevelProjector $stockLevelProjector,
+        private OutboxService $outbox,
     ) {}
 
     public function createCount(int $companyId, array $data, int $userId): PhysicalCount
@@ -157,17 +157,22 @@ class PhysicalCountService
                 }
             }
 
-            // Dispatch domain event
-            Event::dispatch(new StockCountFinalized(
-                companyId: $companyId,
-                physicalCountId: $physicalCountId,
-                finalizedBy: $userId,
-                totals: [
-                    'total_system_value' => $totalSystemValue,
-                    'total_physical_value' => $totalPhysicalValue,
-                    'total_variance' => $totalSystemValue - $totalPhysicalValue,
+            // Dispatch domain event via outbox
+            $this->outbox->insert(
+                eventName: 'stockflow.count.finalized.v1',
+                payload: [
+                    'company_id' => $companyId,
+                    'physical_count_id' => $physicalCountId,
+                    'finalized_by' => $userId,
+                    'totals' => [
+                        'total_system_value' => $totalSystemValue,
+                        'total_physical_value' => $totalPhysicalValue,
+                        'total_variance' => $totalSystemValue - $totalPhysicalValue,
+                    ],
                 ],
-            ));
+                context: ['company_id' => $companyId],
+                publisher: 'stockflow',
+            );
         });
     }
 

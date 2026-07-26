@@ -4,11 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\StockFlow\Listeners;
 
-use App\Domain\StockFlow\Events\CashDiscrepancyDetected;
 use App\Domain\StockFlow\Events\PurchaseOrderReceived;
-use App\Domain\StockFlow\Events\SaleCompleted;
-use App\Domain\StockFlow\Events\StockAdjusted;
-use App\Domain\StockFlow\Events\StockCountFinalized;
 use App\Domain\StockFlow\Services\ActivityLogService;
 use App\Domain\StockFlow\Services\StockFlowNotificationService;
 
@@ -19,32 +15,32 @@ class ActivityLogListener
         private StockFlowNotificationService $notifier,
     ) {}
 
-    public function onSaleCompleted(SaleCompleted $event): void
+    public function onSaleCompleted(array $payload): void
     {
         $this->logService->record(
-            event: $event,
+            event: $payload,
             context: 'sales',
             eventName: 'SaleCompleted',
-            description: "Sale #{$event->getReceiptNumber()} completed — {$event->getPaymentMethod()}, total " . number_format($event->getTotal(), 2),
+            description: "Sale #{$payload['receipt_number']} completed — {$payload['payment_method']}, total " . number_format($payload['total'], 2),
             subjectType: 'Sale',
-            subjectId: $event->getSaleId(),
-            actorUserId: $event->getSoldBy(),
+            subjectId: $payload['sale_id'],
+            actorUserId: $payload['sold_by'],
             extraPayload: [
-                'total' => $event->getTotal(),
-                'payment_method' => $event->getPaymentMethod(),
-                'items_count' => count($event->getItems()),
+                'total' => $payload['total'],
+                'payment_method' => $payload['payment_method'],
+                'items_count' => count($payload['items']),
             ],
         );
 
         $this->notifier->create(
-            companyId: $event->getCompanyId(),
-            userId: $event->getSoldBy(),
+            companyId: $payload['company_id'],
+            userId: $payload['sold_by'],
             type: 'sale.completed',
             title: 'Sale Completed',
-            message: "Sale #{$event->getReceiptNumber()} — {$event->getPaymentMethod()}, " . number_format($event->getTotal(), 2),
-            actionUrl: '/stockflow/sales/' . $event->getSaleId(),
+            message: "Sale #{$payload['receipt_number']} — {$payload['payment_method']}, " . number_format($payload['total'], 2),
+            actionUrl: '/stockflow/sales/' . $payload['sale_id'],
             actionText: 'View Sale',
-            data: ['total' => $event->getTotal(), 'receipt' => $event->getReceiptNumber()],
+            data: ['total' => $payload['total'], 'receipt' => $payload['receipt_number']],
         );
     }
 
@@ -73,88 +69,88 @@ class ActivityLogListener
         );
     }
 
-    public function onStockCountFinalized(StockCountFinalized $event): void
+    public function onStockCountFinalized(array $payload): void
     {
-        $totals = $event->getTotals();
+        $totals = $payload['totals'];
         $this->logService->record(
-            event: $event,
+            event: $payload,
             context: 'audit',
             eventName: 'StockCountFinalized',
             description: "Stock count finalized — variance: " . number_format($totals['total_variance'] ?? 0, 2),
             subjectType: 'PhysicalCount',
-            subjectId: $event->getPhysicalCountId(),
-            actorUserId: $event->getFinalizedBy(),
+            subjectId: $payload['physical_count_id'],
+            actorUserId: $payload['finalized_by'],
             extraPayload: $totals,
         );
 
         $variance = $totals['total_variance'] ?? 0;
         $priority = abs($variance) > 1000 ? 'high' : 'normal';
         $this->notifier->notifyAllAdmins(
-            companyId: $event->getCompanyId(),
+            companyId: $payload['company_id'],
             type: 'count.finalized',
             title: 'Stock Count Finalized',
             message: 'Variance: ' . number_format($variance, 2),
-            actionUrl: '/stockflow/physical-counts/' . $event->getPhysicalCountId(),
+            actionUrl: '/stockflow/physical-counts/' . $payload['physical_count_id'],
             actionText: 'View Count',
             data: $totals,
             priority: $priority,
         );
     }
 
-    public function onCashDiscrepancyDetected(CashDiscrepancyDetected $event): void
+    public function onCashDiscrepancyDetected(array $payload): void
     {
         $this->logService->record(
-            event: $event,
+            event: $payload,
             context: 'sales',
             eventName: 'CashDiscrepancyDetected',
-            description: "Cash discrepancy on {$event->getRegisterDate()}: expected " . number_format($event->getExpectedAmount(), 2) . ", counted " . number_format($event->getCountedAmount(), 2) . ", variance " . number_format($event->getVariance(), 2),
+            description: "Cash discrepancy on {$payload['register_date']}: expected " . number_format($payload['expected_amount'], 2) . ", counted " . number_format($payload['counted_amount'], 2) . ", variance " . number_format($payload['variance'], 2),
             subjectType: 'CashRegister',
-            subjectId: $event->getCashRegisterId(),
+            subjectId: $payload['cash_register_id'],
             extraPayload: [
-                'expected' => $event->getExpectedAmount(),
-                'counted' => $event->getCountedAmount(),
-                'variance' => $event->getVariance(),
+                'expected' => $payload['expected_amount'],
+                'counted' => $payload['counted_amount'],
+                'variance' => $payload['variance'],
             ],
         );
 
         $this->notifier->notifyAllAdmins(
-            companyId: $event->getCompanyId(),
+            companyId: $payload['company_id'],
             type: 'cash.discrepancy',
             title: 'Cash Discrepancy Detected',
-            message: 'Variance: ' . number_format($event->getVariance(), 2),
-            actionUrl: '/stockflow/cash/' . $event->getCashRegisterId(),
+            message: 'Variance: ' . number_format($payload['variance'], 2),
+            actionUrl: '/stockflow/cash/' . $payload['cash_register_id'],
             actionText: 'View Register',
-            data: ['expected' => $event->getExpectedAmount(), 'counted' => $event->getCountedAmount(), 'variance' => $event->getVariance()],
+            data: ['expected' => $payload['expected_amount'], 'counted' => $payload['counted_amount'], 'variance' => $payload['variance']],
             priority: 'high',
         );
     }
 
-    public function onStockAdjusted(StockAdjusted $event): void
+    public function onStockAdjusted(array $payload): void
     {
         $this->logService->record(
-            event: $event,
+            event: $payload,
             context: 'inventory',
             eventName: 'StockAdjusted',
-            description: "Item #{$event->getItemId()} adjusted ({$event->getAdjustmentType()}): {$event->getQuantityBefore()} → {$event->getQuantityAfter()} — {$event->getReason()}",
+            description: "Item #{$payload['item_id']} adjusted ({$payload['adjustment_type']}): {$payload['quantity_before']} → {$payload['quantity_after']} — {$payload['reason']}",
             subjectType: 'Item',
-            subjectId: $event->getItemId(),
-            actorUserId: $event->getAdjustedBy(),
+            subjectId: $payload['item_id'],
+            actorUserId: $payload['adjusted_by'],
             extraPayload: [
-                'type' => $event->getAdjustmentType(),
-                'before' => $event->getQuantityBefore(),
-                'after' => $event->getQuantityAfter(),
+                'type' => $payload['adjustment_type'],
+                'before' => $payload['quantity_before'],
+                'after' => $payload['quantity_after'],
             ],
         );
 
         $this->notifier->create(
-            companyId: $event->getCompanyId(),
-            userId: $event->getAdjustedBy(),
+            companyId: $payload['company_id'],
+            userId: $payload['adjusted_by'],
             type: 'stock.adjusted',
             title: 'Stock Adjusted',
-            message: "{$event->getAdjustmentType()}: {$event->getQuantityBefore()} → {$event->getQuantityAfter()} — {$event->getReason()}",
-            actionUrl: '/stockflow/items/' . $event->getItemId(),
+            message: "{$payload['adjustment_type']}: {$payload['quantity_before']} → {$payload['quantity_after']} — {$payload['reason']}",
+            actionUrl: '/stockflow/items/' . $payload['item_id'],
             actionText: 'View Item',
-            data: ['type' => $event->getAdjustmentType(), 'before' => $event->getQuantityBefore(), 'after' => $event->getQuantityAfter()],
+            data: ['type' => $payload['adjustment_type'], 'before' => $payload['quantity_before'], 'after' => $payload['quantity_after']],
         );
     }
 }

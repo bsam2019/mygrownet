@@ -30,11 +30,6 @@ class POSQuickProductModel extends Model
         return $this->belongsTo(\App\Models\User::class);
     }
 
-    public function inventoryItem(): BelongsTo
-    {
-        return $this->belongsTo(InventoryItemModel::class, 'inventory_item_id');
-    }
-
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

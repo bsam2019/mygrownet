@@ -35,6 +35,7 @@ class Kernel extends HttpKernel
             // \App\Http\Middleware\PerformanceMonitoring::class, // DISABLED - constructor injection causing early service resolution
             \App\Http\Middleware\ResolveDomainContext::class,
             \App\Http\Middleware\SetPlatformContext::class,
+            \App\Http\Middleware\ResolvePlatformContext::class,
         ],
 
         'api' => [

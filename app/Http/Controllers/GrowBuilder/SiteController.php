@@ -48,21 +48,21 @@ class SiteController extends Controller
         $sitesData = $sites->map(fn($site) => $this->dashboardService->formatSiteData($site, $pageViewsPerSite, $messageCounts, $rawDailyViews));
 
         // Get user's actual subscription data
-        $subscriptionService = app(\App\Domain\Module\Services\SubscriptionService::class);
-        $tierConfigService = app(\App\Domain\Module\Services\TierConfigurationService::class);
+        $subscriptionProvider = app(\App\Domain\Core\Services\IntegrationRegistry::class)->resolve(\App\Domain\Module\Contracts\SubscriptionProvider::class);
+        $tierProvider = app(\App\Domain\Core\Services\IntegrationRegistry::class)->resolve(\App\Domain\Module\Contracts\TierProvider::class);
         
-        $userTier = $subscriptionService->getUserTier($user, 'growbuilder') ?? 'free';
-        $tierConfig = $tierConfigService->getTierConfig('growbuilder', $userTier);
+        $userTier = $subscriptionProvider->getUserTier($user, 'growbuilder') ?? 'free';
+        $tierConfig = $tierProvider->getTierConfig('growbuilder', $userTier);
         
         $subscription = [
             'tier' => $userTier,
             'tierName' => $tierConfig['name'] ?? ucfirst($userTier),
-            'sitesLimit' => $tierConfigService->getLimit('growbuilder', $userTier, 'sites'),
+            'sitesLimit' => $tierProvider->getLimit('growbuilder', $userTier, 'sites'),
             'sitesUsed' => $sites->count(),
-            'canCreateSite' => $sites->count() < $tierConfigService->getLimit('growbuilder', $userTier, 'sites'),
-            'storageLimit' => $tierConfigService->getLimit('growbuilder', $userTier, 'storage_mb'),
-            'pagesLimit' => $tierConfigService->getLimit('growbuilder', $userTier, 'pages'),
-            'productsLimit' => $tierConfigService->getLimit('growbuilder', $userTier, 'products'),
+            'canCreateSite' => $sites->count() < $tierProvider->getLimit('growbuilder', $userTier, 'sites'),
+            'storageLimit' => $tierProvider->getLimit('growbuilder', $userTier, 'storage_mb'),
+            'pagesLimit' => $tierProvider->getLimit('growbuilder', $userTier, 'pages'),
+            'productsLimit' => $tierProvider->getLimit('growbuilder', $userTier, 'products'),
             'price' => $tierConfig['price_monthly'] ?? 0,
             'expiresAt' => null, // TODO: Get actual expiration
         ];
@@ -970,8 +970,8 @@ class SiteController extends Controller
             ]);
 
             // Clear any cached subscription data
-            $subscriptionService = app(\App\Domain\Module\Services\SubscriptionService::class);
-            $subscriptionService->clearCache($user, 'growbuilder');
+            $subscriptionProvider = app(\App\Domain\Core\Services\IntegrationRegistry::class)->resolve(\App\Domain\Module\Contracts\SubscriptionProvider::class);
+            $subscriptionProvider->clearCache($user, 'growbuilder');
 
             return redirect()->back()->with('success', 'Tier switched successfully!');
         } catch (\Exception $e) {

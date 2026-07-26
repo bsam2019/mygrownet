@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domain\Core\Services\IntegrationRegistry;
+use App\Domain\Core\Contracts\NotificationProvider;
 use App\Http\Controllers\Controller;
 use App\Models\Employee\EmployeeSupportTicket;
 use App\Models\Employee\EmployeeSupportTicketComment;
@@ -13,7 +15,9 @@ use Inertia\Inertia;
 
 class SupportTicketController extends Controller
 {
-    /**
+    public function __construct(
+        private IntegrationRegistry $registry,
+    ) {}    /**
      * Live Support Dashboard - shows active tickets for real-time support
      */
     public function dashboard()
@@ -269,7 +273,7 @@ class SupportTicketController extends Controller
 
     protected function notifyStatusChange(EmployeeSupportTicket $ticket, string $oldStatus, string $newStatus): void
     {
-        $notificationService = app(\App\Domain\Employee\Services\NotificationService::class);
+        $notifier = $this->registry->resolve(NotificationProvider::class);
 
         $statusLabels = [
             'open' => 'Open',
@@ -279,13 +283,13 @@ class SupportTicketController extends Controller
             'closed' => 'Closed',
         ];
 
-        $notificationService->createNotification(
-            $ticket->employee_id,
-            'ticket_status_changed',
-            'Support Ticket Updated',
-            "Your ticket #{$ticket->ticket_number} status changed to {$statusLabels[$newStatus]}",
-            "/employee/portal/support/{$ticket->id}",
-            ['ticket_id' => $ticket->id, 'old_status' => $oldStatus, 'new_status' => $newStatus]
+        $notifier->send(
+            userId: $ticket->employee_id,
+            type: 'ticket_status_changed',
+            title: 'Support Ticket Updated',
+            message: "Your ticket #{$ticket->ticket_number} status changed to {$statusLabels[$newStatus]}",
+            actionUrl: "/employee/portal/support/{$ticket->id}",
+            data: ['ticket_id' => $ticket->id, 'old_status' => $oldStatus, 'new_status' => $newStatus]
         );
     }
 }

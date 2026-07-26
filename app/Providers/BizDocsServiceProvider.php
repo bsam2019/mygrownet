@@ -19,6 +19,8 @@ use App\Infrastructure\BizDocs\Persistence\Repositories\EloquentDocumentSequence
 use App\Infrastructure\BizDocs\Persistence\Repositories\EloquentDocumentStatusHistoryRepository;
 use App\Infrastructure\BizDocs\Persistence\Repositories\EloquentDocumentTemplateRepository;
 use Illuminate\Support\ServiceProvider;
+use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\Core\Services\ModuleDiscovery;
 
 class BizDocsServiceProvider extends ServiceProvider
 {
@@ -112,5 +114,18 @@ class BizDocsServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations/bizdocs'));
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'bizdocs',
+            name: 'BizDocs',
+            version: '1.0.0',
+            category: 'business',
+            description: 'Business document management with profiles, customers, documents, templates, and stationery',
+            supportsSubdomain: true,
+            capabilities: ['document_management', 'customer_management', 'template_management', 'stationery'],
+            permissions: ['manage_documents', 'manage_customers', 'manage_templates', 'manage_business_profile'],
+            settings: ['default_document_format', 'stationery_layout'],
+        ));
     }
 }

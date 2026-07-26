@@ -17,7 +17,7 @@ class StarterKitService
 {
     public function __construct(
         private readonly \App\Application\Notification\UseCases\SendNotificationUseCase $notificationService,
-        private readonly \App\Domain\Wallet\Services\WalletService $walletService,
+        private readonly \App\Domain\GrowNet\Wallet\Services\WalletService $walletService,
         private readonly StarterKitBenefitService $benefitService
     ) {}
     

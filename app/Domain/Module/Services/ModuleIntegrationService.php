@@ -4,7 +4,6 @@ namespace App\Domain\Module\Services;
 
 use App\Infrastructure\Persistence\Eloquent\ModuleIntegrationModel;
 use App\Domain\POS\Services\POSService;
-use App\Domain\Inventory\Services\InventoryService;
 
 /**
  * Service for managing module integrations
@@ -22,11 +21,6 @@ class ModuleIntegrationService
             'name' => 'Point of Sale',
             'description' => 'Quick sales recording with shift management',
             'icon' => '🛒',
-        ],
-        'inventory' => [
-            'name' => 'Inventory Management',
-            'description' => 'Track stock levels and movements',
-            'icon' => '📦',
         ],
     ];
 
@@ -87,21 +81,6 @@ class ModuleIntegrationService
     public function getPOSService(string $moduleContext, int $userId = null): POSService
     {
         $service = app(POSService::class);
-        $service->forModule($moduleContext);
-        
-        if ($userId) {
-            $service->forUser($userId);
-        }
-
-        return $service;
-    }
-
-    /**
-     * Get Inventory service configured for a specific module context
-     */
-    public function getInventoryService(string $moduleContext = 'inventory', int $userId = null): InventoryService
-    {
-        $service = app(InventoryService::class);
         $service->forModule($moduleContext);
         
         if ($userId) {

@@ -71,9 +71,9 @@ class DashboardController extends Controller
         $modules = $this->filterEnabledModules($modules);
         
         // Get wallet data
-        $walletService = app(\App\Domain\GrowNet\Wallet\Services\WalletService::class);
-        $walletBreakdown = $walletService->getWalletBreakdown($user);
-        $recentTransactions = $walletService->getRecentTransactions($user, 5);
+        $walletProvider = app(\App\Domain\Core\Services\IntegrationRegistry::class)->resolve(\App\Domain\GrowNet\Contracts\WalletProvider::class);
+        $walletBreakdown = $walletProvider->getWalletBreakdown($user);
+        $recentTransactions = $walletProvider->getRecentTransactions($user, 5);
         
         // Check user roles
         $isAdmin = $user->hasRole(['Administrator', 'admin', 'superadmin']);
@@ -164,7 +164,8 @@ class DashboardController extends Controller
         }
         
         // Default: Render the user apps dashboard
-        $walletBalance = app(\App\Domain\GrowNet\Services\WalletService::class)->calculateBalance($user);
+        $walletProvider = app(\App\Domain\Core\Services\IntegrationRegistry::class)->resolve(\App\Domain\GrowNet\Contracts\WalletProvider::class);
+        $walletBalance = $walletProvider->calculateBalance($user);
         $referralCommissions = $user->referralCommissions()
             ->where('status', 'paid')
             ->sum('amount');
@@ -377,8 +378,8 @@ class DashboardController extends Controller
     private function getWalletBalance($user)
     {
         // Use centralized WalletService for consistent calculation
-        $walletService = app(\App\Domain\GrowNet\Services\WalletService::class);
-        return $walletService->calculateBalance($user);
+        $walletProvider = app(\App\Domain\Core\Services\IntegrationRegistry::class)->resolve(\App\Domain\GrowNet\Contracts\WalletProvider::class);
+        return $walletProvider->calculateBalance($user);
     }
     
     private function getRecentActivities($user)

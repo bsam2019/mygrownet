@@ -3,37 +3,23 @@
 namespace App\Console\Commands;
 
 use App\Services\BmsExpenseSyncService;
-use App\Infrastructure\Persistence\Eloquent\BMS\ExpenseModel;
+use App\Domain\BMS\Core\Services\BmsDataService;
 use Illuminate\Console\Command;
 
 class SyncBmsExpenses extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'bms:sync-expenses 
                             {--all : Sync all approved expenses}
                             {--retry : Retry failed syncs}
                             {--stats : Show sync statistics}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Sync CMS expenses to transactions table';
 
-    /**
-     * Execute the console command.
-     */
-    public function handle(CmsExpenseSyncService $syncService): int
+    public function handle(BmsExpenseSyncService $syncService, BmsDataService $bmsData): int
     {
-        // Show statistics
         if ($this->option('stats')) {
             $stats = $syncService->getSyncStatistics();
-            
+
             $this->info('CMS Expense Sync Statistics:');
             $this->table(
                 ['Metric', 'Value'],
@@ -44,45 +30,41 @@ class SyncBmsExpenses extends Command
                     ['Last Sync', $stats['last_sync'] ?? 'Never'],
                 ]
             );
-            
+
             return Command::SUCCESS;
         }
 
-        // Retry failed syncs
         if ($this->option('retry')) {
             $this->info('Retrying failed syncs...');
-            
+
             $results = $syncService->retryFailedSyncs();
-            
+
             $this->info("Retry complete:");
             $this->line("  Total: {$results['total']}");
             $this->line("  Success: {$results['success']}");
             $this->line("  Failed: {$results['failed']}");
-            
+
             return Command::SUCCESS;
         }
 
-        // Sync all approved expenses
         if ($this->option('all')) {
             $this->info('Syncing all approved expenses...');
-            
-            $expenses = ExpenseModel::where('approval_status', 'approved')
-                ->whereDoesntHave('transaction')
-                ->get();
-            
+
+            $expenses = $bmsData->getUnsyncedApprovedExpenses();
+
             if ($expenses->isEmpty()) {
                 $this->info('No expenses to sync.');
                 return Command::SUCCESS;
             }
-            
+
             $this->info("Found {$expenses->count()} expenses to sync.");
-            
+
             $bar = $this->output->createProgressBar($expenses->count());
             $bar->start();
-            
+
             $synced = 0;
             $failed = 0;
-            
+
             foreach ($expenses as $expense) {
                 try {
                     $syncService->syncExpenseToTransaction($expense);
@@ -91,21 +73,20 @@ class SyncBmsExpenses extends Command
                     $failed++;
                     $this->error("\nFailed to sync expense {$expense->id}: {$e->getMessage()}");
                 }
-                
+
                 $bar->advance();
             }
-            
+
             $bar->finish();
             $this->newLine(2);
-            
+
             $this->info("Sync complete:");
             $this->line("  Synced: {$synced}");
             $this->line("  Failed: {$failed}");
-            
+
             return Command::SUCCESS;
         }
 
-        // Default: show help
         $this->info('CMS Expense Sync Command');
         $this->line('');
         $this->line('Options:');

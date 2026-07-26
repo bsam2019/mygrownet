@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Core\ValueObjects\PlatformContext;
 use App\Domain\Workspace\Services\ApplicationAccessService;
 use App\Domain\Workspace\Services\OrganizationAccessService;
 use Closure;
@@ -18,16 +19,18 @@ class SetPlatformContext
     public function handle(Request $request, Closure $next): Response
     {
         if (function_exists('inertia')) {
-            $context = $request->attributes->get('workspace_context');
+            $workspaceContext = $request->attributes->get('workspace_context');
+            $platformContext = $request->attributes->get('platform_context');
             $user = $request->user();
 
-            if ($user && $context) {
+            if ($user && $workspaceContext) {
                 $autoLaunch = $request->attributes->get('auto_launch', false);
 
                 inertia()->share('workspace', [
-                    'context' => $context->toArray(),
+                    'context' => $workspaceContext->toArray(),
+                    'platform_context' => $platformContext?->toArray(),
                     'auto_launch' => $autoLaunch,
-                    'apps' => fn() => $this->appAccess->getAvailableApps($user, $context),
+                    'apps' => fn() => $this->appAccess->getAvailableApps($user, $workspaceContext),
                     'organizations' => function () use ($user) {
                         return $this->orgAccess->getAccessibleOrganizations($user)
                             ->map(fn($org) => [

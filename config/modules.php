@@ -93,15 +93,6 @@ return [
             'color' => 'emerald',
         ],
 
-        'inventory' => [
-            'enabled' => true,
-            'name' => 'Inventory Management',
-            'description' => 'Inventory management',
-            'icon' => 'CubeIcon',
-            'route' => 'inventory.dashboard',
-            'nav_group' => 'business',
-            'requires_subscription' => false,
-        ],
 
         'pos' => [
             'enabled' => false,

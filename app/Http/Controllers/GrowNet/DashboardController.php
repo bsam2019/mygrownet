@@ -253,9 +253,8 @@ class DashboardController extends Controller
     private function getLoanSummary($user): array
     {
         try {
-            if (class_exists(\App\Domain\Financial\Services\LoanService::class)) {
-                return app(\App\Domain\Financial\Services\LoanService::class)->getLoanSummary($user);
-            }
+            $loanProvider = app(\App\Domain\Core\Services\IntegrationRegistry::class)->resolve(\App\Domain\Financial\Contracts\LoanProvider::class);
+            return $loanProvider->getLoanSummary($user);
         } catch (\Exception $e) {
             Log::error('Loan service error', ['error' => $e->getMessage()]);
         }

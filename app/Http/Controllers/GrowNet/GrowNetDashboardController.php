@@ -124,15 +124,8 @@ class GrowNetDashboardController extends Controller
         
         // Get loan summary (if exists)
         try {
-            if (class_exists(\App\Domain\Financial\Services\LoanService::class)) {
-                $loanService = app(\App\Domain\Financial\Services\LoanService::class);
-                $data['loanSummary'] = $loanService->getLoanSummary($user);
-            } else {
-                $data['loanSummary'] = [
-                    'has_loan' => false,
-                    'can_withdraw' => true,
-                ];
-            }
+            $loanProvider = app(\App\Domain\Core\Services\IntegrationRegistry::class)->resolve(\App\Domain\Financial\Contracts\LoanProvider::class);
+            $data['loanSummary'] = $loanProvider->getLoanSummary($user);
         } catch (\Exception $e) {
             $data['loanSummary'] = [
                 'has_loan' => false,
@@ -376,20 +369,8 @@ class GrowNetDashboardController extends Controller
         
         // Get loan summary (with fallback if service doesn't exist)
         try {
-            if (class_exists(\App\Domain\Financial\Services\LoanService::class)) {
-                $loanService = app(\App\Domain\Financial\Services\LoanService::class);
-                $loanSummary = $loanService->getLoanSummary($user);
-            } else {
-                // Fallback: basic loan data from user model
-                $loanSummary = [
-                    'total_borrowed' => (float) ($user->loan_balance ?? 0),
-                    'total_repaid' => (float) ($user->total_loan_repaid ?? 0),
-                    'outstanding_balance' => (float) ($user->loan_balance ?? 0),
-                    'loan_limit' => (float) ($user->loan_limit ?? 0),
-                    'available_credit' => (float) max(0, ($user->loan_limit ?? 0) - ($user->loan_balance ?? 0)),
-                    'loan_balance' => (float) ($user->loan_balance ?? 0),
-                ];
-            }
+            $loanProvider = app(\App\Domain\Core\Services\IntegrationRegistry::class)->resolve(\App\Domain\Financial\Contracts\LoanProvider::class);
+            $loanSummary = $loanProvider->getLoanSummary($user);
         } catch (\Exception $e) {
             // Fallback on error
             $loanSummary = [

@@ -28,6 +28,8 @@ use App\Infrastructure\Persistence\Repositories\QuickInvoice\EloquentSubscriptio
 use App\Infrastructure\Persistence\Repositories\QuickInvoice\EloquentTemplateRepository;
 use App\Infrastructure\Persistence\Repositories\QuickInvoice\EloquentUsageTrackingRepository;
 use Illuminate\Support\ServiceProvider;
+use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\Core\Services\ModuleDiscovery;
 
 class QuickInvoiceServiceProvider extends ServiceProvider
 {
@@ -100,5 +102,17 @@ class QuickInvoiceServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations/quickinvoice'));
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'quickinvoice',
+            name: 'QuickInvoice',
+            version: '1.0.0',
+            category: 'business',
+            description: 'Invoice generator with templates, profiles, subscriptions, and PDF generation',
+            capabilities: ['invoicing', 'pdf_generation', 'document_templates'],
+            permissions: ['manage_invoices', 'manage_templates', 'manage_subscriptions'],
+            settings: ['default_template', 'invoice_prefix', 'payment_terms'],
+        ));
     }
 }

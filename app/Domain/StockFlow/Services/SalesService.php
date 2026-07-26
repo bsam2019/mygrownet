@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\StockFlow\Services;
 
+use App\Domain\Core\Services\OutboxService;
 use App\Domain\StockFlow\Entities\Sale;
 use App\Domain\StockFlow\Entities\SaleItem;
 use App\Domain\StockFlow\Entities\StockMovement;
-use App\Domain\StockFlow\Events\SaleCompleted;
 use App\Domain\StockFlow\Exceptions\InsufficientStockException;
 use App\Domain\StockFlow\Exceptions\OperationFailedException;
 use App\Domain\StockFlow\Repositories\SaleRepositoryInterface;
@@ -23,7 +23,6 @@ use App\Domain\StockFlow\ValueObjects\PaymentMethod;
 use App\Domain\StockFlow\ValueObjects\MovementType;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
 use Throwable;
 
 class SalesService
@@ -34,6 +33,7 @@ class SalesService
         private StockMovementRepositoryInterface $movementRepository,
         private CashRegisterRepositoryInterface $cashRegisterRepository,
         private StockLevelProjector $stockLevelProjector,
+        private OutboxService $outbox,
     ) {}
 
     public function createSale(int $companyId, array $data, int $userId): Sale
@@ -152,16 +152,21 @@ class SalesService
                     }
                 }
 
-                // Dispatch domain event
-                Event::dispatch(new SaleCompleted(
-                    companyId: $companyId,
-                    saleId: $savedSale->id(),
-                    receiptNumber: $receiptNumber,
-                    total: $subtotal,
-                    paymentMethod: $paymentMethod->value(),
-                    soldBy: $userId,
-                    items: $eventItems,
-                ));
+                // Dispatch domain event via outbox
+                $this->outbox->insert(
+                    eventName: 'stockflow.sale.completed.v1',
+                    payload: [
+                        'company_id' => $companyId,
+                        'sale_id' => $savedSale->id(),
+                        'receipt_number' => $receiptNumber,
+                        'total' => $subtotal,
+                        'payment_method' => $paymentMethod->value(),
+                        'sold_by' => $userId,
+                        'items' => $eventItems,
+                    ],
+                    context: ['company_id' => $companyId],
+                    publisher: 'stockflow',
+                );
 
                 return $savedSale;
             });

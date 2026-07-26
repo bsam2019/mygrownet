@@ -104,8 +104,8 @@ class MyGrowNetWalletController extends Controller
         }
         
         // Get loan summary
-        $loanService = app(\App\Domain\Financial\Services\LoanService::class);
-        $loanSummary = $loanService->getLoanSummary($user);
+        $loanProvider = app(\App\Domain\Core\Services\IntegrationRegistry::class)->resolve(\App\Domain\Financial\Contracts\LoanProvider::class);
+        $loanSummary = $loanProvider->getLoanSummary($user);
         
         return Inertia::render('GrowNet/Wallet', [
             'balance' => $balance,

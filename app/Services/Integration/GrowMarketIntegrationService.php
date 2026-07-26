@@ -2,41 +2,38 @@
 
 namespace App\Services\Integration;
 
-use App\Infrastructure\Persistence\Eloquent\BMS\ProductModel as CMSProduct;
+use App\Domain\BMS\Core\Services\BmsDataService;
+use App\Events\BMS\ProductSynced;
 use App\Models\Marketplace\MarketplaceProduct;
 use App\Models\Marketplace\MarketplaceSeller;
-use App\Events\BMS\ProductSynced;
+use App\Models\Marketplace\MarketplaceCategory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class GrowMarketIntegrationService
 {
-    /**
-     * Sync CMS product to GrowMarket
-     */
+    public function __construct(
+        private BmsDataService $bmsData,
+    ) {}
+
     public function syncProductToMarket(int $companyId, int $productId): array
     {
         try {
             DB::beginTransaction();
 
-            // Get CMS product
-            $cmsProduct = CMSProduct::where('company_id', $companyId)
-                ->where('id', $productId)
-                ->first();
+            $cmsProduct = $this->bmsData->getProduct($companyId, $productId);
 
             if (!$cmsProduct) {
                 return ['success' => false, 'error' => 'Product not found'];
             }
 
-            // Get or create seller for this company
             $seller = $this->getOrCreateSellerForCompany($companyId);
 
             if (!$seller) {
                 return ['success' => false, 'error' => 'Could not create seller account'];
             }
 
-            // Create or update marketplace product
             $marketplaceProduct = MarketplaceProduct::updateOrCreate(
                 [
                     'seller_id' => $seller->id,
@@ -48,7 +45,7 @@ class GrowMarketIntegrationService
                     'name' => $cmsProduct->name,
                     'slug' => Str::slug($cmsProduct->name) . '-' . $productId,
                     'description' => $cmsProduct->description ?? 'No description available',
-                    'price' => (int)($cmsProduct->selling_price * 100), // Convert to cents
+                    'price' => (int)($cmsProduct->selling_price * 100),
                     'compare_price' => $cmsProduct->cost_price ? (int)($cmsProduct->cost_price * 100) : null,
                     'stock_quantity' => $cmsProduct->stock_quantity,
                     'images' => $cmsProduct->image_url ? [$cmsProduct->image_url] : [],
@@ -56,10 +53,8 @@ class GrowMarketIntegrationService
                 ]
             );
 
-            // Mark CMS product as synced
             $cmsProduct->update(['sync_to_market' => true]);
 
-            // Fire event
             event(new ProductSynced($cmsProduct, 'growmarket'));
 
             DB::commit();
@@ -71,7 +66,7 @@ class GrowMarketIntegrationService
             ];
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             Log::error('Failed to sync product to GrowMarket', [
                 'company_id' => $companyId,
                 'product_id' => $productId,
@@ -85,14 +80,9 @@ class GrowMarketIntegrationService
         }
     }
 
-    /**
-     * Bulk sync all CMS products to GrowMarket
-     */
     public function bulkSyncProducts(int $companyId): array
     {
-        $products = CMSProduct::where('company_id', $companyId)
-            ->where('is_active', true)
-            ->get();
+        $products = $this->bmsData->getProducts($companyId)->where('is_active', true);
 
         $results = [
             'total' => $products->count(),
@@ -103,7 +93,7 @@ class GrowMarketIntegrationService
 
         foreach ($products as $product) {
             $result = $this->syncProductToMarket($companyId, $product->id);
-            
+
             if ($result['success']) {
                 $results['synced']++;
             } else {
@@ -119,15 +109,11 @@ class GrowMarketIntegrationService
         return $results;
     }
 
-    /**
-     * Unsync product from GrowMarket
-     */
     public function unsyncProduct(int $companyId, int $productId): array
     {
         try {
-            // Find marketplace product
             $seller = $this->getSellerForCompany($companyId);
-            
+
             if (!$seller) {
                 return ['success' => false, 'error' => 'Seller not found'];
             }
@@ -140,10 +126,7 @@ class GrowMarketIntegrationService
                 $marketplaceProduct->update(['status' => 'inactive']);
             }
 
-            // Update CMS product
-            $cmsProduct = CMSProduct::where('company_id', $companyId)
-                ->where('id', $productId)
-                ->first();
+            $cmsProduct = $this->bmsData->getProduct($companyId, $productId);
 
             if ($cmsProduct) {
                 $cmsProduct->update(['sync_to_market' => false]);
@@ -167,28 +150,20 @@ class GrowMarketIntegrationService
         }
     }
 
-    /**
-     * Get or create seller for company
-     */
     private function getOrCreateSellerForCompany(int $companyId): ?MarketplaceSeller
     {
-        // Get company
-        $company = \App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel::find($companyId);
-        
+        $company = $this->bmsData->findCompany($companyId);
+
         if (!$company) {
             return null;
         }
 
-        // Get user from company
-        $cmsUser = \App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel::where('company_id', $companyId)
-            ->where('role', 'owner')
-            ->first();
+        $cmsUser = $this->bmsData->findCompanyOwner($companyId);
 
         if (!$cmsUser) {
             return null;
         }
 
-        // Get or create seller
         $seller = MarketplaceSeller::firstOrCreate(
             [
                 'user_id' => $cmsUser->user_id,
@@ -212,9 +187,6 @@ class GrowMarketIntegrationService
         return $seller;
     }
 
-    /**
-     * Get seller for company
-     */
     private function getSellerForCompany(int $companyId): ?MarketplaceSeller
     {
         return MarketplaceSeller::where('bizboost_business_id', $companyId)
@@ -222,32 +194,25 @@ class GrowMarketIntegrationService
             ->first();
     }
 
-    /**
-     * Map CMS category to marketplace category
-     */
     private function mapCategory(?string $categoryName): ?int
     {
         if (!$categoryName) {
             return null;
         }
 
-        $category = \App\Models\Marketplace\MarketplaceCategory::where('name', $categoryName)->first();
-        
+        $category = MarketplaceCategory::where('name', $categoryName)->first();
+
         if (!$category) {
-            // Try to find similar category
-            $category = \App\Models\Marketplace\MarketplaceCategory::where('name', 'like', "%{$categoryName}%")->first();
+            $category = MarketplaceCategory::where('name', 'like', "%{$categoryName}%")->first();
         }
 
         return $category?->id;
     }
 
-    /**
-     * Get sync status for company
-     */
     public function getSyncStatus(int $companyId): array
     {
-        $totalProducts = CMSProduct::where('company_id', $companyId)->count();
-        $syncedProducts = CMSProduct::where('company_id', $companyId)
+        $totalProducts = $this->bmsData->getProducts($companyId)->count();
+        $syncedProducts = $this->bmsData->getProducts($companyId)
             ->where('sync_to_market', true)
             ->count();
 

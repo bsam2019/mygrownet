@@ -25,6 +25,8 @@ use App\Infrastructure\Persistence\Repositories\GrowMart\EloquentProductReposito
 use App\Infrastructure\Persistence\Repositories\GrowMart\EloquentReviewRepository;
 use App\Infrastructure\Persistence\Repositories\GrowMart\EloquentWarehouseRepository;
 use App\Infrastructure\Persistence\Repositories\GrowMart\EloquentWishlistRepository;
+use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\Core\Services\ModuleDiscovery;
 use Illuminate\Support\ServiceProvider;
 
 class GrowMartServiceProvider extends ServiceProvider
@@ -52,5 +54,18 @@ class GrowMartServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations/growmarket'));
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'growmart',
+            name: 'GrowMart',
+            version: '1.0.0',
+            category: 'consumer',
+            description: 'E-commerce marketplace with products, orders, cart, inventory, and coupons',
+            supportsSubdomain: true,
+            capabilities: ['marketplace', 'shopping_cart', 'product_catalog', 'coupons'],
+            permissions: ['manage_products', 'manage_orders', 'manage_coupons', 'manage_reviews'],
+            settings: ['default_currency', 'shipping_policy', 'tax_inclusive'],
+        ));
     }
 }

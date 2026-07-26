@@ -2,52 +2,39 @@
 
 namespace App\Services\Integration;
 
-use App\Infrastructure\Persistence\Eloquent\BMS\ProductModel;
-use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
-use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\BMS\InventoryModel;
+use App\Domain\BMS\Core\Services\BmsDataService;
 use App\Domain\BMS\Core\Services\CompanySettingsService;
+use App\Domain\Core\Services\OutboxService;
 use App\Events\BMS\InvoiceCreated;
 use App\Events\BMS\InventoryUpdated;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class BMSIntegrationService
 {
     public function __construct(
-        private CompanySettingsService $settingsService
+        private CompanySettingsService $settingsService,
+        private BmsDataService $bmsData,
+        private OutboxService $outbox,
     ) {}
 
-    /**
-     * Check if user has CMS enabled
-     */
     public function isCMSEnabled(int $userId): bool
     {
         $user = \App\Models\User::find($userId);
         return $user && $user->cmsUser !== null;
     }
 
-    /**
-     * Get company ID for user
-     */
     public function getCompanyId(int $userId): ?int
     {
         $user = \App\Models\User::find($userId);
         return $user?->cmsUser?->company_id;
     }
 
-    /**
-     * Get products for integration
-     */
     public function getProducts(int $companyId, bool $activeOnly = true): array
     {
-        $query = ProductModel::where('company_id', $companyId);
-        
-        if ($activeOnly) {
-            $query->where('is_active', true);
-        }
-
-        $products = $query->with('category')->get()->map(fn($product) => [
+        $products = $this->bmsData->getProducts($companyId, $activeOnly)->map(fn($product) => [
             'id' => $product->id,
             'name' => $product->name,
             'description' => $product->description,
@@ -65,15 +52,9 @@ class BMSIntegrationService
         return $products->toArray();
     }
 
-    /**
-     * Get single product
-     */
     public function getProduct(int $companyId, int $productId): ?array
     {
-        $product = ProductModel::where('company_id', $companyId)
-            ->where('id', $productId)
-            ->with('category')
-            ->first();
+        $product = $this->bmsData->getProduct($companyId, $productId);
 
         if (!$product) {
             return null;
@@ -94,76 +75,32 @@ class BMSIntegrationService
         ];
     }
 
-    /**
-     * Create order from GrowBuilder
-     */
     public function createOrderFromGrowBuilder(int $companyId, array $data): array
     {
-        try {
-            DB::beginTransaction();
-
-            // 1. Create or get customer
-            $customer = $this->getOrCreateCustomer($companyId, $data['customer'], 'growbuilder');
-
-            // 2. Validate inventory
-            $this->validateInventory($companyId, $data['items']);
-
-            // 3. Create invoice
-            $invoice = $this->createInvoice($companyId, $customer, $data, 'growbuilder');
-
-            // 4. Update inventory
-            $this->updateInventoryFromOrder($companyId, $data['items'], 'growbuilder');
-
-            // 5. Fire event
-            event(new InvoiceCreated($invoice, 'growbuilder'));
-
-            DB::commit();
-
-            return [
-                'success' => true,
-                'invoice_id' => $invoice->id,
-                'invoice_number' => $invoice->invoice_number,
-                'total' => $invoice->total_amount,
-                'customer_id' => $customer->id,
-            ];
-        } catch (\Exception $e) {
-            DB::rollBack();
-            
-            Log::error('GrowBuilder order creation failed', [
-                'company_id' => $companyId,
-                'error' => $e->getMessage(),
-                'data' => $data,
-            ]);
-
-            return [
-                'success' => false,
-                'error' => $e->getMessage(),
-            ];
-        }
+        return $this->createOrder($companyId, $data, 'growbuilder');
     }
 
-    /**
-     * Create order from GrowMarket
-     */
     public function createOrderFromGrowMarket(int $companyId, array $data): array
     {
+        return $this->createOrder($companyId, $data, 'growmarket');
+    }
+
+    private function createOrder(int $companyId, array $data, string $source): array
+    {
         try {
             DB::beginTransaction();
 
-            // 1. Create or get customer
-            $customer = $this->getOrCreateCustomer($companyId, $data['customer'], 'growmarket');
-
-            // 2. Validate inventory
+            $customer = $this->getOrCreateCustomer($companyId, $data['customer'], $source);
             $this->validateInventory($companyId, $data['items']);
+            $invoice = $this->createInvoice($companyId, $customer, $data, $source);
+            $this->updateInventoryFromOrder($companyId, $data['items'], $source);
 
-            // 3. Create invoice
-            $invoice = $this->createInvoice($companyId, $customer, $data, 'growmarket');
-
-            // 4. Update inventory
-            $this->updateInventoryFromOrder($companyId, $data['items'], 'growmarket');
-
-            // 5. Fire event
-            event(new InvoiceCreated($invoice, 'growmarket'));
+            $this->outbox->insert(
+                eventName: 'bms.invoice.created.v1',
+                payload: ['invoice_id' => $invoice->id, 'invoice_number' => $invoice->invoice_number, 'source' => $source],
+                context: ['company_id' => $companyId],
+                publisher: 'bms',
+            );
 
             DB::commit();
 
@@ -176,11 +113,11 @@ class BMSIntegrationService
             ];
         } catch (\Exception $e) {
             DB::rollBack();
-            
-            Log::error('GrowMarket order creation failed', [
+
+            Log::error('Order creation failed', [
                 'company_id' => $companyId,
+                'source' => $source,
                 'error' => $e->getMessage(),
-                'data' => $data,
             ]);
 
             return [
@@ -190,17 +127,12 @@ class BMSIntegrationService
         }
     }
 
-    /**
-     * Get or create customer
-     */
     private function getOrCreateCustomer(int $companyId, array $customerData, string $source): CustomerModel
     {
-        $customer = CustomerModel::where('company_id', $companyId)
-            ->where('email', $customerData['email'])
-            ->first();
+        $customer = $this->bmsData->findOrFailCustomer($companyId, $customerData['email']);
 
         if (!$customer) {
-            $customer = CustomerModel::create([
+            $customer = $this->bmsData->createCustomer([
                 'company_id' => $companyId,
                 'name' => $customerData['name'],
                 'email' => $customerData['email'],
@@ -213,15 +145,10 @@ class BMSIntegrationService
         return $customer;
     }
 
-    /**
-     * Validate inventory availability
-     */
     private function validateInventory(int $companyId, array $items): void
     {
         foreach ($items as $item) {
-            $product = ProductModel::where('company_id', $companyId)
-                ->where('id', $item['product_id'])
-                ->first();
+            $product = $this->bmsData->getProduct($companyId, $item['product_id']);
 
             if (!$product) {
                 throw new \Exception("Product {$item['product_id']} not found");
@@ -233,9 +160,6 @@ class BMSIntegrationService
         }
     }
 
-    /**
-     * Create invoice from order
-     */
     private function createInvoice(int $companyId, CustomerModel $customer, array $data, string $source): InvoiceModel
     {
         $settings = $this->settingsService->getSettings($companyId);
@@ -245,7 +169,7 @@ class BMSIntegrationService
         $taxAmount = $subtotal * ($taxRate / 100);
         $total = $subtotal + $taxAmount;
 
-        $invoice = InvoiceModel::create([
+        $invoice = $this->bmsData->createInvoice([
             'company_id' => $companyId,
             'customer_id' => $customer->id,
             'invoice_number' => $this->generateInvoiceNumber($companyId, $settings),
@@ -267,10 +191,9 @@ class BMSIntegrationService
             ],
         ]);
 
-        // Create invoice items
         foreach ($data['items'] as $item) {
-            $product = ProductModel::find($item['product_id']);
-            
+            $product = $this->bmsData->findProduct($item['product_id']);
+
             $invoice->items()->create([
                 'product_id' => $item['product_id'],
                 'description' => $product->name,
@@ -283,28 +206,22 @@ class BMSIntegrationService
         return $invoice;
     }
 
-    /**
-     * Update inventory from order
-     */
     private function updateInventoryFromOrder(int $companyId, array $items, string $source): void
     {
         foreach ($items as $item) {
-            $product = ProductModel::find($item['product_id']);
-            
-            if ($product) {
-                $product->decrement('stock_quantity', $item['quantity']);
-                
-                // Log inventory movement
-                InventoryModel::create([
-                    'company_id' => $companyId,
-                    'product_id' => $item['product_id'],
-                    'type' => 'sale',
-                    'quantity' => -$item['quantity'],
-                    'reference' => ucfirst($source) . ' Order',
-                    'date' => now(),
-                ]);
+            $this->bmsData->decrementStock($item['product_id'], $item['quantity']);
 
-                // Fire inventory updated event
+            $this->bmsData->createInventoryMovement([
+                'company_id' => $companyId,
+                'product_id' => $item['product_id'],
+                'type' => 'sale',
+                'quantity' => -$item['quantity'],
+                'reference' => ucfirst($source) . ' Order',
+                'date' => now(),
+            ]);
+
+            $product = $this->bmsData->findProduct($item['product_id']);
+            if ($product) {
                 event(new InventoryUpdated(
                     $item['product_id'],
                     $companyId,
@@ -315,14 +232,9 @@ class BMSIntegrationService
         }
     }
 
-    /**
-     * Get inventory for integration
-     */
     public function getInventory(int $companyId): array
     {
-        $inventory = ProductModel::where('company_id', $companyId)
-            ->where('is_active', true)
-            ->get()
+        $inventory = $this->bmsData->getProducts($companyId)
             ->map(fn($product) => [
                 'product_id' => $product->id,
                 'sku' => $product->sku,
@@ -336,16 +248,12 @@ class BMSIntegrationService
         return $inventory->toArray();
     }
 
-    /**
-     * Generate invoice number
-     */
     private function generateInvoiceNumber(int $companyId, array $settings): string
     {
         $prefix = $settings['invoice']['prefix'] ?? 'INV';
         $nextNumber = $settings['invoice']['next_number'] ?? 1;
-        
-        // Increment next number
-        $company = \App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel::find($companyId);
+
+        $company = $this->bmsData->findCompany($companyId);
         $company->update([
             'settings' => array_merge($settings, [
                 'invoice' => array_merge($settings['invoice'], [
@@ -353,7 +261,7 @@ class BMSIntegrationService
                 ]),
             ]),
         ]);
-        
+
         return $prefix . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
     }
 }

@@ -54,6 +54,8 @@ use App\Infrastructure\Persistence\Repositories\BizBoost\EloquentQrCodeRepositor
 use App\Infrastructure\Persistence\Repositories\BizBoost\EloquentSaleRepository;
 use App\Infrastructure\Persistence\Repositories\BizBoost\EloquentTeamMemberRepository;
 use App\Infrastructure\Persistence\Repositories\BizBoost\EloquentTemplateRepository;
+use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\Core\Services\ModuleDiscovery;
 use Illuminate\Support\ServiceProvider;
 
 class BizBoostServiceProvider extends ServiceProvider
@@ -96,5 +98,19 @@ class BizBoostServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations/bizboost'));
+        $this->loadMigrationsFrom(database_path('migrations/email_marketing'));
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'bizboost',
+            name: 'BizBoost',
+            version: '1.0.0',
+            category: 'business',
+            description: 'SME growth platform with CRM, marketing, sales, email marketing, and QR code tools',
+            supportsSubdomain: true,
+            capabilities: ['business_management', 'crm', 'marketing', 'qr_codes', 'ai_usage', 'email_marketing'],
+            permissions: ['manage_business', 'manage_customers', 'manage_products', 'manage_campaigns'],
+            settings: ['email_campaign_defaults', 'smtp_config'],
+        ));
     }
 }

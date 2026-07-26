@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Domain\StockFlow\Contracts\InventoryProvider;
+use App\Domain\StockFlow\Contracts\InventoryProviderV2;
+use App\Domain\StockFlow\Infrastructure\InventoryProviderImpl;
+use App\Domain\StockFlow\Infrastructure\InventoryProviderV2Impl;
 use App\Domain\StockFlow\Repositories\AuditRepositoryInterface;
 use App\Domain\StockFlow\Repositories\BinRepositoryInterface;
 use App\Domain\StockFlow\Repositories\CashRegisterRepositoryInterface;
@@ -35,6 +39,8 @@ use App\Domain\StockFlow\Repositories\SaleReturnRepositoryInterface;
 use App\Domain\StockFlow\Repositories\SupplierReturnRepositoryInterface;
 use App\Domain\StockFlow\Services\CompanyRoleService;
 use App\Domain\StockFlow\Services\CompanyUserService;
+use App\Domain\Core\Services\ModuleDiscovery;
+use App\Domain\Core\ValueObjects\ModuleManifest;
 use App\Extensions\ExtensionServiceProvider;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentAuditRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentBinRepository;
@@ -74,6 +80,38 @@ class StockFlowServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations/stockflow'));
+
+        $registry = $this->app->make(\App\Domain\Core\Services\EventOwnershipRegistry::class);
+        $registry->register('stockflow.purchase_order.created.v1', 'stockflow');
+        $registry->register('stockflow.goods_received.v1', 'stockflow');
+        $registry->register('stockflow.stock.adjusted.v1', 'stockflow');
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'stockflow',
+            name: 'StockFlow',
+            version: '2.3.0',
+            category: 'business',
+            description: 'Inventory management, purchasing, and auditing',
+            entrypoint: '/stock-audit',
+            supportsSubdomain: true,
+            capabilities: ['inventory', 'warehouses', 'suppliers', 'purchasing', 'auditing', 'stock_transfers'],
+            contracts: [InventoryProvider::class, InventoryProviderV2::class],
+            permissions: ['manage_inventory', 'manage_warehouses', 'manage_suppliers', 'manage_audits', 'manage_cash_registers'],
+            settings: ['default_currency', 'low_stock_threshold', 'expiry_warning_days', 'auto_reorder'],
+            healthChecks: ['database', 'inventory_sync'],
+            events: [
+                \App\Domain\StockFlow\Events\PurchaseOrderReceived::class,
+                \App\Domain\StockFlow\Events\GoodsReceived::class,
+                \App\Domain\StockFlow\Events\StockAdjusted::class,
+                \App\Domain\StockFlow\Events\SaleCompleted::class,
+                \App\Domain\StockFlow\Events\CashDiscrepancyDetected::class,
+            ],
+            listens: [
+                \App\Domain\Core\Events\OrganizationCreated::class,
+                \App\Domain\Core\Events\ApplicationSubscribed::class,
+            ],
+        ));
 
         \Illuminate\Support\Facades\Redirect::macro('sfRoute', function ($name, $parameters = [], $status = 302, $headers = []) {
             // Convert stockflow.* to stockflow.sub.* for subdomain routes
@@ -124,6 +162,10 @@ class StockFlowServiceProvider extends ServiceProvider
         $this->app->bind(TransferRepositoryInterface::class, EloquentTransferRepository::class);
         $this->app->bind(SaleReturnRepositoryInterface::class, EloquentSaleReturnRepository::class);
         $this->app->bind(SupplierReturnRepositoryInterface::class, EloquentSupplierReturnRepository::class);
+
+        // Integration Contracts
+        $this->app->bind(InventoryProvider::class, InventoryProviderImpl::class);
+        $this->app->bind(InventoryProviderV2::class, InventoryProviderV2Impl::class);
 
         // Employee/Role repositories
         $this->app->bind(CompanyRoleRepositoryInterface::class, EloquentCompanyRoleRepository::class);

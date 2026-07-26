@@ -89,7 +89,7 @@ class GiftService
 
     private function getWalletBalance(User $user): int
     {
-        $walletService = app(\App\Domain\GrowNet\Services\WalletService::class);
+        $walletProvider = app(\App\Domain\Core\Services\IntegrationRegistry::class)->resolve(\App\Domain\GrowNet\Contracts\WalletProvider::class);
         return (int) $walletService->calculateBalance($user);
     }
 }

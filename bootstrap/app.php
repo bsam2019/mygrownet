@@ -83,8 +83,6 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('web')
                 ->group(base_path('routes/pos.php'));
             Route::middleware('web')
-                ->group(base_path('routes/inventory.php'));
-            Route::middleware('web')
                 ->group(base_path('routes/marketplace.php'));
             Route::middleware('web')
                 ->group(base_path('routes/admin-marketplace.php'));

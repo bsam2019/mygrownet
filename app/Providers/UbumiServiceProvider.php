@@ -6,6 +6,8 @@ use App\Infrastructure\Ubumi\Eloquent\FamilyModel;
 use App\Infrastructure\Ubumi\Eloquent\PersonModel;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
+use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\Core\Services\ModuleDiscovery;
 
 class UbumiServiceProvider extends ServiceProvider
 {
@@ -48,6 +50,17 @@ class UbumiServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations/ubumi'));
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'ubumi',
+            name: 'Ubumi',
+            version: '1.0.0',
+            category: 'consumer',
+            description: 'Family health and wellness tracking with relationships, check-ins, and milestones',
+            capabilities: ['family_tracking', 'wellness', 'checkins', 'relationships'],
+            permissions: ['manage_family', 'manage_people', 'manage_checkins'],
+        ));
 
         // Register route model binding for Family using slug
         Route::bind('family', function ($value) {

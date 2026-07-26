@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\GrowNet\Contracts\ReferralProvider;
+use App\Domain\GrowNet\Contracts\StarterKitProvider;
+use App\Domain\GrowNet\Contracts\WalletProvider;
 use App\Domain\GrowNet\MLM\Repositories\CommissionRepository as MLMCommissionRepository;
 use App\Domain\GrowNet\MLM\Repositories\TeamVolumeRepository as MLMTeamVolumeRepository;
 use App\Domain\GrowNet\Repositories\CommissionRepositoryInterface;
@@ -19,6 +22,9 @@ use App\Domain\GrowNet\Reward\Repositories\ReferralRepositoryInterface as Reward
 use App\Domain\GrowNet\Services\DashboardService;
 use App\Domain\GrowNet\Services\MemberService;
 use App\Domain\GrowNet\Services\TierAdvancementService;
+use App\Infrastructure\Contracts\GrowNet\ReferralProviderImpl;
+use App\Infrastructure\Contracts\GrowNet\StarterKitProviderImpl;
+use App\Infrastructure\Contracts\GrowNet\WalletProviderImpl;
 use App\Infrastructure\Persistence\Eloquent\GrowNet\MemberModel;
 use App\Infrastructure\Persistence\Repositories\EloquentAssetRepository;
 use App\Infrastructure\Persistence\Repositories\EloquentCommissionRepository;
@@ -32,6 +38,8 @@ use App\Infrastructure\Persistence\Repositories\GrowNet\EloquentReferralReposito
 use App\Infrastructure\Persistence\Repositories\GrowNet\EloquentStarterKitRepository;
 use App\Infrastructure\Persistence\Repositories\GrowNet\EloquentTeamVolumeRepository as GrowNetEloquentTeamVolumeRepository;
 use App\Infrastructure\Persistence\Repositories\GrowNet\EloquentTierUpgradeRepository;
+use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\Core\Services\ModuleDiscovery;
 use Illuminate\Support\ServiceProvider;
 
 class GrowNetServiceProvider extends ServiceProvider
@@ -58,10 +66,34 @@ class GrowNetServiceProvider extends ServiceProvider
         $this->app->singleton(DashboardService::class);
         $this->app->singleton(MemberService::class);
         $this->app->singleton(TierAdvancementService::class);
+
+        // Register integration contracts
+        $this->app->singleton(WalletProvider::class, WalletProviderImpl::class);
+        $this->app->singleton(StarterKitProvider::class, StarterKitProviderImpl::class);
+        $this->app->singleton(ReferralProvider::class, ReferralProviderImpl::class);
     }
 
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations/grownet'));
+        $this->loadMigrationsFrom(database_path('migrations/learning'));
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'grownet',
+            name: 'GrowNet',
+            version: '1.0.0',
+            category: 'consumer',
+            description: 'MLM network, memberships, tiers, commissions, rewards, loyalty, and learning',
+            supportsSubdomain: false,
+            capabilities: ['mlm', 'commissions', 'rewards', 'loyalty', 'tier_management', 'wallet', 'starter_kit', 'referral'],
+            contracts: [
+                \App\Domain\GrowNet\Contracts\WalletProvider::class,
+                \App\Domain\GrowNet\Contracts\StarterKitProvider::class,
+                \App\Domain\GrowNet\Contracts\ReferralProvider::class,
+            ],
+            permissions: ['manage_members', 'manage_commissions', 'manage_tiers', 'manage_rewards'],
+            settings: ['commission_rate', 'tier_thresholds', 'reward_expiry_days'],
+        ));
     }
 }

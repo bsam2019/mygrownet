@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Domain\StockFlow\Services;
 
+use App\Domain\Core\Services\OutboxService;
 use App\Domain\StockFlow\Entities\CashRegister;
-use App\Domain\StockFlow\Events\CashDiscrepancyDetected;
 use App\Domain\StockFlow\Exceptions\OperationFailedException;
 use App\Domain\StockFlow\Repositories\CashRegisterRepositoryInterface;
 use App\Domain\StockFlow\ValueObjects\CashRegisterId;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
 use App\Domain\StockFlow\ValueObjects\Money;
 use DateTimeImmutable;
-use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class CashRegisterService
@@ -21,6 +21,7 @@ class CashRegisterService
 
     public function __construct(
         private CashRegisterRepositoryInterface $cashRegisterRepository,
+        private OutboxService $outbox,
     ) {}
 
     public function openRegister(int $companyId, string $date, float $openingBalance, int $userId): CashRegister
@@ -68,29 +69,36 @@ class CashRegisterService
 
     public function closeRegister(int $registerId, float $actualClosing, ?string $notes = null, ?int $closedBy = null): CashRegister
     {
-        $register = $this->cashRegisterRepository->findById(CashRegisterId::fromInt($registerId));
-        if (!$register) {
-            throw new OperationFailedException('close register', 'Register not found');
-        }
+        return DB::transaction(function () use ($registerId, $actualClosing, $notes, $closedBy) {
+            $register = $this->cashRegisterRepository->findById(CashRegisterId::fromInt($registerId));
+            if (!$register) {
+                throw new OperationFailedException('close register', 'Register not found');
+            }
 
-        $register->close(Money::fromFloat($actualClosing), $notes, $closedBy);
-        $saved = $this->cashRegisterRepository->save($register);
+            $register->close(Money::fromFloat($actualClosing), $notes, $closedBy);
+            $saved = $this->cashRegisterRepository->save($register);
 
-        // Detect and signal cash discrepancy
-        $variance = $saved->getVariance();
-        if ($variance && abs($variance->toFloat()) > self::DISCREPANCY_TOLERANCE) {
-            Event::dispatch(new CashDiscrepancyDetected(
-                companyId: $saved->getCompanyId()->toInt(),
-                cashRegisterId: $registerId,
-                registerDate: $saved->getRegisterDate()->format('Y-m-d'),
-                expectedAmount: $saved->getExpectedClosing()->toFloat(),
-                countedAmount: $actualClosing,
-                variance: $variance->toFloat(),
-                closedBy: $saved->getClosedBy() ?? 0,
-            ));
-        }
+            // Detect and signal cash discrepancy
+            $variance = $saved->getVariance();
+            if ($variance && abs($variance->toFloat()) > self::DISCREPANCY_TOLERANCE) {
+                $this->outbox->insert(
+                    eventName: 'stockflow.cash.discrepancy.v1',
+                    payload: [
+                        'company_id' => $saved->getCompanyId()->toInt(),
+                        'cash_register_id' => $registerId,
+                        'register_date' => $saved->getRegisterDate()->format('Y-m-d'),
+                        'expected_amount' => $saved->getExpectedClosing()->toFloat(),
+                        'counted_amount' => $actualClosing,
+                        'variance' => $variance->toFloat(),
+                        'closed_by' => $saved->getClosedBy() ?? 0,
+                    ],
+                    context: ['company_id' => $saved->getCompanyId()->toInt()],
+                    publisher: 'stockflow',
+                );
+            }
 
-        return $saved;
+            return $saved;
+        });
     }
 
     public function verifyRegister(int $registerId): CashRegister

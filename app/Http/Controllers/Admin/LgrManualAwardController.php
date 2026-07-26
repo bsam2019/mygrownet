@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LGR\LgrManualAward;
 use App\Models\User;
 use App\Application\Notification\UseCases\SendNotificationUseCase;
-use App\Services\IdempotencyService;
+use App\Domain\Core\Services\IdempotencyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -113,13 +113,8 @@ class LgrManualAwardController extends Controller
         // Generate idempotency key based on admin, user, amount, and timestamp
         $timestamp = floor(time() / 60) * 60; // Round to nearest minute
         $idempotencyKey = $this->idempotencyService->generateKey(
-            auth()->id(),
             'lgr_manual_award',
-            [
-                'user_id' => $validated['user_id'],
-                'amount' => $validated['amount'],
-                'timestamp' => $timestamp
-            ]
+            ['admin_id' => auth()->id(), 'user_id' => $validated['user_id'], 'amount' => $validated['amount'], 'timestamp' => $timestamp]
         );
         
         // Check if this exact award was already processed recently

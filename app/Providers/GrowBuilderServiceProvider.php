@@ -12,6 +12,8 @@ use App\Infrastructure\Persistence\Repositories\GrowBuilder\EloquentPageReposito
 use App\Infrastructure\Persistence\Repositories\GrowBuilder\EloquentProductRepository;
 use App\Infrastructure\Persistence\Repositories\GrowBuilder\EloquentSiteRepository;
 use App\Infrastructure\Persistence\Repositories\GrowBuilder\EloquentTemplateRepository;
+use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\Core\Services\ModuleDiscovery;
 use Illuminate\Support\ServiceProvider;
 
 class GrowBuilderServiceProvider extends ServiceProvider
@@ -28,5 +30,18 @@ class GrowBuilderServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations/growbuilder'));
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'growbuilder',
+            name: 'GrowBuilder',
+            version: '1.0.0',
+            category: 'business',
+            description: 'Website builder, e-commerce sites, media, AI usage, and payments',
+            supportsSubdomain: true,
+            capabilities: ['site_builder', 'ecommerce', 'media', 'ai_tools', 'payments'],
+            permissions: ['manage_sites', 'manage_products', 'manage_media', 'manage_payments'],
+            settings: ['default_template', 'media_storage_limit', 'ai_credit_limit'],
+        ));
     }
 }

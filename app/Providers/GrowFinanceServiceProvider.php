@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Core\Services\ModuleDiscovery;
+use App\Domain\Core\Services\EventOwnershipRegistry;
+use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\GrowFinance\Contracts\AccountingProvider;
+use App\Domain\GrowFinance\Infrastructure\AccountingProviderImpl;
 use App\Domain\GrowFinance\Repositories\AccountRepositoryInterface;
 use App\Domain\GrowFinance\Repositories\ApiTokenRepositoryInterface;
 use App\Domain\GrowFinance\Repositories\BankAccountRepositoryInterface;
@@ -112,11 +117,34 @@ class GrowFinanceServiceProvider extends ServiceProvider
         $this->app->singleton(RecurringTransactionService::class);
         $this->app->singleton(TeamService::class);
         $this->app->singleton(WhiteLabelService::class);
+
+        // Integration Contracts
+        $this->app->bind(AccountingProvider::class, AccountingProviderImpl::class);
     }
 
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations/growfinance'));
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'growfinance',
+            name: 'GrowFinance',
+            version: '1.0.0',
+            category: 'business',
+            description: 'Accounting, invoicing, and financial management',
+            requiresOrganization: true,
+            capabilities: ['accounting', 'invoicing', 'financial_reports'],
+            contracts: [AccountingProvider::class],
+            permissions: ['manage_accounts', 'process_payments', 'view_reports', 'manage_budgets'],
+            settings: ['default_currency', 'fiscal_year_start', 'tax_rate', 'invoice_prefix'],
+            events: [
+                \App\Domain\GrowFinance\Events\PaymentReceived::class,
+            ],
+        ));
+
+        $registry = $this->app->make(EventOwnershipRegistry::class);
+        $registry->register('growfinance.payment.received.v1', 'growfinance');
 
         Inertia::share([
             'quickEntryData' => function () {

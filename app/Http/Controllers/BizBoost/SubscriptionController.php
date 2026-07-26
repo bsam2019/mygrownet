@@ -193,11 +193,11 @@ class SubscriptionController extends Controller
 
         try {
             // Update subscription (this would normally happen after payment confirmation)
-            // Using the centralized ModuleSubscriptionService
-            $moduleSubscriptionService = app(\App\Domain\Module\Services\ModuleSubscriptionService::class);
+            // Using the centralized SubscriptionManagementProvider
+            $subscriptionManager = app(\App\Domain\Core\Services\IntegrationRegistry::class)->resolve(\App\Domain\Module\Contracts\SubscriptionManagementProvider::class);
             
-            $moduleSubscriptionService->subscribe(
-                $user,
+            $subscriptionManager->subscribe(
+                $user->id,
                 self::MODULE_ID,
                 $validated['tier'],
                 $validated['billing_cycle']
@@ -230,8 +230,8 @@ class SubscriptionController extends Controller
         $user = $request->user();
 
         try {
-            $moduleSubscriptionService = app(\App\Domain\Module\Services\ModuleSubscriptionService::class);
-            $moduleSubscriptionService->cancel($user, self::MODULE_ID);
+            $subscriptionManager = app(\App\Domain\Core\Services\IntegrationRegistry::class)->resolve(\App\Domain\Module\Contracts\SubscriptionManagementProvider::class);
+            $subscriptionManager->cancel($user->id, self::MODULE_ID);
 
             return redirect()->route('bizboost.dashboard')
                 ->with('success', 'Your subscription has been cancelled. You will retain access until the end of your billing period.');

@@ -16,6 +16,8 @@ use App\Infrastructure\Persistence\Repositories\LifePlus\EloquentGigRepository;
 use App\Infrastructure\Persistence\Repositories\LifePlus\EloquentHabitRepository;
 use App\Infrastructure\Persistence\Repositories\LifePlus\EloquentNoteRepository;
 use App\Infrastructure\Persistence\Repositories\LifePlus\EloquentTaskRepository;
+use App\Domain\Core\Services\ModuleDiscovery;
+use App\Domain\Core\ValueObjects\ModuleManifest;
 use Illuminate\Support\ServiceProvider;
 
 class LifeplusServiceProvider extends ServiceProvider
@@ -34,5 +36,16 @@ class LifeplusServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations/lifeplus'));
+
+        $discovery = $this->app->make(ModuleDiscovery::class);
+        $discovery->register(new ModuleManifest(
+            id: 'lifeplus',
+            name: 'LifePlus',
+            version: '1.0.0',
+            category: 'consumer',
+            description: 'Personal development and wellness with tasks, expenses, habits, and community',
+            capabilities: ['wellness', 'habit_tracking', 'expense_tracking', 'community'],
+            permissions: ['manage_tasks', 'manage_expenses', 'manage_habits', 'manage_gigs'],
+        ));
     }
 }

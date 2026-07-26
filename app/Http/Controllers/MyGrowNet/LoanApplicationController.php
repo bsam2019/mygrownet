@@ -4,7 +4,7 @@ namespace App\Http\Controllers\MyGrowNet;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Services\IdempotencyService;
+use App\Domain\Core\Services\IdempotencyService;
 use App\Application\Notification\UseCases\SendNotificationUseCase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -102,12 +102,8 @@ class LoanApplicationController extends Controller
         // Generate idempotency key
         $timestamp = floor(time() / 300) * 300; // Round to 5 minutes
         $idempotencyKey = $this->idempotencyService->generateKey(
-            $user->id,
             'loan_application',
-            [
-                'amount' => $validated['amount'],
-                'timestamp' => $timestamp
-            ]
+            ['user_id' => $user->id, 'amount' => $validated['amount'], 'timestamp' => $timestamp]
         );
         
         // Check if already submitted

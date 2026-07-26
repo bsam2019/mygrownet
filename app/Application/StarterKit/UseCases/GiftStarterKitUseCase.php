@@ -7,8 +7,9 @@ use App\Domain\StarterKit\ValueObjects\GiftLimits;
 use App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitGiftModel;
 use App\Infrastructure\Persistence\Eloquent\Settings\GiftSettingsModel;
 use App\Models\User;
+use App\Domain\Core\Services\IntegrationRegistry;
+use App\Domain\GrowNet\Contracts\WalletProvider;
 use App\Domain\GrowNet\Services\StarterKitService;
-use App\Domain\GrowNet\Services\WalletService;
 use App\Domain\Announcement\Services\EventBasedAnnouncementService;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +18,7 @@ class GiftStarterKitUseCase
     public function __construct(
         private GiftService $giftService,
         private StarterKitService $starterKitService,
-        private WalletService $walletService,
+        private IntegrationRegistry $registry,
         private EventBasedAnnouncementService $announcementService
     ) {}
 
@@ -107,7 +108,7 @@ class GiftStarterKitUseCase
 
         $giftsThisMonth = $this->giftService->getGiftsThisMonth($userId);
         $giftAmountThisMonth = $this->giftService->getGiftAmountThisMonth($userId);
-        $walletBalance = $this->walletService->calculateBalance($user);
+        $walletBalance = $this->registry->resolve(WalletProvider::class)->calculateBalance($user);
 
         // Debug logging
         \Log::info('Gift Limits Debug', [

@@ -77,8 +77,8 @@ class StorageService
         }
         
         // Get user's subscription tier
-        $subscriptionService = app(\App\Domain\Module\Services\SubscriptionService::class);
-        $tier = $subscriptionService->getUserTier($user, self::MODULE_ID) ?? 'free';
+        $subscriptionProvider = app(\App\Domain\Core\Services\IntegrationRegistry::class)->resolve(\App\Domain\Module\Contracts\SubscriptionProvider::class);
+        $tier = $subscriptionProvider->getUserTier($user, self::MODULE_ID) ?? 'free';
         
         // For agency tier, use pooled storage model
         if ($tier === 'agency') {

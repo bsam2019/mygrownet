@@ -14,6 +14,7 @@ use App\Domain\BMS\Repositories\PaymentRepositoryInterface;
 use App\Domain\BMS\Repositories\PaymentAllocationRepositoryInterface;
 use App\Domain\BMS\Repositories\InvoiceRepositoryInterface;
 use App\Domain\BMS\Repositories\CustomerRepositoryInterface;
+use App\Domain\Core\Services\OutboxService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -24,7 +25,8 @@ class PaymentService
         private readonly PaymentAllocationRepositoryInterface $allocationRepo,
         private readonly InvoiceRepositoryInterface $invoiceRepo,
         private readonly CustomerRepositoryInterface $customerRepo,
-        private readonly AuditTrailService $auditTrail
+        private readonly AuditTrailService $auditTrail,
+        private readonly OutboxService $outbox,
     ) {}
 
     public function recordPayment(
@@ -48,6 +50,7 @@ class PaymentService
 
             Log::info('Payment recorded', ['payment_id' => $payment->id, 'customer_id' => $customerId, 'amount' => $amount]);
 
+            $paidInvoices = [];
             $totalAllocated = 0;
             foreach ($allocations as $invoiceId => $allocationAmount) {
                 if ($allocationAmount <= 0) continue;
@@ -66,7 +69,10 @@ class PaymentService
                     'amount_paid' => $invoice->amountPaid + $allocationAmount,
                 ]));
                 $this->invoiceRepo->save($updatedInvoice);
-                $this->updateInvoiceStatus($updatedInvoice);
+                $wasPaid = $this->updateInvoiceStatus($updatedInvoice);
+                if ($wasPaid) {
+                    $paidInvoices[] = $updatedInvoice;
+                }
                 $totalAllocated += $allocationAmount;
 
                 Log::info('Payment allocated to invoice', ['payment_id' => $payment->id, 'invoice_id' => $invoiceId, 'amount' => $allocationAmount]);
@@ -77,6 +83,15 @@ class PaymentService
             $this->updateCustomerBalance($customerId);
 
             $this->auditTrail->log($companyId, $createdBy, 'payment', $payment->id, 'created', null, $payment->toArray());
+
+            foreach ($paidInvoices as $pi) {
+                $this->outbox->insert(
+                    eventName: 'bms.invoice.paid.v1',
+                    payload: ['invoice_id' => $pi->id, 'invoice_number' => $pi->invoiceNumber, 'amount_paid' => $pi->amountPaid, 'payment_method' => $method->value],
+                    context: ['company_id' => $companyId, 'customer_id' => $customerId],
+                    publisher: 'bms',
+                );
+            }
 
             return ['payment' => $this->paymentRepo->findById($payment->id), 'payment_model' => null];
         });
@@ -144,7 +159,7 @@ class PaymentService
         });
     }
 
-    private function updateInvoiceStatus(Invoice $invoice): void
+    private function updateInvoiceStatus(Invoice $invoice): bool
     {
         $balanceDue = $invoice->totalAmount - $invoice->amountPaid;
         $newStatus = $invoice->status;
@@ -163,6 +178,8 @@ class PaymentService
             $updated = Invoice::reconstitute(array_merge($invoice->toArray(), ['status' => $newStatus]));
             $this->invoiceRepo->save($updated);
         }
+
+        return $newStatus === InvoiceStatus::PAID->value;
     }
 
     private function updateCustomerBalance(int $customerId): void

@@ -74,9 +74,6 @@ class RouteServiceProvider extends ServiceProvider
                 ->group(base_path('routes/bizboost.php'));
                 
             Route::middleware('web')
-                ->group(base_path('routes/inventory.php'));
-                
-            Route::middleware('web')
                 ->group(base_path('routes/pos.php'));
                 
             Route::middleware('web')
