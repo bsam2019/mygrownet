@@ -30,6 +30,8 @@ use App\Domain\BMS\Repositories\RoleRepositoryInterface;
 use App\Domain\BMS\Repositories\SubcontractorRepositoryInterface;
 use App\Domain\BMS\Repositories\VendorRepositoryInterface;
 use App\Domain\BMS\Repositories\WorkerRepositoryInterface;
+use App\Domain\BMS\Core\Events\ExpenseRecorded;
+use App\Domain\Core\Services\EventOwnershipRegistry;
 use App\Domain\Core\ValueObjects\ModuleManifest;
 use App\Domain\Core\Services\ModuleDiscovery;
 use App\Infrastructure\Persistence\Repositories\BMS\EloquentAssetRepository;
@@ -124,7 +126,13 @@ class BmsServiceProvider extends ServiceProvider
             events: [
                 \App\Events\BMS\InvoiceCreated::class,
                 \App\Events\BMS\InvoicePaid::class,
+                ExpenseRecorded::class,
             ],
         ));
+
+        $registry = $this->app->make(EventOwnershipRegistry::class);
+        $registry->register('bms.invoice.created.v1', 'bms');
+        $registry->register('bms.invoice.paid.v1', 'bms');
+        $registry->register(ExpenseRecorded::NAME, 'bms');
     }
 }

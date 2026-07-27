@@ -2,7 +2,9 @@
 
 namespace App\Domain\GrowFinance\Services;
 
+use App\Domain\Core\Services\OutboxService;
 use App\Domain\GrowFinance\Entities\Budget;
+use App\Domain\GrowFinance\Events\BudgetUpdated;
 use App\Domain\GrowFinance\Repositories\BudgetRepositoryInterface;
 use App\Domain\GrowFinance\Repositories\ExpenseRepositoryInterface;
 use Carbon\Carbon;
@@ -13,6 +15,7 @@ class BudgetService
     public function __construct(
         private BudgetRepositoryInterface $budgetRepo,
         private ExpenseRepositoryInterface $expenseRepo,
+        private readonly OutboxService $outbox,
     ) {}
 
     /**
@@ -65,6 +68,23 @@ class BudgetService
         ));
 
         $budget = $this->recalculateSpent($budget->id);
+
+        $remaining = $budget->budgetedAmount - $budget->spentAmount;
+        $budgetEvent = new BudgetUpdated(
+            budgetId: $budget->id,
+            companyId: $businessId,
+            budgetedAmount: $budget->budgetedAmount,
+            spentAmount: $budget->spentAmount,
+            remainingAmount: max(0, $remaining),
+            category: $budget->category ?? 'general',
+            period: $budget->period ?? 'monthly',
+        );
+        $this->outbox->insert(
+            eventName: BudgetUpdated::NAME,
+            payload: $budgetEvent->toPayload(),
+            context: ['business_id' => $businessId],
+            publisher: 'growfinance',
+        );
 
         return $budget->toArray();
     }

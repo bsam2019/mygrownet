@@ -75,6 +75,19 @@ class DataOwnershipRegistry
         $this->register('growfinance_accounts', 'growfinance');
         $this->register('growfinance_invoices', 'growfinance');
         $this->register('growfinance_journal_entries', 'growfinance');
+        $this->register('growfinance_budgets', 'growfinance');
+        $this->register('growfinance_budget_items', 'growfinance');
+        $this->register('loans_receivable', 'growfinance');
+
+        // Phase F1-F3: Financial platform domains
+        $this->register('billing_subscriptions', 'platform-billing');
+        $this->register('billing_invoices', 'platform-billing');
+        $this->register('subscription_plans', 'platform-billing');
+        $this->register('payment_transactions', 'platform-payments');
+        $this->register('payment_attempts', 'platform-payments');
+        $this->register('payment_settlements', 'platform-payments');
+        $this->register('currencies', 'financial-services-core');
+        $this->register('exchange_rates', 'financial-services-core');
 
         $this->register('products', 'growmart');
         $this->register('orders', 'growmart');

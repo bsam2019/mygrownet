@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Domain\BMS\Core\Events\ExpenseRecorded;
 use App\Domain\BMS\Core\Services\BmsDataService;
+use App\Domain\Core\Contracts\IntegrationEventDispatcher;
 use App\Domain\Transaction\Enums\TransactionType;
 use App\Domain\Transaction\Enums\TransactionStatus;
 use App\Infrastructure\Persistence\Eloquent\BMS\ExpenseModel;
@@ -16,6 +18,7 @@ class BmsExpenseSyncService
 {
     public function __construct(
         private BmsDataService $bmsData,
+        private IntegrationEventDispatcher $events,
     ) {}
 
     public function syncExpenseToTransaction(ExpenseModel $expense): ?Transaction
@@ -64,6 +67,14 @@ class BmsExpenseSyncService
             DB::commit();
 
             Log::info("Successfully synced expense {$expense->id} to transaction {$transaction->id}");
+
+            $this->events->dispatch(new ExpenseRecorded(
+                expenseId: $expense->id,
+                companyId: $expense->company_id ?? 0,
+                amount: (float) $expense->amount,
+                category: $expense->category->name ?? 'uncategorized',
+                description: $expense->description,
+            ));
 
             return $transaction;
 

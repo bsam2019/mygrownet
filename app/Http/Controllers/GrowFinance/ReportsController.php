@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\GrowFinance;
 
+use App\Domain\Core\Services\OutboxService;
+use App\Domain\GrowFinance\Events\ReportGenerated;
 use App\Domain\GrowFinance\Services\AccountingService;
 use App\Domain\GrowFinance\Services\PdfReportService;
 use App\Domain\GrowFinance\ValueObjects\AccountType;
@@ -21,7 +23,8 @@ class ReportsController extends Controller
 {
     public function __construct(
         private AccountingService $accountingService,
-        private PdfReportService $pdfReportService
+        private PdfReportService $pdfReportService,
+        private readonly OutboxService $outbox,
     ) {}
     public function profitLoss(Request $request): Response
     {
@@ -267,7 +270,10 @@ class ReportsController extends Controller
                 return back()->with('error', $check['reason']);
             }
 
-            return $this->exportPdf($request, $type);
+            $result = $this->exportPdf($request, $type);
+            $this->dispatchReportGenerated($businessId, $type, 'pdf');
+
+            return $result;
         }
 
         $data = match ($type) {
@@ -278,6 +284,8 @@ class ReportsController extends Controller
             'general-ledger' => $this->getGeneralLedgerCsvData($businessId, $request),
             default => throw new \InvalidArgumentException('Invalid report type'),
         };
+
+        $this->dispatchReportGenerated($businessId, $type, 'csv');
 
         return $this->exportCsv($type, $data);
     }
@@ -516,6 +524,23 @@ class ReportsController extends Controller
         ];
 
         return $rows;
+    }
+
+    private function dispatchReportGenerated(int $businessId, string $reportType, string $format): void
+    {
+        $event = new ReportGenerated(
+            companyId: $businessId,
+            reportType: $reportType,
+            reportFormat: $format,
+            reportUrl: route('growfinance.reports.' . $reportType),
+            generatedAt: new \DateTimeImmutable(),
+        );
+        $this->outbox->insert(
+            eventName: ReportGenerated::NAME,
+            payload: $event->toPayload(),
+            context: ['business_id' => $businessId, 'report_type' => $reportType],
+            publisher: 'growfinance',
+        );
     }
 
     private function exportCsv(string $type, array $data): StreamedResponse

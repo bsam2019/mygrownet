@@ -25,6 +25,7 @@ use App\Domain\BizBoost\Repositories\SaleRepositoryInterface;
 use App\Domain\BizBoost\Repositories\TeamMemberRepositoryInterface;
 use App\Domain\BizBoost\Repositories\TemplateRepositoryInterface;
 use App\Domain\BizBoost\Services\AiUsageService;
+use App\Domain\BizBoost\Services\BizBoostBillingIntegration;
 use App\Domain\BizBoost\Services\BusinessService;
 use App\Domain\BizBoost\Services\CustomerService;
 use App\Domain\BizBoost\Services\DashboardService;
@@ -92,6 +93,7 @@ class BizBoostServiceProvider extends ServiceProvider
         $this->app->singleton(FollowUpReminderService::class);
         $this->app->singleton(QrCodeService::class);
         $this->app->singleton(AiUsageService::class);
+        $this->app->singleton(BizBoostBillingIntegration::class);
         $this->app->singleton(DashboardService::class);
     }
 

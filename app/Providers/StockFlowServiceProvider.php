@@ -82,9 +82,16 @@ class StockFlowServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(database_path('migrations/stockflow'));
 
         $registry = $this->app->make(\App\Domain\Core\Services\EventOwnershipRegistry::class);
-        $registry->register('stockflow.purchase_order.created.v1', 'stockflow');
-        $registry->register('stockflow.goods_received.v1', 'stockflow');
-        $registry->register('stockflow.stock.adjusted.v1', 'stockflow');
+        $registry->register(\App\Domain\StockFlow\Events\PurchaseOrderReceived::NAME, 'stockflow');
+        $registry->register(\App\Domain\StockFlow\Events\GoodsReceived::NAME, 'stockflow');
+        $registry->register(\App\Domain\StockFlow\Events\StockAdjusted::NAME, 'stockflow');
+        $registry->register(\App\Domain\StockFlow\Events\SaleCompleted::NAME, 'stockflow');
+        $registry->register(\App\Domain\StockFlow\Events\StockCountFinalized::NAME, 'stockflow');
+        $registry->register(\App\Domain\StockFlow\Events\CashDiscrepancyDetected::NAME, 'stockflow');
+        $registry->register(\App\Domain\StockFlow\Events\PurchaseReceived::NAME, 'stockflow');
+
+        $resolver = $this->app->make(\App\Domain\Core\Services\DimensionResolver::class);
+        $resolver->register($this->app->make(\App\Domain\StockFlow\Infrastructure\StockFlowDimensionProvider::class));
 
         $discovery = $this->app->make(ModuleDiscovery::class);
         $discovery->register(new ModuleManifest(
@@ -105,7 +112,9 @@ class StockFlowServiceProvider extends ServiceProvider
                 \App\Domain\StockFlow\Events\GoodsReceived::class,
                 \App\Domain\StockFlow\Events\StockAdjusted::class,
                 \App\Domain\StockFlow\Events\SaleCompleted::class,
+                \App\Domain\StockFlow\Events\StockCountFinalized::class,
                 \App\Domain\StockFlow\Events\CashDiscrepancyDetected::class,
+                \App\Domain\StockFlow\Events\PurchaseReceived::class,
             ],
             listens: [
                 \App\Domain\Core\Events\OrganizationCreated::class,
@@ -166,6 +175,7 @@ class StockFlowServiceProvider extends ServiceProvider
         // Integration Contracts
         $this->app->bind(InventoryProvider::class, InventoryProviderImpl::class);
         $this->app->bind(InventoryProviderV2::class, InventoryProviderV2Impl::class);
+        $this->app->singleton(\App\Domain\StockFlow\Infrastructure\StockFlowDimensionProvider::class);
 
         // Employee/Role repositories
         $this->app->bind(CompanyRoleRepositoryInterface::class, EloquentCompanyRoleRepository::class);

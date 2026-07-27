@@ -18,7 +18,9 @@ class StarterKitService
     public function __construct(
         private readonly \App\Application\Notification\UseCases\SendNotificationUseCase $notificationService,
         private readonly \App\Domain\GrowNet\Wallet\Services\WalletService $walletService,
-        private readonly StarterKitBenefitService $benefitService
+        private readonly StarterKitBenefitService $benefitService,
+        private readonly TransactionIntegrityService $transactionIntegrity,
+        private readonly GrowNetBillingIntegration $billingIntegration,
     ) {}
     
     /**
@@ -123,9 +125,6 @@ class StarterKitService
             ]);
             // Handle wallet payment with integrity checks
             if ($paymentMethod === 'wallet') {
-                // Use TransactionIntegrityService to prevent double-counting
-                $transactionService = app(TransactionIntegrityService::class);
-                
                 // Calculate current wallet balance using WalletService (includes loan transactions)
                 $walletBalance = $this->walletService->calculateBalance($user);
                 
@@ -138,7 +137,7 @@ class StarterKitService
                 
                 try {
                     // Create transaction record with integrity checks (prevents duplicates)
-                    $transactionService->recordWalletDebit(
+                    $this->transactionIntegrity->recordWalletDebit(
                         $user,
                         $price,
                         'starter_kit_purchase',
@@ -188,6 +187,17 @@ class StarterKitService
                     'invoice' => $purchase->invoice_number,
                     'payment_method' => $paymentMethod,
                 ]);
+            }
+
+            // Record platform billing transaction for wallet payments
+            if ($paymentMethod === 'wallet') {
+                $this->billingIntegration->processPayment(
+                    userId: $user->id,
+                    organizationId: $user->organization_id ?? 0,
+                    amount: (float) $price,
+                    tier: $tier,
+                    purchaseId: $purchase->id,
+                );
             }
 
             return $purchase;

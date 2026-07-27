@@ -7,6 +7,7 @@ use App\Domain\GrowBuilder\Repositories\PageRepositoryInterface;
 use App\Domain\GrowBuilder\Repositories\ProductRepositoryInterface;
 use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
 use App\Domain\GrowBuilder\Repositories\TemplateRepositoryInterface;
+use App\Domain\GrowBuilder\Services\GrowBuilderBillingIntegration;
 use App\Infrastructure\Persistence\Repositories\GrowBuilder\EloquentOrderRepository;
 use App\Infrastructure\Persistence\Repositories\GrowBuilder\EloquentPageRepository;
 use App\Infrastructure\Persistence\Repositories\GrowBuilder\EloquentProductRepository;
@@ -25,6 +26,8 @@ class GrowBuilderServiceProvider extends ServiceProvider
         $this->app->bind(ProductRepositoryInterface::class, EloquentProductRepository::class);
         $this->app->bind(OrderRepositoryInterface::class, EloquentOrderRepository::class);
         $this->app->bind(TemplateRepositoryInterface::class, EloquentTemplateRepository::class);
+
+        $this->app->singleton(GrowBuilderBillingIntegration::class);
     }
 
     public function boot(): void

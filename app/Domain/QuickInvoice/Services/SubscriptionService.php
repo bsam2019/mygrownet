@@ -17,6 +17,7 @@ class SubscriptionService
         private readonly SubscriptionTierRepositoryInterface $tierRepository,
         private readonly AdminSettingRepositoryInterface $adminSettingRepository,
         private readonly UsageTrackingRepositoryInterface $usageTrackingRepository,
+        private readonly QuickInvoiceBillingIntegration $billingIntegration,
     ) {}
 
     public function getPlans(): array
@@ -177,6 +178,14 @@ class SubscriptionService
                 ],
                 'completed_at' => now(),
             ]);
+
+            $this->billingIntegration->processPayment(
+                userId: $user->id,
+                organizationId: $user->organization_id ?? 0,
+                amount: (float) $tier['price'],
+                tierName: $tier['name'],
+                subscriptionId: $subscription['id'],
+            );
 
             return $subscription;
         });

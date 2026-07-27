@@ -2,14 +2,18 @@
 
 namespace App\Domain\BMS\Core\Services;
 
+use App\Domain\FinancialServicesCore\Contracts\CurrencyService as PlatformCurrencyService;
 use App\Infrastructure\Persistence\Eloquent\BMS\CurrencyModel;
 use App\Infrastructure\Persistence\Eloquent\BMS\ExchangeRateModel;
 use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Http;
 
 class CurrencyService
 {
+    public function __construct(
+        private readonly PlatformCurrencyService $platformCurrency,
+    ) {}
+
     public function getAllCurrencies(): array
     {
         return CurrencyModel::where('is_active', true)
@@ -62,14 +66,12 @@ class CurrencyService
         string $toCurrency,
         ?Carbon $date = null
     ): ?float {
-        // Same currency, rate is 1
         if ($fromCurrency === $toCurrency) {
             return 1.0;
         }
 
         $date = $date ?? Carbon::today();
 
-        // Get the most recent rate on or before the specified date
         $rate = ExchangeRateModel::where('company_id', $companyId)
             ->where('from_currency', $fromCurrency)
             ->where('to_currency', $toCurrency)
@@ -77,7 +79,19 @@ class CurrencyService
             ->orderBy('effective_date', 'desc')
             ->first();
 
-        return $rate ? (float)$rate->rate : null;
+        if ($rate) {
+            return (float)$rate->rate;
+        }
+
+        try {
+            return $this->platformCurrency->getRate(
+                $fromCurrency,
+                $toCurrency,
+                \DateTimeImmutable::createFromMutable($date),
+            );
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     public function setExchangeRate(
@@ -112,9 +126,14 @@ class CurrencyService
         ?Carbon $date = null
     ): ?float {
         $rate = $this->getExchangeRate($companyId, $fromCurrency, $toCurrency, $date);
-        
+
         if ($rate === null) {
-            return null;
+            try {
+                $dateImmutable = $date ? \DateTimeImmutable::createFromMutable($date) : null;
+                return $this->platformCurrency->convert($amount, $fromCurrency, $toCurrency, $dateImmutable);
+            } catch (\Throwable) {
+                return null;
+            }
         }
 
         return $amount * $rate;

@@ -17,6 +17,7 @@ use App\Domain\QuickInvoice\Services\PdfGeneratorService;
 use App\Domain\QuickInvoice\Services\PdfMergerService;
 use App\Domain\QuickInvoice\Services\ProfileService;
 use App\Domain\QuickInvoice\Services\ShareService;
+use App\Domain\QuickInvoice\Services\QuickInvoiceBillingIntegration;
 use App\Domain\QuickInvoice\Services\SubscriptionService;
 use App\Domain\QuickInvoice\Services\TemplateManagementService;
 use App\Infrastructure\Persistence\Repositories\QuickInvoice\EloquentAdminSettingRepository;
@@ -58,12 +59,15 @@ class QuickInvoiceServiceProvider extends ServiceProvider
             );
         });
 
+        $this->app->singleton(QuickInvoiceBillingIntegration::class);
+
         $this->app->singleton(SubscriptionService::class, function ($app) {
             return new SubscriptionService(
                 $app->make(SubscriptionRepositoryInterface::class),
                 $app->make(SubscriptionTierRepositoryInterface::class),
                 $app->make(AdminSettingRepositoryInterface::class),
-                $app->make(UsageTrackingRepositoryInterface::class)
+                $app->make(UsageTrackingRepositoryInterface::class),
+                $app->make(QuickInvoiceBillingIntegration::class)
             );
         });
 

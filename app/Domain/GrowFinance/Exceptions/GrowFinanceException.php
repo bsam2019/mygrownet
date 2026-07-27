@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Domain\GrowFinance\Exceptions;
 
-class GrowFinanceException extends \RuntimeException
+use App\Domain\Core\Contracts\NonRetryableExceptionInterface;
+
+class GrowFinanceException extends \RuntimeException implements NonRetryableExceptionInterface
 {
 }
 

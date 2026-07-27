@@ -20,7 +20,9 @@ use App\Domain\GrowNet\Reward\Repositories\AssetRepository;
 use App\Domain\GrowNet\Reward\Repositories\PhysicalRewardAllocationRepository;
 use App\Domain\GrowNet\Reward\Repositories\ReferralRepositoryInterface as RewardReferralRepositoryInterface;
 use App\Domain\GrowNet\Services\DashboardService;
+use App\Domain\GrowNet\Services\GrowNetBillingIntegration;
 use App\Domain\GrowNet\Services\MemberService;
+use App\Domain\GrowNet\Services\StarterKitService;
 use App\Domain\GrowNet\Services\TierAdvancementService;
 use App\Infrastructure\Contracts\GrowNet\ReferralProviderImpl;
 use App\Infrastructure\Contracts\GrowNet\StarterKitProviderImpl;
@@ -66,11 +68,23 @@ class GrowNetServiceProvider extends ServiceProvider
         $this->app->singleton(DashboardService::class);
         $this->app->singleton(MemberService::class);
         $this->app->singleton(TierAdvancementService::class);
+        $this->app->singleton(GrowNetBillingIntegration::class);
 
         // Register integration contracts
         $this->app->singleton(WalletProvider::class, WalletProviderImpl::class);
         $this->app->singleton(StarterKitProvider::class, StarterKitProviderImpl::class);
         $this->app->singleton(ReferralProvider::class, ReferralProviderImpl::class);
+
+        // Register StarterKitService with explicit dependencies
+        $this->app->singleton(StarterKitService::class, function ($app) {
+            return new StarterKitService(
+                $app->make(\App\Application\Notification\UseCases\SendNotificationUseCase::class),
+                $app->make(\App\Domain\GrowNet\Wallet\Services\WalletService::class),
+                $app->make(\App\Domain\GrowNet\Services\StarterKitBenefitService::class),
+                $app->make(\App\Domain\Financial\Services\TransactionIntegrityService::class),
+                $app->make(GrowNetBillingIntegration::class),
+            );
+        });
     }
 
     public function boot(): void

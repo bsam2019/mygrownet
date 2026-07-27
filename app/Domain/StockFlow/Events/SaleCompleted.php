@@ -8,6 +8,8 @@ use DateTimeImmutable;
 
 class SaleCompleted implements DomainEvent
 {
+    public const NAME = 'stockflow.sale.completed.v1';
+
     public function __construct(
         private int $companyId,
         private int $saleId,

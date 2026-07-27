@@ -4,10 +4,17 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Core\Services\DimensionResolver;
 use App\Domain\Core\Services\ModuleDiscovery;
 use App\Domain\Core\Services\EventOwnershipRegistry;
 use App\Domain\Core\ValueObjects\ModuleManifest;
+use App\Domain\GrowFinance\Infrastructure\GrowFinanceDimensionProvider;
 use App\Domain\GrowFinance\Contracts\AccountingProvider;
+use App\Domain\GrowFinance\Events\AccountBalanceChanged;
+use App\Domain\GrowFinance\Events\BudgetUpdated;
+use App\Domain\GrowFinance\Events\JournalPosted;
+use App\Domain\GrowFinance\Events\PeriodClosed;
+use App\Domain\GrowFinance\Events\ReportGenerated;
 use App\Domain\GrowFinance\Infrastructure\AccountingProviderImpl;
 use App\Domain\GrowFinance\Repositories\AccountRepositoryInterface;
 use App\Domain\GrowFinance\Repositories\ApiTokenRepositoryInterface;
@@ -140,11 +147,33 @@ class GrowFinanceServiceProvider extends ServiceProvider
             settings: ['default_currency', 'fiscal_year_start', 'tax_rate', 'invoice_prefix'],
             events: [
                 \App\Domain\GrowFinance\Events\PaymentReceived::class,
+                JournalPosted::class,
+                AccountBalanceChanged::class,
+                PeriodClosed::class,
+                BudgetUpdated::class,
+                ReportGenerated::class,
             ],
         ));
 
         $registry = $this->app->make(EventOwnershipRegistry::class);
+
+        // Payment event (already existed but no NAME constant on class)
         $registry->register('growfinance.payment.received.v1', 'growfinance');
+
+        // Renamed from growfinance.journal.created.v1 → growfinance.journal.posted.v1
+        // Keep old name registered during transition period for backward compatibility
+        $registry->register('growfinance.journal.created.v1', 'growfinance');
+        $registry->register(JournalPosted::NAME, 'growfinance');
+
+        // New financial events
+        $registry->register(AccountBalanceChanged::NAME, 'growfinance');
+        $registry->register(PeriodClosed::NAME, 'growfinance');
+        $registry->register(BudgetUpdated::NAME, 'growfinance');
+        $registry->register(ReportGenerated::NAME, 'growfinance');
+
+        $this->app->make(DimensionResolver::class)->register(
+            $this->app->make(GrowFinanceDimensionProvider::class)
+        );
 
         Inertia::share([
             'quickEntryData' => function () {

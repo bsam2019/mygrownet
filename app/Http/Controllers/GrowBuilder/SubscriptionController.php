@@ -4,6 +4,7 @@ namespace App\Http\Controllers\GrowBuilder;
 
 use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\Module\Services\TierConfigurationService;
+use App\Domain\GrowBuilder\Services\GrowBuilderBillingIntegration;
 use App\Domain\GrowNet\Wallet\Services\WalletService;
 use App\Http\Controllers\Controller;
 use App\Services\GrowBuilder\StorageService;
@@ -19,7 +20,8 @@ class SubscriptionController extends Controller
         private SubscriptionService $subscriptionService,
         private TierConfigurationService $tierConfigService,
         private WalletService $walletService,
-        private StorageService $storageService
+        private StorageService $storageService,
+        private GrowBuilderBillingIntegration $billingIntegration,
     ) {}
 
     /**
@@ -160,6 +162,20 @@ class SubscriptionController extends Controller
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+
+                // Record platform billing
+                $subscription = DB::table('module_subscriptions')
+                    ->where('user_id', $user->id)
+                    ->where('module_id', self::MODULE_ID)
+                    ->first();
+
+                $this->billingIntegration->processPayment(
+                    userId: $user->id,
+                    organizationId: $user->organization_id ?? 0,
+                    amount: $amount,
+                    tier: $tier,
+                    moduleSubscriptionId: $subscription->id,
+                );
 
                 $this->walletService->clearCache($user);
             }

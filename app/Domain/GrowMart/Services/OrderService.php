@@ -2,6 +2,9 @@
 
 namespace App\Domain\GrowMart\Services;
 
+use App\Domain\Core\Contracts\IntegrationEventDispatcher;
+use App\Domain\GrowMart\Events\OrderFulfilled;
+use App\Domain\GrowMart\Events\OrderPlaced;
 use App\Domain\GrowMart\Repositories\OrderRepositoryInterface;
 use App\Domain\GrowMart\Repositories\ProductRepositoryInterface;
 use App\Models\GrowMart\GrowMartInventory;
@@ -20,6 +23,7 @@ class OrderService
         private readonly CartService $cartService,
         private readonly CouponService $couponService,
         private readonly NotificationService $notificationService,
+        private readonly IntegrationEventDispatcher $events,
     ) {}
 
     public function createOrder(int $userId, array $data): array
@@ -130,6 +134,15 @@ class OrderService
 
             $this->notifyAdmins($order);
 
+            $this->events->dispatch(new OrderPlaced(
+                orderId: $order['id'],
+                companyId: $order['user_id'],
+                customerId: $order['user_id'],
+                total: (float) $order['total'],
+                currency: 'ZMW',
+                itemCount: count($summary['items']),
+            ));
+
             return $order;
         });
     }
@@ -215,6 +228,15 @@ class OrderService
 
         $this->orderRepository->update($orderId, $updates);
         $order = $this->orderRepository->findById($orderId);
+
+        if ($status === 'delivered') {
+            $this->events->dispatch(new OrderFulfilled(
+                orderId: $order['id'],
+                companyId: $order['user_id'],
+                fulfillmentStatus: 'delivered',
+                fulfilledAt: new \DateTimeImmutable(),
+            ));
+        }
 
         $user = User::find($order['user_id']);
         if ($user) {

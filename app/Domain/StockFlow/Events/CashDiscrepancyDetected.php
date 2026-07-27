@@ -8,6 +8,8 @@ use DateTimeImmutable;
 
 class CashDiscrepancyDetected implements DomainEvent
 {
+    public const NAME = 'stockflow.cash.discrepancy.v1';
+
     public function __construct(
         private int $companyId,
         private int $cashRegisterId,

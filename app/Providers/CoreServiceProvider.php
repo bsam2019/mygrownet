@@ -12,7 +12,10 @@ use App\Domain\Core\Services\AlertService;
 use App\Domain\Core\Services\ApiGateway;
 use App\Domain\Core\Services\ApplicationLifecycleService;
 use App\Domain\Core\Services\ApplicationProvisioningService;
+use App\Domain\Core\Contracts\IntegrationEventDispatcher;
 use App\Domain\Core\Services\CacheKeyHelper;
+use App\Domain\Core\Services\DimensionResolver;
+use App\Domain\Core\Services\LaravelEventDispatcher;
 use App\Domain\Core\Services\CapabilityRegistry;
 use App\Domain\Core\Services\ContractInvoker;
 use App\Domain\Core\Services\ContractResolver;
@@ -90,6 +93,7 @@ class CoreServiceProvider extends ServiceProvider
         $this->app->singleton(ManifestValidator::class);
 
         // Phase 5: Operational readiness
+        $this->app->bind(IntegrationEventDispatcher::class, LaravelEventDispatcher::class);
         $this->app->singleton(DeadLetterService::class);
         $this->app->singleton(QueueService::class);
         $this->app->singleton(MetricsService::class);
@@ -99,6 +103,7 @@ class CoreServiceProvider extends ServiceProvider
         $this->app->singleton(DataOwnershipRegistry::class);
         $this->app->singleton(SettingsService::class);
         $this->app->singleton(CacheKeyHelper::class);
+        $this->app->singleton(DimensionResolver::class);
 
         // Phase 7: Reliable event delivery
         $this->app->singleton(OutboxService::class);
@@ -146,9 +151,7 @@ class CoreServiceProvider extends ServiceProvider
         $registry->register('platform.integration.event_delivery_failed.v1', 'platform-core');
         $registry->register('platform.integration.provider_unhealthy.v1', 'platform-core');
 
-        // BMS domain events (§10.7)
-        $registry->register('bms.invoice.created.v1', 'bms');
-        $registry->register('bms.invoice.paid.v1', 'bms');
+        // BMS domain events (§10.7) — invoice events moved to BmsServiceProvider
         $registry->register('bms.employee.created.v1', 'bms');
 
         // StockFlow domain events (§10.7)

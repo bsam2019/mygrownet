@@ -4,13 +4,15 @@ namespace App\Http\Controllers\Storage;
 
 use App\Http\Controllers\Controller;
 use App\Domain\Storage\Repositories\StorageSubscriptionRepositoryInterface;
+use App\Domain\Storage\Services\StorageBillingService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class SubscriptionController extends Controller
 {
     public function __construct(
-        private StorageSubscriptionRepositoryInterface $subscriptionRepo
+        private StorageSubscriptionRepositoryInterface $subscriptionRepo,
+        private StorageBillingService $billing,
     ) {}
 
     public function index()
@@ -91,6 +93,24 @@ class SubscriptionController extends Controller
 
         if ($currentSubscription && $newPlan['quota_bytes'] <= $currentSubscription['storage_plan']['quota_bytes']) {
             return back()->with('error', 'You can only upgrade to a higher tier plan');
+        }
+
+        $price = $validated['billing_cycle'] === 'annual'
+            ? (float) ($newPlan['price_annual'] ?? 0)
+            : (float) ($newPlan['price_monthly'] ?? 0);
+
+        if ($price > 0) {
+            try {
+                $this->billing->processPlanUpgrade(
+                    userId: $user->id,
+                    organizationId: $user->organization_id ?? 0,
+                    planSlug: $newPlan['slug'],
+                    amount: $price,
+                    billingCycle: $validated['billing_cycle'],
+                );
+            } catch (\Throwable $e) {
+                return back()->with('error', 'Payment processing failed: ' . $e->getMessage());
+            }
         }
 
         $this->subscriptionRepo->createOrUpdateSubscription(

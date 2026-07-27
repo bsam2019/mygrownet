@@ -16,6 +16,8 @@ use App\Domain\GrowMart\Services\CouponService;
 use App\Domain\GrowMart\Services\NotificationService;
 use App\Domain\GrowMart\Services\OrderService;
 use App\Domain\GrowMart\Services\PaymentService;
+use App\Domain\GrowMart\Events\OrderFulfilled;
+use App\Domain\GrowMart\Events\OrderPlaced;
 use App\Domain\GrowMart\Services\WishlistService;
 use App\Infrastructure\Persistence\Repositories\GrowMart\EloquentCartRepository;
 use App\Infrastructure\Persistence\Repositories\GrowMart\EloquentCategoryRepository;
@@ -25,6 +27,7 @@ use App\Infrastructure\Persistence\Repositories\GrowMart\EloquentProductReposito
 use App\Infrastructure\Persistence\Repositories\GrowMart\EloquentReviewRepository;
 use App\Infrastructure\Persistence\Repositories\GrowMart\EloquentWarehouseRepository;
 use App\Infrastructure\Persistence\Repositories\GrowMart\EloquentWishlistRepository;
+use App\Domain\Core\Services\EventOwnershipRegistry;
 use App\Domain\Core\ValueObjects\ModuleManifest;
 use App\Domain\Core\Services\ModuleDiscovery;
 use Illuminate\Support\ServiceProvider;
@@ -66,6 +69,12 @@ class GrowMartServiceProvider extends ServiceProvider
             capabilities: ['marketplace', 'shopping_cart', 'product_catalog', 'coupons'],
             permissions: ['manage_products', 'manage_orders', 'manage_coupons', 'manage_reviews'],
             settings: ['default_currency', 'shipping_policy', 'tax_inclusive'],
+            events: [OrderPlaced::class, OrderFulfilled::class, \App\Domain\GrowMart\Events\OrderRefunded::class],
         ));
+
+        $registry = $this->app->make(EventOwnershipRegistry::class);
+        $registry->register(OrderPlaced::NAME, 'growmart');
+        $registry->register(OrderFulfilled::NAME, 'growmart');
+        $registry->register(\App\Domain\GrowMart\Events\OrderRefunded::NAME, 'growmart');
     }
 }

@@ -721,3 +721,61 @@ Running a systematic cross-reference of `PLATFORM_INTEGRATION_ARCHITECTURE.md` +
 
 **18 gaps closed.** See full work state above for complete summary.
 
+## Session Log — 2026-07-26 (evening)
+
+### Phase F2: Platform Payments Domain (Complete)
+Implemented 29 files for the Platform Payments bounded context:
+
+- **Contracts (2):** `PaymentProvider` (process/refund/verify/query), `SettlementProvider` (getReconciliationData/getSettlementReports/reconcile)
+- **Entities (3):** `PaymentTransaction` (state machine: Initiated→Pending→Completed→Settled→Reconciled, Failed, Refunded), `PaymentAttempt` (per-attempt tracking), `Settlement` (matched/discrepancy/reconciled states)
+- **Repositories (3 interfaces + 3 Eloquent impls):** Transaction, Attempt, Settlement repositories
+- **Services (3):** `PaymentService` (initiate→process→refund lifecycle, auto-retry orchestration), `SettlementService` (import settlements, reconcile unsettled), `RetryOrchestrator` (exponential backoff: 1h/6h/24h)
+- **Events (7):** PaymentInitiated, Completed, Failed, Refunded, Settled, RetryScheduled, SettlementReconciled — all extend `PlatformEvent` with dot-version NAME
+- **Migration (1):** `2026_07_26_000001_create_payment_tables.php` — `payment_transactions`, `payment_attempts`, `payment_settlements`
+- **Infrastructure (6):** 3 Eloquent models, 3 repository implementations, 2 stub provider impls
+- **ServiceProvider:** `PlatformPaymentsServiceProvider` — DI bindings, migration loading, manifest, event ownership registry
+- **Registered** in `bootstrap/providers.php`
+
+### Phase F1/F2 architecture notes
+- Matches PlatformBilling infrastructure pattern (all infra in `Domain/{Domain}/Infrastructure/`)
+- F2 depends on nothing from F1; both can be deployed independently per dependency graph
+- `PaymentFailed` event name (`platform.payment.collection_failed.v1`) matches the event `HandlePaymentCollectionFailed` listener in PlatformBilling listens for
+
+### Phase F3: Financial Services Core (Complete)
+Implemented 15 new files + 2 migrations for the Financial Services Core:
+
+- **Contracts (2):** `CurrencyService` (convert, getRate, supportedCurrencies), `ExchangeRateProvider` (fetchRates, historicalRates)
+- **Entities (2):** `Currency` (code, symbol, decimal places, active), `ExchangeRate` (from, to, rate, date, source)
+- **Repositories (2 interfaces + 2 Eloquent impls):** CurrencyRepository, ExchangeRateRepository
+- **Services (2):** `CurrencyServiceImpl` — resolves rates with validation + exceptions; `ExchangeRateProviderImpl` — Bank of Zambia fetch with exchangerate.host fallback, auto-dispatch of FxRateUpdated
+- **Event (1):** `platform.fx.rate_updated.v1` — dispatched per rate on every fetch
+- **Migrations (2):** `currencies` table + `exchange_rates` table (unique on from/to/date) + seeds ZMW, USD, ZAR, GBP, EUR
+- **ServiceProvider:** `FinancialServicesCoreServiceProvider` — bindings, manifest, event ownership
+- **Registered** in `bootstrap/providers.php`
+
+**Refactored services (2):**
+- `StockFlow\CurrencyService::convert()` — falls back to platform rates if company-specific rate not found
+- `BMS\Core\Services\CurrencyService::getExchangeRate()` and `convert()` — fall back to platform rates if company-specific rate not found
+
+### Phase F3 architecture notes
+- `ExchangeRateProviderImpl` fetches from Bank of Zambia JSON API, falls back to `exchangerate.host`
+- FX event dispatched through `IntegrationEventDispatcher` (outbox-ready)
+- Existing per-company rate management preserved in StockFlow/BMS — platform rates serve as global fallback
+
+### Phase F4 (Data Ownership & Table Migration) — complete
+- **Audit command:** `platform:audit-financial-ownership` — validates 15 financial tables against DataOwnershipRegistry (supports `--fix`)
+- **payment_logs drop migration:** `2026_07_26_000002_drop_payment_logs_table.php` in platform-payments folder (table had zero app references — F4.2 mirror write skipped)
+- **DimensionProvider contract** at `app/Domain/Core/Contracts/DimensionProvider.php` — `getDimensions()` and `resolveDimension()` methods
+- **3 DimensionProvider implementations:** BillingDimensionProvider, PaymentDimensionProvider, FxDimensionProvider — each registered in their ServiceProvider with DimensionResolver
+- **DimensionResolver** singleton in CoreServiceProvider — aggregates all dimension providers
+- **3 CI check scripts** in `ci/checks/`: `check-financial-ownership.sh` (CI-11), `check-dimension-providers.sh` (CI-12), `check-payment-logs-removed.sh` (CI-13)
+- **DataOwnershipRegistry** now includes entries for all billing, payments, and FX tables
+
+### Phase F5: Financial Event Wiring & Governance — complete
+- **New events (8):** `bms.expense.recorded.v1`, `growmart.order.placed.v1`, `growmart.order.fulfilled.v1`, `growfinance.journal.posted.v1` (renamed from `.created`), `growfinance.account.balance.changed.v1`, `growfinance.period.closed.v1`, `growfinance.budget.updated.v1`, `growfinance.report.generated.v1`
+- **IntegrationEventDispatcher created:** Missing contract + `LaravelEventDispatcher` impl — bound in CoreServiceProvider (fixes 4 broken imports)
+- **Wired services:** `BmsExpenseSyncService` dispatches `ExpenseRecorded` after sync; `OrderService` dispatches `OrderPlaced`/`OrderFulfilled` after create/deliver
+- **Event ownership:** All 8 new events registered in `EventOwnershipRegistry` via their domain ServiceProviders
+- **CI checks (2):** `check-financial-events.sh` (CI-14) validates all events registered; `check-event-idempotency.sh` (CI-15, advisory) checks for InboxService usage
+- **Documentation:** `EVENT_INVENTORY.md` updated with GrowMart, PlatformBilling, PlatformPayments, FinancialServicesCore event sections; ownership table expanded from 21 → 48 rows
+

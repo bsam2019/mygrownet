@@ -140,7 +140,7 @@ Platform Billing
 - `platform.payment.collection_failed.v1` (after all retries exhausted)
 - `platform.payment.settled.v1`
 - `platform.payment.refunded.v1`
-- `platform.payment.reconciled.v1`
+- `platform.payment.settlement_reconciled.v1`
 
 **Key contracts provided:**
 
@@ -467,7 +467,7 @@ platform.payment.failed.v1
 platform.payment.collection_failed.v1
 platform.payment.settled.v1
 platform.payment.refunded.v1
-platform.payment.reconciled.v1
+platform.payment.settlement_reconciled.v1
 
 -- GrowFinance
 growfinance.journal.posted.v1
@@ -712,7 +712,8 @@ Every table in the database has exactly one owner. No table is shared across dom
 | Table | Owner |
 |---|---|
 | `subscription_plans` | Platform Billing |
-| `application_subscriptions` | Platform Billing |
+| `billing_subscriptions` | Platform Billing |
+| `billing_invoices` | Platform Billing |
 
 ### Platform Payments
 
@@ -720,9 +721,7 @@ Every table in the database has exactly one owner. No table is shared across dom
 |---|---|
 | `payment_transactions` | Platform Payments |
 | `payment_attempts` | Platform Payments |
-| `settlements` | Platform Payments |
-| `payment_methods` | Platform Payments |
-| `payment_webhooks` | Platform Payments |
+| `payment_settlements` | Platform Payments |
 
 ### GrowFinance
 

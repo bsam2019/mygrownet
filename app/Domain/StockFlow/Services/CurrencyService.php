@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\StockFlow\Services;
 
+use App\Domain\FinancialServicesCore\Contracts\CurrencyService as PlatformCurrencyService;
 use App\Domain\StockFlow\Entities\ExchangeRate;
 use App\Domain\StockFlow\Exceptions\OperationFailedException;
 use App\Domain\StockFlow\Repositories\ExchangeRateRepositoryInterface;
@@ -14,7 +15,10 @@ use Throwable;
 
 class CurrencyService
 {
-    public function __construct(private ExchangeRateRepositoryInterface $exchangeRateRepository) {}
+    public function __construct(
+        private ExchangeRateRepositoryInterface $exchangeRateRepository,
+        private PlatformCurrencyService $platformCurrency,
+    ) {}
 
     public function createRate(int $companyId, array $data): ExchangeRate
     {
@@ -56,6 +60,13 @@ class CurrencyService
     public function convert(int $companyId, float $amount, string $from, string $to): ?float
     {
         $rate = $this->exchangeRateRepository->findRate(CompanyId::fromInt($companyId), $from, $to);
-        return $rate ? $rate->convert($amount) : null;
+        if ($rate) {
+            return $rate->convert($amount);
+        }
+        try {
+            return $this->platformCurrency->convert($amount, $from, $to);
+        } catch (Throwable) {
+            return null;
+        }
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\Module\Services\TierConfigurationService;
 use App\Domain\Module\Services\UsageLimitService;
+use App\Domain\BizBoost\Services\BizBoostBillingIntegration;
 use App\Domain\GrowNet\Wallet\Services\WalletService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,8 @@ class SubscriptionController extends Controller
         private SubscriptionService $subscriptionService,
         private TierConfigurationService $tierConfigService,
         private UsageLimitService $usageLimitService,
-        private WalletService $walletService
+        private WalletService $walletService,
+        private BizBoostBillingIntegration $billingIntegration,
     ) {}
 
     /**
@@ -117,6 +119,20 @@ class SubscriptionController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
+            // Record platform billing
+            $subscription = DB::table('module_subscriptions')
+                ->where('user_id', $user->id)
+                ->where('module_id', self::MODULE_ID)
+                ->first();
+
+            $this->billingIntegration->processPayment(
+                userId: $user->id,
+                organizationId: $user->organization_id ?? 0,
+                amount: $amount,
+                tier: $request->input('tier'),
+                moduleSubscriptionId: $subscription->id,
+            );
 
             // Clear caches
             $this->walletService->clearCache($user);

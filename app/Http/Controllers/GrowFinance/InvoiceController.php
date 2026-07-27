@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\GrowFinance;
 
+use App\Domain\Core\Services\OutboxService;
+use App\Domain\GrowFinance\Events\PaymentReceived;
 use App\Domain\GrowFinance\Services\PdfInvoiceService;
 use App\Domain\GrowFinance\ValueObjects\InvoiceStatus;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceCustomerModel;
 use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceInvoiceModel;
 use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceInvoiceItemModel;
+use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinancePaymentModel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +20,8 @@ use Inertia\Response;
 class InvoiceController extends Controller
 {
     public function __construct(
-        private PdfInvoiceService $pdfService
+        private PdfInvoiceService $pdfService,
+        private readonly OutboxService $outbox,
     ) {}
     public function index(Request $request): Response
     {
@@ -241,13 +245,42 @@ class InvoiceController extends Controller
         ]);
 
         $businessId = $request->user()->id;
-        $invoice = GrowFinanceInvoiceModel::forBusiness($businessId)->findOrFail($id);
+        $invoice = GrowFinanceInvoiceModel::forBusiness($businessId)->with('customer')->findOrFail($id);
 
-        $invoice->amount_paid += $validated['amount'];
-        $invoice->status = $invoice->amount_paid >= $invoice->total_amount
-            ? InvoiceStatus::PAID
-            : InvoiceStatus::PARTIAL;
-        $invoice->save();
+        DB::transaction(function () use ($validated, $businessId, $invoice) {
+            $invoice->amount_paid += $validated['amount'];
+            $invoice->status = $invoice->amount_paid >= $invoice->total_amount
+                ? InvoiceStatus::PAID
+                : InvoiceStatus::PARTIAL;
+            $invoice->save();
+
+            $payment = GrowFinancePaymentModel::create([
+                'business_id' => $businessId,
+                'payable_type' => get_class($invoice),
+                'payable_id' => $invoice->id,
+                'payment_date' => now(),
+                'amount' => $validated['amount'],
+                'payment_method' => $validated['payment_method'],
+                'reference' => $validated['reference'],
+            ]);
+
+            $paymentEvent = new PaymentReceived(
+                companyId: $businessId,
+                paymentId: $payment->id,
+                invoiceId: $invoice->id,
+                invoiceNumber: $invoice->invoice_number,
+                amount: $validated['amount'],
+                paymentMethod: $validated['payment_method'],
+                customerId: $invoice->customer_id ?? 0,
+                occurredAt: new \DateTimeImmutable(),
+            );
+            $this->outbox->insert(
+                eventName: PaymentReceived::NAME,
+                payload: $paymentEvent->toPayload(),
+                context: ['business_id' => $businessId, 'invoice_id' => $invoice->id],
+                publisher: 'growfinance',
+            );
+        });
 
         return back()->with('success', 'Payment recorded successfully!');
     }

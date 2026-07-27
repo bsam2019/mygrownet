@@ -913,7 +913,7 @@ app/Domain/StockFlow/Contracts/
 
 app/Domain/GrowFinance/Contracts/
 ├── AccountingProvider.php    ← extends ProviderContract
-└── PaymentProvider.php
+└── PaymentGateway.php
 ```
 
 **Why this structure:**
@@ -1864,7 +1864,7 @@ app/Domain/GrowFinance/Contracts/
 
 app/Domain/Billing/Contracts/  (future)
 ├── InvoiceProvider.php
-├── PaymentProvider.php
+├── PaymentGateway.php
 
 app/Domain/Crm/Contracts/  (future)
 ├── CustomerProvider.php
@@ -1889,7 +1889,7 @@ app/Domain/GrowFinance/Infrastructure/
 | `SupplierProvider` | Supplier records, payment terms, contacts | `StockFlow\Contracts` | StockFlow (interim — see §1.3; ownership moves to a future CRM/Supplier Management module) |
 | `OrderProvider` | Sales orders, order items, fulfillment status | `GrowMart\Contracts` | GrowMart |
 | `InvoiceProvider` | Invoices, billing records | `Billing\Contracts` (future) | Billing module |
-| `PaymentProvider` | Payment gateways, transactions, settlement | `Billing\Contracts` (future) | Billing module |
+| `PaymentGateway` | Payment gateways, transactions, settlement | `Billing\Contracts` (future) | Billing module |
 | `NotificationProvider` | In-app notifications, email, SMS | `Core\Contracts` | Platform Core |
 | `MediaProvider` | File uploads, image processing, CDN URLs | `Core\Contracts` | Storage |
 | `SearchProvider` | Full-text search across entities | `Core\Contracts` | Platform Core |
@@ -2470,7 +2470,7 @@ Stripe Webhook Handler     ← Receives Stripe's data model
 StripeAdapter              ← Translates Stripe model → MyGrowNet model
       │
       ▼
-PaymentProvider            ← Platform contract
+PaymentGateway            ← Platform contract
       │
       ▼
 GrowFinance                ← Pure domain logic

@@ -15,4 +15,6 @@ interface JournalEntryRepositoryInterface
     public function findByBusiness(int $businessId): array;
 
     public function findPosted(int $businessId): array;
+
+    public function findByBusinessAndDateRange(int $businessId, \DateTimeImmutable $start, \DateTimeImmutable $end): array;
 }

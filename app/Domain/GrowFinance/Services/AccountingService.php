@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace App\Domain\GrowFinance\Services;
 
+use App\Domain\Core\Services\OutboxService;
 use App\Domain\GrowFinance\Entities\Account;
 use App\Domain\GrowFinance\Entities\JournalEntry;
 use App\Domain\GrowFinance\Entities\JournalLine;
+use App\Domain\GrowFinance\Events\AccountBalanceChanged;
+use App\Domain\GrowFinance\Events\JournalPosted;
+use App\Domain\GrowFinance\Events\PeriodClosed;
 use App\Domain\GrowFinance\Repositories\AccountRepositoryInterface;
 use App\Domain\GrowFinance\Repositories\JournalEntryRepositoryInterface;
 use App\Domain\GrowFinance\Repositories\JournalLineRepositoryInterface;
 use App\Domain\GrowFinance\ValueObjects\AccountType;
-use App\Domain\Core\Services\OutboxService;
 use Illuminate\Support\Facades\DB;
 
 class AccountingService
@@ -111,6 +114,8 @@ class AccountingService
         }
 
         return DB::transaction(function () use ($entry) {
+            $totalDebit = 0;
+            $totalCredit = 0;
             $lines = $this->journalLineRepo->findByJournalEntry($entry->id);
 
             foreach ($lines as $line) {
@@ -120,6 +125,10 @@ class AccountingService
                 }
 
                 $netAmount = $line->debitAmount - $line->creditAmount;
+                $totalDebit += $line->debitAmount;
+                $totalCredit += $line->creditAmount;
+
+                $previousBalance = $accountEntity->currentBalance;
 
                 if ($accountEntity->type->isDebitNormal()) {
                     $newBalance = $accountEntity->currentBalance + $netAmount;
@@ -142,6 +151,21 @@ class AccountingService
                     createdAt: $accountEntity->createdAt,
                     updatedAt: null,
                 ));
+
+                $balanceEvent = new AccountBalanceChanged(
+                    accountId: $accountEntity->id,
+                    companyId: $entry->businessId,
+                    previousBalance: $previousBalance,
+                    newBalance: $newBalance,
+                    changeAmount: $netAmount,
+                    currency: 'ZMW',
+                );
+                $this->outbox->insert(
+                    eventName: AccountBalanceChanged::NAME,
+                    payload: $balanceEvent->toPayload(),
+                    context: ['business_id' => $entry->businessId],
+                    publisher: 'growfinance',
+                );
             }
 
             $this->journalEntryRepo->save(new JournalEntry(
@@ -157,21 +181,52 @@ class AccountingService
                 updatedAt: null,
             ));
 
+            $journalEvent = new JournalPosted(
+                journalId: $entry->id,
+                companyId: $entry->businessId,
+                totalDebit: $totalDebit,
+                totalCredit: $totalCredit,
+                currency: 'ZMW',
+                description: $entry->description,
+                postedAt: new \DateTimeImmutable(),
+            );
             $this->outbox->insert(
-                eventName: 'growfinance.journal.created.v1',
-                payload: [
-                    'business_id' => $entry->businessId,
-                    'journal_id' => $entry->id,
-                    'entry_number' => $entry->entryNumber,
-                    'description' => $entry->description,
-                    'is_posted' => true,
-                ],
+                eventName: JournalPosted::NAME,
+                payload: $journalEvent->toPayload(),
                 context: ['business_id' => $entry->businessId],
                 publisher: 'growfinance',
             );
 
             return true;
         });
+    }
+
+    public function closePeriod(int $businessId, string $periodStart, string $periodEnd): bool
+    {
+        $start = new \DateTimeImmutable($periodStart);
+        $end = new \DateTimeImmutable($periodEnd);
+
+        $entries = $this->journalEntryRepo->findByBusinessAndDateRange($businessId, $start, $end);
+        $unposted = array_filter($entries, fn($e) => !$e->isPosted);
+        if (!empty($unposted)) {
+            throw new \RuntimeException('Cannot close period: ' . count($unposted) . ' journal entries are still unposted');
+        }
+
+        $periodEvent = new PeriodClosed(
+            companyId: $businessId,
+            periodType: 'monthly',
+            periodStart: $start,
+            periodEnd: $end,
+            closedAt: new \DateTimeImmutable(),
+        );
+        $this->outbox->insert(
+            eventName: PeriodClosed::NAME,
+            payload: $periodEvent->toPayload(),
+            context: ['business_id' => $businessId, 'period_start' => $periodStart, 'period_end' => $periodEnd],
+            publisher: 'growfinance',
+        );
+
+        return true;
     }
 
     public function getAccountBalance(int $accountId): float

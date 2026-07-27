@@ -22,6 +22,7 @@ class StorageServiceProvider extends ServiceProvider
         $this->app->bind(StorageFolderRepositoryInterface::class, EloquentStorageFolderRepository::class);
         $this->app->bind(StorageSubscriptionRepositoryInterface::class, EloquentStorageSubscriptionRepository::class);
         $this->app->bind(FileShareRepositoryInterface::class, EloquentFileShareRepository::class);
+        $this->app->singleton(\App\Domain\Storage\Services\StorageBillingService::class);
     }
 
     public function boot(): void

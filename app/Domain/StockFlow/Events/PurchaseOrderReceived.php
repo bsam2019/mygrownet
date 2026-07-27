@@ -8,6 +8,8 @@ use DateTimeImmutable;
 
 class PurchaseOrderReceived implements DomainEvent
 {
+    public const NAME = 'stockflow.purchase_order.created.v1';
+
     public function __construct(
         private int $companyId,
         private int $purchaseOrderId,

@@ -4,27 +4,39 @@ declare(strict_types=1);
 
 namespace App\Domain\GrowFinance\Events;
 
-use DateTimeImmutable;
+use App\Domain\Core\Events\PlatformEvent;
 
-class PaymentReceived
+class PaymentReceived extends PlatformEvent
 {
-    public function __construct(
-        private int $companyId,
-        private int $paymentId,
-        private int $invoiceId,
-        private string $invoiceNumber,
-        private float $amount,
-        private string $paymentMethod,
-        private int $customerId,
-        private DateTimeImmutable $occurredAt = new DateTimeImmutable(),
-    ) {}
+    public const NAME = 'growfinance.payment.received.v1';
 
-    public function occurredAt(): DateTimeImmutable { return $this->occurredAt; }
-    public function getCompanyId(): int { return $this->companyId; }
-    public function getPaymentId(): int { return $this->paymentId; }
-    public function getInvoiceId(): int { return $this->invoiceId; }
-    public function getInvoiceNumber(): string { return $this->invoiceNumber; }
-    public function getAmount(): float { return $this->amount; }
-    public function getPaymentMethod(): string { return $this->paymentMethod; }
-    public function getCustomerId(): int { return $this->customerId; }
+    public function __construct(
+        public readonly int $companyId,
+        public readonly int $paymentId,
+        public readonly int $invoiceId,
+        public readonly string $invoiceNumber,
+        public readonly float $amount,
+        public readonly string $paymentMethod,
+        public readonly int $customerId,
+        public readonly \DateTimeImmutable $occurredAt,
+    ) {
+        parent::__construct(
+            entityId: (string) $paymentId,
+            eventName: self::NAME,
+        );
+    }
+
+    public function toPayload(): array
+    {
+        return [
+            'company_id' => $this->companyId,
+            'payment_id' => $this->paymentId,
+            'invoice_id' => $this->invoiceId,
+            'invoice_number' => $this->invoiceNumber,
+            'amount' => $this->amount,
+            'payment_method' => $this->paymentMethod,
+            'customer_id' => $this->customerId,
+            'occurred_at' => $this->occurredAt->format(\DateTimeInterface::ATOM),
+        ];
+    }
 }

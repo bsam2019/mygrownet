@@ -41,4 +41,13 @@ class EloquentJournalEntryRepository implements JournalEntryRepositoryInterface
         return GrowFinanceJournalEntryModel::forBusiness($businessId)->posted()->get()->map(fn($m) => JournalEntry::reconstitute($m->toArray()))->toArray();
     }
 
+    public function findByBusinessAndDateRange(int $businessId, \DateTimeImmutable $start, \DateTimeImmutable $end): array
+    {
+        return GrowFinanceJournalEntryModel::forBusiness($businessId)
+            ->whereBetween('entry_date', [$start->format('Y-m-d'), $end->format('Y-m-d')])
+            ->get()
+            ->map(fn($m) => JournalEntry::reconstitute($m->toArray()))
+            ->toArray();
+    }
+
 }
