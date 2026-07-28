@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import GrowFinanceLayout from '@/Layouts/GrowFinanceLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline';
@@ -8,21 +9,45 @@ interface Account {
     code: string;
     name: string;
     type: string;
-    subtype: string | null;
+    normal_balance: string;
+    parent_id: number | null;
+    level: number;
+    path: string | null;
+    statement_category: string | null;
+    category: string | null;
     description: string | null;
     is_active: boolean;
     is_system: boolean;
 }
 
-const props = defineProps<{
+interface ParentAccount {
+    id: number;
+    code: string;
+    name: string;
+    type: string;
+    level: number;
+}
+
+interface Props {
     account: Account;
-}>();
+    parentAccounts: ParentAccount[];
+    statementCategories: string[];
+}
+
+const props = defineProps<Props>();
 
 const form = useForm({
     name: props.account.name,
-    category: props.account.subtype || '',
+    normal_balance: props.account.normal_balance,
+    parent_id: props.account.parent_id ?? '',
+    statement_category: props.account.statement_category || '',
+    category: props.account.category || '',
     description: props.account.description || '',
     is_active: props.account.is_active,
+});
+
+const filteredParents = computed(() => {
+    return props.parentAccounts.filter(a => a.type === props.account.type);
 });
 
 const submit = () => {
@@ -35,7 +60,6 @@ const submit = () => {
         <Head title="Edit Account" />
 
         <div class="max-w-2xl mx-auto">
-            <!-- Header -->
             <div class="flex items-center gap-4 mb-6">
                 <Link
                     :href="route('growfinance.accounts.index')"
@@ -43,66 +67,80 @@ const submit = () => {
                 >
                     <ArrowLeftIcon class="h-5 w-5" aria-hidden="true" />
                 </Link>
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Edit Account</h1>
-                    <p class="text-sm text-gray-500">{{ account.code }} - {{ account.type }}</p>
-                </div>
+                <h1 class="text-2xl font-bold text-gray-900">Edit Account</h1>
+                <span class="text-sm text-gray-500 font-mono">{{ account.code }}</span>
             </div>
 
-            <!-- System Account Warning -->
-            <div v-if="account.is_system" class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p class="text-sm text-yellow-800">
-                    This is a system account. Only the name and description can be modified.
-                </p>
-            </div>
-
-            <!-- Form -->
             <form @submit.prevent="submit" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Account Code
-                    </label>
-                    <div class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 font-mono">
-                        {{ account.code }}
+                <div v-if="account.is_system" class="p-3 bg-blue-50 text-blue-700 text-sm rounded-lg">
+                    System account — only name and description can be modified.
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                            Account Name <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                            id="name"
+                            v-model="form.name"
+                            type="text"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                            required
+                        />
+                        <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</p>
                     </div>
-                    <p class="mt-1 text-xs text-gray-500">Account codes cannot be changed</p>
-                </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Account Type
-                    </label>
-                    <div class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 capitalize">
-                        {{ account.type }}
+                    <div>
+                        <label for="normal_balance" class="block text-sm font-medium text-gray-700 mb-1">
+                            Normal Balance
+                        </label>
+                        <select
+                            id="normal_balance"
+                            v-model="form.normal_balance"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                        >
+                            <option value="debit">Debit</option>
+                            <option value="credit">Credit</option>
+                        </select>
+                        <p v-if="form.errors.normal_balance" class="mt-1 text-sm text-red-600">{{ form.errors.normal_balance }}</p>
                     </div>
-                    <p class="mt-1 text-xs text-gray-500">Account types cannot be changed</p>
                 </div>
 
-                <div>
-                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
-                        Account Name <span class="text-red-500">*</span>
-                    </label>
-                    <input
-                        id="name"
-                        v-model="form.name"
-                        type="text"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        required
-                    />
-                    <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</p>
-                </div>
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label for="parent_id" class="block text-sm font-medium text-gray-700 mb-1">
+                            Parent Account
+                        </label>
+                        <select
+                            id="parent_id"
+                            v-model="form.parent_id"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                        >
+                            <option value="">None (top-level)</option>
+                            <option v-for="parent in filteredParents" :key="parent.id" :value="parent.id">
+                                {{ parent.code }} - {{ parent.name }}
+                            </option>
+                        </select>
+                        <p v-if="form.errors.parent_id" class="mt-1 text-sm text-red-600">{{ form.errors.parent_id }}</p>
+                    </div>
 
-                <div>
-                    <label for="category" class="block text-sm font-medium text-gray-700 mb-1">
-                        Category
-                    </label>
-                    <input
-                        id="category"
-                        v-model="form.category"
-                        type="text"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="e.g., Current Asset, Operating Expense"
-                    />
+                    <div>
+                        <label for="statement_category" class="block text-sm font-medium text-gray-700 mb-1">
+                            Statement Category
+                        </label>
+                        <select
+                            id="statement_category"
+                            v-model="form.statement_category"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                        >
+                            <option value="">Select category</option>
+                            <option v-for="cat in statementCategories" :key="cat" :value="cat">
+                                {{ cat.replace(/_/g, ' ') }}
+                            </option>
+                        </select>
+                        <p v-if="form.errors.statement_category" class="mt-1 text-sm text-red-600">{{ form.errors.statement_category }}</p>
+                    </div>
                 </div>
 
                 <div>
@@ -113,9 +151,9 @@ const submit = () => {
                         id="description"
                         v-model="form.description"
                         rows="3"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Optional description for this account"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                     ></textarea>
+                    <p v-if="form.errors.description" class="mt-1 text-sm text-red-600">{{ form.errors.description }}</p>
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -123,8 +161,7 @@ const submit = () => {
                         id="is_active"
                         v-model="form.is_active"
                         type="checkbox"
-                        class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        :disabled="account.is_system"
+                        class="h-4 w-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
                     />
                     <label for="is_active" class="text-sm text-gray-700">Active account</label>
                 </div>
@@ -138,8 +175,8 @@ const submit = () => {
                     </Link>
                     <button
                         type="submit"
-                        :disabled="form.processing"
-                        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        :disabled="form.processing || account.is_system"
+                        class="px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 disabled:opacity-50"
                     >
                         {{ form.processing ? 'Saving...' : 'Save Changes' }}
                     </button>

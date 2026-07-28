@@ -186,6 +186,18 @@ return [
         'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | ZRA (Zambia Revenue Authority) e-Invoicing & Tax Returns
+    |--------------------------------------------------------------------------
+    */
+
+    'zra' => [
+        'base_url' => env('ZRA_BASE_URL', 'https://api.zra.gov.zm'),
+        'tpin' => env('ZRA_TPIN'),
+        'password' => env('ZRA_PASSWORD'),
+    ],
+
     // Social Login
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),

@@ -82,7 +82,7 @@ class ReconciliationService
     {
         $matched = 0;
         $lines = $this->bankStatementLineRepo->findByStatement($statement->id);
-        $postedEntries = $this->journalEntryRepo->findPosted($businessId);
+            $postedEntries = $this->journalEntryRepo->findByStatus($businessId, 'posted');
 
         foreach ($lines as $line) {
             if ($line->status !== 'unmatched') continue;
@@ -93,7 +93,7 @@ class ReconciliationService
 
             $candidates = [];
             foreach ($postedEntries as $entry) {
-                if (!$entry->entryDate || $entry->entryDate < $startRange || $entry->entryDate > $endRange) continue;
+                if (!$entry->date || $entry->date < $startRange || $entry->date > $endRange) continue;
 
                 $entryLines = $this->journalLineRepo->findByJournalEntry($entry->id);
                 foreach ($entryLines as $jl) {
@@ -380,12 +380,12 @@ class ReconciliationService
             )
         );
 
-        $postedEntries = $this->journalEntryRepo->findPosted($businessId);
+        $postedEntries = $this->journalEntryRepo->findByStatus($businessId, 'posted');
 
         $lines = [];
         foreach ($postedEntries as $entry) {
-            if (!empty($dateRange) && $entry->entryDate) {
-                if ($entry->entryDate < new \DateTimeImmutable($dateRange[0]) || $entry->entryDate > new \DateTimeImmutable($dateRange[1])) {
+            if (!empty($dateRange) && $entry->date) {
+                if ($entry->date < new \DateTimeImmutable($dateRange[0]) || $entry->date > new \DateTimeImmutable($dateRange[1])) {
                     continue;
                 }
             }

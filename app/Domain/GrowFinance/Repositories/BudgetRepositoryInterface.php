@@ -19,4 +19,7 @@ interface BudgetRepositoryInterface
     public function findCurrent(int $businessId): array;
 
     public function findByCategory(int $businessId, string $category): array;
+
+    /** @return Budget[] */
+    public function findActiveByPeriod(int $businessId, \DateTimeImmutable $from, \DateTimeImmutable $to): array;
 }

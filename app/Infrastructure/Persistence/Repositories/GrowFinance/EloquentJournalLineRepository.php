@@ -7,6 +7,7 @@ namespace App\Infrastructure\Persistence\Repositories\GrowFinance;
 use App\Domain\GrowFinance\Entities\JournalLine;
 use App\Domain\GrowFinance\Repositories\JournalLineRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceJournalLineModel;
+use DateTimeImmutable;
 
 class EloquentJournalLineRepository implements JournalLineRepositoryInterface
 {
@@ -33,12 +34,31 @@ class EloquentJournalLineRepository implements JournalLineRepositoryInterface
 
     public function findByJournalEntry(int $journalEntryId): array
     {
-        return GrowFinanceJournalLineModel::where('journal_entry_id', $journalEntryId)->get()->map(fn($m) => JournalLine::reconstitute($m->toArray()))->toArray();
+        return GrowFinanceJournalLineModel::where('journal_entry_id', $journalEntryId)
+            ->get()
+            ->map(fn($m) => JournalLine::reconstitute($m->toArray()))
+            ->toArray();
     }
 
     public function findByAccount(int $accountId): array
     {
-        return GrowFinanceJournalLineModel::where('account_id', $accountId)->get()->map(fn($m) => JournalLine::reconstitute($m->toArray()))->toArray();
+        return GrowFinanceJournalLineModel::where('account_id', $accountId)
+            ->get()
+            ->map(fn($m) => JournalLine::reconstitute($m->toArray()))
+            ->toArray();
     }
 
+    public function findByAccountAndDateRange(int $accountId, DateTimeImmutable $start, DateTimeImmutable $end): array
+    {
+        return GrowFinanceJournalLineModel::where('account_id', $accountId)
+            ->whereHas('journalEntry', fn($q) => $q->whereBetween('date', [$start->format('Y-m-d'), $end->format('Y-m-d')]))
+            ->get()
+            ->map(fn($m) => JournalLine::reconstitute($m->toArray()))
+            ->toArray();
+    }
+
+    public function deleteByJournalEntry(int $journalEntryId): void
+    {
+        GrowFinanceJournalLineModel::where('journal_entry_id', $journalEntryId)->delete();
+    }
 }

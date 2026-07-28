@@ -2,9 +2,7 @@
 
 namespace App\Domain\GrowFinance\Events;
 
-use App\Domain\Core\Events\PlatformEvent;
-
-class PeriodClosed extends PlatformEvent
+class PeriodClosed
 {
     public const NAME = 'growfinance.period.closed.v1';
 
@@ -14,12 +12,7 @@ class PeriodClosed extends PlatformEvent
         public readonly \DateTimeImmutable $periodStart,
         public readonly \DateTimeImmutable $periodEnd,
         public readonly \DateTimeImmutable $closedAt,
-    ) {
-        parent::__construct(
-            entityId: "{$companyId}/{$periodType}/{$periodStart->format('Y-m')}",
-            eventName: self::NAME,
-        );
-    }
+    ) {}
 
     public function toPayload(): array
     {

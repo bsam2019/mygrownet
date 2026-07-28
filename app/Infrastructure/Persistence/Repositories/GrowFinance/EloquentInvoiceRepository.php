@@ -56,4 +56,12 @@ class EloquentInvoiceRepository implements InvoiceRepositoryInterface
         $_ = GrowFinanceInvoiceModel::forBusiness($businessId)->where('invoice_number', $number)->first(); return $_ ? Invoice::reconstitute($_->toArray()) : null;
     }
 
+    public function findByDateRange(int $businessId, \DateTimeImmutable $start, \DateTimeImmutable $end): array
+    {
+        return GrowFinanceInvoiceModel::forBusiness($businessId)
+            ->whereBetween('invoice_date', [$start->format('Y-m-d'), $end->format('Y-m-d')])
+            ->get()
+            ->map(fn($m) => Invoice::reconstitute($m->toArray()))
+            ->toArray();
+    }
 }

@@ -18,6 +18,8 @@ abstract class GrowFinanceTestCase extends TestCase
     {
         parent::setUp();
 
+        $this->withoutVite();
+
         // Create a test user
         $this->user = User::factory()->create([
             'email' => 'test@growfinance.test',

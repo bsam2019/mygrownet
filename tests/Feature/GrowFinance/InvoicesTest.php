@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\GrowFinance;
 
+use App\Domain\GrowFinance\ValueObjects\InvoiceStatus as InvoiceStatusEnum;
 use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceCustomerModel;
 use App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceInvoiceModel;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -111,7 +112,7 @@ class InvoicesTest extends GrowFinanceTestCase
 
         $invoice->refresh();
         $this->assertEquals(1160, $invoice->amount_paid);
-        $this->assertEquals('paid', $invoice->status);
+        $this->assertEquals(InvoiceStatusEnum::PAID, $invoice->status);
     }
 
     public function test_can_send_invoice(): void
@@ -135,6 +136,6 @@ class InvoicesTest extends GrowFinanceTestCase
         $response->assertRedirect();
 
         $invoice->refresh();
-        $this->assertEquals('sent', $invoice->status);
+        $this->assertEquals(InvoiceStatusEnum::SENT, $invoice->status);
     }
 }

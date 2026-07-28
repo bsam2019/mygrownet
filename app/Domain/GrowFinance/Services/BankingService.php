@@ -11,6 +11,8 @@ use App\Domain\GrowFinance\Repositories\AccountRepositoryInterface;
 use App\Domain\GrowFinance\Repositories\JournalEntryRepositoryInterface;
 use App\Domain\GrowFinance\Repositories\JournalLineRepositoryInterface;
 use App\Domain\Core\Services\OutboxService;
+use App\Domain\GrowFinance\ValueObjects\JournalStatus;
+use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 
 class BankingService
@@ -42,19 +44,18 @@ class BankingService
                 throw new \RuntimeException('No equity or income account found for deposit');
             }
 
-            $entryNumber = $this->generateEntryNumber($businessId);
+            $journalNumber = $this->generateJournalNumber($businessId);
 
             $entry = $this->journalEntryRepo->save(new JournalEntry(
                 id: null,
                 businessId: $businessId,
-                entryNumber: $entryNumber,
-                entryDate: new \DateTimeImmutable($date),
+                journalNumber: $journalNumber,
+                date: new DateTimeImmutable($date),
                 description: $description,
                 reference: $reference,
-                isPosted: true,
+                status: JournalStatus::POSTED,
                 createdBy: $createdBy,
-                createdAt: null,
-                updatedAt: null,
+                postedAt: new DateTimeImmutable(),
             ));
 
             $this->journalLineRepo->save(new JournalLine(
@@ -64,8 +65,6 @@ class BankingService
                 debitAmount: $amount,
                 creditAmount: 0,
                 description: $description,
-                createdAt: null,
-                updatedAt: null,
             ));
 
             $this->journalLineRepo->save(new JournalLine(
@@ -75,8 +74,6 @@ class BankingService
                 debitAmount: 0,
                 creditAmount: $amount,
                 description: $description,
-                createdAt: null,
-                updatedAt: null,
             ));
 
             $cashAccount = $this->accountRepo->findById($accountId);
@@ -90,6 +87,11 @@ class BankingService
                 code: $cashAccount->code,
                 name: $cashAccount->name,
                 type: $cashAccount->type,
+                normalBalance: $cashAccount->normalBalance,
+                parentId: $cashAccount->parentId,
+                level: $cashAccount->level,
+                path: $cashAccount->path,
+                statementCategory: $cashAccount->statementCategory,
                 category: $cashAccount->category,
                 description: $cashAccount->description,
                 isSystem: $cashAccount->isSystem,
@@ -106,6 +108,11 @@ class BankingService
                 code: $equityAccount->code,
                 name: $equityAccount->name,
                 type: $equityAccount->type,
+                normalBalance: $equityAccount->normalBalance,
+                parentId: $equityAccount->parentId,
+                level: $equityAccount->level,
+                path: $equityAccount->path,
+                statementCategory: $equityAccount->statementCategory,
                 category: $equityAccount->category,
                 description: $equityAccount->description,
                 isSystem: $equityAccount->isSystem,
@@ -121,7 +128,7 @@ class BankingService
                 payload: [
                     'business_id' => $businessId,
                     'journal_id' => $entry->id,
-                    'entry_number' => $entryNumber,
+                    'journal_number' => $journalNumber,
                     'description' => $description,
                 ],
                 context: ['business_id' => $businessId],
@@ -148,19 +155,18 @@ class BankingService
                 throw new \RuntimeException('No drawings account found for withdrawal');
             }
 
-            $entryNumber = $this->generateEntryNumber($businessId);
+            $journalNumber = $this->generateJournalNumber($businessId);
 
             $entry = $this->journalEntryRepo->save(new JournalEntry(
                 id: null,
                 businessId: $businessId,
-                entryNumber: $entryNumber,
-                entryDate: new \DateTimeImmutable($date),
+                journalNumber: $journalNumber,
+                date: new DateTimeImmutable($date),
                 description: $description,
                 reference: $reference,
-                isPosted: true,
+                status: JournalStatus::POSTED,
                 createdBy: $createdBy,
-                createdAt: null,
-                updatedAt: null,
+                postedAt: new DateTimeImmutable(),
             ));
 
             $this->journalLineRepo->save(new JournalLine(
@@ -170,8 +176,6 @@ class BankingService
                 debitAmount: $amount,
                 creditAmount: 0,
                 description: $description,
-                createdAt: null,
-                updatedAt: null,
             ));
 
             $this->journalLineRepo->save(new JournalLine(
@@ -181,8 +185,6 @@ class BankingService
                 debitAmount: 0,
                 creditAmount: $amount,
                 description: $description,
-                createdAt: null,
-                updatedAt: null,
             ));
 
             $cashAccount = $this->accountRepo->findById($accountId);
@@ -196,6 +198,11 @@ class BankingService
                 code: $cashAccount->code,
                 name: $cashAccount->name,
                 type: $cashAccount->type,
+                normalBalance: $cashAccount->normalBalance,
+                parentId: $cashAccount->parentId,
+                level: $cashAccount->level,
+                path: $cashAccount->path,
+                statementCategory: $cashAccount->statementCategory,
                 category: $cashAccount->category,
                 description: $cashAccount->description,
                 isSystem: $cashAccount->isSystem,
@@ -212,6 +219,11 @@ class BankingService
                 code: $drawingsAccount->code,
                 name: $drawingsAccount->name,
                 type: $drawingsAccount->type,
+                normalBalance: $drawingsAccount->normalBalance,
+                parentId: $drawingsAccount->parentId,
+                level: $drawingsAccount->level,
+                path: $drawingsAccount->path,
+                statementCategory: $drawingsAccount->statementCategory,
                 category: $drawingsAccount->category,
                 description: $drawingsAccount->description,
                 isSystem: $drawingsAccount->isSystem,
@@ -227,7 +239,7 @@ class BankingService
                 payload: [
                     'business_id' => $businessId,
                     'journal_id' => $entry->id,
-                    'entry_number' => $entryNumber,
+                    'journal_number' => $journalNumber,
                     'description' => $description,
                 ],
                 context: ['business_id' => $businessId],
@@ -248,19 +260,18 @@ class BankingService
         int $createdBy
     ): array {
         return DB::transaction(function () use ($businessId, $fromAccountId, $toAccountId, $amount, $description, $date, $createdBy) {
-            $entryNumber = $this->generateEntryNumber($businessId);
+            $journalNumber = $this->generateJournalNumber($businessId);
 
             $entry = $this->journalEntryRepo->save(new JournalEntry(
                 id: null,
                 businessId: $businessId,
-                entryNumber: $entryNumber,
-                entryDate: new \DateTimeImmutable($date),
+                journalNumber: $journalNumber,
+                date: new DateTimeImmutable($date),
                 description: $description,
                 reference: 'TRANSFER',
-                isPosted: true,
+                status: JournalStatus::POSTED,
                 createdBy: $createdBy,
-                createdAt: null,
-                updatedAt: null,
+                postedAt: new DateTimeImmutable(),
             ));
 
             $this->journalLineRepo->save(new JournalLine(
@@ -270,8 +281,6 @@ class BankingService
                 debitAmount: $amount,
                 creditAmount: 0,
                 description: $description,
-                createdAt: null,
-                updatedAt: null,
             ));
 
             $this->journalLineRepo->save(new JournalLine(
@@ -281,8 +290,6 @@ class BankingService
                 debitAmount: 0,
                 creditAmount: $amount,
                 description: $description,
-                createdAt: null,
-                updatedAt: null,
             ));
 
             $fromAccount = $this->accountRepo->findById($fromAccountId);
@@ -301,6 +308,11 @@ class BankingService
                 code: $fromAccount->code,
                 name: $fromAccount->name,
                 type: $fromAccount->type,
+                normalBalance: $fromAccount->normalBalance,
+                parentId: $fromAccount->parentId,
+                level: $fromAccount->level,
+                path: $fromAccount->path,
+                statementCategory: $fromAccount->statementCategory,
                 category: $fromAccount->category,
                 description: $fromAccount->description,
                 isSystem: $fromAccount->isSystem,
@@ -317,6 +329,11 @@ class BankingService
                 code: $toAccount->code,
                 name: $toAccount->name,
                 type: $toAccount->type,
+                normalBalance: $toAccount->normalBalance,
+                parentId: $toAccount->parentId,
+                level: $toAccount->level,
+                path: $toAccount->path,
+                statementCategory: $toAccount->statementCategory,
                 category: $toAccount->category,
                 description: $toAccount->description,
                 isSystem: $toAccount->isSystem,
@@ -332,7 +349,7 @@ class BankingService
                 payload: [
                     'business_id' => $businessId,
                     'journal_id' => $entry->id,
-                    'entry_number' => $entryNumber,
+                    'journal_number' => $journalNumber,
                     'description' => $description,
                 ],
                 context: ['business_id' => $businessId],
@@ -343,14 +360,14 @@ class BankingService
         });
     }
 
-    private function generateEntryNumber(int $businessId): string
+    private function generateJournalNumber(int $businessId): string
     {
         $lastEntry = DB::table('growfinance_journal_entries')
             ->where('business_id', $businessId)
             ->orderBy('id', 'desc')
             ->first();
 
-        $nextNumber = $lastEntry ? ((int) substr($lastEntry->entry_number, 3)) + 1 : 1;
+        $nextNumber = $lastEntry ? ((int) substr($lastEntry->journal_number, 3)) + 1 : 1;
 
         return 'JE-' . str_pad((string) $nextNumber, 6, '0', STR_PAD_LEFT);
     }

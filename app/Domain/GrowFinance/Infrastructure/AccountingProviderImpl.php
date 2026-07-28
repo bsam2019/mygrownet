@@ -43,6 +43,8 @@ class AccountingProviderImpl implements AccountingProvider
             lines: $entry['lines'] ?? [],
             reference: $entry['reference'] ?? null,
             createdBy: $entry['created_by'] ?? null,
+            currencyCode: $entry['currency_code'] ?? 'ZMW',
+            exchangeRate: (float) ($entry['exchange_rate'] ?? 1.0),
         );
     }
 

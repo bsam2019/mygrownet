@@ -42,8 +42,8 @@ class BankingController extends Controller
             ->with(['lines' => function ($query) use ($accountIds) {
                 $query->whereIn('account_id', $accountIds)->with('account');
             }])
-            ->where('is_posted', true)
-            ->orderBy('entry_date', 'desc')
+            ->where('status', 'posted')
+            ->orderBy('date', 'desc')
             ->limit(20)
             ->get()
             ->filter(fn($entry) => $entry->lines->isNotEmpty())
@@ -51,7 +51,7 @@ class BankingController extends Controller
                 $line = $entry->lines->first();
                 return [
                     'id' => $entry->id,
-                    'date' => $entry->entry_date,
+                    'date' => $entry->date,
                     'description' => $entry->description,
                     'reference' => $entry->reference,
                     'account' => $line->account->name ?? 'Unknown',

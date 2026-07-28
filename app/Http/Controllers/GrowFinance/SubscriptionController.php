@@ -25,6 +25,7 @@ class SubscriptionController extends Controller
     {
         return Inertia::render('GrowFinance/Upgrade', [
             'currentTier' => 'free',
+            'tiers' => [],
         ]);
     }
 
@@ -49,7 +50,14 @@ class SubscriptionController extends Controller
 
     public function usage(Request $request)
     {
-        return response()->json(['tier' => 'free']);
+        return response()->json([
+            'tier' => 'free',
+            'transactions' => 0,
+            'invoices' => 0,
+            'customers' => 0,
+            'vendors' => 0,
+            'storage' => 0,
+        ]);
     }
 
     public function cancel(Request $request)

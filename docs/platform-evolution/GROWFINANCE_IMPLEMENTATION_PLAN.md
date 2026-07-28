@@ -1,7 +1,7 @@
 # GrowFinance Enterprise Accounting — Implementation Plan
 
 > **Status:** Draft  
-> **Version:** 1.0  
+> **Version:** 1.1  
 > **Aligns with:** `GROWFINANCE_ENTERPRISE_ARCHITECTURE.md` v6.0  
 > **Objective:** Build GrowFinance from partial codebase to production-ready accounting platform following the roadmap in §21 and build/do-not-build list in §23
 
@@ -31,6 +31,22 @@ GrowFinance currently has 17 services, partial tables (`growfinance_accounts`, `
 | G6 | Regional Capability | 6 weeks | Offline resilience and regulatory connectivity |
 
 **Total estimated duration:** ~42 weeks (phases build sequentially, some overlap possible)
+
+### UI Architecture Workstream
+
+A parallel UI Architecture document ([GROWFINANCE_UI_ARCHITECTURE.md](GROWFINANCE_UI_ARCHITECTURE.md)) defines the frontend strategy — Transaction Grid, Pinia stores, command palette, density mode, accessibility, internationalization, and Inertia hybrid pattern. Its workstream maps across the G phases:
+
+| UI Component | Mapped To | Phase |
+|---|---|---|
+| API controllers (Journals, Accounts, Budgets, Invoices) | Data foundation for all Vue pages | G1 (accounting API) + G2 (invoice API) |
+| Pinia stores (`useJournalStore`, `useInvoiceStore`, `useAccountStore`) | Client state behind all transactional screens | G1 |
+| Transaction Grid (`TransactionGrid.vue` with keyboard nav, inline editing) | Core journal entry input | G1.17 |
+| Command palette (`Ctrl+K` action registry) | Cross-cutting navigation | G1 |
+| Density toggle (compact/comfortable) | UI preference | G1 |
+| Accessibility (WCAG AA, axe-core CI) | Applied to all Vue pages | G1 (Phase A screens) / G2–G6 (remaining) |
+| Internationalization (locale-aware formats, i18n) | Applied to all Vue pages | G6 |
+
+The UI document's Phase A deliverables (Journal Entry grid, command palette, density toggle) are tracked in G1.17 (journal entry UI) and G1.18 (journal list UI) below. Phase B/C items (AR/AP aging, mobile, i18n) are covered by later G phases.
 
 ---
 
@@ -72,8 +88,8 @@ A user can:
 | G1.14 | Create reversal journal flow — `JournalEntry::reverse(reason)` creates a mirror entry with reversed debits/credits, sets `reversal_of_id` on both entries, posts both | Domain logic | P0 |
 | G1.15 | Implement `ReportingEngine` — `getTrialBalance()`, `getProfitAndLoss(from, to)`, `getBalanceSheet(asOf)`, `getCashFlow(from, to)` | Domain service | P0 |
 | G1.16 | Create `ReportRepositoryInterface` for cached report snapshots | Repository | P0 |
-| G1.17 | Create manual journal entry UI (create draft, add lines, validate balance, post) | Vue pages | P0 |
-| G1.18 | Create journal list UI (filter by period, status, date range) | Vue pages | P0 |
+| G1.17 | Create manual journal entry UI (create draft, add lines, validate balance, post) — use `TransactionGrid.vue` with inline editing, keyboard nav, real-time totals, and `useJournalStore` per [UI Architecture](GROWFINANCE_UI_ARCHITECTURE.md) | Vue pages | P0 |
+| G1.18 | Create journal list UI (filter by period, status, date range) — backed by Pinia store data fetching, IDempotency-Key on post | Vue pages | P0 |
 | G1.19 | Create reversal journal UI (select original entry, enter reason, confirm) | Vue pages | P0 |
 | G1.20 | Create trial balance report UI with date filter and drill-down | Vue page | P0 |
 | G1.21 | Create P&L report UI with period comparison | Vue page | P0 |

@@ -215,9 +215,9 @@ class ReportsController extends Controller
                 ->with(['lines' => function ($query) use ($selectedAccount) {
                     $query->where('account_id', $selectedAccount->id);
                 }])
-                ->whereBetween('entry_date', [$startDate, $endDate])
-                ->where('is_posted', true)
-                ->orderBy('entry_date')
+                ->whereBetween('date', [$startDate, $endDate])
+                ->where('status', 'posted')
+                ->orderBy('date')
                 ->orderBy('id')
                 ->get();
 
@@ -237,8 +237,8 @@ class ReportsController extends Controller
 
                     $ledgerEntries[] = [
                         'id' => $entry->id,
-                        'date' => $entry->entry_date,
-                        'entry_number' => $entry->entry_number,
+                        'date' => $entry->date,
+                        'entry_number' => $entry->journal_number,
                         'description' => $entry->description,
                         'reference' => $entry->reference,
                         'debit' => $debit,
@@ -384,9 +384,9 @@ class ReportsController extends Controller
                 ->with(['lines' => function ($query) use ($account) {
                     $query->where('account_id', $account->id);
                 }])
-                ->whereBetween('entry_date', [$startDate, $endDate])
-                ->where('is_posted', true)
-                ->orderBy('entry_date')
+                ->whereBetween('date', [$startDate, $endDate])
+                ->where('status', 'posted')
+                ->orderBy('date')
                 ->get();
 
             $runningBalance = (float) $account->opening_balance;
@@ -403,7 +403,7 @@ class ReportsController extends Controller
                     }
 
                     $rows[] = [
-                        $entry->entry_date,
+                        $entry->date,
                         $entry->reference ?? '',
                         $entry->description,
                         $debit > 0 ? number_format($debit, 2) : '',

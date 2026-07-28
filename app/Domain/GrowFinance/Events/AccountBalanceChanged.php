@@ -2,9 +2,7 @@
 
 namespace App\Domain\GrowFinance\Events;
 
-use App\Domain\Core\Events\PlatformEvent;
-
-class AccountBalanceChanged extends PlatformEvent
+class AccountBalanceChanged
 {
     public const NAME = 'growfinance.account.balance.changed.v1';
 
@@ -15,12 +13,7 @@ class AccountBalanceChanged extends PlatformEvent
         public readonly float $newBalance,
         public readonly float $changeAmount,
         public readonly string $currency,
-    ) {
-        parent::__construct(
-            entityId: (string) $accountId,
-            eventName: self::NAME,
-        );
-    }
+    ) {}
 
     public function toPayload(): array
     {

@@ -78,9 +78,11 @@ class EventServiceProvider extends ServiceProvider
         // StockFlow Domain Events
         'stockflow.sale.completed.v1' => [
             [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onSaleCompleted'],
+            \App\Domain\GrowFinance\Listeners\StockFlowSaleListener::class,
         ],
         'stockflow.stock.adjusted.v1' => [
             [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onStockAdjusted'],
+            \App\Domain\GrowFinance\Listeners\StockFlowAdjustmentListener::class,
         ],
         'stockflow.count.finalized.v1' => [
             [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onStockCountFinalized'],
@@ -88,8 +90,27 @@ class EventServiceProvider extends ServiceProvider
         'stockflow.cash.discrepancy.v1' => [
             [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onCashDiscrepancyDetected'],
         ],
+        'stockflow.purchase.received.v1' => [
+            \App\Domain\GrowFinance\Listeners\StockFlowPurchaseListener::class,
+        ],
         \App\Domain\StockFlow\Events\PurchaseOrderReceived::class => [
             [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onPurchaseOrderReceived'],
+        ],
+
+        // Platform Payments → GrowFinance Auto-Journaling
+        'platform.payment.settled.v1' => [
+            \App\Domain\GrowFinance\Listeners\PlatformPaymentsListener::class,
+        ],
+
+        // BMS Events → GrowFinance Auto-Journaling
+        'bms.invoice.created.v1' => [
+            \App\Domain\GrowFinance\Listeners\BmsInvoiceCreatedListener::class,
+        ],
+        'bms.invoice.paid.v1' => [
+            \App\Domain\GrowFinance\Listeners\BmsInvoicePaidListener::class,
+        ],
+        \App\Domain\BMS\Core\Events\ExpenseRecorded::class => [
+            \App\Domain\GrowFinance\Listeners\BmsExpenseRecordedListener::class,
         ],
 
         // Platform Core Events

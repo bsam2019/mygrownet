@@ -2,9 +2,7 @@
 
 namespace App\Domain\GrowFinance\Events;
 
-use App\Domain\Core\Events\PlatformEvent;
-
-class JournalPosted extends PlatformEvent
+class JournalPosted
 {
     public const NAME = 'growfinance.journal.posted.v1';
 
@@ -16,12 +14,7 @@ class JournalPosted extends PlatformEvent
         public readonly string $currency,
         public readonly string $description,
         public readonly \DateTimeImmutable $postedAt,
-    ) {
-        parent::__construct(
-            entityId: (string) $journalId,
-            eventName: self::NAME,
-        );
-    }
+    ) {}
 
     public function toPayload(): array
     {

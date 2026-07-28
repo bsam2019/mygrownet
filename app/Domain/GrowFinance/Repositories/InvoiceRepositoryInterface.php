@@ -21,4 +21,6 @@ interface InvoiceRepositoryInterface
     public function findOverdue(int $businessId): array;
 
     public function findByNumber(int $businessId, string $number): ?Invoice;
+
+    public function findByDateRange(int $businessId, \DateTimeImmutable $start, \DateTimeImmutable $end): array;
 }

@@ -61,4 +61,15 @@ class EloquentBudgetRepository implements BudgetRepositoryInterface
             ->map(fn($m) => Budget::reconstitute($m->toArray()))
             ->toArray();
     }
+
+    public function findActiveByPeriod(int $businessId, \DateTimeImmutable $from, \DateTimeImmutable $to): array
+    {
+        return GrowFinanceBudgetModel::forBusiness($businessId)
+            ->active()
+            ->where('start_date', '<=', $to->format('Y-m-d'))
+            ->where('end_date', '>=', $from->format('Y-m-d'))
+            ->get()
+            ->map(fn($m) => Budget::reconstitute($m->toArray()))
+            ->toArray();
+    }
 }

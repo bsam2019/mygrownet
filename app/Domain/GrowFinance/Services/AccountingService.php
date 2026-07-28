@@ -9,12 +9,13 @@ use App\Domain\GrowFinance\Entities\Account;
 use App\Domain\GrowFinance\Entities\JournalEntry;
 use App\Domain\GrowFinance\Entities\JournalLine;
 use App\Domain\GrowFinance\Events\AccountBalanceChanged;
-use App\Domain\GrowFinance\Events\JournalPosted;
 use App\Domain\GrowFinance\Events\PeriodClosed;
 use App\Domain\GrowFinance\Repositories\AccountRepositoryInterface;
 use App\Domain\GrowFinance\Repositories\JournalEntryRepositoryInterface;
 use App\Domain\GrowFinance\Repositories\JournalLineRepositoryInterface;
 use App\Domain\GrowFinance\ValueObjects\AccountType;
+use App\Domain\GrowFinance\ValueObjects\JournalStatus;
+use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 
 class AccountingService
@@ -24,25 +25,57 @@ class AccountingService
         private JournalEntryRepositoryInterface $journalEntryRepo,
         private JournalLineRepositoryInterface $journalLineRepo,
         private readonly OutboxService $outbox,
+        private readonly PostingEngine $postingEngine,
+        private readonly GeneralLedgerEngine $generalLedgerEngine,
     ) {}
 
-    public function initializeChartOfAccounts(int $businessId): void
+    public function initializeChartOfAccounts(int $businessId, string $template = 'default'): void
     {
-        $defaultAccounts = $this->getDefaultAccounts();
+        $defaultAccounts = match ($template) {
+            'retail' => $this->getRetailAccounts(),
+            'service' => $this->getServiceAccounts(),
+            'manufacturing' => $this->getManufacturingAccounts(),
+            'ngo' => $this->getNgoAccounts(),
+            default => $this->getDefaultAccounts(),
+        };
+
+        $created = [];
 
         foreach ($defaultAccounts as $account) {
             $existing = $this->accountRepo->findByCode($businessId, $account['code']);
-            if ($existing === null) {
-                $this->accountRepo->save(new Account(
-                    id: null,
-                    businessId: $businessId,
-                    code: $account['code'],
-                    name: $account['name'],
-                    type: $account['type'],
-                    category: $account['category'] ?? null,
-                    isSystem: true,
-                ));
+            if ($existing !== null) {
+                $created[$account['code']] = $existing;
+                continue;
             }
+
+            $isDebitNormal = $account['type']->isDebitNormal();
+            $normalBalance = $account['normal_balance'] ?? ($isDebitNormal ? 'debit' : 'credit');
+
+            $parentId = null;
+            $path = $account['code'];
+
+            if (isset($account['parent_code']) && isset($created[$account['parent_code']])) {
+                $parentId = $created[$account['parent_code']]->id;
+                $parentPath = $created[$account['parent_code']]->path ?? $created[$account['parent_code']]->code;
+                $path = $parentPath . '/' . $account['code'];
+            }
+
+            $saved = $this->accountRepo->save(new Account(
+                id: null,
+                businessId: $businessId,
+                code: $account['code'],
+                name: $account['name'],
+                type: $account['type'],
+                normalBalance: $normalBalance,
+                parentId: $parentId,
+                level: $account['level'] ?? 1,
+                path: $path,
+                statementCategory: $account['statement_category'] ?? null,
+                category: $account['category'] ?? null,
+                isSystem: true,
+            ));
+
+            $created[$account['code']] = $saved;
         }
     }
 
@@ -51,34 +84,53 @@ class AccountingService
         string $description,
         array $lines,
         ?string $reference = null,
-        ?int $createdBy = null
+        ?int $createdBy = null,
+        ?DateTimeImmutable $date = null,
+        ?array $dimensions = null,
+        string $currencyCode = 'ZMW',
+        float $exchangeRate = 1.0,
     ): array {
-        return DB::transaction(function () use ($businessId, $description, $lines, $reference, $createdBy) {
-            $entryNumber = $this->generateEntryNumber($businessId);
+        return DB::transaction(function () use ($businessId, $description, $lines, $reference, $createdBy, $date, $dimensions, $currencyCode, $exchangeRate) {
+            $journalNumber = $this->generateJournalNumber($businessId);
 
             $entry = $this->journalEntryRepo->save(new JournalEntry(
                 id: null,
                 businessId: $businessId,
-                entryNumber: $entryNumber,
-                entryDate: new \DateTimeImmutable(),
+                journalNumber: $journalNumber,
+                date: $date ?? new DateTimeImmutable(),
                 description: $description,
                 reference: $reference,
-                isPosted: false,
+                status: JournalStatus::DRAFT,
+                currencyCode: $currencyCode,
+                exchangeRate: $exchangeRate,
                 createdBy: $createdBy,
-                createdAt: null,
-                updatedAt: null,
+                dimensions: $dimensions,
             ));
 
+            // Compute functional amounts for multi-currency entries
+            $isMultiCurrency = strtoupper($currencyCode) !== 'ZMW' && abs($exchangeRate - 1.0) > 0.0001;
+
             foreach ($lines as $line) {
+                $debitAmount = (float) ($line['debit_amount'] ?? 0);
+                $creditAmount = (float) ($line['credit_amount'] ?? 0);
+
+                $functionalDebit = null;
+                $functionalCredit = null;
+                if ($isMultiCurrency) {
+                    $functionalDebit = round($debitAmount * $exchangeRate, 2);
+                    $functionalCredit = round($creditAmount * $exchangeRate, 2);
+                }
+
                 $this->journalLineRepo->save(new JournalLine(
                     id: null,
                     journalEntryId: $entry->id,
                     accountId: $line['account_id'],
-                    debitAmount: (float) ($line['debit_amount'] ?? 0),
-                    creditAmount: (float) ($line['credit_amount'] ?? 0),
+                    debitAmount: $debitAmount,
+                    creditAmount: $creditAmount,
+                    functionalDebitAmount: $functionalDebit,
+                    functionalCreditAmount: $functionalCredit,
                     description: $line['description'] ?? null,
-                    createdAt: null,
-                    updatedAt: null,
+                    dimensions: $line['dimensions'] ?? null,
                 ));
             }
 
@@ -87,7 +139,7 @@ class AccountingService
                 payload: [
                     'business_id' => $businessId,
                     'journal_id' => $entry->id,
-                    'entry_number' => $entryNumber,
+                    'journal_number' => $journalNumber,
                     'description' => $description,
                 ],
                 context: ['business_id' => $businessId],
@@ -100,114 +152,26 @@ class AccountingService
 
     public function postJournalEntry(int $entryId): bool
     {
-        $entry = $this->journalEntryRepo->findById($entryId);
-        if (!$entry) {
-            return false;
-        }
-
-        if ($entry->isPosted) {
-            return false;
-        }
-
-        if (!$entry->isBalanced()) {
-            throw new \InvalidArgumentException('Journal entry is not balanced');
-        }
-
-        return DB::transaction(function () use ($entry) {
-            $totalDebit = 0;
-            $totalCredit = 0;
-            $lines = $this->journalLineRepo->findByJournalEntry($entry->id);
-
-            foreach ($lines as $line) {
-                $accountEntity = $this->accountRepo->findById($line->accountId);
-                if (!$accountEntity) {
-                    continue;
-                }
-
-                $netAmount = $line->debitAmount - $line->creditAmount;
-                $totalDebit += $line->debitAmount;
-                $totalCredit += $line->creditAmount;
-
-                $previousBalance = $accountEntity->currentBalance;
-
-                if ($accountEntity->type->isDebitNormal()) {
-                    $newBalance = $accountEntity->currentBalance + $netAmount;
-                } else {
-                    $newBalance = $accountEntity->currentBalance - $netAmount;
-                }
-
-                $this->accountRepo->save(new Account(
-                    id: $accountEntity->id,
-                    businessId: $accountEntity->businessId,
-                    code: $accountEntity->code,
-                    name: $accountEntity->name,
-                    type: $accountEntity->type,
-                    category: $accountEntity->category,
-                    description: $accountEntity->description,
-                    isSystem: $accountEntity->isSystem,
-                    isActive: $accountEntity->isActive,
-                    openingBalance: $accountEntity->openingBalance,
-                    currentBalance: $newBalance,
-                    createdAt: $accountEntity->createdAt,
-                    updatedAt: null,
-                ));
-
-                $balanceEvent = new AccountBalanceChanged(
-                    accountId: $accountEntity->id,
-                    companyId: $entry->businessId,
-                    previousBalance: $previousBalance,
-                    newBalance: $newBalance,
-                    changeAmount: $netAmount,
-                    currency: 'ZMW',
-                );
-                $this->outbox->insert(
-                    eventName: AccountBalanceChanged::NAME,
-                    payload: $balanceEvent->toPayload(),
-                    context: ['business_id' => $entry->businessId],
-                    publisher: 'growfinance',
-                );
-            }
-
-            $this->journalEntryRepo->save(new JournalEntry(
-                id: $entry->id,
-                businessId: $entry->businessId,
-                entryNumber: $entry->entryNumber,
-                entryDate: $entry->entryDate,
-                description: $entry->description,
-                reference: $entry->reference,
-                isPosted: true,
-                createdBy: $entry->createdBy,
-                createdAt: $entry->createdAt,
-                updatedAt: null,
-            ));
-
-            $journalEvent = new JournalPosted(
-                journalId: $entry->id,
-                companyId: $entry->businessId,
-                totalDebit: $totalDebit,
-                totalCredit: $totalCredit,
-                currency: 'ZMW',
-                description: $entry->description,
-                postedAt: new \DateTimeImmutable(),
-            );
-            $this->outbox->insert(
-                eventName: JournalPosted::NAME,
-                payload: $journalEvent->toPayload(),
-                context: ['business_id' => $entry->businessId],
-                publisher: 'growfinance',
-            );
-
+        try {
+            $this->postingEngine->post($entryId);
             return true;
-        });
+        } catch (\DomainException $e) {
+            throw new \InvalidArgumentException($e->getMessage());
+        }
+    }
+
+    public function reverseJournalEntry(int $entryId, string $reason): array
+    {
+        return $this->postingEngine->reverse($entryId, $reason);
     }
 
     public function closePeriod(int $businessId, string $periodStart, string $periodEnd): bool
     {
-        $start = new \DateTimeImmutable($periodStart);
-        $end = new \DateTimeImmutable($periodEnd);
+        $start = new DateTimeImmutable($periodStart);
+        $end = new DateTimeImmutable($periodEnd);
 
-        $entries = $this->journalEntryRepo->findByBusinessAndDateRange($businessId, $start, $end);
-        $unposted = array_filter($entries, fn($e) => !$e->isPosted);
+        $entries = $this->journalEntryRepo->findByDateRange($businessId, $start, $end);
+        $unposted = array_filter($entries, fn($e) => $e->status === JournalStatus::DRAFT);
         if (!empty($unposted)) {
             throw new \RuntimeException('Cannot close period: ' . count($unposted) . ' journal entries are still unposted');
         }
@@ -217,7 +181,7 @@ class AccountingService
             periodType: 'monthly',
             periodStart: $start,
             periodEnd: $end,
-            closedAt: new \DateTimeImmutable(),
+            closedAt: new DateTimeImmutable(),
         );
         $this->outbox->insert(
             eventName: PeriodClosed::NAME,
@@ -240,52 +204,17 @@ class AccountingService
 
     public function getTrialBalance(int $businessId): array
     {
-        $accounts = $this->accountRepo->findActive($businessId);
-
-        usort($accounts, fn(Account $a, Account $b) => strcmp($a->code, $b->code));
-
-        $totalDebits = 0;
-        $totalCredits = 0;
-        $balances = [];
-
-        foreach ($accounts as $account) {
-            $balance = $account->currentBalance;
-
-            if ($account->type->isDebitNormal()) {
-                if ($balance >= 0) {
-                    $totalDebits += $balance;
-                    $balances[] = ['account' => $account->toArray(), 'debit' => $balance, 'credit' => 0];
-                } else {
-                    $totalCredits += abs($balance);
-                    $balances[] = ['account' => $account->toArray(), 'debit' => 0, 'credit' => abs($balance)];
-                }
-            } else {
-                if ($balance >= 0) {
-                    $totalCredits += $balance;
-                    $balances[] = ['account' => $account->toArray(), 'debit' => 0, 'credit' => $balance];
-                } else {
-                    $totalDebits += abs($balance);
-                    $balances[] = ['account' => $account->toArray(), 'debit' => abs($balance), 'credit' => 0];
-                }
-            }
-        }
-
-        return [
-            'balances' => $balances,
-            'total_debits' => $totalDebits,
-            'total_credits' => $totalCredits,
-            'is_balanced' => abs($totalDebits - $totalCredits) < 0.01,
-        ];
+        return $this->generalLedgerEngine->getTrialBalance($businessId);
     }
 
-    private function generateEntryNumber(int $businessId): string
+    private function generateJournalNumber(int $businessId): string
     {
         $lastEntry = DB::table('growfinance_journal_entries')
             ->where('business_id', $businessId)
             ->orderBy('id', 'desc')
             ->first();
 
-        $nextNumber = $lastEntry ? ((int) substr($lastEntry->entry_number, 3)) + 1 : 1;
+        $nextNumber = $lastEntry ? ((int) substr($lastEntry->journal_number, 3)) + 1 : 1;
 
         return 'JE-' . str_pad((string) $nextNumber, 6, '0', STR_PAD_LEFT);
     }
@@ -293,33 +222,131 @@ class AccountingService
     private function getDefaultAccounts(): array
     {
         return [
-            ['code' => '1000', 'name' => 'Cash on Hand', 'type' => AccountType::ASSET, 'category' => 'Cash'],
-            ['code' => '1010', 'name' => 'Bank Account', 'type' => AccountType::ASSET, 'category' => 'Cash'],
-            ['code' => '1020', 'name' => 'Mobile Money', 'type' => AccountType::ASSET, 'category' => 'Cash'],
-            ['code' => '1100', 'name' => 'Accounts Receivable', 'type' => AccountType::ASSET, 'category' => 'Receivables'],
-            ['code' => '1200', 'name' => 'Inventory', 'type' => AccountType::ASSET, 'category' => 'Inventory'],
-            ['code' => '1300', 'name' => 'Prepaid Expenses', 'type' => AccountType::ASSET, 'category' => 'Prepaid'],
-            ['code' => '2000', 'name' => 'Accounts Payable', 'type' => AccountType::LIABILITY, 'category' => 'Payables'],
-            ['code' => '2100', 'name' => 'Accrued Expenses', 'type' => AccountType::LIABILITY, 'category' => 'Accrued'],
-            ['code' => '2200', 'name' => 'Short-term Loans', 'type' => AccountType::LIABILITY, 'category' => 'Loans'],
-            ['code' => '2300', 'name' => 'VAT Payable', 'type' => AccountType::LIABILITY, 'category' => 'Tax'],
-            ['code' => '3000', 'name' => "Owner's Capital", 'type' => AccountType::EQUITY, 'category' => 'Capital'],
-            ['code' => '3100', 'name' => 'Retained Earnings', 'type' => AccountType::EQUITY, 'category' => 'Earnings'],
-            ['code' => '3200', 'name' => "Owner's Drawings", 'type' => AccountType::EQUITY, 'category' => 'Drawings'],
-            ['code' => '4000', 'name' => 'Sales Revenue', 'type' => AccountType::INCOME, 'category' => 'Sales'],
-            ['code' => '4100', 'name' => 'Service Revenue', 'type' => AccountType::INCOME, 'category' => 'Services'],
-            ['code' => '4200', 'name' => 'Other Income', 'type' => AccountType::INCOME, 'category' => 'Other'],
-            ['code' => '4300', 'name' => 'Interest Income', 'type' => AccountType::INCOME, 'category' => 'Interest'],
-            ['code' => '5000', 'name' => 'Cost of Goods Sold', 'type' => AccountType::EXPENSE, 'category' => 'COGS'],
-            ['code' => '5100', 'name' => 'Salaries & Wages', 'type' => AccountType::EXPENSE, 'category' => 'Payroll'],
-            ['code' => '5200', 'name' => 'Rent Expense', 'type' => AccountType::EXPENSE, 'category' => 'Rent'],
-            ['code' => '5300', 'name' => 'Utilities', 'type' => AccountType::EXPENSE, 'category' => 'Utilities'],
-            ['code' => '5400', 'name' => 'Transport & Fuel', 'type' => AccountType::EXPENSE, 'category' => 'Transport'],
-            ['code' => '5500', 'name' => 'Office Supplies', 'type' => AccountType::EXPENSE, 'category' => 'Supplies'],
-            ['code' => '5600', 'name' => 'Marketing & Advertising', 'type' => AccountType::EXPENSE, 'category' => 'Marketing'],
-            ['code' => '5700', 'name' => 'Bank Charges', 'type' => AccountType::EXPENSE, 'category' => 'Bank'],
-            ['code' => '5800', 'name' => 'Depreciation', 'type' => AccountType::EXPENSE, 'category' => 'Depreciation'],
-            ['code' => '5900', 'name' => 'Miscellaneous Expenses', 'type' => AccountType::EXPENSE, 'category' => 'Other'],
+            ['code' => '1000', 'name' => 'Current Assets', 'type' => AccountType::ASSET, 'level' => 1, 'statement_category' => 'current_asset'],
+            ['code' => '1100', 'name' => 'Cash and Cash Equivalents', 'type' => AccountType::ASSET, 'level' => 2, 'parent_code' => '1000', 'statement_category' => 'cash'],
+            ['code' => '1110', 'name' => 'Cash on Hand', 'type' => AccountType::ASSET, 'level' => 3, 'parent_code' => '1100', 'category' => 'Cash', 'statement_category' => 'cash'],
+            ['code' => '1120', 'name' => 'Bank Account', 'type' => AccountType::ASSET, 'level' => 3, 'parent_code' => '1100', 'category' => 'Cash', 'statement_category' => 'cash'],
+            ['code' => '1130', 'name' => 'Mobile Money', 'type' => AccountType::ASSET, 'level' => 3, 'parent_code' => '1100', 'category' => 'Cash', 'statement_category' => 'cash'],
+            ['code' => '1200', 'name' => 'Accounts Receivable', 'type' => AccountType::ASSET, 'level' => 2, 'parent_code' => '1000', 'category' => 'Receivables', 'statement_category' => 'receivables'],
+            ['code' => '1300', 'name' => 'Inventory', 'type' => AccountType::ASSET, 'level' => 2, 'parent_code' => '1000', 'category' => 'Inventory', 'statement_category' => 'inventory'],
+            ['code' => '1400', 'name' => 'Prepaid Expenses', 'type' => AccountType::ASSET, 'level' => 2, 'parent_code' => '1000', 'category' => 'Prepaid', 'statement_category' => 'prepayments'],
+            ['code' => '1500', 'name' => 'Non-Current Assets', 'type' => AccountType::ASSET, 'level' => 1, 'statement_category' => 'fixed_asset'],
+            ['code' => '1510', 'name' => 'Fixed Assets', 'type' => AccountType::ASSET, 'level' => 2, 'parent_code' => '1500', 'statement_category' => 'fixed_asset'],
+            ['code' => '1520', 'name' => 'Accumulated Depreciation', 'type' => AccountType::ASSET, 'normal_balance' => 'credit', 'level' => 2, 'parent_code' => '1500', 'statement_category' => 'fixed_asset'],
+            ['code' => '2000', 'name' => 'Current Liabilities', 'type' => AccountType::LIABILITY, 'level' => 1, 'statement_category' => 'current_liability'],
+            ['code' => '2100', 'name' => 'Accounts Payable', 'type' => AccountType::LIABILITY, 'level' => 2, 'parent_code' => '2000', 'category' => 'Payables', 'statement_category' => 'payables'],
+            ['code' => '2200', 'name' => 'Accrued Expenses', 'type' => AccountType::LIABILITY, 'level' => 2, 'parent_code' => '2000', 'category' => 'Accrued', 'statement_category' => 'accruals'],
+            ['code' => '2300', 'name' => 'Short-term Loans', 'type' => AccountType::LIABILITY, 'level' => 2, 'parent_code' => '2000', 'category' => 'Loans', 'statement_category' => 'borrowings'],
+            ['code' => '2400', 'name' => 'VAT Payable', 'type' => AccountType::LIABILITY, 'level' => 2, 'parent_code' => '2000', 'category' => 'Tax', 'statement_category' => 'tax'],
+            ['code' => '2500', 'name' => 'Withholding Tax Payable', 'type' => AccountType::LIABILITY, 'level' => 2, 'parent_code' => '2000', 'statement_category' => 'tax'],
+            ['code' => '2600', 'name' => 'Non-Current Liabilities', 'type' => AccountType::LIABILITY, 'level' => 1, 'statement_category' => 'long_term_liability'],
+            ['code' => '2610', 'name' => 'Long-term Loans', 'type' => AccountType::LIABILITY, 'level' => 2, 'parent_code' => '2600', 'statement_category' => 'borrowings'],
+            ['code' => '3000', 'name' => "Owner's Capital", 'type' => AccountType::EQUITY, 'level' => 2, 'category' => 'Capital', 'statement_category' => 'equity'],
+            ['code' => '3100', 'name' => 'Retained Earnings', 'type' => AccountType::EQUITY, 'level' => 2, 'category' => 'Earnings', 'statement_category' => 'retained_earnings'],
+            ['code' => '3200', 'name' => "Owner's Drawings", 'type' => AccountType::EQUITY, 'level' => 2, 'category' => 'Drawings', 'statement_category' => 'drawings'],
+            ['code' => '4000', 'name' => 'Operating Revenue', 'type' => AccountType::INCOME, 'level' => 1, 'statement_category' => 'operating_revenue'],
+            ['code' => '4100', 'name' => 'Sales Revenue', 'type' => AccountType::INCOME, 'level' => 2, 'parent_code' => '4000', 'category' => 'Sales', 'statement_category' => 'operating_revenue'],
+            ['code' => '4200', 'name' => 'Service Revenue', 'type' => AccountType::INCOME, 'level' => 2, 'parent_code' => '4000', 'category' => 'Services', 'statement_category' => 'operating_revenue'],
+            ['code' => '4300', 'name' => 'Other Income', 'type' => AccountType::INCOME, 'level' => 2, 'parent_code' => '4000', 'category' => 'Other', 'statement_category' => 'other_income'],
+            ['code' => '4400', 'name' => 'Interest Income', 'type' => AccountType::INCOME, 'level' => 2, 'parent_code' => '4000', 'category' => 'Interest', 'statement_category' => 'other_income'],
+            ['code' => '5000', 'name' => 'Cost of Sales', 'type' => AccountType::EXPENSE, 'level' => 1, 'statement_category' => 'cost_of_sales'],
+            ['code' => '5100', 'name' => 'Cost of Goods Sold', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5000', 'category' => 'COGS', 'statement_category' => 'cost_of_sales'],
+            ['code' => '5200', 'name' => 'Operating Expenses', 'type' => AccountType::EXPENSE, 'level' => 1, 'statement_category' => 'operating_expense'],
+            ['code' => '5210', 'name' => 'Salaries & Wages', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5200', 'category' => 'Payroll', 'statement_category' => 'operating_expense'],
+            ['code' => '5220', 'name' => 'Rent Expense', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5200', 'category' => 'Rent', 'statement_category' => 'operating_expense'],
+            ['code' => '5230', 'name' => 'Utilities', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5200', 'category' => 'Utilities', 'statement_category' => 'operating_expense'],
+            ['code' => '5240', 'name' => 'Transport & Fuel', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5200', 'category' => 'Transport', 'statement_category' => 'operating_expense'],
+            ['code' => '5250', 'name' => 'Office Supplies', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5200', 'category' => 'Supplies', 'statement_category' => 'operating_expense'],
+            ['code' => '5260', 'name' => 'Marketing & Advertising', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5200', 'category' => 'Marketing', 'statement_category' => 'operating_expense'],
+            ['code' => '5270', 'name' => 'Bank Charges', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5200', 'category' => 'Bank', 'statement_category' => 'operating_expense'],
+            ['code' => '5280', 'name' => 'Depreciation', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5200', 'category' => 'Depreciation', 'statement_category' => 'operating_expense'],
+            ['code' => '5290', 'name' => 'Professional Fees', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5200', 'statement_category' => 'operating_expense'],
+            ['code' => '5300', 'name' => 'Miscellaneous Expenses', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5200', 'category' => 'Other', 'statement_category' => 'operating_expense'],
+            ['code' => '4305', 'name' => 'Realized FX Gain', 'type' => AccountType::INCOME, 'level' => 2, 'parent_code' => '4000', 'category' => 'Currency', 'statement_category' => 'other_income'],
+            ['code' => '5305', 'name' => 'Realized FX Loss', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5200', 'category' => 'Currency', 'statement_category' => 'operating_expense'],
+            ['code' => '3300', 'name' => 'Unrealized FX Revaluation', 'type' => AccountType::EQUITY, 'level' => 2, 'category' => 'Currency', 'statement_category' => 'equity'],
         ];
+    }
+
+    private function getRetailAccounts(): array
+    {
+        $base = $this->getDefaultAccounts();
+        $retail = [
+            ['code' => '1160', 'name' => 'Petty Cash', 'type' => AccountType::ASSET, 'level' => 3, 'parent_code' => '1100', 'category' => 'Cash', 'statement_category' => 'cash'],
+            ['code' => '1310', 'name' => 'Merchandise Inventory', 'type' => AccountType::ASSET, 'level' => 3, 'parent_code' => '1300', 'category' => 'Inventory', 'statement_category' => 'inventory'],
+            ['code' => '1600', 'name' => 'POS Systems', 'type' => AccountType::ASSET, 'level' => 2, 'parent_code' => '1500', 'statement_category' => 'fixed_asset'],
+            ['code' => '4110', 'name' => 'Retail Sales', 'type' => AccountType::INCOME, 'level' => 3, 'parent_code' => '4100', 'category' => 'Sales', 'statement_category' => 'operating_revenue'],
+            ['code' => '4120', 'name' => 'Wholesale Sales', 'type' => AccountType::INCOME, 'level' => 3, 'parent_code' => '4100', 'category' => 'Sales', 'statement_category' => 'operating_revenue'],
+            ['code' => '5110', 'name' => 'Cost of Goods Sold - Retail', 'type' => AccountType::EXPENSE, 'level' => 3, 'parent_code' => '5100', 'category' => 'COGS', 'statement_category' => 'cost_of_sales'],
+            ['code' => '5120', 'name' => 'Cost of Goods Sold - Wholesale', 'type' => AccountType::EXPENSE, 'level' => 3, 'parent_code' => '5100', 'category' => 'COGS', 'statement_category' => 'cost_of_sales'],
+            ['code' => '5310', 'name' => 'Point of Sale Expenses', 'type' => AccountType::EXPENSE, 'level' => 3, 'parent_code' => '5200', 'category' => 'Other', 'statement_category' => 'operating_expense'],
+            ['code' => '5320', 'name' => 'Shelf Rental Income', 'type' => AccountType::INCOME, 'level' => 3, 'parent_code' => '4000', 'category' => 'Other', 'statement_category' => 'other_income'],
+        ];
+        return array_merge($base, $retail);
+    }
+
+    private function getServiceAccounts(): array
+    {
+        $base = $this->getDefaultAccounts();
+        $service = [
+            ['code' => '1210', 'name' => 'Unbilled Receivables', 'type' => AccountType::ASSET, 'level' => 3, 'parent_code' => '1200', 'category' => 'Receivables', 'statement_category' => 'receivables'],
+            ['code' => '1410', 'name' => 'Contract Assets', 'type' => AccountType::ASSET, 'level' => 3, 'parent_code' => '1400', 'category' => 'Prepaid', 'statement_category' => 'prepayments'],
+            ['code' => '2210', 'name' => 'Deferred Revenue', 'type' => AccountType::LIABILITY, 'level' => 3, 'parent_code' => '2200', 'category' => 'Accrued', 'statement_category' => 'accruals'],
+            ['code' => '4210', 'name' => 'Consulting Revenue', 'type' => AccountType::INCOME, 'level' => 3, 'parent_code' => '4200', 'category' => 'Services', 'statement_category' => 'operating_revenue'],
+            ['code' => '4220', 'name' => 'Managed Services Revenue', 'type' => AccountType::INCOME, 'level' => 3, 'parent_code' => '4200', 'category' => 'Services', 'statement_category' => 'operating_revenue'],
+            ['code' => '4230', 'name' => 'Retainer Revenue', 'type' => AccountType::INCOME, 'level' => 3, 'parent_code' => '4200', 'category' => 'Services', 'statement_category' => 'operating_revenue'],
+            ['code' => '5330', 'name' => 'Contract Labor', 'type' => AccountType::EXPENSE, 'level' => 3, 'parent_code' => '5200', 'category' => 'Payroll', 'statement_category' => 'operating_expense'],
+            ['code' => '5340', 'name' => 'Software & Subscriptions', 'type' => AccountType::EXPENSE, 'level' => 3, 'parent_code' => '5200', 'category' => 'Other', 'statement_category' => 'operating_expense'],
+        ];
+        return array_merge($base, $service);
+    }
+
+    private function getManufacturingAccounts(): array
+    {
+        $base = $this->getDefaultAccounts();
+        $manufacturing = [
+            ['code' => '1310', 'name' => 'Raw Materials', 'type' => AccountType::ASSET, 'level' => 3, 'parent_code' => '1300', 'category' => 'Inventory', 'statement_category' => 'inventory'],
+            ['code' => '1320', 'name' => 'Work in Progress', 'type' => AccountType::ASSET, 'level' => 3, 'parent_code' => '1300', 'category' => 'Inventory', 'statement_category' => 'inventory'],
+            ['code' => '1330', 'name' => 'Finished Goods', 'type' => AccountType::ASSET, 'level' => 3, 'parent_code' => '1300', 'category' => 'Inventory', 'statement_category' => 'inventory'],
+            ['code' => '1340', 'name' => 'Production Supplies', 'type' => AccountType::ASSET, 'level' => 3, 'parent_code' => '1300', 'category' => 'Inventory', 'statement_category' => 'inventory'],
+            ['code' => '1700', 'name' => 'Plant & Machinery', 'type' => AccountType::ASSET, 'level' => 2, 'parent_code' => '1500', 'statement_category' => 'fixed_asset'],
+            ['code' => '1710', 'name' => 'Accum. Depreciation - Plant', 'type' => AccountType::ASSET, 'normal_balance' => 'credit', 'level' => 3, 'parent_code' => '1700', 'statement_category' => 'fixed_asset'],
+            ['code' => '5130', 'name' => 'Raw Material Usage', 'type' => AccountType::EXPENSE, 'level' => 3, 'parent_code' => '5100', 'category' => 'COGS', 'statement_category' => 'cost_of_sales'],
+            ['code' => '5140', 'name' => 'Direct Labor', 'type' => AccountType::EXPENSE, 'level' => 3, 'parent_code' => '5100', 'category' => 'COGS', 'statement_category' => 'cost_of_sales'],
+            ['code' => '5150', 'name' => 'Manufacturing Overhead', 'type' => AccountType::EXPENSE, 'level' => 3, 'parent_code' => '5100', 'category' => 'COGS', 'statement_category' => 'cost_of_sales'],
+            ['code' => '5160', 'name' => 'Freight & Shipping', 'type' => AccountType::EXPENSE, 'level' => 3, 'parent_code' => '5100', 'category' => 'COGS', 'statement_category' => 'cost_of_sales'],
+            ['code' => '5350', 'name' => 'Equipment Maintenance', 'type' => AccountType::EXPENSE, 'level' => 3, 'parent_code' => '5200', 'category' => 'Other', 'statement_category' => 'operating_expense'],
+            ['code' => '5360', 'name' => 'Quality Control', 'type' => AccountType::EXPENSE, 'level' => 3, 'parent_code' => '5200', 'category' => 'Other', 'statement_category' => 'operating_expense'],
+        ];
+        return array_merge($base, $manufacturing);
+    }
+
+    private function getNgoAccounts(): array
+    {
+        $base = $this->getDefaultAccounts();
+        $ngo = [
+            ['code' => '1220', 'name' => 'Grant Receivables', 'type' => AccountType::ASSET, 'level' => 3, 'parent_code' => '1200', 'category' => 'Receivables', 'statement_category' => 'receivables'],
+            ['code' => '1420', 'name' => 'Grant Prepayments', 'type' => AccountType::ASSET, 'level' => 3, 'parent_code' => '1400', 'category' => 'Prepaid', 'statement_category' => 'prepayments'],
+            ['code' => '2220', 'name' => 'Restricted Funds', 'type' => AccountType::LIABILITY, 'level' => 3, 'parent_code' => '2200', 'category' => 'Accrued', 'statement_category' => 'accruals'],
+            ['code' => '2310', 'name' => 'Donor Restricted Grants', 'type' => AccountType::LIABILITY, 'level' => 3, 'parent_code' => '2300', 'category' => 'Loans', 'statement_category' => 'borrowings'],
+            ['code' => '3400', 'name' => 'Restricted Net Assets', 'type' => AccountType::EQUITY, 'level' => 2, 'category' => 'Capital', 'statement_category' => 'equity'],
+            ['code' => '3410', 'name' => 'Unrestricted Net Assets', 'type' => AccountType::EQUITY, 'level' => 2, 'category' => 'Earnings', 'statement_category' => 'equity'],
+            ['code' => '3420', 'name' => 'Temporarily Restricted Net Assets', 'type' => AccountType::EQUITY, 'level' => 3, 'parent_code' => '3400', 'statement_category' => 'equity'],
+            ['code' => '4240', 'name' => 'Grant Revenue', 'type' => AccountType::INCOME, 'level' => 3, 'parent_code' => '4200', 'category' => 'Services', 'statement_category' => 'operating_revenue'],
+            ['code' => '4250', 'name' => 'Donation Revenue', 'type' => AccountType::INCOME, 'level' => 3, 'parent_code' => '4200', 'category' => 'Services', 'statement_category' => 'operating_revenue'],
+            ['code' => '4260', 'name' => 'Membership Revenue', 'type' => AccountType::INCOME, 'level' => 3, 'parent_code' => '4200', 'category' => 'Services', 'statement_category' => 'operating_revenue'],
+            ['code' => '5400', 'name' => 'Program Expenses', 'type' => AccountType::EXPENSE, 'level' => 1, 'statement_category' => 'program_expense'],
+            ['code' => '5410', 'name' => 'Program - Education', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5400', 'category' => 'Program', 'statement_category' => 'program_expense'],
+            ['code' => '5420', 'name' => 'Program - Health', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5400', 'category' => 'Program', 'statement_category' => 'program_expense'],
+            ['code' => '5430', 'name' => 'Program - Community', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5400', 'category' => 'Program', 'statement_category' => 'program_expense'],
+            ['code' => '5500', 'name' => 'Administrative Expenses', 'type' => AccountType::EXPENSE, 'level' => 1, 'statement_category' => 'admin_expense'],
+            ['code' => '5510', 'name' => 'Admin - Salaries', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5500', 'category' => 'Payroll', 'statement_category' => 'admin_expense'],
+            ['code' => '5520', 'name' => 'Admin - Office Rent', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5500', 'category' => 'Rent', 'statement_category' => 'admin_expense'],
+            ['code' => '5530', 'name' => 'Admin - Utilities', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5500', 'category' => 'Utilities', 'statement_category' => 'admin_expense'],
+            ['code' => '5600', 'name' => 'Fundraising Expenses', 'type' => AccountType::EXPENSE, 'level' => 1, 'statement_category' => 'fundraising_expense'],
+            ['code' => '5610', 'name' => 'Fundraising Events', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5600', 'category' => 'Marketing', 'statement_category' => 'fundraising_expense'],
+            ['code' => '5620', 'name' => 'Donor Acquisition', 'type' => AccountType::EXPENSE, 'level' => 2, 'parent_code' => '5600', 'category' => 'Marketing', 'statement_category' => 'fundraising_expense'],
+        ];
+        return array_merge($base, $ngo);
     }
 }

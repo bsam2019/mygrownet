@@ -27,18 +27,27 @@ interface Account {
     code: string;
     name: string;
     type: string;
-    subtype: string | null;
+    normal_balance: string;
+    parent_id: number | null;
+    level: number;
+    path: string | null;
+    statement_category: string | null;
+    category: string | null;
     description: string | null;
-    balance: number;
+    current_balance: number;
     is_active: boolean;
     is_system: boolean;
-    journal_lines?: JournalLine[];
+    is_contra?: boolean;
 }
 
-defineProps<{
+interface Props {
     account: Account;
     recentTransactions?: JournalLine[];
-}>();
+    children: Account[];
+    parentAccount: Account | null;
+}
+
+const props = defineProps<Props>();
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZM', {
@@ -61,8 +70,8 @@ const getTypeColor = (type: string) => {
         asset: 'bg-blue-100 text-blue-800',
         liability: 'bg-red-100 text-red-800',
         equity: 'bg-purple-100 text-purple-800',
-        revenue: 'bg-green-100 text-green-800',
-        expense: 'bg-orange-100 text-orange-800',
+        income: 'bg-emerald-100 text-emerald-800',
+        expense: 'bg-amber-100 text-amber-800',
     };
     return colors[type] || 'bg-gray-100 text-gray-800';
 };
@@ -88,6 +97,10 @@ const getTypeColor = (type: string) => {
                             <span :class="[getTypeColor(account.type), 'px-3 py-1 rounded-full text-sm font-medium capitalize']">
                                 {{ account.type }}
                             </span>
+                            <span
+                                v-if="account.is_contra"
+                                class="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
+                            >Contra</span>
                         </div>
                         <p class="text-gray-500">{{ account.name }}</p>
                     </div>
@@ -103,17 +116,50 @@ const getTypeColor = (type: string) => {
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Account Info -->
+                <!-- Main Content -->
                 <div class="lg:col-span-2 space-y-6">
                     <!-- Balance Card -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm font-medium text-gray-500">Current Balance</p>
-                                <p class="text-3xl font-bold text-gray-900 mt-1">{{ formatCurrency(account.balance) }}</p>
+                                <p class="text-3xl font-bold text-gray-900 mt-1">{{ formatCurrency(account.current_balance) }}</p>
                             </div>
                             <div class="p-4 bg-blue-50 rounded-xl">
                                 <BanknotesIcon class="h-8 w-8 text-blue-600" aria-hidden="true" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hierarchy -->
+                    <div v-if="parentAccount || children.length" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Hierarchy</h2>
+                        <div class="space-y-3">
+                            <div v-if="parentAccount" class="flex items-center gap-3 text-sm">
+                                <span class="text-gray-500">Parent:</span>
+                                <Link
+                                    :href="route('growfinance.accounts.show', parentAccount.id)"
+                                    class="text-amber-600 hover:text-amber-700 font-medium"
+                                >
+                                    {{ parentAccount.code }} - {{ parentAccount.name }}
+                                </Link>
+                            </div>
+                            <div v-if="account.path" class="flex items-center gap-3 text-sm">
+                                <span class="text-gray-500">Path:</span>
+                                <span class="text-gray-700 font-mono text-xs">{{ account.path }}</span>
+                            </div>
+                            <div v-if="children.length" class="pt-2 border-t">
+                                <p class="text-sm font-medium text-gray-700 mb-2">Sub-accounts ({{ children.length }})</p>
+                                <div class="space-y-1">
+                                    <Link
+                                        v-for="child in children"
+                                        :key="child.id"
+                                        :href="route('growfinance.accounts.show', child.id)"
+                                        class="block text-sm text-amber-600 hover:text-amber-700 ml-4"
+                                    >
+                                        {{ child.code }} - {{ child.name }}
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -182,9 +228,17 @@ const getTypeColor = (type: string) => {
                                 <dt class="text-sm font-medium text-gray-500">Type</dt>
                                 <dd class="mt-1 text-sm text-gray-900 capitalize">{{ account.type }}</dd>
                             </div>
-                            <div v-if="account.subtype">
-                                <dt class="text-sm font-medium text-gray-500">Subtype</dt>
-                                <dd class="mt-1 text-sm text-gray-900 capitalize">{{ account.subtype.replace('_', ' ') }}</dd>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Normal Balance</dt>
+                                <dd class="mt-1 text-sm text-gray-900 capitalize">{{ account.normal_balance }}</dd>
+                            </div>
+                            <div v-if="account.statement_category">
+                                <dt class="text-sm font-medium text-gray-500">Statement Category</dt>
+                                <dd class="mt-1 text-sm text-gray-900 capitalize">{{ account.statement_category.replace(/_/g, ' ') }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Level</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ account.level }}</dd>
                             </div>
                             <div>
                                 <dt class="text-sm font-medium text-gray-500">Status</dt>

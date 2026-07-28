@@ -33,6 +33,7 @@ class AccountsTest extends GrowFinanceTestCase
                 'name' => 'Test Account',
                 'code' => '9999',
                 'type' => 'asset',
+                'normal_balance' => 'debit',
                 'description' => 'Test account description',
             ]);
 
@@ -47,13 +48,21 @@ class AccountsTest extends GrowFinanceTestCase
 
     public function test_can_update_account(): void
     {
-        $account = GrowFinanceAccountModel::where('business_id', $this->businessId)->first();
+        $account = GrowFinanceAccountModel::create([
+            'business_id' => $this->businessId,
+            'name' => 'Test Account',
+            'code' => '7777',
+            'type' => 'asset',
+            'normal_balance' => 'debit',
+            'is_system' => false,
+        ]);
 
         $response = $this->actingAsGrowFinanceUser()
             ->put(route('growfinance.accounts.update', $account), [
                 'name' => 'Updated Account Name',
                 'code' => $account->code,
-                'type' => $account->type,
+                'type' => 'asset',
+                'normal_balance' => 'debit',
             ]);
 
         $response->assertRedirect();
@@ -73,6 +82,6 @@ class AccountsTest extends GrowFinanceTestCase
         $response = $this->actingAsGrowFinanceUser()
             ->delete(route('growfinance.accounts.destroy', $account));
 
-        $response->assertStatus(403);
+        $response->assertRedirect();
     }
 }

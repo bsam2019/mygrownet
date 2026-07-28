@@ -8,6 +8,7 @@ import RecordSaleModal from '@/Components/GrowFinance/RecordSaleModal.vue';
 import RecordExpenseModal from '@/Components/GrowFinance/RecordExpenseModal.vue';
 import QuickInvoiceModal from '@/Components/GrowFinance/QuickInvoiceModal.vue';
 import NotificationBell from '@/Components/GrowFinance/NotificationBell.vue';
+import OfflineIndicator from '../GrowFinance/Offline/OfflineIndicator.vue';
 import OnboardingTour from '@/Components/GrowFinance/OnboardingTour.vue';
 import UsageDashboardWidget from '@/Components/GrowFinance/UsageDashboardWidget.vue';
 import UsageLimitBanner from '@/Components/GrowFinance/UsageLimitBanner.vue';
@@ -47,6 +48,12 @@ import {
     PaintBrushIcon,
     SparklesIcon,
     ArrowUpCircleIcon,
+    ArrowDownTrayIcon,
+    ArrowsRightLeftIcon,
+    CheckBadgeIcon,
+    LightBulbIcon,
+    DocumentCheckIcon,
+    PaperAirplaneIcon,
 } from '@heroicons/vue/24/outline';
 import {
     HomeIcon as HomeIconSolid,
@@ -201,6 +208,7 @@ const desktopNavigation = computed(() => [
     { name: 'Sales', href: 'growfinance.sales.index', icon: BanknotesIcon, badge: null },
     { name: 'Invoices', href: 'growfinance.invoices.index', icon: DocumentTextIcon, badge: invoiceStats.value.overdue || null },
     { name: 'Expenses', href: 'growfinance.expenses.index', icon: ClipboardDocumentListIcon, badge: null },
+    { name: 'Fixed Assets', href: 'growfinance.fixed-assets.index', icon: ClipboardDocumentListIcon, badge: null },
     { name: 'Recurring', href: 'growfinance.recurring.index', icon: ArrowPathIcon, badge: null },
     { name: 'Budgets', href: 'growfinance.budgets.index', icon: CurrencyDollarIcon, badge: null },
     { name: 'Customers', href: 'growfinance.customers.index', icon: UsersIcon, badge: null },
@@ -208,7 +216,30 @@ const desktopNavigation = computed(() => [
     { name: 'Banking', href: 'growfinance.banking.index', icon: BuildingLibraryIcon, badge: null },
     { name: 'Reconciliation', href: 'growfinance.banking.reconcile', icon: ArrowPathIcon, badge: null },
     { name: 'Reports', href: 'growfinance.reports.profit-loss', icon: ChartBarIcon, badge: null },
+    { name: 'AR Aging', href: 'growfinance.aging.ar', icon: UsersIcon, badge: null },
+    { name: 'AP Aging', href: 'growfinance.aging.ap', icon: BuildingStorefrontIcon, badge: null },
+    { name: 'VAT Return', href: 'growfinance.tax.vat-return', icon: CurrencyDollarIcon, badge: null },
+    { name: 'Withholding Tax', href: 'growfinance.tax.withholding-schedule', icon: CurrencyDollarIcon, badge: null },
+    { name: 'Period End', href: 'growfinance.period-end.index', icon: ClockIcon, badge: null },
+    { name: 'Report Schedules', href: 'growfinance.report-schedules.index', icon: DocumentTextIcon, badge: null },
+    { name: 'Dashboard Widgets', href: 'growfinance.dashboard.widgets', icon: ChartBarIcon, badge: null },
+    { name: 'Exports', href: 'growfinance.export.csv', icon: ArrowDownTrayIcon, badge: null },
     { name: 'Analytics', href: 'growfinance.analytics.index', icon: ChartBarIcon, badge: null },
+    { name: 'Anomaly Detection', href: 'growfinance.anomalies.index', icon: ExclamationCircleIcon, badge: null },
+    { name: 'ZRA e-Invoicing', href: 'growfinance.zra.health', icon: DocumentCheckIcon, badge: null },
+    { name: 'Tax Return Submission', href: 'growfinance.tax-returns.submission', icon: PaperAirplaneIcon, badge: null },
+    { name: 'Consolidation', href: 'growfinance.consolidation.index', icon: DocumentTextIcon, badge: null },
+    { name: 'Profitability', href: 'growfinance.profitability.index', icon: ChartBarIcon, badge: null },
+    { name: 'Ratios & Trends', href: 'growfinance.ratios.index', icon: ChartBarIcon, badge: null },
+    { name: 'Auto-Journaling', href: 'growfinance.settings.auto-journal-mappings', icon: ArrowPathIcon, badge: null },
+    { name: 'Approvals', href: 'growfinance.workflow.index', icon: CheckBadgeIcon, badge: null },
+    { name: 'Cash Flow Forecast', href: 'growfinance.forecast.index', icon: ChartBarIcon, badge: null },
+    { name: 'Revenue Prediction', href: 'growfinance.predictions.index', icon: ChartBarIcon, badge: null },
+    { name: 'Analytics Dashboard', href: 'growfinance.analytics-dashboard.dashboard', icon: ChartBarIcon, badge: null },
+    { name: 'NLP Query', href: 'growfinance.nlp.query', icon: MagnifyingGlassIcon, badge: null },
+    { name: 'Recommendations', href: 'growfinance.recommendations.index', icon: LightBulbIcon, badge: null },
+    { name: 'Audit Snapshots', href: 'growfinance.audit-snapshots.index', icon: CheckBadgeIcon, badge: null },
+    { name: 'Three-Way Matching', href: 'growfinance.matching.index', icon: ArrowsRightLeftIcon, badge: null },
 ]);
 
 const isActive = (routeName: string) => {
@@ -261,6 +292,9 @@ const closeQuickAdd = () => { quickAddOpen.value = false; };
                 </div>
 
                 <div class="flex items-center gap-3">
+                    <!-- Offline Status -->
+                    <OfflineIndicator />
+                    
                     <!-- Notifications -->
                     <NotificationBell />
                     
@@ -308,6 +342,9 @@ const closeQuickAdd = () => { quickAddOpen.value = false; };
                 <div class="flex items-center gap-2">
                     <!-- Mobile Notifications -->
                     <NotificationBell />
+                    
+                    <!-- Mobile Offline Status -->
+                    <OfflineIndicator />
                     
                     <button 
                         @click.stop="moreMenuOpen = !moreMenuOpen"

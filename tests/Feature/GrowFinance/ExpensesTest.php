@@ -11,6 +11,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 class ExpensesTest extends GrowFinanceTestCase
 {
     protected GrowFinanceVendorModel $vendor;
+    protected int $expenseAccountId;
 
     protected function setUp(): void
     {
@@ -22,6 +23,10 @@ class ExpensesTest extends GrowFinanceTestCase
             'email' => 'vendor@test.com',
             'is_active' => true,
         ]);
+
+        $this->expenseAccountId = \App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceAccountModel::where('business_id', $this->businessId)
+            ->where('code', '5250')
+            ->value('id');
     }
 
     public function test_expenses_index_loads_successfully(): void
@@ -40,6 +45,7 @@ class ExpensesTest extends GrowFinanceTestCase
         $response = $this->actingAsGrowFinanceUser()
             ->post(route('growfinance.expenses.store'), [
                 'vendor_id' => $this->vendor->id,
+                'account_id' => $this->expenseAccountId,
                 'expense_date' => now()->format('Y-m-d'),
                 'category' => 'Office Supplies',
                 'description' => 'Test expense',
@@ -61,6 +67,7 @@ class ExpensesTest extends GrowFinanceTestCase
         $expense = GrowFinanceExpenseModel::create([
             'business_id' => $this->businessId,
             'vendor_id' => $this->vendor->id,
+            'account_id' => $this->expenseAccountId,
             'expense_date' => now(),
             'category' => 'Original',
             'description' => 'Original expense',
@@ -71,6 +78,7 @@ class ExpensesTest extends GrowFinanceTestCase
         $response = $this->actingAsGrowFinanceUser()
             ->put(route('growfinance.expenses.update', $expense), [
                 'vendor_id' => $this->vendor->id,
+                'account_id' => $this->expenseAccountId,
                 'expense_date' => now()->format('Y-m-d'),
                 'category' => 'Updated',
                 'description' => 'Updated expense',
@@ -92,6 +100,7 @@ class ExpensesTest extends GrowFinanceTestCase
         $expense = GrowFinanceExpenseModel::create([
             'business_id' => $this->businessId,
             'vendor_id' => $this->vendor->id,
+            'account_id' => $this->expenseAccountId,
             'expense_date' => now(),
             'category' => 'To Delete',
             'amount' => 100,
@@ -115,6 +124,7 @@ class ExpensesTest extends GrowFinanceTestCase
         $expense = GrowFinanceExpenseModel::create([
             'business_id' => $this->businessId,
             'vendor_id' => $this->vendor->id,
+            'account_id' => $this->expenseAccountId,
             'expense_date' => now(),
             'category' => 'Test',
             'amount' => 100,

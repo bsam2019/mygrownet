@@ -12,17 +12,29 @@ class GrowFinanceJournalEntryModel extends Model
 
     protected $fillable = [
         'business_id',
-        'entry_number',
-        'entry_date',
+        'journal_number',
+        'date',
         'description',
         'reference',
-        'is_posted',
+        'status',
+        'reversal_of_id',
+        'reversal_reason',
+        'source_event_id',
+        'period_id',
+        'currency_code',
+        'exchange_rate',
+        'functional_amount',
         'created_by',
+        'posted_at',
+        'dimensions_json',
     ];
 
     protected $casts = [
-        'entry_date' => 'date',
-        'is_posted' => 'boolean',
+        'date' => 'date',
+        'posted_at' => 'datetime',
+        'exchange_rate' => 'decimal:4',
+        'functional_amount' => 'decimal:2',
+        'dimensions_json' => 'array',
     ];
 
     public function business(): BelongsTo
@@ -40,28 +52,33 @@ class GrowFinanceJournalEntryModel extends Model
         return $this->hasMany(GrowFinanceJournalLineModel::class, 'journal_entry_id');
     }
 
+    public function reversalOf(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'reversal_of_id');
+    }
+
+    public function reversals(): HasMany
+    {
+        return $this->hasMany(self::class, 'reversal_of_id');
+    }
+
     public function scopeForBusiness($query, int $businessId)
     {
         return $query->where('business_id', $businessId);
     }
 
+    public function scopeWithStatus($query, string $status)
+    {
+        return $query->where('status', $status);
+    }
+
     public function scopePosted($query)
     {
-        return $query->where('is_posted', true);
+        return $query->where('status', 'posted');
     }
 
-    public function getTotalDebitsAttribute(): float
+    public function scopeInDateRange($query, string $start, string $end)
     {
-        return $this->lines->sum('debit_amount');
-    }
-
-    public function getTotalCreditsAttribute(): float
-    {
-        return $this->lines->sum('credit_amount');
-    }
-
-    public function isBalanced(): bool
-    {
-        return abs($this->total_debits - $this->total_credits) < 0.01;
+        return $query->whereBetween('date', [$start, $end]);
     }
 }

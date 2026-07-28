@@ -33,34 +33,91 @@
                 </button>
             </div>
 
-            <!-- Accounts List -->
+            <!-- Accounts Tree -->
             <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-                <ul v-if="filteredAccounts.length > 0" class="divide-y divide-gray-100">
-                    <li v-for="account in filteredAccounts" :key="account.id" class="p-4">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div :class="[
-                                    'w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold',
-                                    getTypeColor(account.type)
-                                ]">
-                                    {{ account.code }}
+                <ul v-if="treeAccounts.length > 0" class="divide-y divide-gray-100">
+                    <template v-for="account in treeAccounts" :key="account.id">
+                        <!-- Parent / Header row -->
+                        <li
+                            :class="[
+                                'transition-colors',
+                                account.level <= 1 ? 'bg-gray-50' : '',
+                            ]"
+                        >
+                            <div
+                                class="flex items-center justify-between p-4"
+                                :style="{ paddingLeft: `${12 + (account.level - 1) * 24}px` }"
+                            >
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <button
+                                        v-if="account.children_count > 0"
+                                        @click="toggleExpand(account.id)"
+                                        class="shrink-0 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                        :aria-label="expanded[account.id] ? 'Collapse' : 'Expand'"
+                                    >
+                                        <ChevronDownIcon
+                                            v-if="expanded[account.id]"
+                                            class="h-4 w-4"
+                                            aria-hidden="true"
+                                        />
+                                        <ChevronRightIcon
+                                            v-else
+                                            class="h-4 w-4"
+                                            aria-hidden="true"
+                                        />
+                                    </button>
+                                    <span v-else class="w-6 shrink-0"></span>
+                                    <div :class="[
+                                        'w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0',
+                                        getTypeColor(account.type)
+                                    ]">
+                                        {{ account.code }}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <p class="font-medium text-gray-900 truncate">{{ account.name }}</p>
+                                            <span
+                                                v-if="account.is_contra"
+                                                class="text-[10px] px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 font-medium shrink-0"
+                                            >Contra</span>
+                                            <span
+                                                v-if="account.is_system && account.level <= 1"
+                                                class="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 font-medium shrink-0"
+                                            >Header</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 truncate">{{ account.statement_category || account.type }}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="font-medium text-gray-900">{{ account.name }}</p>
-                                    <p class="text-xs text-gray-500">{{ account.category || account.type }}</p>
+                                <div class="text-right shrink-0 ml-4">
+                                    <p v-if="account.level > 1" :class="[
+                                        'font-semibold',
+                                        account.current_balance >= 0 ? 'text-gray-900' : 'text-red-600'
+                                    ]">
+                                        {{ formatMoney(account.current_balance) }}
+                                    </p>
+                                    <div class="flex items-center gap-2 justify-end mt-1">
+                                        <button
+                                            @click="toggleActive(account)"
+                                            :class="[
+                                                'text-xs px-2 py-0.5 rounded-full font-medium',
+                                                account.is_active
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : 'bg-gray-100 text-gray-500'
+                                            ]"
+                                        >
+                                            {{ account.is_active ? 'Active' : 'Inactive' }}
+                                        </button>
+                                        <Link
+                                            :href="route('growfinance.accounts.show', account.id)"
+                                            class="text-xs text-amber-600 hover:text-amber-700 font-medium"
+                                        >
+                                            View
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <p :class="[
-                                    'font-semibold',
-                                    account.current_balance >= 0 ? 'text-gray-900' : 'text-red-600'
-                                ]">
-                                    {{ formatMoney(account.current_balance) }}
-                                </p>
-                                <span v-if="account.is_system" class="text-xs text-gray-400">System</span>
-                            </div>
-                        </div>
-                    </li>
+                        </li>
+                    </template>
                 </ul>
                 <div v-else class="p-8 text-center">
                     <p class="text-gray-500 text-sm">No accounts in this category</p>
@@ -72,9 +129,9 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import GrowFinanceLayout from '@/Layouts/GrowFinanceLayout.vue';
-import { PlusIcon } from '@heroicons/vue/24/outline';
+import { PlusIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/24/outline';
 
 interface Account {
     id: number;
@@ -82,22 +139,90 @@ interface Account {
     name: string;
     type: string;
     category: string | null;
+    statement_category: string | null;
+    normal_balance: string;
+    parent_id: number | null;
+    level: number;
+    path: string | null;
     current_balance: number;
     is_system: boolean;
+    is_active: boolean;
+    children_count?: number;
+    is_contra?: boolean;
 }
 
 interface Props {
-    accounts: Record<string, Account[]>;
+    accounts: Account[];
     accountTypes: Array<{ value: string; label: string; color: string }>;
 }
 
 const props = defineProps<Props>();
 
 const selectedType = ref('asset');
+const expanded = ref<Record<number, boolean>>({});
 
-const filteredAccounts = computed(() => {
-    return props.accounts[selectedType.value] || [];
+const treeAccounts = computed(() => {
+    const filtered = props.accounts.filter(a => a.type === selectedType.value);
+
+    const withFlags = filtered.map(a => ({
+        ...a,
+        is_contra: (a.normal_balance === 'debit' && !['asset', 'expense'].includes(a.type))
+            || (a.normal_balance === 'credit' && ['asset', 'expense'].includes(a.type)),
+    }));
+
+    const childrenMap: Record<number, Account[]> = {};
+    const roots: Account[] = [];
+
+    withFlags.forEach(a => {
+        if (a.parent_id) {
+            if (!childrenMap[a.parent_id]) childrenMap[a.parent_id] = [];
+            childrenMap[a.parent_id].push(a);
+        } else {
+            roots.push(a);
+        }
+    });
+
+    Object.values(childrenMap).forEach(children => {
+        children.sort((a, b) => a.code.localeCompare(b.code));
+    });
+
+    const withCounts = withFlags.map(a => ({
+        ...a,
+        children_count: (childrenMap[a.id] || []).length,
+    }));
+
+    const result: (Account & { children_count: number; is_contra: boolean })[] = [];
+
+    const flatten = (accounts: Account[], depth: number) => {
+        accounts.forEach(a => {
+            const full = withCounts.find(w => w.id === a.id)!;
+            result.push(full);
+            if (expanded.value[full.id] !== false && childrenMap[full.id]) {
+                flatten(childrenMap[full.id], depth + 1);
+            }
+        });
+    };
+
+    roots.sort((a, b) => a.code.localeCompare(b.code));
+    withCounts.forEach(a => {
+        if (!a.parent_id && a.level <= 1) {
+            expanded.value[a.id] = expanded.value[a.id] ?? true;
+        }
+    });
+    flatten(roots, 0);
+
+    return result;
 });
+
+const toggleExpand = (id: number) => {
+    expanded.value[id] = !expanded.value[id];
+};
+
+const toggleActive = (account: Account) => {
+    router.put(route('growfinance.accounts.update', account.id), {
+        is_active: !account.is_active,
+    });
+};
 
 const getTypeColor = (type: string) => {
     const colors: Record<string, string> = {

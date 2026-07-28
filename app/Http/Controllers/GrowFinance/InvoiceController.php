@@ -78,6 +78,7 @@ class InvoiceController extends Controller
             'items.*.description' => 'required|string|max:255',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.tax_rate' => 'nullable|numeric|min:0|max:100',
         ]);
 
         $businessId = $request->user()->id;
@@ -94,6 +95,7 @@ class InvoiceController extends Controller
         DB::transaction(function () use ($validated, $businessId, $templateId) {
             $invoiceNumber = $this->generateInvoiceNumber($businessId);
             $subtotal = collect($validated['items'])->sum(fn($i) => $i['quantity'] * $i['unit_price']);
+            $taxAmount = collect($validated['items'])->sum(fn($i) => ($i['quantity'] * $i['unit_price']) * (($i['tax_rate'] ?? 0) / 100));
 
             $invoice = GrowFinanceInvoiceModel::create([
                 'business_id' => $businessId,
@@ -103,8 +105,9 @@ class InvoiceController extends Controller
                 'due_date' => $validated['due_date'],
                 'status' => InvoiceStatus::DRAFT,
                 'subtotal' => $subtotal,
-                'total_amount' => $subtotal,
-                'notes' => $validated['notes'],
+                'tax_amount' => $taxAmount,
+                'total_amount' => $subtotal + $taxAmount,
+                'notes' => $validated['notes'] ?? null,
                 'template_id' => $templateId,
             ]);
 
@@ -261,7 +264,7 @@ class InvoiceController extends Controller
                 'payment_date' => now(),
                 'amount' => $validated['amount'],
                 'payment_method' => $validated['payment_method'],
-                'reference' => $validated['reference'],
+                'reference' => $validated['reference'] ?? null,
             ]);
 
             $paymentEvent = new PaymentReceived(

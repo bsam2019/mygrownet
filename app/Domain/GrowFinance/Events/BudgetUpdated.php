@@ -2,9 +2,7 @@
 
 namespace App\Domain\GrowFinance\Events;
 
-use App\Domain\Core\Events\PlatformEvent;
-
-class BudgetUpdated extends PlatformEvent
+class BudgetUpdated
 {
     public const NAME = 'growfinance.budget.updated.v1';
 
@@ -16,12 +14,7 @@ class BudgetUpdated extends PlatformEvent
         public readonly float $remainingAmount,
         public readonly string $category,
         public readonly string $period,
-    ) {
-        parent::__construct(
-            entityId: (string) $budgetId,
-            eventName: self::NAME,
-        );
-    }
+    ) {}
 
     public function toPayload(): array
     {

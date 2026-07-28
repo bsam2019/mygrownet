@@ -8,17 +8,11 @@ use Illuminate\Support\Facades\DB;
 
 class PdfReportService
 {
-    /**
-     * Check if user can export PDF reports
-     */
     public function canExportPdf(User $user): array
     {
         return ['allowed' => true];
     }
 
-    /**
-     * Generate Profit & Loss PDF
-     */
     public function generateProfitLoss(
         User $user,
         string $startDate,
@@ -35,9 +29,6 @@ class PdfReportService
         ]);
     }
 
-    /**
-     * Generate Balance Sheet PDF
-     */
     public function generateBalanceSheet(User $user, string $asOfDate): \Barryvdh\DomPDF\PDF
     {
         $data = $this->getBalanceSheetData($user->id, $asOfDate);
@@ -50,9 +41,6 @@ class PdfReportService
         ]);
     }
 
-    /**
-     * Generate Cash Flow PDF
-     */
     public function generateCashFlow(
         User $user,
         string $startDate,
@@ -69,9 +57,6 @@ class PdfReportService
         ]);
     }
 
-    /**
-     * Generate Trial Balance PDF
-     */
     public function generateTrialBalance(User $user, string $asOfDate): \Barryvdh\DomPDF\PDF
     {
         $data = $this->getTrialBalanceData($user->id, $asOfDate);
@@ -84,9 +69,6 @@ class PdfReportService
         ]);
     }
 
-    /**
-     * Generate General Ledger PDF
-     */
     public function generateGeneralLedger(
         User $user,
         string $startDate,
@@ -104,34 +86,35 @@ class PdfReportService
         ]);
     }
 
-    /**
-     * Get Profit & Loss data
-     */
     private function getProfitLossData(int $businessId, string $startDate, string $endDate): array
     {
-        // Revenue accounts (type = 'revenue')
         $revenue = DB::table('growfinance_accounts as a')
+            ->leftJoin('growfinance_journal_lines as jl', 'a.id', '=', 'jl.account_id')
             ->leftJoin('growfinance_journal_entries as je', function ($join) use ($startDate, $endDate) {
-                $join->on('a.id', '=', 'je.account_id')
-                    ->whereBetween('je.entry_date', [$startDate, $endDate]);
+                $join->on('jl.journal_entry_id', '=', 'je.id')
+                    ->where('je.status', '=', 'posted')
+                    ->whereBetween('je.date', [$startDate, $endDate]);
             })
             ->where('a.business_id', $businessId)
-            ->where('a.type', 'revenue')
+            ->where(function ($q) {
+                $q->where('a.type', 'income')->orWhere('a.type', 'revenue');
+            })
             ->select(
                 'a.id',
                 'a.name',
                 'a.code',
-                DB::raw('COALESCE(SUM(je.credit) - SUM(je.debit), 0) as balance')
+                DB::raw('COALESCE(SUM(jl.credit_amount) - SUM(jl.debit_amount), 0) as balance')
             )
             ->groupBy('a.id', 'a.name', 'a.code')
             ->having('balance', '!=', 0)
             ->get();
 
-        // Expense accounts (type = 'expense')
         $expenses = DB::table('growfinance_accounts as a')
+            ->leftJoin('growfinance_journal_lines as jl', 'a.id', '=', 'jl.account_id')
             ->leftJoin('growfinance_journal_entries as je', function ($join) use ($startDate, $endDate) {
-                $join->on('a.id', '=', 'je.account_id')
-                    ->whereBetween('je.entry_date', [$startDate, $endDate]);
+                $join->on('jl.journal_entry_id', '=', 'je.id')
+                    ->where('je.status', '=', 'posted')
+                    ->whereBetween('je.date', [$startDate, $endDate]);
             })
             ->where('a.business_id', $businessId)
             ->where('a.type', 'expense')
@@ -139,7 +122,7 @@ class PdfReportService
                 'a.id',
                 'a.name',
                 'a.code',
-                DB::raw('COALESCE(SUM(je.debit) - SUM(je.credit), 0) as balance')
+                DB::raw('COALESCE(SUM(jl.debit_amount) - SUM(jl.credit_amount), 0) as balance')
             )
             ->groupBy('a.id', 'a.name', 'a.code')
             ->having('balance', '!=', 0)
@@ -158,16 +141,14 @@ class PdfReportService
         ];
     }
 
-    /**
-     * Get Balance Sheet data
-     */
     private function getBalanceSheetData(int $businessId, string $asOfDate): array
     {
-        // Assets
         $assets = DB::table('growfinance_accounts as a')
+            ->leftJoin('growfinance_journal_lines as jl', 'a.id', '=', 'jl.account_id')
             ->leftJoin('growfinance_journal_entries as je', function ($join) use ($asOfDate) {
-                $join->on('a.id', '=', 'je.account_id')
-                    ->where('je.entry_date', '<=', $asOfDate);
+                $join->on('jl.journal_entry_id', '=', 'je.id')
+                    ->where('je.status', '=', 'posted')
+                    ->where('je.date', '<=', $asOfDate);
             })
             ->where('a.business_id', $businessId)
             ->where('a.type', 'asset')
@@ -175,17 +156,18 @@ class PdfReportService
                 'a.id',
                 'a.name',
                 'a.code',
-                'a.sub_type',
-                DB::raw('COALESCE(SUM(je.debit) - SUM(je.credit), 0) as balance')
+                'a.statement_category',
+                DB::raw('COALESCE(SUM(jl.debit_amount) - SUM(jl.credit_amount), 0) as balance')
             )
-            ->groupBy('a.id', 'a.name', 'a.code', 'a.sub_type')
+            ->groupBy('a.id', 'a.name', 'a.code', 'a.statement_category')
             ->get();
 
-        // Liabilities
         $liabilities = DB::table('growfinance_accounts as a')
+            ->leftJoin('growfinance_journal_lines as jl', 'a.id', '=', 'jl.account_id')
             ->leftJoin('growfinance_journal_entries as je', function ($join) use ($asOfDate) {
-                $join->on('a.id', '=', 'je.account_id')
-                    ->where('je.entry_date', '<=', $asOfDate);
+                $join->on('jl.journal_entry_id', '=', 'je.id')
+                    ->where('je.status', '=', 'posted')
+                    ->where('je.date', '<=', $asOfDate);
             })
             ->where('a.business_id', $businessId)
             ->where('a.type', 'liability')
@@ -193,17 +175,18 @@ class PdfReportService
                 'a.id',
                 'a.name',
                 'a.code',
-                'a.sub_type',
-                DB::raw('COALESCE(SUM(je.credit) - SUM(je.debit), 0) as balance')
+                'a.statement_category',
+                DB::raw('COALESCE(SUM(jl.credit_amount) - SUM(jl.debit_amount), 0) as balance')
             )
-            ->groupBy('a.id', 'a.name', 'a.code', 'a.sub_type')
+            ->groupBy('a.id', 'a.name', 'a.code', 'a.statement_category')
             ->get();
 
-        // Equity
         $equity = DB::table('growfinance_accounts as a')
+            ->leftJoin('growfinance_journal_lines as jl', 'a.id', '=', 'jl.account_id')
             ->leftJoin('growfinance_journal_entries as je', function ($join) use ($asOfDate) {
-                $join->on('a.id', '=', 'je.account_id')
-                    ->where('je.entry_date', '<=', $asOfDate);
+                $join->on('jl.journal_entry_id', '=', 'je.id')
+                    ->where('je.status', '=', 'posted')
+                    ->where('je.date', '<=', $asOfDate);
             })
             ->where('a.business_id', $businessId)
             ->where('a.type', 'equity')
@@ -211,7 +194,7 @@ class PdfReportService
                 'a.id',
                 'a.name',
                 'a.code',
-                DB::raw('COALESCE(SUM(je.credit) - SUM(je.debit), 0) as balance')
+                DB::raw('COALESCE(SUM(jl.credit_amount) - SUM(jl.debit_amount), 0) as balance')
             )
             ->groupBy('a.id', 'a.name', 'a.code')
             ->get();
@@ -230,37 +213,36 @@ class PdfReportService
         ];
     }
 
-    /**
-     * Get Cash Flow data
-     */
     private function getCashFlowData(int $businessId, string $startDate, string $endDate): array
     {
-        // Cash accounts
         $cashAccounts = DB::table('growfinance_accounts')
             ->where('business_id', $businessId)
-            ->where('sub_type', 'cash')
+            ->where('category', 'Cash')
             ->pluck('id');
 
-        // Opening balance
-        $openingBalance = DB::table('growfinance_journal_entries')
-            ->whereIn('account_id', $cashAccounts)
-            ->where('entry_date', '<', $startDate)
-            ->selectRaw('COALESCE(SUM(debit) - SUM(credit), 0) as balance')
+        $openingBalance = (float) DB::table('growfinance_journal_lines as jl')
+            ->join('growfinance_journal_entries as je', 'jl.journal_entry_id', '=', 'je.id')
+            ->whereIn('jl.account_id', $cashAccounts)
+            ->where('je.status', 'posted')
+            ->where('je.date', '<', $startDate)
+            ->selectRaw('COALESCE(SUM(jl.debit_amount) - SUM(jl.credit_amount), 0) as balance')
             ->value('balance') ?? 0;
 
-        // Cash inflows
-        $inflows = DB::table('growfinance_journal_entries')
-            ->whereIn('account_id', $cashAccounts)
-            ->whereBetween('entry_date', [$startDate, $endDate])
-            ->where('debit', '>', 0)
-            ->sum('debit');
+        $inflows = (float) DB::table('growfinance_journal_lines as jl')
+            ->join('growfinance_journal_entries as je', 'jl.journal_entry_id', '=', 'je.id')
+            ->whereIn('jl.account_id', $cashAccounts)
+            ->where('je.status', 'posted')
+            ->whereBetween('je.date', [$startDate, $endDate])
+            ->where('jl.debit_amount', '>', 0)
+            ->sum('jl.debit_amount');
 
-        // Cash outflows
-        $outflows = DB::table('growfinance_journal_entries')
-            ->whereIn('account_id', $cashAccounts)
-            ->whereBetween('entry_date', [$startDate, $endDate])
-            ->where('credit', '>', 0)
-            ->sum('credit');
+        $outflows = (float) DB::table('growfinance_journal_lines as jl')
+            ->join('growfinance_journal_entries as je', 'jl.journal_entry_id', '=', 'je.id')
+            ->whereIn('jl.account_id', $cashAccounts)
+            ->where('je.status', 'posted')
+            ->whereBetween('je.date', [$startDate, $endDate])
+            ->where('jl.credit_amount', '>', 0)
+            ->sum('jl.credit_amount');
 
         $netCashFlow = $inflows - $outflows;
         $closingBalance = $openingBalance + $netCashFlow;
@@ -274,15 +256,14 @@ class PdfReportService
         ];
     }
 
-    /**
-     * Get Trial Balance data
-     */
     private function getTrialBalanceData(int $businessId, string $asOfDate): array
     {
         $accounts = DB::table('growfinance_accounts as a')
+            ->leftJoin('growfinance_journal_lines as jl', 'a.id', '=', 'jl.account_id')
             ->leftJoin('growfinance_journal_entries as je', function ($join) use ($asOfDate) {
-                $join->on('a.id', '=', 'je.account_id')
-                    ->where('je.entry_date', '<=', $asOfDate);
+                $join->on('jl.journal_entry_id', '=', 'je.id')
+                    ->where('je.status', '=', 'posted')
+                    ->where('je.date', '<=', $asOfDate);
             })
             ->where('a.business_id', $businessId)
             ->select(
@@ -290,11 +271,11 @@ class PdfReportService
                 'a.name',
                 'a.code',
                 'a.type',
-                DB::raw('COALESCE(SUM(je.debit), 0) as total_debit'),
-                DB::raw('COALESCE(SUM(je.credit), 0) as total_credit')
+                DB::raw('COALESCE(SUM(jl.debit_amount), 0) as total_debit'),
+                DB::raw('COALESCE(SUM(jl.credit_amount), 0) as total_credit')
             )
             ->groupBy('a.id', 'a.name', 'a.code', 'a.type')
-            ->having(DB::raw('COALESCE(SUM(je.debit), 0) + COALESCE(SUM(je.credit), 0)'), '>', 0)
+            ->having(DB::raw('COALESCE(SUM(jl.debit_amount), 0) + COALESCE(SUM(jl.credit_amount), 0)'), '>', 0)
             ->orderBy('a.code')
             ->get();
 
@@ -309,9 +290,6 @@ class PdfReportService
         ];
     }
 
-    /**
-     * Get General Ledger data
-     */
     private function getGeneralLedgerData(
         int $businessId,
         string $startDate,
@@ -330,29 +308,30 @@ class PdfReportService
         $ledger = [];
 
         foreach ($accounts as $account) {
-            // Opening balance
-            $openingBalance = DB::table('growfinance_journal_entries')
-                ->where('account_id', $account->id)
-                ->where('entry_date', '<', $startDate)
-                ->selectRaw('COALESCE(SUM(debit) - SUM(credit), 0) as balance')
+            $openingBalance = (float) DB::table('growfinance_journal_lines as jl')
+                ->join('growfinance_journal_entries as je', 'jl.journal_entry_id', '=', 'je.id')
+                ->where('jl.account_id', $account->id)
+                ->where('je.status', 'posted')
+                ->where('je.date', '<', $startDate)
+                ->selectRaw('COALESCE(SUM(jl.debit_amount) - SUM(jl.credit_amount), 0) as balance')
                 ->value('balance') ?? 0;
 
-            // Transactions
-            $transactions = DB::table('growfinance_journal_entries as je')
-                ->join('growfinance_transactions as t', 'je.transaction_id', '=', 't.id')
-                ->where('je.account_id', $account->id)
-                ->whereBetween('je.entry_date', [$startDate, $endDate])
+            $transactions = DB::table('growfinance_journal_lines as jl')
+                ->join('growfinance_journal_entries as je', 'jl.journal_entry_id', '=', 'je.id')
+                ->where('jl.account_id', $account->id)
+                ->where('je.status', 'posted')
+                ->whereBetween('je.date', [$startDate, $endDate])
                 ->select(
-                    'je.entry_date',
-                    't.reference',
-                    't.description',
-                    'je.debit',
-                    'je.credit'
+                    'je.date',
+                    'je.reference',
+                    'je.description',
+                    'jl.debit_amount as debit',
+                    'jl.credit_amount as credit',
+                    'je.journal_number'
                 )
-                ->orderBy('je.entry_date')
+                ->orderBy('je.date')
                 ->get();
 
-            // Calculate running balance
             $runningBalance = $openingBalance;
             $transactionsWithBalance = $transactions->map(function ($tx) use (&$runningBalance) {
                 $runningBalance += $tx->debit - $tx->credit;

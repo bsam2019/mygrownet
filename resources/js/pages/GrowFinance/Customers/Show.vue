@@ -66,6 +66,12 @@
                     <p class="text-xl font-bold text-gray-900">{{ formatMoney(customer.credit_limit) }}</p>
                 </div>
             </div>
+            <Link :href="route('growfinance.aging.customer', customer.id)"
+                class="flex items-center justify-between bg-amber-50 rounded-xl p-3 mb-4 active:bg-amber-100 transition-colors"
+            >
+                <span class="text-sm font-medium text-amber-800">View AR Aging Detail</span>
+                <span class="text-xs text-amber-600">{{ customer.outstanding_balance > 0 ? formatMoney(customer.outstanding_balance) + ' outstanding' : 'All paid' }}</span>
+            </Link>
 
             <!-- Recent Invoices -->
             <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -95,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { router, Link } from '@inertiajs/vue3';
 import GrowFinanceLayout from '@/Layouts/GrowFinanceLayout.vue';
 import { ArrowLeftIcon, PencilIcon, PhoneIcon, EnvelopeIcon, MapPinIcon } from '@heroicons/vue/24/outline';
 

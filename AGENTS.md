@@ -779,3 +779,36 @@ Implemented 15 new files + 2 migrations for the Financial Services Core:
 - **CI checks (2):** `check-financial-events.sh` (CI-14) validates all events registered; `check-event-idempotency.sh` (CI-15, advisory) checks for InboxService usage
 - **Documentation:** `EVENT_INVENTORY.md` updated with GrowMart, PlatformBilling, PlatformPayments, FinancialServicesCore event sections; ownership table expanded from 21 → 48 rows
 
+## Session Log — 2026-07-28 (Migration Collision Cleanup)
+
+### Cross-Module Migration Collisions Fixed
+
+17 pairs of duplicate migration files existed across `core/` and `transaction/` modules — same filename, same class, same schema — causing `migrate:fresh` crashes (dev/test) and module ownership confusion.
+
+**Root cause:** The `core/` module was historically treated as a dumping ground for all table migrations. When the `transaction/` module split off, files were duplicated rather than moved.
+
+**Fix:** Deleted the copy in the wrong module for each duplicate pair, keeping the file in the module that owns it per the Canonical Migration Folders table:
+
+| Table | Owner | Deleted from | Filename |
+|---|---|---|---|
+| `withdrawal_policies` | `transaction/` | `core/` | `2024_02_20_000004_create_withdrawal_policies_table.php` |
+| `withdrawal_requests` | `transaction/` | `core/` | `2024_02_20_000004_create_withdrawal_requests_table.php` |
+| `withdrawals` | `transaction/` | `core/` | `2025_04_06_064823_create_withdrawals_table.php` |
+| `withdrawal_requests` (modify) | `transaction/` | `core/` | `2025_07_31_073718_add_vbif_fields_to_withdrawal_requests_table.php` |
+| `withdrawals` (modify) | `transaction/` | `core/` | `2025_12_14_000001_add_phone_and_reference_to_withdrawals_table.php` |
+| `withdrawals` (modify) | `transaction/` | `core/` | `2026_03_01_145650_add_transaction_id_to_withdrawals_table.php` |
+| `transactions` | `core/` | `transaction/` | `2024_02_20_000000_create_transactions_table.php` |
+| `transactions` (modify) | `core/` | `transaction/` | `2024_02_21_000001_add_processed_columns_to_transactions_table.php` |
+| `transactions` (modify) | `core/` | `transaction/` | `2025_04_17_224408_add_notes_to_transactions_table.php` |
+| `transactions` (modify) | `core/` | `transaction/` | `2025_11_07_add_indexes_to_transactions_table.php` |
+| `payment_logs` | `core/` | `transaction/` | `2025_11_07_create_payment_logs_table.php` |
+| `transactions` (modify) | `core/` | `transaction/` | `2026_03_01_083955_add_transaction_source_to_transactions_table.php` |
+| `transactions` (modify) | `core/` | `transaction/` | `2026_07_17_630000_add_currency_to_transactions.php` |
+| `profit_transactions` | `transaction/` | `core/` | `2024_04_17_000004_create_profit_transactions_table.php` |
+| — | — | `core/` | `2025_10_20_201500_add_wallet_topup_to_payment_type_enum.php` (modifies `member_payments` — belongs to `growth/` but deduped by same-filename merge) |
+| — | — | `core/` | `2025_10_25_123951_rename_map_amount_to_bp_amount_in_point_transactions.php` |
+
+**Why production-safe:** All deleted files were already recorded in the `migrations` table in production. `php artisan migrate` only runs unrecorded (new) migrations, so deleting already-run files has zero effect. The fix only prevents crashes on `migrate:fresh` (dev/test), where duplicate CREATE TABLE files would otherwise collide.
+
+**Found separately:** `lgr_cycles` table created by `2025_10_31_120000_create_lgr_system_tables.php` collides with another migration that creates the same table. Not yet fixed.
+

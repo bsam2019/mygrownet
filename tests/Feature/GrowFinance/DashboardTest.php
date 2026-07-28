@@ -6,6 +6,27 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 class DashboardTest extends GrowFinanceTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        if (!\Illuminate\Support\Facades\Schema::hasTable('growfinance_profiles')) {
+            \Illuminate\Support\Facades\Schema::create('growfinance_profiles', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->string('business_name')->nullable();
+                $table->string('account_number')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        \App\Infrastructure\Persistence\Eloquent\GrowFinance\GrowFinanceProfileModel::create([
+            'user_id' => $this->businessId,
+            'business_name' => 'Test Business',
+            'account_number' => 'ACC-001',
+        ]);
+    }
+
     public function test_dashboard_requires_authentication(): void
     {
         $response = $this->get(route('growfinance.dashboard'));
@@ -21,7 +42,7 @@ class DashboardTest extends GrowFinanceTestCase
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
             ->component('GrowFinance/Dashboard')
-            ->has('stats')
+            ->has('financialSummary')
             ->has('recentTransactions')
         );
     }
@@ -32,10 +53,9 @@ class DashboardTest extends GrowFinanceTestCase
             ->get(route('growfinance.dashboard'));
 
         $response->assertInertia(fn (Assert $page) => $page
-            ->has('stats.totalIncome')
-            ->has('stats.totalExpenses')
-            ->has('stats.netProfit')
-            ->has('stats.accountsReceivable')
+            ->has('financialSummary')
+            ->has('invoiceStats')
+            ->has('overdueInvoices')
         );
     }
 }

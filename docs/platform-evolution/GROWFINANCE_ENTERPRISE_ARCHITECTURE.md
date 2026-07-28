@@ -4,7 +4,9 @@
 **Status:** Engineering-Ready Architecture  
 **Last Updated:** 2026-07-26  
 **Supersedes:** v5.2  
-**Related:** [MYGROWNET_FINANCIAL_PLATFORM_ARCHITECTURE.md](MYGROWNET_FINANCIAL_PLATFORM_ARCHITECTURE.md) v4.0
+**Related:** [MYGROWNET_FINANCIAL_PLATFORM_ARCHITECTURE.md](MYGROWNET_FINANCIAL_PLATFORM_ARCHITECTURE.md) v4.0, [GROWFINANCE_UI_ARCHITECTURE.md](GROWFINANCE_UI_ARCHITECTURE.md) v2  
+
+**Architecture decisions:** See [GROWFINANCE_UI_ARCHITECTURE.md §12](GROWFINANCE_UI_ARCHITECTURE.md#12-inertiajs-integration--hybrid-pattern) for the Inertia/SPA hybrid pattern decision affecting all transactional UI controllers.
 
 > This document defines the architecture, product capabilities, and technical direction of GrowFinance as an enterprise-grade accounting platform designed to compete with established accounting systems such as Pastel, Sage, QuickBooks, and ERP financial modules while operating as a first-class financial service within the MyGrowNet ecosystem.
 

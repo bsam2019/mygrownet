@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\GrowFinance\Events;
 
-use App\Domain\Core\Events\PlatformEvent;
-
-class PaymentReceived extends PlatformEvent
+class PaymentReceived
 {
     public const NAME = 'growfinance.payment.received.v1';
 
@@ -19,12 +17,7 @@ class PaymentReceived extends PlatformEvent
         public readonly string $paymentMethod,
         public readonly int $customerId,
         public readonly \DateTimeImmutable $occurredAt,
-    ) {
-        parent::__construct(
-            entityId: (string) $paymentId,
-            eventName: self::NAME,
-        );
-    }
+    ) {}
 
     public function toPayload(): array
     {

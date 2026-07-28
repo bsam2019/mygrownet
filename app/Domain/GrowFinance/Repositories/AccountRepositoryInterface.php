@@ -12,6 +12,8 @@ interface AccountRepositoryInterface
 
     public function save(Account $account): Account;
 
+    public function delete(int $id): bool;
+
     public function findByBusiness(int $businessId): array;
 
     public function findActive(int $businessId): array;
@@ -19,4 +21,17 @@ interface AccountRepositoryInterface
     public function findByCode(int $businessId, string $code): ?Account;
 
     public function findOfType(int $businessId, string $type): array;
+
+    /** @return Account[] */
+    public function getChart(int $businessId): array;
+
+    public function getChildren(int $parentId): array;
+
+    public function getParent(int $accountId): ?Account;
+
+    /** @return Account[] */
+    public function getAccountsByStatementCategory(int $businessId, string $statementCategory): array;
+
+    /** @return Account[] */
+    public function findByCodes(int $businessId, array $codes): array;
 }

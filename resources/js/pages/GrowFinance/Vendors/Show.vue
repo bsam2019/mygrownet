@@ -58,12 +58,18 @@
             </div>
 
             <!-- Outstanding Balance -->
-            <div class="bg-white rounded-2xl shadow-sm p-4 mb-4">
+            <div class="bg-white rounded-2xl shadow-sm p-4 mb-2">
                 <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">You Owe</p>
                 <p :class="['text-2xl font-bold', vendor.outstanding_balance > 0 ? 'text-red-600' : 'text-gray-900']">
                     {{ formatMoney(vendor.outstanding_balance) }}
                 </p>
             </div>
+            <Link :href="route('growfinance.aging.vendor', vendor.id)"
+                class="flex items-center justify-between bg-amber-50 rounded-xl p-3 mb-4 active:bg-amber-100 transition-colors"
+            >
+                <span class="text-sm font-medium text-amber-800">View AP Aging Detail</span>
+                <span class="text-xs text-amber-600">{{ vendor.outstanding_balance > 0 ? formatMoney(vendor.outstanding_balance) + ' outstanding' : 'All paid' }}</span>
+            </Link>
 
             <!-- Recent Expenses -->
             <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -93,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { router, Link } from '@inertiajs/vue3';
 import GrowFinanceLayout from '@/Layouts/GrowFinanceLayout.vue';
 import { ArrowLeftIcon, PencilIcon, PhoneIcon, EnvelopeIcon, MapPinIcon, ClockIcon, BuildingStorefrontIcon } from '@heroicons/vue/24/outline';
 

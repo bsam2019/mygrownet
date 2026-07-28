@@ -16,6 +16,12 @@ class GrowFinanceAccountModel extends Model
         'code',
         'name',
         'type',
+        'normal_balance',
+        'parent_id',
+        'level',
+        'path',
+        'statement_category',
+        'currency_code',
         'category',
         'description',
         'is_system',
@@ -30,11 +36,22 @@ class GrowFinanceAccountModel extends Model
         'is_active' => 'boolean',
         'opening_balance' => 'decimal:2',
         'current_balance' => 'decimal:2',
+        'level' => 'integer',
     ];
 
     public function business(): BelongsTo
     {
         return $this->belongsTo(\App\Models\User::class, 'business_id');
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
     }
 
     public function journalLines(): HasMany
@@ -60,5 +77,15 @@ class GrowFinanceAccountModel extends Model
     public function scopeOfType($query, AccountType $type)
     {
         return $query->where('type', $type->value);
+    }
+
+    public function scopeStatementCategory($query, string $category)
+    {
+        return $query->where('statement_category', $category);
+    }
+
+    public function scopeRootAccounts($query)
+    {
+        return $query->whereNull('parent_id');
     }
 }

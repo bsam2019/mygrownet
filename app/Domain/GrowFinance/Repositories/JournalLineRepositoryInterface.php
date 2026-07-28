@@ -15,4 +15,8 @@ interface JournalLineRepositoryInterface
     public function findByJournalEntry(int $journalEntryId): array;
 
     public function findByAccount(int $accountId): array;
+
+    public function findByAccountAndDateRange(int $accountId, \DateTimeImmutable $start, \DateTimeImmutable $end): array;
+
+    public function deleteByJournalEntry(int $journalEntryId): void;
 }
