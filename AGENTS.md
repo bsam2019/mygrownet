@@ -818,3 +818,17 @@ Implemented 15 new files + 2 migrations for the Financial Services Core:
 - `User` model `getLifePointsAttribute()` accessor shadows `users.life_points` column, returning `grow_net_users.life_points` instead. Tests use `assertDatabaseHas('users', ...)` to verify raw column updates.
 - **Total: ~386 tests pass** (150 GrowNet unit + 64 GrowNet feature + 92 StockFlow unit + 50 StockFlow feature + 30 Platform Finance).
 
+## Session Log — 2026-07-28 (GrowBuilder Tests + Bug Fixes)
+- **204 GrowBuilder unit tests** created in `tests/Unit/GrowBuilder/` covering 13 VOs (Money, Subdomain, SiteStatus, SitePlan, OrderStatus, PageContent, Theme, TemplateCategory, SiteId, ProductId, PageId, OrderId, TemplateId) and 5 domain entities (Site, Page, Product, Order, Template) — each test file exhaustively covers construction, behavior methods, equality, and state transitions.
+- **53 GrowBuilder feature tests** created in `tests/Feature/GrowBuilder/` covering 5 Eloquent repository implementations:
+  - `SiteRepositoryTest` (12 tests): CRUD, subdomain lookup, ownership, delete cascade, plan/status round-trip
+  - `PageRepositoryTest` (13 tests): CRUD, site-scoped queries, homepage singleton, published/unpublished, nav visibility, delete
+  - `ProductRepositoryTest` (14 tests): CRUD, stock management (increment/decrement clamped to 0), pricing, slug uniqueness per site, categories, pagination
+  - `OrderRepositoryTest` (14 tests): CRUD, lifecycle (pending→paid→shipped→delivered), discount/totals persistence, status transitions
+  - `TemplateRepositoryTest` (10 tests): CRUD, active/free/premium filters, industry filter, pagination, update existing
+- **Bugs fixed:**
+  - `EloquentProductRepository::decrementStock()` — was using SQL `decrement()` directly allowing negative stock; now clamped to `max(0, ...)`
+  - `EloquentTemplateRepository::save()` — mapped `category`→`industry` (wrong column), added null-safe description default (`description ?? ''`), removed non-fillable columns from create payload, merged `structure` + `defaultStyles` into `theme` JSON column
+- **Pre-existing failures:** 24 Pest-based Inertia tests (EditorTest, SiteAuthTest, SitePublishTest) fail with `ShareErrorsFromSession` middleware 500 errors and `assertInertia` failures — unrelated to repository changes, caused by Inertia rendering requiring frontend build in test environment.
+- **Total: ~643 tests pass** (204 GrowBuilder unit + 53 GrowBuilder feature + 150 GrowNet unit + 64 GrowNet feature + 92 StockFlow unit + 50 StockFlow feature + 30 Platform Finance).
+

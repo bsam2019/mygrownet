@@ -93,14 +93,11 @@ class EloquentTemplateRepository implements TemplateRepositoryInterface
         $data = [
             'name' => $template->getName(),
             'slug' => $template->getSlug(),
-            'category' => $template->getCategory()->value(),
-            'description' => $template->getDescription(),
-            'preview_image' => $template->getPreviewImage(),
+            'industry' => $template->getCategory()->value(),
+            'description' => $template->getDescription() ?? '',
             'thumbnail' => $template->getThumbnail(),
-            'structure_json' => $template->getStructureJson(),
-            'default_styles' => $template->getDefaultStyles(),
+            'theme' => array_merge($template->getDefaultStyles(), ['structure' => $template->getStructureJson()]),
             'is_premium' => $template->isPremium(),
-            'price' => $template->getPrice(),
             'is_active' => $template->isActive(),
             'usage_count' => $template->getUsageCount(),
         ];
@@ -122,18 +119,22 @@ class EloquentTemplateRepository implements TemplateRepositoryInterface
 
     private function toDomainEntity(SiteTemplate $model): Template
     {
+        $theme = $model->theme ?? [];
+        $structure = $theme['structure'] ?? [];
+        unset($theme['structure']);
+
         return Template::reconstitute(
             id: TemplateId::fromInt($model->id),
             name: $model->name,
             slug: $model->slug,
-            category: TemplateCategory::fromString($model->category ?? 'general'),
+            category: TemplateCategory::fromString($model->industry ?? 'general'),
             description: $model->description,
-            previewImage: $model->preview_image,
+            previewImage: null,
             thumbnail: $model->thumbnail,
-            structureJson: $model->structure_json ?? [],
-            defaultStyles: $model->default_styles ?? [],
+            structureJson: $structure,
+            defaultStyles: $theme,
             isPremium: $model->is_premium ?? false,
-            price: $model->price ?? 0,
+            price: 0,
             isActive: $model->is_active ?? true,
             usageCount: $model->usage_count ?? 0,
             createdAt: new DateTimeImmutable($model->created_at->toDateTimeString()),

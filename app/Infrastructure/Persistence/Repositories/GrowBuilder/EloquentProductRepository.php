@@ -153,7 +153,8 @@ class EloquentProductRepository implements ProductRepositoryInterface
     {
         $model = GrowBuilderProduct::find($id->value());
         if ($model && $model->track_stock) {
-            $model->decrement('stock_quantity', $quantity);
+            $newStock = max(0, $model->stock_quantity - $quantity);
+            $model->update(['stock_quantity' => $newStock]);
         }
     }
 
