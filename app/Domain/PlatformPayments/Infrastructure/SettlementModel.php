@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class SettlementModel extends Model
 {
-    protected $table = 'payment_settlements';
+    protected $table = 'platform_payment_settlements';
 
     protected $fillable = [
         'organization_id',

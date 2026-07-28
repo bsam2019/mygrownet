@@ -30,7 +30,7 @@ class StockMovement implements Arrayable
         private ?string $reason,
         private ?string $referenceType,
         private ?int $referenceId,
-        private int $createdBy,
+        private ?int $createdBy = null,
         private DateTimeImmutable $createdAt,
         private ?string $itemName = null,
     ) {}
@@ -39,7 +39,7 @@ class StockMovement implements Arrayable
         CompanyId $companyId, ItemId $itemId, ?BinId $binId, MovementType $type,
         float $quantity, Money $unitPrice, float $quantityBefore, float $quantityAfter,
         ?string $reason = null, ?string $referenceType = null, ?int $referenceId = null,
-        int $createdBy = 0,
+        ?int $createdBy = null,
     ): self {
         return new self(
             StockMovementId::generate(), $companyId, $itemId, $binId, $type, $quantity,
@@ -52,7 +52,7 @@ class StockMovement implements Arrayable
         StockMovementId $id, CompanyId $companyId, ItemId $itemId, ?BinId $binId,
         MovementType $type, float $quantity, Money $unitPrice, Money $totalValue,
         float $quantityBefore, float $quantityAfter, ?string $reason,
-        ?string $referenceType, ?int $referenceId, int $createdBy, DateTimeImmutable $createdAt,
+        ?string $referenceType, ?int $referenceId, ?int $createdBy, DateTimeImmutable $createdAt,
         ?string $itemName = null,
     ): self {
         return new self($id, $companyId, $itemId, $binId, $type, $quantity, $unitPrice, $totalValue, $quantityBefore, $quantityAfter, $reason, $referenceType, $referenceId, $createdBy, $createdAt, $itemName);
@@ -71,7 +71,7 @@ class StockMovement implements Arrayable
     public function getReason(): ?string { return $this->reason; }
     public function getReferenceType(): ?string { return $this->referenceType; }
     public function getReferenceId(): ?int { return $this->referenceId; }
-    public function getCreatedBy(): int { return $this->createdBy; }
+    public function getCreatedBy(): ?int { return $this->createdBy; }
     public function getItemName(): ?string { return $this->itemName; }
 
     public function toArray(): array

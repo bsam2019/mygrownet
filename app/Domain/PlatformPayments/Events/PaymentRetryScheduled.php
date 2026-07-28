@@ -3,6 +3,8 @@
 namespace App\Domain\PlatformPayments\Events;
 
 use App\Domain\Core\Events\PlatformEvent;
+use App\Domain\Core\ValueObjects\PlatformContext;
+use Illuminate\Support\Str;
 
 class PaymentRetryScheduled extends PlatformEvent
 {
@@ -15,18 +17,29 @@ class PaymentRetryScheduled extends PlatformEvent
         public readonly \DateTimeImmutable $scheduledAt,
     ) {
         parent::__construct(
-            entityId: (string) $transactionId,
+            eventId: (string) Str::uuid(),
             eventName: self::NAME,
+            eventVersion: '1.0',
+            publisher: 'platform-payments',
+            occurredAt: new \DateTimeImmutable(),
+            correlationId: (string) $transactionId,
+            causationId: null,
+            context: PlatformContext::make(
+                userId: (string) $organizationId,
+                organizationId: (string) $organizationId,
+                applicationId: 'platform-payments',
+            ),
+            payload: [
+                'transaction_id' => $transactionId,
+                'organization_id' => $organizationId,
+                'attempt_number' => $attemptNumber,
+                'scheduled_at' => $scheduledAt->format(\DateTimeInterface::ATOM),
+            ],
         );
     }
 
     public function toPayload(): array
     {
-        return [
-            'transaction_id' => $this->transactionId,
-            'organization_id' => $this->organizationId,
-            'attempt_number' => $this->attemptNumber,
-            'scheduled_at' => $this->scheduledAt->format(\DateTimeInterface::ATOM),
-        ];
+        return $this->payload;
     }
 }

@@ -8,11 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable('payment_transactions')) {
-            return;
-        }
-
-        Schema::create('payment_transactions', function (Blueprint $table) {
+        Schema::create('platform_payment_transactions', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('organization_id');
             $table->decimal('amount', 15, 2);
@@ -31,9 +27,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('payment_attempts', function (Blueprint $table) {
+        Schema::create('platform_payment_attempts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('transaction_id')->constrained('payment_transactions')->onDelete('cascade');
+            $table->foreignId('transaction_id')->constrained('platform_payment_transactions')->onDelete('cascade');
             $table->integer('attempt_number');
             $table->string('status')->default('pending');
             $table->json('provider_response')->nullable();
@@ -43,7 +39,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('payment_settlements', function (Blueprint $table) {
+        Schema::create('platform_payment_settlements', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('organization_id');
             $table->string('provider');
@@ -62,8 +58,8 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('payment_settlements');
-        Schema::dropIfExists('payment_attempts');
-        Schema::dropIfExists('payment_transactions');
+        Schema::dropIfExists('platform_payment_settlements');
+        Schema::dropIfExists('platform_payment_attempts');
+        Schema::dropIfExists('platform_payment_transactions');
     }
 };

@@ -30,9 +30,11 @@ class CountItem implements Arrayable
         private DateTimeImmutable $updatedAt,
     ) {}
 
-    public static function create(PhysicalCountId $physicalCountId, ItemId $itemId, ?BinId $binId, float $systemQuantity, Money $unitPrice, ?string $itemName = null): self
+    public static function create(PhysicalCountId $physicalCountId, ItemId $itemId, ?BinId $binId, float $systemQuantity, Money $unitPrice, ?string $itemName = null, float $physicalQuantity = 0): self
     {
-        return new self(CountItemId::generate(), $physicalCountId, $itemId, $binId, $systemQuantity, 0, -$systemQuantity, $unitPrice, Money::zero(), $itemName, new DateTimeImmutable(), new DateTimeImmutable());
+        $variance = $physicalQuantity - $systemQuantity;
+        $varianceValue = $unitPrice->multiply($variance);
+        return new self(CountItemId::generate(), $physicalCountId, $itemId, $binId, $systemQuantity, $physicalQuantity, $variance, $unitPrice, $varianceValue, $itemName, new DateTimeImmutable(), new DateTimeImmutable());
     }
 
     public static function reconstitute(CountItemId $id, PhysicalCountId $physicalCountId, ItemId $itemId, ?BinId $binId, float $systemQuantity, float $physicalQuantity, float $variance, Money $unitPrice, Money $varianceValue, ?string $itemName, DateTimeImmutable $createdAt, DateTimeImmutable $updatedAt): self

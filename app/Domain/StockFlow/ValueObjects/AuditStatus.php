@@ -20,6 +20,7 @@ class AuditStatus
         return new self($value);
     }
     public function value(): string { return $this->value; }
+    public function isDraft(): bool { return $this->value === self::DRAFT; }
     public function isFinalized(): bool { return $this->value === self::FINALIZED; }
     public function label(): string { return ucfirst($this->value); }
     public static function all(): array { return [self::DRAFT, self::FINALIZED]; }

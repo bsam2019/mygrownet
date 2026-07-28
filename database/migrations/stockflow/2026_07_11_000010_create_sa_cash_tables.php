@@ -17,8 +17,8 @@ return new class extends Migration
             $table->decimal('total_expenses', 16, 2)->default(0);
             $table->decimal('total_banking', 16, 2)->default(0);
             $table->decimal('expected_closing', 16, 2)->default(0);
-            $table->decimal('actual_closing', 16, 2)->default(0);
-            $table->decimal('variance', 16, 2)->default(0);
+            $table->decimal('actual_closing', 16, 2)->nullable()->default(null);
+            $table->decimal('variance', 16, 2)->nullable()->default(null);
             $table->enum('status', ['open', 'closed', 'verified'])->default('open');
             $table->foreignId('opened_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('closed_by')->nullable()->constrained('users')->nullOnDelete();

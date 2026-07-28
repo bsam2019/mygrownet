@@ -342,11 +342,10 @@ class BillingService
         try {
             return $this->contextResolver->current();
         } catch (\Throwable) {
-            return new PlatformContext(
-                correlationId: '',
-                userId: null,
-                organizationId: null,
-                applicationId: null,
+            return PlatformContext::make(
+                userId: '',
+                organizationId: '',
+                applicationId: '',
             );
         }
     }

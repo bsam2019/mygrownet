@@ -71,7 +71,7 @@ class InventoryService
                         quantityBefore: 0,
                         quantityAfter: $savedItem->getSystemQuantity(),
                         reason: 'Opening balance',
-                        createdBy: 0,
+                        createdBy: 1,
                     )
                 );
                 $this->stockLevelProjector->rebuildForItem($companyId, $savedItem->id());

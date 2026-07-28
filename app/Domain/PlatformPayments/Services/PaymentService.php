@@ -47,24 +47,26 @@ class PaymentService
             metadata: $metadata,
         );
 
-        DB::transaction(function () use ($transaction) {
-            $this->transactions->save($transaction);
+        $saved = null;
+        DB::transaction(function () use ($transaction, &$saved) {
+            $saved = $this->transactions->save($transaction);
             $this->events->dispatch(new PaymentInitiated(
-                transactionId: $transaction->id(),
-                organizationId: $transaction->organizationId(),
-                amount: $transaction->amount(),
-                currency: $transaction->currency(),
-                paymentMethod: $transaction->paymentMethod()->value,
+                transactionId: $saved->id(),
+                organizationId: $saved->organizationId(),
+                amount: $saved->amount(),
+                currency: $saved->currency(),
+                paymentMethod: $saved->paymentMethod()->value,
             ));
         });
 
-        return $transaction;
+        return $saved ?? $transaction;
     }
 
     public function process(PaymentTransaction $transaction): PaymentTransaction
     {
+        $txId = $transaction->id() ?? 0;
         $attempt = PaymentAttempt::create(
-            transactionId: $transaction->id(),
+            transactionId: $txId,
             attemptNumber: $transaction->attemptCount() + 1,
             scheduledAt: new \DateTimeImmutable(),
         );
@@ -73,7 +75,7 @@ class PaymentService
             $response = $this->provider->process(
                 amount: $transaction->amount(),
                 currency: $transaction->currency(),
-                reference: (string) $transaction->id(),
+                reference: (string) $txId,
                 metadata: ['organization_id' => $transaction->organizationId()],
             );
 
@@ -84,17 +86,20 @@ class PaymentService
 
             $attempt->markSuccess($response);
 
-            DB::transaction(function () use ($transaction, $attempt) {
-                $this->transactions->save($transaction);
+            $savedTx = null;
+            DB::transaction(function () use ($transaction, $attempt, &$savedTx) {
+                $savedTx = $this->transactions->save($transaction);
                 $this->attempts->save($attempt);
                 $this->events->dispatch(new PaymentCompleted(
-                    transactionId: $transaction->id(),
-                    organizationId: $transaction->organizationId(),
-                    amount: $transaction->amount(),
-                    currency: $transaction->currency(),
-                    providerTransactionId: $transaction->providerTransactionId(),
+                    transactionId: $savedTx->id() ?? $txId,
+                    organizationId: $savedTx->organizationId(),
+                    amount: $savedTx->amount(),
+                    currency: $savedTx->currency(),
+                    providerTransactionId: $savedTx->providerTransactionId(),
                 ));
             });
+
+            return $savedTx ?? $transaction;
 
         } catch (\Throwable $e) {
             $transaction->markFailed($e->getMessage());
@@ -106,7 +111,7 @@ class PaymentService
             });
 
             $this->events->dispatch(new PaymentAttemptFailed(
-                transactionId: $transaction->id(),
+                transactionId: $transaction->id() ?? $txId,
                 organizationId: $transaction->organizationId(),
                 amount: $transaction->amount(),
                 currency: $transaction->currency(),
@@ -117,7 +122,7 @@ class PaymentService
             if ($transaction->attemptCount() >= self::MAX_RETRY_ATTEMPTS) {
                 $metadata = $transaction->metadata();
                 $this->events->dispatch(new PaymentFailed(
-                    transactionId: $transaction->id(),
+                    transactionId: $transaction->id() ?? $txId,
                     organizationId: $transaction->organizationId(),
                     amount: $transaction->amount(),
                     currency: $transaction->currency(),
@@ -128,9 +133,9 @@ class PaymentService
             } else {
                 $this->retryOrchestrator->scheduleRetry($transaction);
             }
-        }
 
-        return $transaction;
+            return $transaction;
+        }
     }
 
     public function refund(PaymentTransaction $transaction, float $amount): PaymentTransaction

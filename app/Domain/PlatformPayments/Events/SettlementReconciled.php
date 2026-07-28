@@ -3,6 +3,8 @@
 namespace App\Domain\PlatformPayments\Events;
 
 use App\Domain\Core\Events\PlatformEvent;
+use App\Domain\Core\ValueObjects\PlatformContext;
+use Illuminate\Support\Str;
 
 class SettlementReconciled extends PlatformEvent
 {
@@ -17,20 +19,31 @@ class SettlementReconciled extends PlatformEvent
         public readonly string $status,
     ) {
         parent::__construct(
-            entityId: (string) $settlementId,
+            eventId: (string) Str::uuid(),
             eventName: self::NAME,
+            eventVersion: '1.0',
+            publisher: 'platform-payments',
+            occurredAt: new \DateTimeImmutable(),
+            correlationId: (string) $settlementId,
+            causationId: null,
+            context: PlatformContext::make(
+                userId: (string) $organizationId,
+                organizationId: (string) $organizationId,
+                applicationId: 'platform-payments',
+            ),
+            payload: [
+                'settlement_id' => $settlementId,
+                'organization_id' => $organizationId,
+                'expected_amount' => $expectedAmount,
+                'actual_amount' => $actualAmount,
+                'currency' => $currency,
+                'status' => $status,
+            ],
         );
     }
 
     public function toPayload(): array
     {
-        return [
-            'settlement_id' => $this->settlementId,
-            'organization_id' => $this->organizationId,
-            'expected_amount' => $this->expectedAmount,
-            'actual_amount' => $this->actualAmount,
-            'currency' => $this->currency,
-            'status' => $this->status,
-        ];
+        return $this->payload;
     }
 }

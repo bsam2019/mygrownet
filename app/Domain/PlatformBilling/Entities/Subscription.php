@@ -19,7 +19,7 @@ enum SubscriptionStatus: string
             self::Active => in_array($target, [self::Expired, self::Cancelled, self::Suspended], true),
             self::Suspended => in_array($target, [self::Active, self::Expired, self::Cancelled], true),
             self::Expired => in_array($target, [self::Active, self::Cancelled], true),
-            self::Cancelled => [],
+            self::Cancelled => false,
         };
     }
 }

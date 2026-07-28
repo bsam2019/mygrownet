@@ -44,6 +44,8 @@ class Supplier implements Arrayable
     public function getEmail(): ?string { return $this->email; }
     public function getAddress(): ?string { return $this->address; }
     public function getPaymentTerms(): ?string { return $this->paymentTerms; }
+    public function getCreatedAt(): DateTimeImmutable { return $this->createdAt; }
+    public function getUpdatedAt(): DateTimeImmutable { return $this->updatedAt; }
 
     public function toArray(): array
     {

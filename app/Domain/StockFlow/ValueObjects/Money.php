@@ -10,7 +10,6 @@ class Money
 
     public static function fromFloat(float $amount, string $currency = 'MWK'): self
     {
-        if ($amount < 0) { throw new \InvalidArgumentException('Money amount cannot be negative'); }
         return new self(round($amount, 2), $currency);
     }
 

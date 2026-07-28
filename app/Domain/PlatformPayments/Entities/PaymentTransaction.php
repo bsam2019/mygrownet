@@ -2,28 +2,6 @@
 
 namespace App\Domain\PlatformPayments\Entities;
 
-enum TransactionStatus: string
-{
-    case Initiated = 'initiated';
-    case Pending = 'pending';
-    case Completed = 'completed';
-    case Failed = 'failed';
-    case Refunded = 'refunded';
-    case PartiallyRefunded = 'partially_refunded';
-    case Settled = 'settled';
-    case Reconciled = 'reconciled';
-}
-
-enum PaymentMethod: string
-{
-    case MTNMoMo = 'mtn_momo';
-    case AirtelMoney = 'airtel_money';
-    case MoneyUnify = 'moneyunify';
-    case Card = 'card';
-    case BankTransfer = 'bank_transfer';
-    case Wallet = 'wallet';
-}
-
 class PaymentTransaction
 {
     private function __construct(
@@ -152,6 +130,7 @@ class PaymentTransaction
     public function provider(): string { return $this->provider; }
     public function attemptCount(): int { return $this->attemptCount; }
     public function failureReason(): ?string { return $this->failureReason; }
+    public function metadata(): array { return $this->metadata; }
 
     public function toArray(): array
     {

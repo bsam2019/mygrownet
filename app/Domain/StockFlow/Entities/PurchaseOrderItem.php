@@ -29,9 +29,9 @@ class PurchaseOrderItem implements Arrayable
         private DateTimeImmutable $updatedAt,
     ) {}
 
-    public static function create(PurchaseOrderId $purchaseOrderId, ItemId $itemId, ?LotId $lotId, float $quantityOrdered, Money $unitCost, ?string $itemName = null): self
+    public static function create(PurchaseOrderId $purchaseOrderId, ItemId $itemId, ?LotId $lotId, float $quantityOrdered, Money $unitCost, ?string $itemName = null, float $quantityReceived = 0): self
     {
-        return new self(PurchaseOrderItemId::generate(), $purchaseOrderId, $itemId, $lotId, $quantityOrdered, 0, $unitCost, $unitCost->multiply($quantityOrdered), $itemName, new DateTimeImmutable(), new DateTimeImmutable());
+        return new self(PurchaseOrderItemId::generate(), $purchaseOrderId, $itemId, $lotId, $quantityOrdered, $quantityReceived, $unitCost, $unitCost->multiply($quantityOrdered), $itemName, new DateTimeImmutable(), new DateTimeImmutable());
     }
 
     public static function reconstitute(PurchaseOrderItemId $id, PurchaseOrderId $purchaseOrderId, ItemId $itemId, ?LotId $lotId, float $quantityOrdered, float $quantityReceived, Money $unitCost, Money $totalCost, ?string $itemName, DateTimeImmutable $createdAt, DateTimeImmutable $updatedAt): self
@@ -39,6 +39,7 @@ class PurchaseOrderItem implements Arrayable
         return new self($id, $purchaseOrderId, $itemId, $lotId, $quantityOrdered, $quantityReceived, $unitCost, $totalCost, $itemName, $createdAt, $updatedAt);
     }
 
+    public function id(): int { return $this->id->toInt(); }
     public function getLotId(): ?LotId { return $this->lotId; }
 
     public function receive(float $quantity): void
@@ -56,6 +57,7 @@ class PurchaseOrderItem implements Arrayable
     public function getQuantityOrdered(): float { return $this->quantityOrdered; }
     public function getQuantityReceived(): float { return $this->quantityReceived; }
     public function getUnitCost(): Money { return $this->unitCost; }
+    public function getTotalCost(): Money { return $this->totalCost; }
 
     public function toArray(): array
     {

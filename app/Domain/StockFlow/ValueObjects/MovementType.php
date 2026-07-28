@@ -44,7 +44,7 @@ class MovementType
     }
 
     public function value(): string { return $this->value; }
-    public function isIncoming(): bool { return in_array($this->value, [self::PURCHASE_IN, self::ADJUSTMENT_IN, self::RETURN_IN, self::OPENING_BALANCE], true); }
+    public function isIncoming(): bool { return in_array($this->value, [self::PURCHASE_IN, self::ADJUSTMENT_IN, self::RETURN_IN, self::OPENING_BALANCE, self::TRANSFER_IN], true); }
     public function isOutgoing(): bool { return !$this->isIncoming(); }
     public function label(): string { return str_replace('_', ' ', ucfirst($this->value)); }
     public static function all(): array { return [self::PURCHASE_IN, self::SALE_OUT, self::ADJUSTMENT_IN, self::ADJUSTMENT_OUT, self::DAMAGE_OUT, self::EXPIRED_OUT, self::RETURN_IN, self::PHYSICAL_COUNT, self::OPENING_BALANCE]; }

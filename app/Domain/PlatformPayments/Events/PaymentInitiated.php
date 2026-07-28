@@ -3,6 +3,7 @@
 namespace App\Domain\PlatformPayments\Events;
 
 use App\Domain\Core\Events\PlatformEvent;
+use Illuminate\Support\Str;
 
 class PaymentInitiated extends PlatformEvent
 {
@@ -16,19 +17,30 @@ class PaymentInitiated extends PlatformEvent
         public readonly string $paymentMethod,
     ) {
         parent::__construct(
-            entityId: (string) $transactionId,
+            eventId: (string) Str::uuid(),
             eventName: self::NAME,
+            eventVersion: '1.0',
+            publisher: 'platform-payments',
+            occurredAt: new \DateTimeImmutable(),
+            correlationId: (string) $transactionId,
+            causationId: null,
+            context: \App\Domain\Core\ValueObjects\PlatformContext::make(
+                userId: (string) $organizationId,
+                organizationId: (string) $organizationId,
+                applicationId: 'platform-payments',
+            ),
+            payload: [
+                'transaction_id' => $transactionId,
+                'organization_id' => $organizationId,
+                'amount' => $amount,
+                'currency' => $currency,
+                'payment_method' => $paymentMethod,
+            ],
         );
     }
 
     public function toPayload(): array
     {
-        return [
-            'transaction_id' => $this->transactionId,
-            'organization_id' => $this->organizationId,
-            'amount' => $this->amount,
-            'currency' => $this->currency,
-            'payment_method' => $this->paymentMethod,
-        ];
+        return $this->payload;
     }
 }

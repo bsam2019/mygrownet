@@ -45,6 +45,14 @@ class AuditItem implements Arrayable
         return new self($id, $auditId, $itemId, $binId, $itemName, $unitPrice, $systemQty, $physicalQty, $systemValue, $physicalValue, $gapQty, $gapValue, $createdAt);
     }
 
+    public function id(): int { return $this->id->toInt(); }
+    public function getSystemQty(): float { return $this->systemQty; }
+    public function getPhysicalQty(): float { return $this->physicalQty; }
+    public function getGapQty(): float { return $this->gapQty; }
+    public function getSystemValue(): Money { return $this->systemValue; }
+    public function getPhysicalValue(): Money { return $this->physicalValue; }
+    public function getGapValue(): Money { return $this->gapValue; }
+
     public function toArray(): array
     {
         return [

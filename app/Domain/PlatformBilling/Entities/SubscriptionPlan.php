@@ -118,7 +118,7 @@ class SubscriptionPlan
             'storage_limit_mb' => $this->storageLimitMb,
             'team_member_limit' => $this->teamMemberLimit,
             'client_limit' => $this->clientLimit,
-            'features' => $this->features,
+            'features_json' => $this->features,
             'is_active' => $this->isActive,
             'sort_order' => $this->sortOrder,
         ];
