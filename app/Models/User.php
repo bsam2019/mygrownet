@@ -20,6 +20,8 @@ use App\Models\BGF\BgfDisbursement;
 use App\Models\BGF\BgfProject;
 use App\Models\BGF\BgfRepayment;
 use App\Models\Community\CommunityProject;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\Achievement;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\UserAchievement;
 
 class User extends Authenticatable
 {
