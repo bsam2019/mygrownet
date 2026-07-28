@@ -10,6 +10,7 @@ use App\Domain\GrowNet\ValueObjects\MemberId;
 use App\Domain\GrowNet\ValueObjects\MembershipTier;
 use App\Domain\GrowNet\ValueObjects\Money;
 use App\Infrastructure\Persistence\Eloquent\GrowNet\TierUpgrade as TierUpgradeModel;
+use App\Models\InvestmentTier;
 use DateTimeImmutable;
 
 class EloquentTierUpgradeRepository implements TierUpgradeRepositoryInterface
@@ -25,12 +26,16 @@ class EloquentTierUpgradeRepository implements TierUpgradeRepositoryInterface
 
     public function save(TierUpgrade $tierUpgrade): TierUpgrade
     {
+        $fromTierId = $this->ensureInvestmentTier($tierUpgrade->fromTier()->displayName());
+        $toTierId = $this->ensureInvestmentTier($tierUpgrade->toTier()->displayName());
+
         $data = [
             'user_id' => $tierUpgrade->memberId()->value(),
-            'from_tier' => $tierUpgrade->fromTier()->value,
-            'to_tier' => $tierUpgrade->toTier()->value,
+            'from_tier_id' => $fromTierId,
+            'to_tier_id' => $toTierId,
+            'total_investment_amount' => 0,
             'upgrade_reason' => $tierUpgrade->reason(),
-            'achievement_bonus' => $tierUpgrade->achievementBonus()->amount(),
+            'processed_at' => now(),
         ];
 
         if ($tierUpgrade->id() > 0) {
@@ -44,17 +49,37 @@ class EloquentTierUpgradeRepository implements TierUpgradeRepositoryInterface
 
     private function toDomain($model): TierUpgrade
     {
-        $fromTier = MembershipTier::tryFrom($model->from_tier ?? $model->fromTier?->value ?? 'associate') ?? MembershipTier::Associate;
-        $toTier = MembershipTier::tryFrom($model->to_tier ?? $model->toTier?->value ?? 'bronze') ?? MembershipTier::Bronze;
+        $model->loadMissing('fromTier', 'toTier');
+
+        $fromTierName = $model->fromTier?->name ?? 'associate';
+        $toTierName = $model->toTier?->name ?? 'bronze';
+
+        $fromTier = MembershipTier::tryFrom(strtolower($fromTierName)) ?? MembershipTier::Associate;
+        $toTier = MembershipTier::tryFrom(strtolower($toTierName)) ?? MembershipTier::Bronze;
 
         return TierUpgrade::create(
             memberId: new MemberId($model->user_id),
             fromTier: $fromTier,
             toTier: $toTier,
             reason: $model->upgrade_reason ?? 'manual',
-            achievementBonus: new Money((float) ($model->achievement_bonus ?? 0)),
-            teamVolumeAtUpgrade: (float) ($model->team_volume ?? 0),
-            activeReferralsAtUpgrade: (int) ($model->active_referrals ?? 0),
+            achievementBonus: new Money((float) ($model->getAttribute('achievement_bonus_awarded') ?? 0)),
+            teamVolumeAtUpgrade: (float) ($model->getAttribute('team_volume') ?? 0),
+            activeReferralsAtUpgrade: (int) ($model->getAttribute('active_referrals') ?? 0),
         );
+    }
+
+    private function ensureInvestmentTier(string $name): int
+    {
+        $tier = InvestmentTier::firstOrCreate(
+            ['name' => $name],
+            [
+                'minimum_investment' => 0,
+                'fixed_profit_rate' => 0,
+                'direct_referral_rate' => 0,
+                'description' => $name,
+                'order' => 0,
+            ]
+        );
+        return $tier->id;
     }
 }

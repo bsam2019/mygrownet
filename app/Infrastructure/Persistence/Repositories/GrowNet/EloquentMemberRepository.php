@@ -7,6 +7,7 @@ namespace App\Infrastructure\Persistence\Repositories\GrowNet;
 use App\Domain\GrowNet\Entities\Member;
 use App\Domain\GrowNet\Repositories\MemberRepositoryInterface;
 use App\Domain\GrowNet\ValueObjects\MemberId;
+use App\Domain\GrowNet\ValueObjects\MembershipTier;
 use App\Infrastructure\Persistence\Eloquent\GrowNet\MemberModel;
 
 class EloquentMemberRepository implements MemberRepositoryInterface
@@ -41,6 +42,13 @@ class EloquentMemberRepository implements MemberRepositoryInterface
 
         $model = MemberModel::create($data);
         return $this->toDomain($model);
+    }
+
+    public function updateTier(MemberId $memberId, MembershipTier $tier): void
+    {
+        MemberModel::where('id', $memberId->value())->update([
+            'current_professional_level' => $tier->value,
+        ]);
     }
 
     public function delete(MemberId $id): void

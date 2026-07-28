@@ -8,8 +8,8 @@ class MemberId
 {
     public function __construct(private int $value)
     {
-        if ($value <= 0) {
-            throw new \InvalidArgumentException('Member ID must be a positive integer');
+        if ($value < 0) {
+            throw new \InvalidArgumentException('Member ID must be a non-negative integer');
         }
     }
 

@@ -6,6 +6,7 @@ namespace App\Domain\GrowNet\Repositories;
 
 use App\Domain\GrowNet\Entities\Member;
 use App\Domain\GrowNet\ValueObjects\MemberId;
+use App\Domain\GrowNet\ValueObjects\MembershipTier;
 
 interface MemberRepositoryInterface
 {
@@ -20,6 +21,8 @@ interface MemberRepositoryInterface
 
     /** @return Member[] */
     public function findWithExpiringSubscriptions(\DateTimeImmutable $cutoff): array;
+
+    public function updateTier(MemberId $memberId, MembershipTier $tier): void;
 
     public function countByTier(string $tier): int;
 

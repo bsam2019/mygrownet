@@ -75,6 +75,8 @@ class TierAdvancementService
 
             $this->tierUpgradeRepository->save($tierUpgrade);
 
+            $this->memberRepository->updateTier($member->id(), $toTier);
+
             DB::commit();
             return $tierUpgrade;
 

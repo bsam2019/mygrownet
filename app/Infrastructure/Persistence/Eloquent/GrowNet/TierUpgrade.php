@@ -5,6 +5,7 @@ namespace App\Infrastructure\Persistence\Eloquent\GrowNet;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\InvestmentTier;
 use App\Models\User;
 
 class TierUpgrade extends Model

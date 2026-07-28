@@ -13,9 +13,14 @@ class InvestmentTier extends Model
         'name',
         'minimum_investment',
         'maximum_investment',
+        'fixed_profit_rate',
+        'direct_referral_rate',
+        'level2_referral_rate',
+        'level3_referral_rate',
         'benefits',
         'description',
         'sort_order',
+        'order',
         'is_active'
     ];
 
