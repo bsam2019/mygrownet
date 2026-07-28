@@ -812,3 +812,9 @@ Implemented 15 new files + 2 migrations for the Financial Services Core:
 
 **Found separately:** `lgr_cycles` table created by `2025_10_31_120000_create_lgr_system_tables.php` collides with another migration that creates the same table. Not yet fixed.
 
+## Session Log — 2026-07-28 (StarterKitService Test)
+- Created `tests/Feature/GrowNet/StarterKitServiceTest.php` — 12 tests (constants, `calculateShopCredit`, `awardAchievement`, `expireShopCredits`, `processUnlocks`, `getUserProgress`).
+- `StarterKitService` resolves from container successfully.
+- `User` model `getLifePointsAttribute()` accessor shadows `users.life_points` column, returning `grow_net_users.life_points` instead. Tests use `assertDatabaseHas('users', ...)` to verify raw column updates.
+- **Total: ~386 tests pass** (150 GrowNet unit + 64 GrowNet feature + 92 StockFlow unit + 50 StockFlow feature + 30 Platform Finance).
+

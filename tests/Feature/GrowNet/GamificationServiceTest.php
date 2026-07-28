@@ -9,7 +9,6 @@ use App\Infrastructure\Persistence\Eloquent\GrowNet\UserAchievement;
 use App\Infrastructure\Persistence\Eloquent\GrowNet\Leaderboard;
 use App\Infrastructure\Persistence\Eloquent\GrowNet\LeaderboardEntry;
 use Illuminate\Support\Facades\Cache;
-
 class GamificationServiceTest extends GrowNetTestCase
 {
     private GamificationService $gamification;
@@ -147,7 +146,45 @@ class GamificationServiceTest extends GrowNetTestCase
         $this->assertTrue($achievement->isAvailableForUser($this->user));
     }
 
+    public function test_get_next_available_achievements_returns_available(): void
+    {
+        Achievement::create([
+            'name' => 'Active Achievement', 'slug' => 'active-achievement', 'description' => 'Available',
+            'category' => 'referral', 'badge_icon' => 'star', 'badge_color' => 'gold',
+            'points' => 100, 'is_active' => true,
+        ]);
 
+        $next = $this->gamification->getNextAvailableAchievements($this->user, 10);
+        $this->assertGreaterThanOrEqual(1, $next->count());
+    }
+
+    public function test_get_next_available_achievements_excludes_inactive(): void
+    {
+        Achievement::create([
+            'name' => 'Inactive Achievement', 'slug' => 'inactive-achievement', 'description' => 'N/A',
+            'category' => 'referral', 'badge_icon' => 'star', 'badge_color' => 'gold',
+            'points' => 100, 'is_active' => false,
+        ]);
+
+        $next = $this->gamification->getNextAvailableAchievements($this->user, 10);
+        $this->assertCount(0, $next);
+    }
+
+    public function test_get_next_available_achievements_respects_limit(): void
+    {
+        Achievement::create(['name' => 'A1', 'slug' => 'a1', 'description' => 'A',
+            'category' => 'referral', 'badge_icon' => 'star', 'badge_color' => 'gold',
+            'points' => 10, 'is_active' => true]);
+        Achievement::create(['name' => 'A2', 'slug' => 'a2', 'description' => 'B',
+            'category' => 'referral', 'badge_icon' => 'star', 'badge_color' => 'gold',
+            'points' => 20, 'is_active' => true]);
+        Achievement::create(['name' => 'A3', 'slug' => 'a3', 'description' => 'C',
+            'category' => 'referral', 'badge_icon' => 'star', 'badge_color' => 'gold',
+            'points' => 30, 'is_active' => true]);
+
+        $next = $this->gamification->getNextAvailableAchievements($this->user, 2);
+        $this->assertCount(2, $next);
+    }
 
     public function test_get_user_leaderboard_positions_empty(): void
     {
