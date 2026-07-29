@@ -9,7 +9,7 @@ use App\Domain\GrowBuilder\ValueObjects\ProductId;
 use App\Domain\GrowBuilder\ValueObjects\SiteId;
 use App\Domain\GrowBuilder\ValueObjects\Subdomain;
 use App\Domain\GrowBuilder\Payment\Services\GrowBuilderPaymentService;
-use App\Domain\GrowBuilder\Payment\DTOs\PaymentRequest;
+use App\Domain\PlatformPayments\DTOs\PaymentRequest;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderOrder;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderPayment;

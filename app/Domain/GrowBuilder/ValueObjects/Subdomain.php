@@ -52,4 +52,9 @@ final class Subdomain
     {
         return $this->value . '.mygrownet.com';
     }
+
+    public function toUrl(): string
+    {
+        return 'https://' . $this->getFullDomain();
+    }
 }

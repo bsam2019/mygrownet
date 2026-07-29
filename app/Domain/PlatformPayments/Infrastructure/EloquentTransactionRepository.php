@@ -78,7 +78,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         $model->fee = $data['fee'] ?? null;
         $model->settled_amount = $data['settled_amount'] ?? null;
         $model->settled_at = $data['settled_at'] ?? null;
-        $model->metadata = $transaction->id() ? $model->metadata : [];
+        $model->metadata = $transaction->metadata();
         $model->save();
 
         return $this->toDomain($model);

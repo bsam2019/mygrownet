@@ -6,11 +6,20 @@ namespace App\Domain\GrowBuilder\ValueObjects;
 
 final class SitePlan
 {
+    private const FREE = 'free';
     private const STARTER = 'starter';
     private const BUSINESS = 'business';
     private const PRO = 'pro';
 
     private const LIMITS = [
+        self::FREE => [
+            'pages' => 5,
+            'products' => 10,
+            'storage_mb' => 100,
+            'custom_domain' => false,
+            'remove_branding' => false,
+            'analytics' => false,
+        ],
         self::STARTER => [
             'pages' => 5,
             'products' => 10,
@@ -39,6 +48,11 @@ final class SitePlan
 
     private function __construct(private string $value) {}
 
+    public static function free(): self
+    {
+        return new self(self::FREE);
+    }
+
     public static function starter(): self
     {
         return new self(self::STARTER);
@@ -57,6 +71,7 @@ final class SitePlan
     public static function fromString(string $value): self
     {
         return match ($value) {
+            self::FREE => self::free(),
             self::STARTER => self::starter(),
             self::BUSINESS => self::business(),
             self::PRO => self::pro(),
@@ -67,6 +82,11 @@ final class SitePlan
     public function value(): string
     {
         return $this->value;
+    }
+
+    public function isFree(): bool
+    {
+        return $this->value === self::FREE;
     }
 
     public function isStarter(): bool

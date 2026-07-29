@@ -147,6 +147,7 @@ class PaymentTransaction
             'fee' => $this->fee,
             'settled_amount' => $this->settledAmount,
             'settled_at' => $this->settledAt?->format(\DateTimeInterface::ATOM),
+            'metadata' => $this->metadata,
             'failure_reason' => $this->failureReason,
             'attempt_count' => $this->attemptCount,
         ];

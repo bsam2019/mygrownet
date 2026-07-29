@@ -68,16 +68,16 @@ class SiteController extends Controller
         ];
 
         // Get available tiers for upgrade options
-        $availableTiers = collect(['free', 'starter', 'business', 'agency'])->map(function($tierKey) use ($tierConfigService) {
-            $config = $tierConfigService->getTierConfig('growbuilder', $tierKey);
+        $availableTiers = collect(['free', 'starter', 'business', 'agency'])->map(function($tierKey) use ($tierProvider) {
+            $config = $tierProvider->getTierConfig('growbuilder', $tierKey);
             return [
                 'key' => $tierKey,
                 'name' => $config['name'] ?? ucfirst($tierKey),
                 'price' => $config['price_monthly'] ?? 0,
-                'storageLimit' => $tierConfigService->getLimit('growbuilder', $tierKey, 'storage_mb'),
-                'sitesLimit' => $tierConfigService->getLimit('growbuilder', $tierKey, 'sites'),
-                'pagesLimit' => $tierConfigService->getLimit('growbuilder', $tierKey, 'pages'),
-                'productsLimit' => $tierConfigService->getLimit('growbuilder', $tierKey, 'products'),
+                'storageLimit' => $tierProvider->getLimit('growbuilder', $tierKey, 'storage_mb'),
+                'sitesLimit' => $tierProvider->getLimit('growbuilder', $tierKey, 'sites'),
+                'pagesLimit' => $tierProvider->getLimit('growbuilder', $tierKey, 'pages'),
+                'productsLimit' => $tierProvider->getLimit('growbuilder', $tierKey, 'products'),
             ];
         })->toArray();
 

@@ -2,13 +2,14 @@
 
 namespace App\Domain\GrowBuilder\Payment\Services;
 
-use App\Domain\GrowBuilder\Payment\Contracts\PaymentGatewayInterface;
-use App\Domain\GrowBuilder\Payment\DTOs\PaymentRequest;
-use App\Domain\GrowBuilder\Payment\DTOs\PaymentResponse;
-use App\Domain\GrowBuilder\Payment\DTOs\RefundRequest;
-use App\Domain\GrowBuilder\Payment\DTOs\RefundResponse;
-use App\Domain\GrowBuilder\Payment\Enums\PaymentGateway;
-use App\Domain\GrowBuilder\Payment\Enums\PaymentStatus;
+use App\Domain\PlatformPayments\Contracts\PaymentGatewayInterface;
+use App\Domain\PlatformPayments\DTOs\PaymentRequest;
+use App\Domain\PlatformPayments\DTOs\PaymentResponse;
+use App\Domain\PlatformPayments\DTOs\RefundRequest;
+use App\Domain\PlatformPayments\DTOs\RefundResponse;
+use App\Domain\PlatformPayments\Enums\GatewayProvider;
+use App\Domain\PlatformPayments\Enums\PaymentStatus;
+use App\Domain\PlatformPayments\Services\PaymentGatewayFactory;
 use App\Models\GrowBuilder\SitePaymentConfig;
 use App\Models\GrowBuilder\SitePaymentTransaction;
 use Illuminate\Support\Facades\DB;
@@ -16,26 +17,19 @@ use Illuminate\Support\Facades\Log;
 
 class GrowBuilderPaymentService
 {
-    /**
-     * Initialize payment for a GrowBuilder site
-     */
     public function initiatePayment(
         int $siteId,
         PaymentRequest $request
     ): PaymentResponse {
         try {
-            // Get site payment configuration
             $config = SitePaymentConfig::where('site_id', $siteId)
                 ->where('is_active', true)
                 ->firstOrFail();
 
-            // Create gateway instance
             $gateway = $this->createGateway($config);
 
-            // Initiate payment
             $response = $gateway->initiatePayment($request);
 
-            // Log transaction
             $this->logTransaction($siteId, $config->id, $request, $response);
 
             return $response;
@@ -56,9 +50,6 @@ class GrowBuilderPaymentService
         }
     }
 
-    /**
-     * Verify payment status
-     */
     public function verifyPayment(int $siteId, string $transactionReference): PaymentResponse
     {
         try {
@@ -69,7 +60,6 @@ class GrowBuilderPaymentService
             $gateway = $this->createGateway($config);
             $response = $gateway->verifyPayment($transactionReference);
 
-            // Update transaction status
             $this->updateTransactionStatus($transactionReference, $response);
 
             return $response;
@@ -90,9 +80,6 @@ class GrowBuilderPaymentService
         }
     }
 
-    /**
-     * Process refund
-     */
     public function refundPayment(
         int $siteId,
         RefundRequest $request
@@ -105,7 +92,6 @@ class GrowBuilderPaymentService
             $gateway = $this->createGateway($config);
             $response = $gateway->refundPayment($request);
 
-            // Log refund
             if ($response->success) {
                 $this->logRefund($siteId, $request, $response);
             }
@@ -127,9 +113,6 @@ class GrowBuilderPaymentService
         }
     }
 
-    /**
-     * Handle payment webhook
-     */
     public function handleWebhook(int $siteId, array $payload): bool
     {
         try {
@@ -137,7 +120,6 @@ class GrowBuilderPaymentService
                 ->where('is_active', true)
                 ->firstOrFail();
 
-            // Verify webhook signature if applicable
             if (!$this->verifyWebhookSignature($config, $payload)) {
                 Log::warning('Invalid webhook signature', [
                     'site_id' => $siteId,
@@ -145,11 +127,9 @@ class GrowBuilderPaymentService
                 return false;
             }
 
-            // Extract transaction reference from payload
             $reference = $this->extractTransactionReference($config->gateway, $payload);
 
             if ($reference) {
-                // Verify payment status
                 $response = $this->verifyPayment($siteId, $reference);
                 return $response->success;
             }
@@ -166,12 +146,9 @@ class GrowBuilderPaymentService
         }
     }
 
-    /**
-     * Create gateway instance from configuration
-     */
     private function createGateway(SitePaymentConfig $config): PaymentGatewayInterface
     {
-        $gateway = PaymentGateway::from($config->gateway);
+        $gateway = GatewayProvider::from($config->gateway);
         $credentials = $config->decryptedCredentials();
 
         return PaymentGatewayFactory::create(
@@ -181,9 +158,6 @@ class GrowBuilderPaymentService
         );
     }
 
-    /**
-     * Log payment transaction
-     */
     private function logTransaction(
         int $siteId,
         int $configId,
@@ -207,9 +181,6 @@ class GrowBuilderPaymentService
         ]);
     }
 
-    /**
-     * Update transaction status
-     */
     private function updateTransactionStatus(
         string $transactionReference,
         PaymentResponse $response
@@ -223,9 +194,6 @@ class GrowBuilderPaymentService
             ]);
     }
 
-    /**
-     * Log refund
-     */
     private function logRefund(
         int $siteId,
         RefundRequest $request,
@@ -241,19 +209,11 @@ class GrowBuilderPaymentService
             ]);
     }
 
-    /**
-     * Verify webhook signature
-     */
     private function verifyWebhookSignature(SitePaymentConfig $config, array $payload): bool
     {
-        // Implementation depends on gateway
-        // For now, return true
         return true;
     }
 
-    /**
-     * Extract transaction reference from webhook payload
-     */
     private function extractTransactionReference(string $gateway, array $payload): ?string
     {
         return match($gateway) {

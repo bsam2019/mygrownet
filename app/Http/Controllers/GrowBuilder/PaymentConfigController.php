@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
 use App\Models\GrowBuilder\SitePaymentConfig;
 use App\Models\GrowBuilder\SitePaymentTransaction;
-use App\Domain\GrowBuilder\Payment\Services\PaymentGatewayFactory;
-use App\Domain\GrowBuilder\Payment\Enums\PaymentGateway;
+use App\Domain\PlatformPayments\Enums\GatewayProvider;
+use App\Domain\PlatformPayments\Services\PaymentGatewayFactory;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Inertia\Inertia;
@@ -56,7 +56,7 @@ class PaymentConfigController extends Controller
             'gateway' => 'required|string',
         ]);
 
-        $gateway = PaymentGateway::from($request->gateway);
+        $gateway = GatewayProvider::from($request->gateway);
         $fields = PaymentGatewayFactory::getGatewayFields($gateway);
 
         return response()->json([
@@ -84,7 +84,7 @@ class PaymentConfigController extends Controller
         ]);
 
         // Validate gateway credentials
-        $gateway = PaymentGateway::from($validated['gateway']);
+        $gateway = GatewayProvider::from($validated['gateway']);
         $gatewayInstance = PaymentGatewayFactory::create(
             $gateway,
             $validated['credentials'],
@@ -187,7 +187,7 @@ class PaymentConfigController extends Controller
 
         try {
             $gateway = PaymentGatewayFactory::create(
-                PaymentGateway::from($config->gateway),
+                GatewayProvider::from($config->gateway),
                 $config->decryptedCredentials(),
                 $config->test_mode
             );

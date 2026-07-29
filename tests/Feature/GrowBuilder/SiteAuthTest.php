@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    $this->authCookies = [];
     $this->owner = User::factory()->create();
     
     $this->site = GrowBuilderSite::create([
@@ -107,6 +108,7 @@ describe('Site User Login', function () {
             'name' => 'Test Member',
             'email' => 'member@example.com',
             'password' => Hash::make('password123'),
+            'status' => 'active',
         ]);
     });
     
@@ -154,6 +156,7 @@ describe('Site Member Area Access', function () {
             'name' => 'Test Member',
             'email' => 'member@example.com',
             'password' => Hash::make('password123'),
+            'status' => 'active',
         ]);
     });
     
@@ -164,25 +167,26 @@ describe('Site Member Area Access', function () {
     });
     
     it('allows authenticated site user to access member area', function () {
-        // Login first
-        $this->post("/sites/{$this->site->subdomain}/login", [
+        $loginResponse = $this->post("/sites/{$this->site->subdomain}/login", [
             'email' => 'member@example.com',
             'password' => 'password123',
         ]);
-        
-        $response = $this->get("/sites/{$this->site->subdomain}/dashboard");
+        $cookieArr = [];
+        foreach ($loginResponse->headers->getCookies() as $c) { $cookieArr[$c->getName()] = $c->getValue(); }
+        $response = $this->call('GET', "/sites/{$this->site->subdomain}/dashboard", [], $cookieArr);
         
         $response->assertStatus(200);
     });
     
     it('allows site user to logout', function () {
-        // Login first
-        $this->post("/sites/{$this->site->subdomain}/login", [
+        $loginResponse = $this->post("/sites/{$this->site->subdomain}/login", [
             'email' => 'member@example.com',
             'password' => 'password123',
         ]);
+        $cookieArr = [];
+        foreach ($loginResponse->headers->getCookies() as $c) { $cookieArr[$c->getName()] = $c->getValue(); }
         
-        $response = $this->post("/sites/{$this->site->subdomain}/logout");
+        $response = $this->call('POST', "/sites/{$this->site->subdomain}/logout", [], $cookieArr);
         
         $response->assertRedirect();
         
@@ -202,26 +206,28 @@ describe('Site User Profile', function () {
             'name' => 'Test Member',
             'email' => 'member@example.com',
             'password' => Hash::make('password123'),
+            'status' => 'active',
         ]);
         
-        // Login
-        $this->post("/sites/{$this->site->subdomain}/login", [
+        $loginResponse = $this->post("/sites/{$this->site->subdomain}/login", [
             'email' => 'member@example.com',
             'password' => 'password123',
         ]);
+        $this->authCookies = [];
+        foreach ($loginResponse->headers->getCookies() as $c) { $this->authCookies[$c->getName()] = $c->getValue(); }
     });
     
     it('allows user to view their profile', function () {
-        $response = $this->get("/sites/{$this->site->subdomain}/dashboard/profile");
+        $response = $this->call('GET', "/sites/{$this->site->subdomain}/dashboard/profile", [], $this->authCookies);
         
         $response->assertStatus(200);
     });
     
     it('allows user to update their profile', function () {
-        $response = $this->put("/sites/{$this->site->subdomain}/dashboard/profile", [
+        $response = $this->call('PUT', "/sites/{$this->site->subdomain}/dashboard/profile", [
             'name' => 'Updated Name',
             'phone' => '+260977123456',
-        ]);
+        ], $this->authCookies);
         
         $response->assertRedirect();
         

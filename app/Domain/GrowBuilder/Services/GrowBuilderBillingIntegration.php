@@ -70,7 +70,7 @@ class GrowBuilderBillingIntegration
             reference: 'GB-' . $moduleSubscriptionId . '-' . $now->getTimestamp(),
         );
 
-        $this->transactions->save($txn);
+        $txn = $this->transactions->save($txn);
 
         $platformSubscription = $this->billing->createSubscription(
             userId: $userId,
