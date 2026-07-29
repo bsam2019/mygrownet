@@ -37,6 +37,7 @@ class InvestmentConfirmedNotification extends Notification
     {
         return [
             'type' => 'venture_investment_confirmed',
+            'category' => 'ventures',
             'investment_id' => $this->investment->id,
             'venture_id' => $this->investment->venture_id,
             'venture_title' => $this->investment->venture->title,

@@ -80,6 +80,7 @@ class EloquentInvestmentRepository implements InvestmentRepositoryInterface
             return $this->findById($id);
         }
 
+        $data = array_filter($data, fn($v) => $v !== null);
         $model = VentureInvestmentModel::create($data);
         return $this->toDomainEntity($model);
     }

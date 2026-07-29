@@ -35,6 +35,7 @@ class PositionModel extends Model
         'organizational_level',
         'reports_to_position_id',
         'is_active',
+        'is_department_head',
     ];
 
     protected $casts = [
@@ -45,6 +46,7 @@ class PositionModel extends Model
         'permissions' => 'array',
         'level' => 'integer',
         'is_active' => 'boolean',
+        'is_department_head' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',

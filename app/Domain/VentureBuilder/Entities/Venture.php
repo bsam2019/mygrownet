@@ -8,10 +8,11 @@ use DateTimeImmutable;
 class Venture
 {
     public function __construct(
-        public readonly ?int $id = null,
-        public readonly ?int $categoryId = null,
         public readonly string $title,
         public readonly string $slug,
+        public readonly VentureStatus $status,
+        public readonly ?int $id = null,
+        public readonly ?int $categoryId = null,
         public readonly ?string $description = null,
         public readonly ?string $businessModel = null,
         public readonly ?string $featuredImage = null,
@@ -25,7 +26,6 @@ class Venture
         public readonly ?DateTimeImmutable $fundingEndDate = null,
         public readonly ?DateTimeImmutable $expectedLaunchDate = null,
         public readonly ?DateTimeImmutable $actualLaunchDate = null,
-        public readonly VentureStatus $status,
         public readonly ?string $companyName = null,
         public readonly ?string $companyRegistrationNumber = null,
         public readonly ?DateTimeImmutable $companyFormationDate = null,
@@ -73,10 +73,11 @@ class Venture
     public static function reconstitute(array $data): self
     {
         return new self(
-            id: isset($data['id']) ? (int) $data['id'] : null,
-            categoryId: isset($data['category_id']) ? (int) $data['category_id'] : null,
             title: $data['title'],
             slug: $data['slug'],
+            status: VentureStatus::fromString($data['status'] ?? 'draft'),
+            id: isset($data['id']) ? (int) $data['id'] : null,
+            categoryId: isset($data['category_id']) ? (int) $data['category_id'] : null,
             description: $data['description'] ?? null,
             businessModel: $data['business_model'] ?? null,
             featuredImage: $data['featured_image'] ?? null,
@@ -90,7 +91,6 @@ class Venture
             fundingEndDate: isset($data['funding_end_date']) ? new \DateTimeImmutable($data['funding_end_date']) : null,
             expectedLaunchDate: isset($data['expected_launch_date']) ? new \DateTimeImmutable($data['expected_launch_date']) : null,
             actualLaunchDate: isset($data['actual_launch_date']) ? new \DateTimeImmutable($data['actual_launch_date']) : null,
-            status: VentureStatus::fromString($data['status'] ?? 'draft'),
             companyName: $data['company_name'] ?? null,
             companyRegistrationNumber: $data['company_registration_number'] ?? null,
             companyFormationDate: isset($data['company_formation_date']) ? new \DateTimeImmutable($data['company_formation_date']) : null,

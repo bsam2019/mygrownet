@@ -312,18 +312,27 @@ class UsageLimitService
     public function getUpgradeSuggestions(User $user, string $moduleId): array
     {
         $tier = $this->getUserTier($user, $moduleId);
-        $summary = $this->getUsageSummary($user, $moduleId);
+        $tierConfig = $this->tierConfig->getTierConfig($moduleId, $tier);
+        if (!$tierConfig) {
+            return [];
+        }
+        $limits = $tierConfig['limits'] ?? [];
         $suggestions = [];
 
-        foreach ($summary['metrics'] as $metricKey => $metric) {
-            // Suggest upgrade if usage is above 80% of limit
-            if (!$metric['unlimited'] && !$metric['not_available'] && $metric['percentage'] >= 80) {
+        foreach ($limits as $metricKey => $limit) {
+            if ($limit === -1 || $limit === 0) {
+                continue;
+            }
+            $currentUsage = $this->getCurrentUsage($user, $moduleId, $metricKey);
+            $percentage = $limit > 0 ? round(($currentUsage / $limit) * 100) : 0;
+
+            if ($percentage >= 80) {
                 $nextTier = $this->getNextTierWithHigherLimit($moduleId, $tier, $metricKey);
                 if ($nextTier) {
                     $suggestions[] = [
                         'metric' => $metricKey,
-                        'label' => $metric['label'],
-                        'current_usage' => $metric['percentage'] . '%',
+                        'label' => $metricKey,
+                        'current_usage' => $percentage . '%',
                         'suggested_tier' => $nextTier,
                         'pricing' => $this->tierConfig->getTierPricing($moduleId, $nextTier),
                     ];

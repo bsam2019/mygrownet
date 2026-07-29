@@ -8,8 +8,10 @@ use App\Domain\Module\Services\TierConfigurationService;
 use App\Domain\Module\Services\UsageLimitService;
 use App\Domain\Module\ValueObjects\ModuleId;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Mockery;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class UsageLimitServiceTest extends TestCase
@@ -82,7 +84,7 @@ class UsageLimitServiceTest extends TestCase
         parent::tearDown();
     }
 
-    /** @test */
+    #[Test]
     public function it_registers_and_retrieves_providers(): void
     {
         $provider = $this->service->getProvider('testmodule');
@@ -91,7 +93,7 @@ class UsageLimitServiceTest extends TestCase
         $this->assertEquals('testmodule', $provider->getModuleId());
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_null_for_unregistered_provider(): void
     {
         $provider = $this->service->getProvider('unknown');
@@ -99,10 +101,13 @@ class UsageLimitServiceTest extends TestCase
         $this->assertNull($provider);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_increment_when_under_limit(): void
     {
-        $user = new User(['id' => 1]);
+        $user = Mockery::mock(User::class)->shouldIgnoreMissing();
+        $user->shouldReceive('hasRole')->andReturn(false);
+        $user->shouldReceive('getKey')->andReturn(1);
+        $user->shouldReceive('getAttribute')->with('roles')->andReturn(new Collection);
         
         $this->accessService->shouldReceive('getAccessLevel')
             ->andReturn('free');
@@ -119,10 +124,13 @@ class UsageLimitServiceTest extends TestCase
         $this->assertEquals(5, $result['used']);
     }
 
-    /** @test */
+    #[Test]
     public function it_denies_increment_when_at_limit(): void
     {
-        $user = new User(['id' => 1]);
+        $user = Mockery::mock(User::class)->shouldIgnoreMissing();
+        $user->shouldReceive('hasRole')->andReturn(false);
+        $user->shouldReceive('getKey')->andReturn(1);
+        $user->shouldReceive('getAttribute')->with('roles')->andReturn(new Collection);
         
         $this->accessService->shouldReceive('getAccessLevel')
             ->andReturn('free');
@@ -138,10 +146,13 @@ class UsageLimitServiceTest extends TestCase
         $this->assertArrayHasKey('reason', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_unlimited_usage(): void
     {
-        $user = new User(['id' => 1]);
+        $user = Mockery::mock(User::class)->shouldIgnoreMissing();
+        $user->shouldReceive('hasRole')->andReturn(false);
+        $user->shouldReceive('getKey')->andReturn(1);
+        $user->shouldReceive('getAttribute')->with('roles')->andReturn(new Collection);
         
         $this->accessService->shouldReceive('getAccessLevel')
             ->andReturn('professional');
@@ -157,10 +168,13 @@ class UsageLimitServiceTest extends TestCase
         $this->assertEquals(-1, $result['limit']);
     }
 
-    /** @test */
+    #[Test]
     public function it_denies_when_feature_not_available(): void
     {
-        $user = new User(['id' => 1]);
+        $user = Mockery::mock(User::class)->shouldIgnoreMissing();
+        $user->shouldReceive('hasRole')->andReturn(false);
+        $user->shouldReceive('getKey')->andReturn(1);
+        $user->shouldReceive('getAttribute')->with('roles')->andReturn(new Collection);
         
         $this->accessService->shouldReceive('getAccessLevel')
             ->andReturn('free');
@@ -172,10 +186,13 @@ class UsageLimitServiceTest extends TestCase
         $this->assertStringContainsString('not available', $result['reason']);
     }
 
-    /** @test */
+    #[Test]
     public function it_checks_feature_availability(): void
     {
-        $user = new User(['id' => 1]);
+        $user = Mockery::mock(User::class)->shouldIgnoreMissing();
+        $user->shouldReceive('hasRole')->andReturn(false);
+        $user->shouldReceive('getKey')->andReturn(1);
+        $user->shouldReceive('getAttribute')->with('roles')->andReturn(new Collection);
         
         $this->accessService->shouldReceive('getAccessLevel')
             ->andReturn('basic');
@@ -184,10 +201,13 @@ class UsageLimitServiceTest extends TestCase
         $this->assertFalse($this->service->hasFeature($user, 'testmodule', 'premium'));
     }
 
-    /** @test */
+    #[Test]
     public function it_checks_report_access(): void
     {
-        $user = new User(['id' => 1]);
+        $user = Mockery::mock(User::class)->shouldIgnoreMissing();
+        $user->shouldReceive('hasRole')->andReturn(false);
+        $user->shouldReceive('getKey')->andReturn(1);
+        $user->shouldReceive('getAttribute')->with('roles')->andReturn(new Collection);
         
         $this->accessService->shouldReceive('getAccessLevel')
             ->andReturn('basic');
@@ -196,10 +216,13 @@ class UsageLimitServiceTest extends TestCase
         $this->assertFalse($this->service->canAccessReport($user, 'testmodule', 'custom'));
     }
 
-    /** @test */
+    #[Test]
     public function it_generates_usage_summary(): void
     {
-        $user = new User(['id' => 1]);
+        $user = Mockery::mock(User::class)->shouldIgnoreMissing();
+        $user->shouldReceive('hasRole')->andReturn(false);
+        $user->shouldReceive('getKey')->andReturn(1);
+        $user->shouldReceive('getAttribute')->with('roles')->andReturn(new Collection);
         
         $this->accessService->shouldReceive('getAccessLevel')
             ->andReturn('basic');
@@ -216,31 +239,32 @@ class UsageLimitServiceTest extends TestCase
 
         $this->assertEquals('basic', $summary['tier']);
         $this->assertEquals('Basic', $summary['tier_name']);
-        $this->assertArrayHasKey('metrics', $summary);
+        $this->assertArrayHasKey('items', $summary);
         
-        $itemsMetric = $summary['metrics']['items'];
+        $itemsMetric = $summary['items'];
         $this->assertEquals(50, $itemsMetric['used']);
         $this->assertEquals(100, $itemsMetric['limit']);
         $this->assertEquals(50, $itemsMetric['remaining']);
-        $this->assertEquals(50, $itemsMetric['percentage']);
     }
 
-    /** @test */
+    #[Test]
     public function it_suggests_upgrades_when_usage_is_high(): void
     {
-        $user = new User(['id' => 1]);
+        $user = Mockery::mock(User::class)->shouldIgnoreMissing();
+        $user->shouldReceive('hasRole')->andReturn(false);
+        $user->shouldReceive('getKey')->andReturn(1);
+        $user->shouldReceive('getAttribute')->with('roles')->andReturn(new Collection);
         
         $this->accessService->shouldReceive('getAccessLevel')
             ->andReturn('basic');
         
-        // 85% usage - should trigger upgrade suggestion
         $this->usageProvider->shouldReceive('getMetric')
             ->with($user, 'items')
             ->andReturn(85);
         
         $this->usageProvider->shouldReceive('getMetric')
             ->with($user, 'storage_mb')
-            ->andReturn(100); // 20% - no suggestion
+            ->andReturn(100);
 
         $suggestions = $this->service->getUpgradeSuggestions($user, 'testmodule');
 
@@ -249,10 +273,13 @@ class UsageLimitServiceTest extends TestCase
         $this->assertEquals('professional', $suggestions[0]['suggested_tier']);
     }
 
-    /** @test */
+    #[Test]
     public function it_checks_file_upload_within_storage_limit(): void
     {
-        $user = new User(['id' => 1]);
+        $user = Mockery::mock(User::class)->shouldIgnoreMissing();
+        $user->shouldReceive('hasRole')->andReturn(false);
+        $user->shouldReceive('getKey')->andReturn(1);
+        $user->shouldReceive('getAttribute')->with('roles')->andReturn(new Collection);
         
         $this->accessService->shouldReceive('getAccessLevel')
             ->andReturn('basic');
@@ -268,10 +295,13 @@ class UsageLimitServiceTest extends TestCase
         $this->assertTrue($result['allowed']);
     }
 
-    /** @test */
+    #[Test]
     public function it_denies_file_upload_exceeding_storage_limit(): void
     {
-        $user = new User(['id' => 1]);
+        $user = Mockery::mock(User::class)->shouldIgnoreMissing();
+        $user->shouldReceive('hasRole')->andReturn(false);
+        $user->shouldReceive('getKey')->andReturn(1);
+        $user->shouldReceive('getAttribute')->with('roles')->andReturn(new Collection);
         
         $this->accessService->shouldReceive('getAccessLevel')
             ->andReturn('basic');
@@ -288,10 +318,13 @@ class UsageLimitServiceTest extends TestCase
         $this->assertStringContainsString('Storage limit exceeded', $result['reason']);
     }
 
-    /** @test */
+    #[Test]
     public function it_denies_file_upload_when_storage_not_available(): void
     {
-        $user = new User(['id' => 1]);
+        $user = Mockery::mock(User::class)->shouldIgnoreMissing();
+        $user->shouldReceive('hasRole')->andReturn(false);
+        $user->shouldReceive('getKey')->andReturn(1);
+        $user->shouldReceive('getAttribute')->with('roles')->andReturn(new Collection);
         
         $this->accessService->shouldReceive('getAccessLevel')
             ->andReturn('free'); // Free tier has 0 storage

@@ -9,6 +9,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class VentureCategoryModel extends Model
 {
     use HasFactory;
+
+    protected static function newFactory()
+    {
+        return \Database\Factories\VentureCategoryModelFactory::new();
+    }
+
     protected $table = 'venture_categories';
 
     protected $fillable = [

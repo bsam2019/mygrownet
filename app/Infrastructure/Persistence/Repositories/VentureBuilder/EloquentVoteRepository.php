@@ -29,6 +29,7 @@ class EloquentVoteRepository implements VoteRepositoryInterface
             return $vote;
         }
 
+        $data = array_filter($data, fn($v) => $v !== null);
         $model = VentureVoteModel::create($data);
         return $this->toDomainEntity($model);
     }

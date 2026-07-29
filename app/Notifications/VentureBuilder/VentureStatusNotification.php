@@ -26,6 +26,7 @@ class VentureStatusNotification extends Notification
     {
         return [
             'type' => 'venture_status_changed',
+            'category' => 'ventures',
             'venture_id' => $this->venture->id,
             'venture_title' => $this->venture->title,
             'old_status' => $this->oldStatus,

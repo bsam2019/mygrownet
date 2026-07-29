@@ -96,7 +96,7 @@ class Module
     {
         $accountTypes = [];
         foreach ($config['account_types'] ?? ['sme'] as $type) {
-            $accountTypes[] = AccountType::tryFrom($type) ?? AccountType::SME;
+            $accountTypes[] = AccountType::tryFrom($type) ?? AccountType::BUSINESS;
         }
 
         return new self(

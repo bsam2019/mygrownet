@@ -128,7 +128,7 @@ class ModuleSubscriptionService
 
     public function renewSubscription(SubscriptionId $subscriptionId): void
     {
-        $subscription = $this->repository->findById($subscriptionId);
+        $subscription = $this->repository->findById((string) $subscriptionId->value());
         
         if (!$subscription) {
             throw new \DomainException('Subscription not found');

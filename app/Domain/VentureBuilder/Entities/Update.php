@@ -7,16 +7,16 @@ use DateTimeImmutable;
 class Update
 {
     public function __construct(
-        public readonly ?int $id = null,
         public readonly int $ventureId,
         public readonly string $title,
-        public readonly ?string $content = null,
-        public readonly ?string $type = null,
         public readonly string $visibility,
+        public readonly int $postedBy,
+        public readonly string $content,
+        public readonly ?int $id = null,
+        public readonly ?string $type = null,
         public readonly ?bool $sendNotification = null,
         public readonly ?bool $isPinned = null,
         public readonly ?int $viewsCount = null,
-        public readonly int $postedBy,
         public readonly ?DateTimeImmutable $publishedAt = null,
         public readonly ?DateTimeImmutable $createdAt = null,
         public readonly ?DateTimeImmutable $updatedAt = null,
@@ -49,16 +49,16 @@ class Update
     public static function reconstitute(array $data): self
     {
         return new self(
-            id: isset($data['id']) ? (int) $data['id'] : null,
             ventureId: (int) $data['venture_id'],
             title: $data['title'],
-            content: $data['content'] ?? null,
-            type: $data['type'] ?? null,
             visibility: $data['visibility'],
+            postedBy: (int) $data['posted_by'],
+            id: isset($data['id']) ? (int) $data['id'] : null,
+            content: $data['content'],
+            type: $data['type'] ?? null,
             sendNotification: isset($data['send_notification']) ? (bool) $data['send_notification'] : null,
             isPinned: isset($data['is_pinned']) ? (bool) $data['is_pinned'] : null,
             viewsCount: array_key_exists('views_count', $data) ? (int) $data['views_count'] : null,
-            postedBy: (int) $data['posted_by'],
             publishedAt: isset($data['published_at']) ? new \DateTimeImmutable($data['published_at']) : null,
             createdAt: isset($data['created_at']) ? new \DateTimeImmutable($data['created_at']) : null,
             updatedAt: isset($data['updated_at']) ? new \DateTimeImmutable($data['updated_at']) : null,

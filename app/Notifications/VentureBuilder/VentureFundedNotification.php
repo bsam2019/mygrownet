@@ -36,6 +36,7 @@ class VentureFundedNotification extends Notification
     {
         return [
             'type' => 'venture_funded',
+            'category' => 'ventures',
             'venture_id' => $this->venture->id,
             'venture_title' => $this->venture->title,
             'total_raised' => $this->venture->total_raised,

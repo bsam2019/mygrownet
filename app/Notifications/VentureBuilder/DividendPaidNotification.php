@@ -38,6 +38,7 @@ class DividendPaidNotification extends Notification
     {
         return [
             'type' => 'venture_dividend_paid',
+            'category' => 'ventures',
             'dividend_id' => $this->dividend->id,
             'venture_id' => $this->dividend->venture_id,
             'venture_title' => $this->dividend->venture->title,

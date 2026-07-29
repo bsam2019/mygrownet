@@ -189,6 +189,7 @@ class User extends Authenticatable
         // PWA settings
         'pwa_default_app',
         // Wallet policy and rewards
+        'wallet_balance',
         'wallet_policy_accepted',
         'wallet_policy_accepted_at',
         'bonus_balance',
@@ -636,6 +637,11 @@ class User extends Authenticatable
     public function growNetData(): HasOne
     {
         return $this->hasOne(\App\Infrastructure\Persistence\Eloquent\GrowNet\MemberModel::class);
+    }
+
+    public function employee(): HasOne
+    {
+        return $this->hasOne(\App\Infrastructure\Persistence\Eloquent\EmployeeModel::class);
     }
 
     public function profile(): HasOne

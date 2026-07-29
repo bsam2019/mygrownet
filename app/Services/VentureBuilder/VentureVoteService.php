@@ -120,7 +120,7 @@ class VentureVoteService
             DB::commit();
 
             return $voteRecord;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollback();
             throw $e;
         }

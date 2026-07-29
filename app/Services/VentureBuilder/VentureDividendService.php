@@ -72,7 +72,7 @@ class VentureDividendService
             );
 
             DB::commit();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollback();
             throw $e;
         }
@@ -105,7 +105,15 @@ class VentureDividendService
             $shareholder->increment('total_dividends_received', $dividend->amount);
             $shareholder->update(['last_dividend_date' => now()]);
 
-            Event::dispatch(new VentureDividendPaid($dividend));
+            Event::dispatch(new VentureDividendPaid(
+                $dividend->id,
+                $dividend->venture_id,
+                $dividend->shareholder_id,
+                $user->id,
+                $dividend->amount,
+                $dividend->payment_reference,
+                $dividend->dividend_period,
+            ));
 
             AuditLog::logEvent(
                 'venture_dividend_paid',
@@ -125,7 +133,7 @@ class VentureDividendService
             DB::commit();
 
             return $dividend->fresh();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollback();
             throw $e;
         }

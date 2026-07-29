@@ -12,6 +12,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class VentureModel extends Model
 {
     use HasFactory;
+
+    protected static function newFactory()
+    {
+        return \Database\Factories\VentureModelFactory::new();
+    }
+
     use SoftDeletes;
 
     protected $table = 'ventures';

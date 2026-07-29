@@ -7,9 +7,9 @@ use DateTimeImmutable;
 class Category
 {
     public function __construct(
-        public readonly ?int $id = null,
         public readonly string $name,
         public readonly string $slug,
+        public readonly ?int $id = null,
         public readonly ?string $description = null,
         public readonly ?string $icon = null,
         public readonly ?int $sortOrder = null,
@@ -21,9 +21,9 @@ class Category
     public static function reconstitute(array $data): self
     {
         return new self(
-            id: isset($data['id']) ? (int) $data['id'] : null,
             name: $data['name'],
             slug: $data['slug'],
+            id: isset($data['id']) ? (int) $data['id'] : null,
             description: $data['description'] ?? null,
             icon: $data['icon'] ?? null,
             sortOrder: array_key_exists('sort_order', $data) ? (int) $data['sort_order'] : null,

@@ -8,14 +8,14 @@ use DateTimeImmutable;
 class Dividend
 {
     public function __construct(
-        public readonly ?int $id = null,
         public readonly int $ventureId,
         public readonly int $shareholderId,
+        public readonly float $amount,
+        public readonly DividendStatus $status,
+        public readonly ?int $id = null,
         public readonly ?string $dividendPeriod = null,
         public readonly ?DateTimeImmutable $declarationDate = null,
-        public readonly float $amount,
         public readonly ?float $equityPercentageAtPayment = null,
-        public readonly DividendStatus $status,
         public readonly ?string $notes = null,
         public readonly ?DateTimeImmutable $paymentDate = null,
         public readonly ?DateTimeImmutable $paidAt = null,
@@ -39,14 +39,14 @@ class Dividend
     public static function reconstitute(array $data): self
     {
         return new self(
-            id: isset($data['id']) ? (int) $data['id'] : null,
             ventureId: (int) $data['venture_id'],
             shareholderId: (int) $data['shareholder_id'],
+            amount: (float) $data['amount'],
+            status: DividendStatus::fromString($data['status'] ?? 'declared'),
+            id: isset($data['id']) ? (int) $data['id'] : null,
             dividendPeriod: $data['dividend_period'] ?? null,
             declarationDate: isset($data['declaration_date']) ? new \DateTimeImmutable($data['declaration_date']) : null,
-            amount: (float) $data['amount'],
             equityPercentageAtPayment: array_key_exists('equity_percentage_at_payment', $data) ? (float) $data['equity_percentage_at_payment'] : null,
-            status: DividendStatus::fromString($data['status'] ?? 'declared'),
             notes: $data['notes'] ?? null,
             paymentDate: isset($data['payment_date']) ? new \DateTimeImmutable($data['payment_date']) : null,
             paidAt: isset($data['paid_at']) ? new \DateTimeImmutable($data['paid_at']) : null,

@@ -36,6 +36,7 @@ class EloquentDividendRepository implements DividendRepositoryInterface
 
     public function create(array $data): Dividend
     {
+        $data = array_filter($data, fn($v) => $v !== null);
         $model = VentureDividendModel::create($data);
         return $this->toDomainEntity($model);
     }

@@ -8,13 +8,13 @@ use DateTimeImmutable;
 class Investment
 {
     public function __construct(
-        public readonly ?int $id = null,
         public readonly int $ventureId,
         public readonly int $userId,
         public readonly float $amount,
+        public readonly InvestmentStatus $status,
+        public readonly ?int $id = null,
         public readonly ?float $sharesAllocated = null,
         public readonly ?float $equityPercentage = null,
-        public readonly InvestmentStatus $status,
         public readonly ?string $paymentMethod = null,
         public readonly ?string $paymentReference = null,
         public readonly ?DateTimeImmutable $paymentConfirmedAt = null,
@@ -46,13 +46,13 @@ class Investment
     public static function reconstitute(array $data): self
     {
         return new self(
-            id: isset($data['id']) ? (int) $data['id'] : null,
             ventureId: (int) $data['venture_id'],
             userId: (int) $data['user_id'],
             amount: (float) $data['amount'],
+            status: InvestmentStatus::fromString($data['status'] ?? 'pending'),
+            id: isset($data['id']) ? (int) $data['id'] : null,
             sharesAllocated: array_key_exists('shares_allocated', $data) ? (float) $data['shares_allocated'] : null,
             equityPercentage: array_key_exists('equity_percentage', $data) ? (float) $data['equity_percentage'] : null,
-            status: InvestmentStatus::fromString($data['status'] ?? 'pending'),
             paymentMethod: $data['payment_method'] ?? null,
             paymentReference: $data['payment_reference'] ?? null,
             paymentConfirmedAt: isset($data['payment_confirmed_at']) ? new \DateTimeImmutable($data['payment_confirmed_at']) : null,

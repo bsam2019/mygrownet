@@ -8,12 +8,12 @@ use DateTimeImmutable;
 class Resolution
 {
     public function __construct(
-        public readonly ?int $id = null,
         public readonly int $ventureId,
         public readonly string $title,
-        public readonly ?string $description = null,
-        public readonly ?string $type = null,
         public readonly ResolutionStatus $status,
+        public readonly string $description,
+        public readonly ?int $id = null,
+        public readonly ?string $type = null,
         public readonly ?DateTimeImmutable $votingStartsAt = null,
         public readonly ?DateTimeImmutable $votingEndsAt = null,
         public readonly ?float $passThresholdPercentage = null,
@@ -49,12 +49,12 @@ class Resolution
     public static function reconstitute(array $data): self
     {
         return new self(
-            id: isset($data['id']) ? (int) $data['id'] : null,
             ventureId: (int) $data['venture_id'],
             title: $data['title'],
-            description: $data['description'] ?? null,
-            type: $data['type'] ?? null,
             status: ResolutionStatus::fromString($data['status'] ?? 'draft'),
+            id: isset($data['id']) ? (int) $data['id'] : null,
+            description: $data['description'],
+            type: $data['type'] ?? null,
             votingStartsAt: isset($data['voting_starts_at']) ? new \DateTimeImmutable($data['voting_starts_at']) : null,
             votingEndsAt: isset($data['voting_ends_at']) ? new \DateTimeImmutable($data['voting_ends_at']) : null,
             passThresholdPercentage: array_key_exists('pass_threshold_percentage', $data) ? (float) $data['pass_threshold_percentage'] : null,

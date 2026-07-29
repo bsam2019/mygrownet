@@ -125,7 +125,7 @@ class VentureShareTransferService
             DB::commit();
 
             return $transfer->fresh();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollback();
             throw $e;
         }

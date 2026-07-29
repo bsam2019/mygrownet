@@ -78,7 +78,14 @@ class VentureInvestmentService
                 'payment_reference' => $investment->payment_reference,
             ]);
 
-            Event::dispatch(new VentureInvestmentConfirmed($investment));
+            Event::dispatch(new VentureInvestmentConfirmed(
+                $investment->id,
+                $venture->id,
+                $user->id,
+                $investment->amount,
+                $investment->payment_reference,
+                $venture->title,
+            ));
 
             AuditLog::logEvent(
                 'venture_investment_confirmed',
@@ -101,7 +108,7 @@ class VentureInvestmentService
             DB::commit();
 
             return $investment;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollback();
             throw $e;
         }
@@ -189,7 +196,14 @@ class VentureInvestmentService
                 'payment_reference' => $investment->payment_reference,
             ]);
 
-            Event::dispatch(new VentureInvestmentConfirmed($investment));
+            Event::dispatch(new VentureInvestmentConfirmed(
+                $investment->id,
+                $venture->id,
+                $investment->user_id,
+                $investment->amount,
+                $investment->payment_reference,
+                $venture->title,
+            ));
 
             AuditLog::logEvent(
                 'venture_investment_confirmed',
@@ -207,7 +221,7 @@ class VentureInvestmentService
             DB::commit();
 
             return $investment->fresh();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollback();
             throw $e;
         }
@@ -258,7 +272,7 @@ class VentureInvestmentService
             DB::commit();
 
             return $investment->fresh();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollback();
             throw $e;
         }

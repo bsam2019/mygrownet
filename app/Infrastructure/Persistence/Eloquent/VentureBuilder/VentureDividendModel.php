@@ -10,6 +10,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class VentureDividendModel extends Model
 {
     use HasFactory;
+
+    protected static function newFactory()
+    {
+        return \Database\Factories\VentureDividendModelFactory::new();
+    }
+
     protected $table = 'venture_dividends';
 
     protected $fillable = [

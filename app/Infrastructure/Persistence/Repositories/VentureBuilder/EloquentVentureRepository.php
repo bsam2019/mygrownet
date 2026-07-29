@@ -81,6 +81,8 @@ class EloquentVentureRepository implements VentureRepositoryInterface
         $id = $data['id'] ?? null;
         unset($data['id']);
 
+        $data = array_filter($data, fn($v) => $v !== null);
+
         if ($id) {
             VentureModel::where('id', $id)->update($data);
             return $this->findById($id);
@@ -119,11 +121,11 @@ class EloquentVentureRepository implements VentureRepositoryInterface
     {
         return [
             'total_ventures' => VentureModel::count(),
-            'total_funding_raised' => VentureModel::sum('total_raised'),
+            'total_funding_raised' => (float) VentureModel::sum('total_raised'),
             'total_investors' => VentureModel::sum('investor_count'),
             'active_ventures' => VentureModel::active()->count(),
             'funding_ventures' => VentureModel::funding()->count(),
-            'total_funding_target' => VentureModel::sum('funding_target'),
+            'total_funding_target' => (float) VentureModel::sum('funding_target'),
         ];
     }
 

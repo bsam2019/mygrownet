@@ -55,7 +55,7 @@ class VentureShareTransferService
 
         AuditLog::logEvent(
             'venture_share_transfer_requested',
-            "ShareTransfer#{$saved->id}",
+            null,
             $fromUserId,
             null,
             $saved->toArray(),
@@ -122,9 +122,9 @@ class VentureShareTransferService
                 'completed_at' => now(),
             ]);
 
-            AuditLog::logEvent(
-                'venture_share_transfer_completed',
-                "ShareTransfer#$transferId",
+        AuditLog::logEvent(
+            'venture_share_transfer_completed',
+            null,
                 Auth::id(),
                 ['status' => 'pending'],
                 [],

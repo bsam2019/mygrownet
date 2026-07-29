@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
+use App\Infrastructure\Persistence\Eloquent\DepartmentModel;
+use App\Infrastructure\Persistence\Eloquent\EmployeeModel;
+use App\Infrastructure\Persistence\Eloquent\PositionModel;
 use App\Infrastructure\Persistence\Repositories\OptimizedEmployeeRepository;
 use App\Services\EmployeeCacheService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
@@ -28,7 +32,8 @@ class EmployeeCacheServiceTest extends TestCase
     {
         parent::setUp();
         
-        $this->repository = $this->createMock(OptimizedEmployeeRepository::class);
+        // Use a stub by default; tests that need expectations recreate the mock
+        $this->repository = $this->createStub(OptimizedEmployeeRepository::class);
         $this->cacheService = new EmployeeCacheService($this->repository);
         
         // Clear cache before each test
@@ -40,9 +45,12 @@ class EmployeeCacheServiceTest extends TestCase
      */
     public function test_department_hierarchy_caching(): void
     {
-        $mockData = collect([
-            (object) ['id' => 1, 'name' => 'IT', 'parent_department_id' => null],
-            (object) ['id' => 2, 'name' => 'Development', 'parent_department_id' => 1],
+        $this->repository = $this->createMock(OptimizedEmployeeRepository::class);
+        $this->cacheService = new EmployeeCacheService($this->repository);
+
+        $mockData = new EloquentCollection([
+            (object) ['id' => 1, 'name' => 'IT', 'description' => 'IT', 'head_name' => 'Alice', 'employee_count' => 10, 'avg_salary' => 75000, 'parent_department_id' => null],
+            (object) ['id' => 2, 'name' => 'Development', 'description' => 'Dev', 'head_name' => 'Bob', 'employee_count' => 5, 'avg_salary' => 80000, 'parent_department_id' => 1],
         ]);
 
         $this->repository->expects($this->once())
@@ -64,6 +72,9 @@ class EmployeeCacheServiceTest extends TestCase
      */
     public function test_organizational_chart_caching(): void
     {
+        $this->repository = $this->createMock(OptimizedEmployeeRepository::class);
+        $this->cacheService = new EmployeeCacheService($this->repository);
+
         $mockChart = [
             ['id' => 1, 'name' => 'CEO', 'children' => []]
         ];
@@ -87,6 +98,9 @@ class EmployeeCacheServiceTest extends TestCase
      */
     public function test_employee_statistics_caching(): void
     {
+        $this->repository = $this->createMock(OptimizedEmployeeRepository::class);
+        $this->cacheService = new EmployeeCacheService($this->repository);
+
         $mockStats = [
             'total_employees' => 100,
             'active_employees' => 85,
@@ -112,6 +126,9 @@ class EmployeeCacheServiceTest extends TestCase
      */
     public function test_performance_analytics_caching(): void
     {
+        $this->repository = $this->createMock(OptimizedEmployeeRepository::class);
+        $this->cacheService = new EmployeeCacheService($this->repository);
+
         $startDate = Carbon::now()->subMonths(3);
         $endDate = Carbon::now();
         
@@ -141,6 +158,9 @@ class EmployeeCacheServiceTest extends TestCase
      */
     public function test_commission_analytics_caching(): void
     {
+        $this->repository = $this->createMock(OptimizedEmployeeRepository::class);
+        $this->cacheService = new EmployeeCacheService($this->repository);
+
         $startDate = Carbon::now()->subMonths(1);
         $endDate = Carbon::now();
         
@@ -166,25 +186,31 @@ class EmployeeCacheServiceTest extends TestCase
      */
     public function test_employee_cache_invalidation(): void
     {
-        $employeeId = 1;
-        
-        // Mock employee data
-        $mockEmployee = (object) [
-            'id' => $employeeId,
-            'department_id' => 1,
-            'first_name' => 'John',
-            'last_name' => 'Doe'
-        ];
+        $department = DepartmentModel::factory()->create(['name' => 'IT']);
+        $position = PositionModel::factory()->create(['department_id' => $department->id]);
+        $employee = EmployeeModel::factory()->create([
+            'department_id' => $department->id,
+            'position_id' => $position->id,
+        ]);
+        $employeeId = $employee->id;
+        $departmentId = $department->id;
 
         // Set up cache with employee data
-        Cache::put('employee:employee:' . $employeeId, $mockEmployee->toArray(), 3600);
-        Cache::put('employee:department_employees:1', [$mockEmployee], 3600);
+        Cache::put('employee:employee:' . $employeeId, [
+            'id' => $employeeId,
+            'department_id' => $departmentId,
+            'first_name' => 'John',
+            'last_name' => 'Doe'
+        ], 3600);
+        Cache::put('employee:department_employees:' . $departmentId, [
+            ['id' => $employeeId, 'department_id' => $departmentId, 'first_name' => 'John', 'last_name' => 'Doe'],
+        ], 3600);
         Cache::put('employee:organizational_chart', [], 3600);
         Cache::put('employee:statistics', ['total' => 1], 3600);
 
         // Verify cache exists
         $this->assertTrue(Cache::has('employee:employee:' . $employeeId));
-        $this->assertTrue(Cache::has('employee:department_employees:1'));
+        $this->assertTrue(Cache::has('employee:department_employees:' . $departmentId));
 
         // Invalidate employee cache
         $this->cacheService->invalidateEmployeeCache($employeeId);
@@ -260,12 +286,12 @@ class EmployeeCacheServiceTest extends TestCase
     public function test_cache_warm_up(): void
     {
         // Mock all the methods that will be called during warm-up
-        $this->repository->method('getDepartmentHierarchyOptimized')->willReturn(collect([]));
+        $this->repository->method('getDepartmentHierarchyOptimized')->willReturn(new EloquentCollection([]));
         $this->repository->method('getOrganizationalChart')->willReturn([]);
-        $this->repository->method('getEmployeeStatistics')->willReturn(['total' => 0]);
+        $this->repository->method('getEmployeeStatistics')->willReturn(['total_employees' => 0, 'active_employees' => 0, 'by_department' => []]);
         $this->repository->method('getPerformanceAnalytics')->willReturn(['total_reviews' => 0]);
         $this->repository->method('getCommissionAnalytics')->willReturn(['total_commissions' => 0]);
-        $this->repository->method('getPayrollData')->willReturn(collect([]));
+        $this->repository->method('getPayrollData')->willReturn(new EloquentCollection([]));
 
         // Warm up caches
         $this->cacheService->warmUpCaches();
@@ -317,8 +343,11 @@ class EmployeeCacheServiceTest extends TestCase
      */
     public function test_force_refresh(): void
     {
-        $mockData = collect([
-            (object) ['id' => 1, 'name' => 'IT']
+        $this->repository = $this->createMock(OptimizedEmployeeRepository::class);
+        $this->cacheService = new EmployeeCacheService($this->repository);
+
+        $mockData = new EloquentCollection([
+            (object) ['id' => 1, 'name' => 'IT', 'description' => 'IT', 'head_name' => 'Alice', 'employee_count' => 10, 'avg_salary' => 75000, 'parent_department_id' => null],
         ]);
 
         // Set up repository to be called twice (once for cache, once for force refresh)

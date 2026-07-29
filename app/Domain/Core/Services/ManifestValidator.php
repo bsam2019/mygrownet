@@ -3,11 +3,16 @@
 namespace App\Domain\Core\Services;
 
 use App\Domain\Core\ValueObjects\ModuleManifest;
-use Illuminate\Support\Facades\Log;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 class ManifestValidator
 {
     private array $errors = [];
+
+    public function __construct(
+        private readonly LoggerInterface $logger = new NullLogger(),
+    ) {}
 
     public function validate(ModuleManifest $manifest): bool
     {
@@ -18,7 +23,7 @@ class ManifestValidator
         $this->validateCapabilities($manifest);
 
         if (!empty($this->errors)) {
-            Log::warning("Manifest validation failed for '{$manifest->id}'", [
+            $this->logger->warning("Manifest validation failed for '{$manifest->id}'", [
                 'errors' => $this->errors,
                 'manifest' => $manifest->toArray(),
             ]);

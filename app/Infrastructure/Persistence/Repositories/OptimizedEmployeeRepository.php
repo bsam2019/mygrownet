@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Infrastructure\Persistence\Eloquent\EmployeeModel;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Optimized Employee Repository with N+1 Query Prevention
@@ -68,6 +69,30 @@ class OptimizedEmployeeRepository extends EloquentEmployeeRepository
             ])
             ->orderBy('d.name')
             ->get();
+    }
+
+    /**
+     * Get employee statistics with optimized queries
+     */
+    public function getEmployeeStatistics(): array
+    {
+        $cacheKey = 'employee_statistics_aggregate';
+
+        return Cache::remember($cacheKey, 300, function () {
+            $totalEmployees = EmployeeModel::count();
+            $activeEmployees = EmployeeModel::where('employment_status', 'active')->count();
+            $departmentStats = EmployeeModel::selectRaw('department_id, COUNT(*) as count, AVG(current_salary) as avg_salary')
+                ->where('employment_status', 'active')
+                ->groupBy('department_id')
+                ->pluck('count', 'department_id')
+                ->toArray();
+
+            return [
+                'total_employees' => $totalEmployees,
+                'active_employees' => $activeEmployees,
+                'by_department' => $departmentStats,
+            ];
+        });
     }
 
     /**

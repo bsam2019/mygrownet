@@ -26,7 +26,10 @@ class PositionModelTest extends TestCase
             'performance_commission_rate',
             'permissions',
             'level',
+            'organizational_level',
+            'reports_to_position_id',
             'is_active',
+            'is_department_head',
         ];
 
         $position = new PositionModel();

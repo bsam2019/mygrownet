@@ -4,6 +4,7 @@ namespace Tests\Unit\Domain\Module;
 
 use App\Domain\Module\Services\TierConfigurationService;
 use Illuminate\Support\Facades\Config;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class TierConfigurationServiceTest extends TestCase
@@ -67,7 +68,7 @@ class TierConfigurationServiceTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function it_gets_module_config(): void
     {
         $config = $this->service->getModuleConfig('growfinance');
@@ -77,7 +78,7 @@ class TierConfigurationServiceTest extends TestCase
         $this->assertArrayHasKey('tiers', $config);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_null_for_unknown_module(): void
     {
         $config = $this->service->getModuleConfig('unknown_module');
@@ -85,7 +86,7 @@ class TierConfigurationServiceTest extends TestCase
         $this->assertNull($config);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_all_tiers(): void
     {
         $tiers = $this->service->getTiers('growfinance');
@@ -96,7 +97,7 @@ class TierConfigurationServiceTest extends TestCase
         $this->assertArrayHasKey('professional', $tiers);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_tier_config(): void
     {
         $tierConfig = $this->service->getTierConfig('growfinance', 'basic');
@@ -106,7 +107,7 @@ class TierConfigurationServiceTest extends TestCase
         $this->assertEquals(99, $tierConfig['price_monthly']);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_null_for_unknown_tier(): void
     {
         $tierConfig = $this->service->getTierConfig('growfinance', 'enterprise');
@@ -114,7 +115,7 @@ class TierConfigurationServiceTest extends TestCase
         $this->assertNull($tierConfig);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_tier_limits(): void
     {
         $limits = $this->service->getTierLimits('growfinance', 'free');
@@ -124,7 +125,7 @@ class TierConfigurationServiceTest extends TestCase
         $this->assertEquals(10, $limits['customers']);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_specific_limit(): void
     {
         $limit = $this->service->getLimit('growfinance', 'basic', 'accounts');
@@ -132,7 +133,7 @@ class TierConfigurationServiceTest extends TestCase
         $this->assertEquals(10, $limit);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_unlimited_as_negative_one(): void
     {
         $limit = $this->service->getLimit('growfinance', 'professional', 'accounts');
@@ -141,7 +142,7 @@ class TierConfigurationServiceTest extends TestCase
         $this->assertTrue($this->service->isUnlimited($limit));
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_zero_for_unknown_limit(): void
     {
         $limit = $this->service->getLimit('growfinance', 'free', 'unknown_limit');
@@ -150,7 +151,7 @@ class TierConfigurationServiceTest extends TestCase
         $this->assertTrue($this->service->isNotAvailable($limit));
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_tier_features(): void
     {
         $features = $this->service->getTierFeatures('growfinance', 'basic');
@@ -160,7 +161,7 @@ class TierConfigurationServiceTest extends TestCase
         $this->assertContains('receipt_upload', $features);
     }
 
-    /** @test */
+    #[Test]
     public function it_checks_feature_availability(): void
     {
         $this->assertTrue($this->service->hasFeature('growfinance', 'basic', 'invoicing'));
@@ -168,7 +169,7 @@ class TierConfigurationServiceTest extends TestCase
         $this->assertTrue($this->service->hasFeature('growfinance', 'professional', 'api_access'));
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_tier_reports(): void
     {
         $reports = $this->service->getTierReports('growfinance', 'professional');
@@ -178,14 +179,14 @@ class TierConfigurationServiceTest extends TestCase
         $this->assertContains('custom_reports', $reports);
     }
 
-    /** @test */
+    #[Test]
     public function it_checks_report_availability(): void
     {
         $this->assertTrue($this->service->hasReport('growfinance', 'basic', 'balance_sheet'));
         $this->assertFalse($this->service->hasReport('growfinance', 'free', 'balance_sheet'));
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_tier_pricing(): void
     {
         $pricing = $this->service->getTierPricing('growfinance', 'basic');
@@ -195,7 +196,7 @@ class TierConfigurationServiceTest extends TestCase
         $this->assertEquals('ZMW', $pricing['currency']);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_required_tier_for_feature(): void
     {
         $tier = $this->service->getRequiredTierForFeature('growfinance', 'invoicing');
@@ -203,7 +204,7 @@ class TierConfigurationServiceTest extends TestCase
         $this->assertEquals('basic', $tier);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_required_tier_for_limit(): void
     {
         // Need at least 100 customers
@@ -217,7 +218,7 @@ class TierConfigurationServiceTest extends TestCase
         $this->assertEquals('professional', $tier);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_all_tiers_for_display(): void
     {
         $tiers = $this->service->getAllTiersForDisplay('growfinance');
@@ -230,7 +231,7 @@ class TierConfigurationServiceTest extends TestCase
         $this->assertEquals(249, $professional['price_monthly']);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_usage_metrics(): void
     {
         $metrics = $this->service->getUsageMetrics('growfinance');

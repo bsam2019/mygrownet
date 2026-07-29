@@ -42,6 +42,7 @@ class EloquentUpdateRepository implements UpdateRepositoryInterface
             return $this->findById($id);
         }
 
+        $data = array_filter($data, fn($v) => $v !== null);
         $model = VentureUpdateModel::create($data);
         return $this->toDomainEntity($model);
     }

@@ -36,6 +36,7 @@ class EloquentResolutionRepository implements ResolutionRepositoryInterface
             return $this->findById($id);
         }
 
+        $data = array_filter($data, fn($v) => $v !== null);
         $model = VentureResolutionModel::create($data);
         return $this->toDomainEntity($model);
     }

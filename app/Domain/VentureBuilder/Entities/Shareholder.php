@@ -8,10 +8,11 @@ use DateTimeImmutable;
 class Shareholder
 {
     public function __construct(
-        public readonly ?int $id = null,
         public readonly int $ventureId,
         public readonly int $userId,
-        public readonly ?int $investmentId = null,
+        public readonly ShareholderStatus $status,
+        public readonly int $investmentId,
+        public readonly ?int $id = null,
         public readonly ?float $totalInvestment = null,
         public readonly ?float $sharesOwned = null,
         public readonly ?float $equityPercentage = null,
@@ -20,7 +21,6 @@ class Shareholder
         public readonly ?string $shareholderAgreementPath = null,
         public readonly ?bool $agreementSigned = null,
         public readonly ?DateTimeImmutable $agreementSignedAt = null,
-        public readonly ShareholderStatus $status,
         public readonly ?float $totalDividendsReceived = null,
         public readonly ?DateTimeImmutable $lastDividendDate = null,
         public readonly ?DateTimeImmutable $createdAt = null,
@@ -40,10 +40,11 @@ class Shareholder
     public static function reconstitute(array $data): self
     {
         return new self(
-            id: isset($data['id']) ? (int) $data['id'] : null,
             ventureId: (int) $data['venture_id'],
             userId: (int) $data['user_id'],
-            investmentId: isset($data['investment_id']) ? (int) $data['investment_id'] : null,
+            status: ShareholderStatus::fromString($data['status'] ?? 'active'),
+            id: isset($data['id']) ? (int) $data['id'] : null,
+            investmentId: (int) $data['investment_id'],
             totalInvestment: array_key_exists('total_investment', $data) ? (float) $data['total_investment'] : null,
             sharesOwned: array_key_exists('shares_owned', $data) ? (float) $data['shares_owned'] : null,
             equityPercentage: array_key_exists('equity_percentage', $data) ? (float) $data['equity_percentage'] : null,
@@ -52,7 +53,6 @@ class Shareholder
             shareholderAgreementPath: $data['shareholder_agreement_path'] ?? null,
             agreementSigned: isset($data['agreement_signed']) ? (bool) $data['agreement_signed'] : null,
             agreementSignedAt: isset($data['agreement_signed_at']) ? new \DateTimeImmutable($data['agreement_signed_at']) : null,
-            status: ShareholderStatus::fromString($data['status'] ?? 'active'),
             totalDividendsReceived: array_key_exists('total_dividends_received', $data) ? (float) $data['total_dividends_received'] : null,
             lastDividendDate: isset($data['last_dividend_date']) ? new \DateTimeImmutable($data['last_dividend_date']) : null,
             createdAt: isset($data['created_at']) ? new \DateTimeImmutable($data['created_at']) : null,

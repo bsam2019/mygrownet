@@ -9,6 +9,7 @@ use App\Domain\Module\Services\UsageLimitService;
 use App\Domain\Module\ValueObjects\ModuleId;
 use App\Models\User;
 use Mockery;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class SubscriptionServiceTest extends TestCase
@@ -39,7 +40,7 @@ class SubscriptionServiceTest extends TestCase
         parent::tearDown();
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_user_tier(): void
     {
         $user = new User(['id' => 1]);
@@ -53,7 +54,7 @@ class SubscriptionServiceTest extends TestCase
         $this->assertEquals('professional', $tier);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_user_limits(): void
     {
         $user = new User(['id' => 1]);
@@ -72,7 +73,7 @@ class SubscriptionServiceTest extends TestCase
         $this->assertEquals($expectedLimits, $limits);
     }
 
-    /** @test */
+    #[Test]
     public function it_checks_feature_access(): void
     {
         $user = new User(['id' => 1]);
@@ -84,7 +85,7 @@ class SubscriptionServiceTest extends TestCase
         $this->assertTrue($this->service->hasFeature($user, 'invoicing', 'growfinance'));
     }
 
-    /** @test */
+    #[Test]
     public function it_checks_action_permission(): void
     {
         $user = new User(['id' => 1]);
@@ -96,7 +97,7 @@ class SubscriptionServiceTest extends TestCase
         $this->assertFalse($this->service->canPerformAction($user, 'advanced_reports', 'growfinance'));
     }
 
-    /** @test */
+    #[Test]
     public function it_checks_increment_permission(): void
     {
         $user = new User(['id' => 1]);
@@ -116,7 +117,7 @@ class SubscriptionServiceTest extends TestCase
         $this->assertEquals($expectedResult, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_checks_report_access(): void
     {
         $user = new User(['id' => 1]);
@@ -128,7 +129,7 @@ class SubscriptionServiceTest extends TestCase
         $this->assertTrue($this->service->canAccessReport($user, 'balance_sheet', 'growfinance'));
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_required_tier_for_feature(): void
     {
         $this->tierConfig->shouldReceive('getRequiredTierForFeature')
@@ -140,7 +141,7 @@ class SubscriptionServiceTest extends TestCase
         $this->assertEquals('professional', $tier);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_usage_summary(): void
     {
         $user = new User(['id' => 1]);
@@ -159,7 +160,7 @@ class SubscriptionServiceTest extends TestCase
         $this->assertEquals($expectedSummary, $summary);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_upgrade_suggestions(): void
     {
         $user = new User(['id' => 1]);
@@ -176,7 +177,7 @@ class SubscriptionServiceTest extends TestCase
         $this->assertEquals($expectedSuggestions, $suggestions);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_all_tiers(): void
     {
         $expectedTiers = [
@@ -193,7 +194,7 @@ class SubscriptionServiceTest extends TestCase
         $this->assertEquals($expectedTiers, $tiers);
     }
 
-    /** @test */
+    #[Test]
     public function it_gets_tier_pricing(): void
     {
         $expectedPricing = [
@@ -211,7 +212,7 @@ class SubscriptionServiceTest extends TestCase
         $this->assertEquals($expectedPricing, $pricing);
     }
 
-    /** @test */
+    #[Test]
     public function it_checks_file_upload_permission(): void
     {
         $user = new User(['id' => 1]);
@@ -226,7 +227,7 @@ class SubscriptionServiceTest extends TestCase
         $this->assertEquals($expectedResult, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_default_module_id(): void
     {
         $user = new User(['id' => 1]);

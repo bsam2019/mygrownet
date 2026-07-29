@@ -32,7 +32,7 @@ class VentureService
 
         $venture->update(['status' => $newStatus]);
 
-        Event::dispatch(new VentureStatusChanged($venture, $oldStatus, $newStatus));
+        Event::dispatch(new VentureStatusChanged($venture->id, $oldStatus, $newStatus, $venture->title, $venture->slug));
 
         AuditLog::logEvent(
             'venture_status_changed',
@@ -99,7 +99,7 @@ class VentureService
         if ($venture->total_raised >= $venture->funding_target && $venture->status === 'funding') {
             $venture->update(['status' => 'funded', 'funding_end_date' => now()]);
 
-            Event::dispatch(new VentureFundingCompleted($venture));
+            Event::dispatch(new VentureFundingCompleted($venture->id, $venture->title, (float) $venture->total_raised, (float) $venture->funding_target));
 
             AuditLog::logEvent(
                 'venture_funded',

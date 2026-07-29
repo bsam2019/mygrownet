@@ -11,6 +11,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class VentureShareTransferModel extends Model
 {
     use HasFactory;
+
+    protected static function newFactory()
+    {
+        return \Database\Factories\VentureShareTransferModelFactory::new();
+    }
+
     use SoftDeletes;
 
     protected $table = 'venture_share_transfers';

@@ -8,14 +8,14 @@ use DateTimeImmutable;
 class ShareTransfer
 {
     public function __construct(
-        public readonly ?int $id = null,
         public readonly int $ventureId,
         public readonly int $fromUserId,
         public readonly int $toUserId,
         public readonly float $shares,
+        public readonly TransferStatus $status,
+        public readonly ?int $id = null,
         public readonly ?float $pricePerShare = null,
         public readonly ?float $totalValue = null,
-        public readonly TransferStatus $status,
         public readonly ?string $reason = null,
         public readonly ?string $adminNotes = null,
         public readonly ?int $approvedBy = null,
@@ -38,14 +38,14 @@ class ShareTransfer
     public static function reconstitute(array $data): self
     {
         return new self(
-            id: isset($data['id']) ? (int) $data['id'] : null,
             ventureId: (int) $data['venture_id'],
             fromUserId: (int) $data['from_user_id'],
             toUserId: (int) $data['to_user_id'],
             shares: (float) $data['shares'],
+            status: TransferStatus::fromString($data['status'] ?? 'pending'),
+            id: isset($data['id']) ? (int) $data['id'] : null,
             pricePerShare: array_key_exists('price_per_share', $data) ? (float) $data['price_per_share'] : null,
             totalValue: array_key_exists('total_value', $data) ? (float) $data['total_value'] : null,
-            status: TransferStatus::fromString($data['status'] ?? 'pending'),
             reason: $data['reason'] ?? null,
             adminNotes: $data['admin_notes'] ?? null,
             approvedBy: isset($data['approved_by']) ? (int) $data['approved_by'] : null,
