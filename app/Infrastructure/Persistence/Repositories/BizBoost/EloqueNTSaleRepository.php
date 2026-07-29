@@ -22,10 +22,10 @@ class EloquentSaleRepository implements SaleRepositoryInterface
         $query = BizBoostSaleModel::where('business_id', $businessId);
 
         if (!empty($filters['date_from'])) {
-            $query->where('sale_date', '>=', $filters['date_from']);
+            $query->whereDate('sale_date', '>=', $filters['date_from']);
         }
         if (!empty($filters['date_to'])) {
-            $query->where('sale_date', '<=', $filters['date_to']);
+            $query->whereDate('sale_date', '<=', $filters['date_to']);
         }
         if (!empty($filters['product_id'])) {
             $query->where('product_id', $filters['product_id']);
@@ -60,10 +60,10 @@ class EloquentSaleRepository implements SaleRepositoryInterface
     {
         $query = BizBoostSaleModel::where('business_id', $businessId);
         if (!empty($conditions['date_from'])) {
-            $query->where('sale_date', '>=', $conditions['date_from']);
+            $query->whereDate('sale_date', '>=', $conditions['date_from']);
         }
         if (!empty($conditions['date_to'])) {
-            $query->where('sale_date', '<=', $conditions['date_to']);
+            $query->whereDate('sale_date', '<=', $conditions['date_to']);
         }
         return (float) $query->sum('total_amount');
     }
@@ -71,7 +71,8 @@ class EloquentSaleRepository implements SaleRepositoryInterface
     public function getSalesReport(int $businessId, string $startDate, string $endDate): array
     {
         $byDay = BizBoostSaleModel::where('business_id', $businessId)
-            ->whereBetween('sale_date', [$startDate, $endDate])
+            ->whereDate('sale_date', '>=', $startDate)
+            ->whereDate('sale_date', '<=', $endDate)
             ->select(
                 DB::raw('DATE(sale_date) as date'),
                 DB::raw('SUM(total_amount) as total'),
@@ -83,7 +84,8 @@ class EloquentSaleRepository implements SaleRepositoryInterface
             ->toArray();
 
         $topProducts = BizBoostSaleModel::where('business_id', $businessId)
-            ->whereBetween('sale_date', [$startDate, $endDate])
+            ->whereDate('sale_date', '>=', $startDate)
+            ->whereDate('sale_date', '<=', $endDate)
             ->select(
                 'product_name',
                 DB::raw('SUM(total_amount) as total'),
@@ -96,7 +98,8 @@ class EloquentSaleRepository implements SaleRepositoryInterface
             ->toArray();
 
         $byPayment = BizBoostSaleModel::where('business_id', $businessId)
-            ->whereBetween('sale_date', [$startDate, $endDate])
+            ->whereDate('sale_date', '>=', $startDate)
+            ->whereDate('sale_date', '<=', $endDate)
             ->whereNotNull('payment_method')
             ->select(
                 'payment_method',

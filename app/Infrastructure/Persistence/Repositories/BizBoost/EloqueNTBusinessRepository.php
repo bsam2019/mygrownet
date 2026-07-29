@@ -34,7 +34,7 @@ class EloquentBusinessRepository implements BusinessRepositoryInterface
     {
         $data = $entity->toArray();
         $id = $data['id'] ?? null;
-        unset($data['id'], $data['created_at'], $data['updated_at']);
+        unset($data['id'], $data['created_at'], $data['updated_at'], $data['organization_id']);
 
         if ($id) {
             BizBoostBusinessModel::where('id', $id)->update($data);

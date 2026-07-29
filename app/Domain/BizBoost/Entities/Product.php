@@ -66,7 +66,7 @@ class Product
             trackInventory: (bool) ($data['track_inventory'] ?? false),
             isActive: (bool) ($data['is_active'] ?? true),
             isFeatured: (bool) ($data['is_featured'] ?? false),
-            sortOrder: isset($data['sort_order']) ? (int) $data['sort_order'] : null,
+            sortOrder: isset($data['sort_order']) ? (int) $data['sort_order'] : 0,
             attributes: $data['attributes'] ?? null,
             createdAt: null,
             updatedAt: null,
