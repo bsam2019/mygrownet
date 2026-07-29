@@ -9,7 +9,7 @@ import { defineConfig } from 'vite';
 const MODULE = process.env.MODULE;
 const isDev = process.argv.includes('dev') || process.argv[1]?.includes('vite') && !process.argv.includes('build');
 
-const knownBuildModules = ['stockflow', 'bizboost', 'bizdocs', 'grownet', 'growbuilder', 'growmart', 'growstream', 'zamstay', 'cms', 'primeedge', 'venture', 'growfinance', 'marketplace', 'admin', 'lifephus', 'employee'];
+const knownBuildModules = ['stockflow', 'bizboost', 'bizdocs', 'grownet', 'growbuilder', 'growmart', 'growstream', 'zamstay', 'bms', 'primeedge', 'venture', 'growfinance', 'marketplace', 'admin', 'lifephus', 'employee'];
 const buildSubdir = MODULE && knownBuildModules.includes(MODULE) ? MODULE : null;
 const buildDir = buildSubdir ? `build/${buildSubdir}` : 'build';
 const basePath = buildSubdir ? `/build/${buildSubdir}/` : '/build/';
@@ -33,7 +33,7 @@ const ALL_INPUTS: Record<string, string[]> = {
         'resources/js/app-grownet.ts',
         'resources/js/app-growbuilder.ts',
         'resources/js/app-zamstay.ts',
-        'resources/js/app-cms.ts',
+        'resources/js/app-bms.ts',
         'resources/js/app-primeedge.ts',
         'resources/js/app-venture.ts',
         'resources/js/app-stockflow.ts',
@@ -52,7 +52,7 @@ const ALL_INPUTS: Record<string, string[]> = {
     grownet: ['resources/js/app-grownet.ts'],
     growbuilder: ['resources/js/app-growbuilder.ts'],
     zamstay: ['resources/js/app-zamstay.ts'],
-    cms: ['resources/js/app-cms.ts'],
+    bms: ['resources/js/app-bms.ts'],
     primeedge: ['resources/js/app-primeedge.ts'],
     venture: ['resources/js/app-venture.ts'],
     stockflow: ['resources/js/app-stockflow.ts'],
