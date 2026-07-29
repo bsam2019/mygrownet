@@ -162,6 +162,17 @@ return [
             'session_prefix' => null,
             'build_dir' => null,
         ],
+
+        'growstream' => [
+            'name' => 'GrowStream',
+            'domain_slug' => 'growstream',
+            'service_provider' => null,
+            'middleware' => ['web', 'auth'],
+            'uses_inertia' => true,
+            'blade_layout' => 'growstream',
+            'session_prefix' => null,
+            'build_dir' => 'growstream',
+        ],
     ],
 
     /*
@@ -206,6 +217,7 @@ return [
             'stockflow'   => env('IDENTITY_REDIRECT_STOCKFLOW', false),
             'primeedge'   => env('IDENTITY_REDIRECT_PRIMEEDGE', false),
             'growbuilder' => env('IDENTITY_REDIRECT_GROWBUILDER', false),
+            'growstream'  => env('IDENTITY_REDIRECT_GROWSTREAM', false),
         ],
         'rate_limiting' => [
             'per_ip'       => (int) env('IDENTITY_RATE_LIMIT_PER_IP', 20),
@@ -262,6 +274,7 @@ return [
             'bms'         => 'queue-bms',
             'growmart'    => 'queue-growmart',
             'grownet'     => 'queue-grownet',
+            'growstream'  => 'queue-growstream',
             'employee'    => 'queue-employee',
         ],
     ],

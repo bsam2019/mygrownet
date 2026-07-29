@@ -118,6 +118,27 @@ class DetectSubdomain
                     return $next($request);
                 }
 
+                // Handle GrowStream subdomain
+                // Routes are defined via Route::domain('growstream.mygrownet.com') in growstream.php
+                if ($subdomain === 'growstream') {
+                    $branch = 'growstream';
+                    $this->configureSubdomainUrl($subdomain);
+
+                    $route = $request->route();
+                    if ($route) {
+                        $name = $route->getName();
+                        if ($name) {
+                            $isGrowStreamSubdomain = str_starts_with($name, 'growstream.')
+                                && !str_starts_with($name, 'growstream.main.');
+                            if (!$isGrowStreamSubdomain) {
+                                abort(404);
+                            }
+                        }
+                    }
+
+                    return $next($request);
+                }
+
                 // Resolve standard application subdomains via domains table
                 $domainHost = "{$subdomain}.mygrownet.com";
                 $domainRecord = Domain::where('domain', $domainHost)

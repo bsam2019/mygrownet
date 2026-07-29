@@ -70,9 +70,11 @@ class GrowStreamServiceProvider extends ServiceProvider
             base_path('config/growstream.php') => config_path('growstream.php'),
         ], 'growstream-config');
 
-        // Load routes
+        // Load API routes
         $this->loadRoutesFrom(__DIR__ . '/Presentation/routes/api.php');
-        $this->loadRoutesFrom(__DIR__ . '/Presentation/routes/web.php');
+        // Web routes are loaded from routes/growstream.php (bootstrap/app.php)
+        // to support both main-domain (/growstream) and subdomain (growstream.mygrownet.com)
+        // $this->loadRoutesFrom(__DIR__ . '/Presentation/routes/web.php');
 
         // Register event listeners
         $this->registerEventListeners();

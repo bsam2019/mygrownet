@@ -39,6 +39,10 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('web')
                 ->group(base_path('routes/primeedge.php'));
 
+            // GrowStream subdomain routes — loaded before web.php so domain routes match first
+            Route::middleware('web')
+                ->group(base_path('routes/growstream.php'));
+
             // StockFlow landing subdomain (stockflow.mygrownet.com) - marketing page
             // MUST be loaded BEFORE stockflow-subdomain.php so specific domain matches first
             Route::middleware('web')
@@ -170,7 +174,7 @@ return Application::configure(basePath: dirname(__DIR__))
             $isStockFlowSubdomain = preg_match('/^[a-z0-9-]+\.mygrownet\.com$/i', $host)
                 && !in_array(strtolower(explode('.', $host)[0]), [
                     'bizboost', 'bizdocs', 'growbuilder', 'venture', 'grownet',
-                    'growstorage', 'growmart', 'zamstay', 'bms', 'primeedge',
+                    'growstorage', 'growstream', 'growmart', 'zamstay', 'bms', 'primeedge',
                     'stockflow', 'geopamu', 'wowthem', 'www',
                 ]);
 
