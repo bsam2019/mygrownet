@@ -38,6 +38,7 @@ const pageGlobs: Record<string, () => Promise<DefineComponent>> = {
     ...import.meta.glob<DefineComponent>('./pages/PrimeEdge/**/*.vue'), // PrimeEdge pages
     ...import.meta.glob<DefineComponent>('./pages/LifePlus/**/*.vue'), // LifePlus pages
     ...import.meta.glob<DefineComponent>('./pages/GrowStorage/**/*.vue'), // GrowStorage pages
+    ...import.meta.glob<DefineComponent>('./pages/Ventures/**/*.vue'), // Ventures pages
 };
 
 bootInertia(appName, (name: string) => {
