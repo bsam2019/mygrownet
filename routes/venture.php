@@ -37,6 +37,9 @@ $registerVentureMemberRoutes = function (string $prefix, string $namePrefix) {
 // 1. MAIN DOMAIN ROUTES (mygrownet.com/ventures/*)
 // ============================================================
 
+// Venture Builder Landing Page
+Route::get('/venturebuilder', fn() => Inertia::render('Ventures/Welcome'))->name('venturebuilder.welcome');
+
 // Public Venture Routes (No authentication required)
 Route::middleware(['module:venture_builder'])->prefix('ventures')->name('ventures.')->group(function () {
     Route::get('/about', fn() => Inertia::render('Ventures/About'))->name('about');
