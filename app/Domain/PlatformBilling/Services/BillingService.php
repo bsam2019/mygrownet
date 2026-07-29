@@ -327,7 +327,7 @@ class BillingService
     {
         try {
             $this->outbox->insert(
-                eventName: $event->eventName,
+                eventName: $event->eventName(),
                 payload: $event->toArray(),
                 context: $this->getContext()->toArray(),
                 publisher: 'platform-billing',

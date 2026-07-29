@@ -11,13 +11,16 @@ class EloquentProductRepository implements ProductRepositoryInterface
 {
     public function findById(int $id): ?array
     {
-        $model = GrowMartProduct::with(['category', 'images', 'inventory'])->find($id);
+        $model = GrowMartProduct::with(['category', 'images', 'inventory'])
+            ->withSum('inventory', 'quantity')
+            ->find($id);
         return $model?->toArray();
     }
 
     public function findBySlug(string $slug): ?array
     {
         $model = GrowMartProduct::with(['category', 'images', 'inventory'])
+            ->withSum('inventory', 'quantity')
             ->where('slug', $slug)
             ->first();
         return $model?->toArray();

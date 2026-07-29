@@ -2,6 +2,7 @@
 
 namespace App\Domain\Core\Services;
 
+use App\Domain\Core\Events\GenericPlatformEvent;
 use App\Domain\Core\Events\PlatformEvent;
 use App\Domain\Core\ValueObjects\PlatformContext;
 
@@ -11,7 +12,7 @@ class EventSerializer
     {
         return json_encode([
             'event_id' => $event->eventId,
-            'event_name' => $event->eventName,
+            'event_name' => $event->eventName(),
             'publisher' => $event->publisher,
             'occurred_at' => $event->occurredAt->format(\DateTimeInterface::ATOM),
             'correlation_id' => $event->correlationId,
@@ -28,7 +29,7 @@ class EventSerializer
 
         $context = PlatformContext::fromArray($data['context'] ?? []);
 
-        return new PlatformEvent(
+        return new GenericPlatformEvent(
             eventId: $data['event_id'] ?? uniqid(),
             eventName: $data['event_name'] ?? 'unknown',
             eventVersion: $data['event_version'] ?? '1.0',
@@ -45,7 +46,7 @@ class EventSerializer
     {
         return [
             'X-Event-Id' => $event->eventId,
-            'X-Event-Name' => $event->eventName,
+            'X-Event-Name' => $event->eventName(),
             'X-Publisher' => $event->publisher,
             'X-Occurred-At' => $event->occurredAt->format(\DateTimeInterface::ATOM),
             'X-Correlation-Id' => $event->correlationId,

@@ -67,7 +67,7 @@ class EloquentSellerRepository implements SellerRepositoryInterface
             'cancellation_rate' => $seller->cancellationRate,
             'rating' => $seller->rating,
             'is_active' => $seller->isActive,
-            'commission_rate' => $seller->commissionRate,
+            'commission_rate' => $seller->commissionRate ?? config('marketplace.commission.rates.' . $seller->trustLevel->value(), 10.0),
             'phone' => $seller->phone,
             'email' => $seller->email,
             'description' => $seller->description,
@@ -140,11 +140,25 @@ class EloquentSellerRepository implements SellerRepositoryInterface
 
     public function incrementBalance(int $sellerId, int $amount): void
     {
-        DB::table('marketplace_seller_balances')
-            ->updateOrInsert(
-                ['seller_id' => $sellerId],
-                ['available_balance' => DB::raw("COALESCE(available_balance, 0) + {$amount}")]
-            );
+        $row = DB::table('marketplace_seller_balances')
+            ->where('seller_id', $sellerId)
+            ->first();
+
+        if ($row) {
+            DB::table('marketplace_seller_balances')
+                ->where('seller_id', $sellerId)
+                ->increment('available_balance', $amount);
+        } else {
+            DB::table('marketplace_seller_balances')
+                ->insert([
+                    'seller_id' => $sellerId,
+                    'available_balance' => $amount,
+                    'pending_balance' => 0,
+                    'total_earned' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+        }
     }
 
     private function toDomainEntity(MarketplaceSeller $model): Seller

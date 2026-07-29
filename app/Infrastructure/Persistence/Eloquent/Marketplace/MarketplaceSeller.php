@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Persistence\Eloquent\Marketplace;
 
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;

@@ -25,7 +25,7 @@ class PlatformPaymentsListener implements ShouldQueue
 
         $this->processWithInbox(
             eventId: 'payment-' . ($payload['transaction_id'] ?? ''),
-            eventName: $event->eventName,
+            eventName: $event->eventName(),
             payload: $payload,
             publisher: $event->publisher,
             handler: function (array $payload) use ($event) {
