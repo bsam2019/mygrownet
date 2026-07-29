@@ -45,6 +45,9 @@ use App\Http\Controllers\GrowFinance\VendorController;
 use App\Http\Controllers\GrowFinance\WhiteLabelController;
 use App\Http\Controllers\GrowFinance\WorkflowAdminController;
 use App\Http\Controllers\GrowFinance\WorkflowController;
+use App\Http\Controllers\GrowFinance\OfflineSyncController;
+use App\Http\Controllers\GrowFinance\ZraController;
+use App\Http\Controllers\GrowFinance\TaxReturnSubmissionController;
 use App\Http\Middleware\GrowFinanceStandalone;
 use Illuminate\Support\Facades\Route;
 

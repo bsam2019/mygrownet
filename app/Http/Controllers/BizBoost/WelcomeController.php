@@ -4,6 +4,7 @@ namespace App\Http\Controllers\BizBoost;
 
 use App\Http\Controllers\Controller;
 use App\Domain\Module\Services\TierConfigurationService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,10 +16,14 @@ class WelcomeController extends Controller
 
     /**
      * Display the BizBoost welcome/landing page.
-     * This page is publicly accessible without authentication.
+     * Shows Welcome for guests, delegates to DashboardController for authenticated users.
      */
-    public function index(): Response
+    public function index(Request $request): Response|\Illuminate\Http\RedirectResponse
     {
+        if (auth()->check()) {
+            return app(DashboardController::class)->index($request);
+        }
+
         $currency = session('user_currency', 'ZMW');
 
         return Inertia::render('BizBoost/Welcome', [

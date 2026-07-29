@@ -33,11 +33,11 @@ $registerGrowNetSubdomainRoutes = function (string $prefix, string $namePrefix) 
         Route::get('/my-membership', [MembershipController::class, 'show'])->name('membership.show');
         Route::get('/professional-levels', [MembershipController::class, 'levels'])->name('levels.index');
 
-        Route::get('/my-starter-kit', [StarterKitController::class, 'show'])->name('starter-kit.show');
-        Route::get('/my-starter-kit/purchase', [StarterKitController::class, 'purchase'])->name('starter-kit.purchase');
-        Route::post('/my-starter-kit/purchase', [StarterKitController::class, 'storePurchase'])->name('starter-kit.store');
-        Route::get('/my-starter-kit/upgrade', [StarterKitController::class, 'showUpgrade'])->name('starter-kit.upgrade');
-        Route::post('/my-starter-kit/upgrade', [StarterKitController::class, 'processUpgrade'])->name('starter-kit.upgrade.process');
+        Route::get('/my-starter-kit', [MyGrowNetStarterKitController::class, 'show'])->name('starter-kit.show');
+        Route::get('/my-starter-kit/purchase', [MyGrowNetStarterKitController::class, 'purchase'])->name('starter-kit.purchase');
+        Route::post('/my-starter-kit/purchase', [MyGrowNetStarterKitController::class, 'storePurchase'])->name('starter-kit.store');
+        Route::get('/my-starter-kit/upgrade', [MyGrowNetStarterKitController::class, 'showUpgrade'])->name('starter-kit.upgrade');
+        Route::post('/my-starter-kit/upgrade', [MyGrowNetStarterKitController::class, 'processUpgrade'])->name('starter-kit.upgrade.process');
 
         Route::post('/gifts/starter-kit', [GiftController::class, 'giftStarterKit'])->name('gifts.starter-kit');
         Route::get('/gifts/limits', [GiftController::class, 'getLimits'])->name('gifts.limits');
@@ -125,9 +125,9 @@ $registerGrowNetSubdomainRoutes = function (string $prefix, string $namePrefix) 
             Route::get('/churn-risk', [AnalyticsController::class, 'churnRisk'])->name('churn-risk');
         });
 
-        Route::get('/wallet', [WalletController::class, 'index'])->name('wallet.index');
-        Route::post('/wallet/accept-policy', [WalletController::class, 'acceptPolicy'])->name('wallet.accept-policy');
-        Route::post('/wallet/check-withdrawal-limit', [WalletController::class, 'checkWithdrawalLimit'])->name('wallet.check-withdrawal-limit');
+        Route::get('/wallet', [MyGrowNetWalletController::class, 'index'])->name('wallet.index');
+        Route::post('/wallet/accept-policy', [MyGrowNetWalletController::class, 'acceptPolicy'])->name('wallet.accept-policy');
+        Route::post('/wallet/check-withdrawal-limit', [MyGrowNetWalletController::class, 'checkWithdrawalLimit'])->name('wallet.check-withdrawal-limit');
         Route::post('/wallet/lgr-transfer', [LgrTransferController::class, 'store'])->name('wallet.lgr-transfer');
 
         Route::get('/loans', [LoanApplicationController::class, 'index'])->name('loans.index');

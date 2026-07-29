@@ -377,8 +377,8 @@ $registerBizBoostAuthRoutes = function (string $prefix, string $namePrefix, stri
 // Public routes (no auth) — kept at their original URLs for backward compatibility
 Route::middleware(\App\Http\Middleware\BizBoostStandalone::class)->group(function () {
 
-    // Welcome page
-    Route::get('/bizboost/welcome', [WelcomeController::class, 'index'])->name('bizboost.welcome');
+    // Legacy welcome URL
+    Route::get('/bizboost/welcome', [WelcomeController::class, 'index'])->name('bizboost.welcome.legacy');
 
     // Public mini-website
     Route::prefix('biz')->name('bizboost.public.')->group(function () {
@@ -411,12 +411,18 @@ Route::middleware(\App\Http\Middleware\BizBoostStandalone::class)->group(functio
 });
 
 // Authenticated routes (under /bizboost prefix)
+// Dashboard is at /bizboost/dashboard (not /bizboost/) to avoid collision with the public welcome route
 $registerBizBoostAuthRoutes(
     prefix: 'bizboost',
     namePrefix: 'bizboost.',
-    dashboardPath: '/'
+    dashboardPath: '/dashboard'
 );
 
+// Public welcome route (registered AFTER auth routes so it wins for /bizboost)
+// Handles both guests (shows landing page) and authenticated users (delegates to DashboardController)
+Route::middleware(\App\Http\Middleware\BizBoostStandalone::class)->group(function () {
+    Route::get('/bizboost', [WelcomeController::class, 'index'])->name('bizboost.welcome');
+});
 
 // ============================================================
 // 2. SUBDOMAIN ROUTES (bizboost.mygrownet.com/)

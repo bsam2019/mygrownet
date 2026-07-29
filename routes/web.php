@@ -31,6 +31,7 @@ Route::prefix('platform')->name('platform.')->group(function () {
 });
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\GrowNet\ReferralGroupController;
+use App\Http\Controllers\GrowNet\ReferralController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\Investment\InvestmentController;
 use App\Http\Controllers\DashboardStatsController;

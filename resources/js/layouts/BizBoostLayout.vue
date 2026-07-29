@@ -138,7 +138,7 @@ if (isAdvancedNavActive.value) {
 }
 
 // Dashboard only (always visible)
-const dashboardNav = { name: 'Dashboard', href: '/bizboost', icon: HomeIcon, current: route().current('bizboost.dashboard'), tourId: 'dashboard' };
+const dashboardNav = { name: 'Dashboard', href: route('bizboost.dashboard'), icon: HomeIcon, current: route().current('bizboost.dashboard'), tourId: 'dashboard' };
 
 // Business operations (collapsible)
 const businessNavigation = [
@@ -224,7 +224,7 @@ const openCommandPalette = () => {
                     </div>
                     <div class="flex grow flex-col gap-y-5 overflow-y-auto mobile-sidebar-scroll bg-white px-6 pb-4">
                         <div class="flex h-16 shrink-0 items-center">
-                            <Link href="/bizboost" class="flex items-center gap-2">
+                            <Link :href="route('bizboost.dashboard')" class="flex items-center gap-2">
                                 <div class="h-8 w-8 rounded-lg bg-violet-600 flex items-center justify-center">
                                     <SparklesIcon class="h-5 w-5 text-white" />
                                 </div>
@@ -282,7 +282,7 @@ const openCommandPalette = () => {
             <div class="flex grow flex-col gap-y-5 overflow-y-auto sidebar-scroll border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 pb-4 shadow-sm">
                 <!-- Header with collapse toggle -->
                 <div :class="['flex h-16 shrink-0 items-center border-b border-slate-200 dark:border-slate-700', sidebarCollapsed ? 'justify-center px-4' : 'justify-between px-6']">
-                    <Link href="/bizboost" :class="['flex items-center gap-3', sidebarCollapsed && 'justify-center']">
+                    <Link :href="route('bizboost.dashboard')" :class="['flex items-center gap-3', sidebarCollapsed && 'justify-center']">
                         <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-600 via-violet-600 to-pink-500 flex items-center justify-center shadow-lg shadow-violet-500/30 ring-2 ring-white">
                             <SparklesIcon class="h-5 w-5 text-white" />
                         </div>
