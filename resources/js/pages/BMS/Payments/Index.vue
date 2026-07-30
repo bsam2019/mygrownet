@@ -46,7 +46,7 @@ const search = ref(props.filters.search);
 const selectedCustomer = ref(props.filters.customer_id);
 
 const applyFilters = () => {
-    router.get../BMS/payments', {
+    router.get('/BMS/payments', {
         customer_id: selectedCustomer.value,
         search: search.value,
     }, {

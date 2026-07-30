@@ -71,6 +71,6 @@ const retry = () => {
 };
 
 const goToDashboard = () => {
-  router.visit../BMS/dashboard');
+  router.visit('/BMS/dashboard');
 };
 </script>

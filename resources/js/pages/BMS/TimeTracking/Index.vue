@@ -21,7 +21,7 @@ const runningTimer = computed(() => {
 });
 
 function applyFilters() {
-  router.get../BMS/time-tracking', {
+  router.get('/BMS/time-tracking', {
     worker_id: selectedWorker.value || undefined,
     job_id: selectedJob.value || undefined,
     status: selectedStatus.value || undefined,
@@ -30,7 +30,7 @@ function applyFilters() {
 }
 
 function startTimer(workerId: number, jobId?: number) {
-  router.post../BMS/time-tracking/start-timer', {
+  router.post('/BMS/time-tracking/start-timer', {
     worker_id: workerId,
     job_id: jobId,
     is_billable: true,
@@ -38,7 +38,7 @@ function startTimer(workerId: number, jobId?: number) {
 }
 
 function stopTimer(entryId: number) {
-  router.post../BMS/time-tracking/${entryId}/stop-timer`, {});
+  router.post(`/BMS/time-tracking/${entryId}/stop-timer`, {});
 }
 
 function formatDuration(minutes: number) {
@@ -154,7 +154,7 @@ function formatDuration(minutes: number) {
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
                 <button
                   v-if="entry.status === 'submitted'"
-                  @click="router.post../BMS/time-tracking/${entry.id}/approve`, {})"
+                  @click="router.post(`/BMS/time-tracking/${entry.id}/approve`, {})"
                   class="text-green-600 hover:text-green-900 mr-3"
                   aria-label="Approve entry"
                 >
@@ -162,7 +162,7 @@ function formatDuration(minutes: number) {
                 </button>
                 <button
                   v-if="entry.status === 'submitted'"
-                  @click="router.post../BMS/time-tracking/${entry.id}/reject`, { rejection_reason: 'Rejected' })"
+                  @click="router.post(`/BMS/time-tracking/${entry.id}/reject`, { rejection_reason: 'Rejected' })"
                   class="text-red-600 hover:text-red-900"
                   aria-label="Reject entry"
                 >

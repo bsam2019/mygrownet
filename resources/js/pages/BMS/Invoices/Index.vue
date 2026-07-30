@@ -51,7 +51,7 @@ const search = ref(props.filters.search);
 const selectedStatus = ref(props.filters.status);
 
 const applyFilters = () => {
-    router.get../BMS/invoices', {
+    router.get('/BMS/invoices', {
         status: selectedStatus.value,
         search: search.value,
     }, {

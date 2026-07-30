@@ -51,7 +51,7 @@ const search = ref(props.filters.search);
 const selectedStatus = ref(props.filters.status);
 
 const applyFilters = () => {
-    router.get../BMS/quotations', {
+    router.get('/BMS/quotations', {
         status: selectedStatus.value,
         search: search.value,
     }, {

@@ -32,7 +32,7 @@ const startDate = ref(props.filters.start_date);
 const endDate = ref(props.filters.end_date);
 
 const applyFilters = () => {
-    router.get../BMS/reports', {
+    router.get('/BMS/reports', {
         start_date: startDate.value,
         end_date: endDate.value,
     }, {
