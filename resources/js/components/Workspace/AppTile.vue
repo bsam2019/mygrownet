@@ -81,28 +81,10 @@ function trackRecent(app: App) {
 function launch(app: App) {
     trackRecent(app);
     
-    // For external URLs (subdomains), use direct navigation via form POST
-    // This avoids Inertia's AJAX call and provides cleaner browser history
-    if (app.url && (app.url.startsWith('http://') || app.url.startsWith('https://'))) {
-        // Create a hidden form and submit it
-        // This stores session context on backend, then redirects to subdomain
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = route('workspace.launch', { application: app.id });
-        
-        // Add CSRF token
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = '_token';
-        csrfInput.value = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-        form.appendChild(csrfInput);
-        
-        document.body.appendChild(form);
-        form.submit();
-    } else {
-        // Internal route - use Inertia router
-        router.post(route('workspace.launch', { application: app.id }));
-    }
+    // For ALL apps, just navigate directly
+    // The backend will handle session/context via middleware on the target domain
+    const launchUrl = route('workspace.launch', { application: app.id });
+    window.location.href = launchUrl;
 }
 </script>
 
