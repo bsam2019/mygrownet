@@ -338,7 +338,6 @@
               { name: 'Rewards', route: 'rewards', description: 'Loyalty & rewards program' },
               { name: 'Roadmap', route: 'roadmap', description: 'Platform development roadmap' },
               { name: 'FAQ', route: 'faq', description: 'Frequently asked questions' },
-              { name: 'Referral Program', route: 'referral-program', description: 'Refer friends & earn' },
             ]
           },
           { name: 'Contact', route: 'contact' },

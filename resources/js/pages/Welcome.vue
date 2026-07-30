@@ -22,7 +22,7 @@
                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 to-indigo-300">Business Growth Platform</span>
               </h1>
               <p class="mt-4 text-base sm:text-lg text-slate-300/80 leading-relaxed max-w-xl">
-                One integrated ecosystem combining SME tools, e-commerce, network marketing, and wealth-building — designed to help you learn, earn, and grow.
+                One integrated ecosystem combining SME tools, e-commerce, and wealth-building — designed to help you learn, earn, and grow.
               </p>
               <div class="mt-8 flex flex-col sm:flex-row gap-4">
                 <button @click="showLoginModal = true" class="group inline-flex items-center justify-center px-7 py-3 bg-white text-slate-900 rounded-xl font-semibold text-sm hover:bg-slate-100 transition-all duration-200 shadow-2xl shadow-violet-500/10">
@@ -173,7 +173,7 @@
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
               </div>
               <h3 class="text-base font-semibold text-slate-900">Earn</h3>
-              <p class="mt-2 text-sm text-slate-500 leading-relaxed">Generate income through commissions, network marketing, e-commerce sales, and investment opportunities.</p>
+               <p class="mt-2 text-sm text-slate-500 leading-relaxed">Generate income through e-commerce sales, digital products, and investment opportunities.</p>
             </div>
             <div class="group rounded-2xl border border-slate-100 bg-white p-6 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
               <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center mb-5 text-white shadow-lg shadow-violet-200/50">
@@ -200,8 +200,8 @@
               <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center mb-5 text-white shadow-lg shadow-violet-200/50">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
               </div>
-              <h3 class="text-base font-semibold text-slate-900">Network Marketing</h3>
-              <p class="mt-2 text-sm text-slate-500 leading-relaxed">Referral tracking, multi-level commissions, sponsor management, and team-building tools built right in.</p>
+              <h3 class="text-base font-semibold text-slate-900">Digital Products</h3>
+              <p class="mt-2 text-sm text-slate-500 leading-relaxed">Stream content, learn new skills, access professional templates, and leverage AI tools — all from one platform.</p>
             </div>
           </div>
         </div>
@@ -279,7 +279,7 @@
               <div class="flex items-center gap-1 mb-5">
                 <svg v-for="i in 5" :key="i" class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
               </div>
-              <p class="text-sm text-slate-600 leading-relaxed italic">"Setting up my store and first ad campaign took less than an hour. The network marketing tools are incredibly powerful for growing a team."</p>
+               <p class="text-sm text-slate-600 leading-relaxed italic">"Setting up my store and first ad campaign took less than an hour. The platform tools make running my business incredibly easy."</p>
               <div class="mt-6 pt-5 border-t border-slate-100">
                 <div class="text-sm font-semibold text-slate-900">Mwansa Tembo</div>
                 <div class="text-xs text-slate-400">Entrepreneur</div>
