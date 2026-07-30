@@ -272,7 +272,7 @@ class DetectSubdomain
         // Dashboard (requires auth)
         if ($path === 'dashboard') {
             $controller = app()->make(\App\Http\Controllers\BMS\DashboardController::class);
-            $result = $controller->index();
+            $result = $controller->index($request);
             return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
         }
         

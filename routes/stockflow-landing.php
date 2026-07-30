@@ -41,6 +41,6 @@ Route::domain('stockflow.mygrownet.com')
         // Route::get('/request-demo', [LandingController::class, 'requestDemo'])->name('request-demo');
         // Route::post('/request-demo', [LandingController::class, 'storeDemo'])->name('request-demo.store');
 
-        // Admin login (could be moved to stockflow-admin.php later)
-        Route::get('/admin/login', [AuthController::class, 'showAdminLogin'])->name('admin.login');
+        // Admin login removed Phase 8d — all users authenticate via web guard
+        // Route::get('/admin/login', [AuthController::class, 'showAdminLogin'])->name('admin.login');
     });
