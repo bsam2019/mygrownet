@@ -15,36 +15,93 @@ fi
 
 echo "🚀 Deploying assets to MyGrowNet droplet..."
 echo "📍 Server: $DROPLET_IP"
+echo ""
 
-# Ensure manifest is in correct location before upload
-echo "📦 Ensuring Vite manifest is in correct location..."
-mkdir -p public/build/.vite
-if [ -f public/build/manifest.json ]; then
+# Ensure manifest is in correct location before upload (if main module exists)
+if [ -f "public/build/manifest.json" ]; then
+    echo "📦 Ensuring Vite manifest is in correct location..."
+    mkdir -p public/build/.vite
     cp public/build/manifest.json public/build/.vite/manifest.json
     echo "✅ Vite manifest copied to .vite directory"
+    echo ""
 fi
 
-# Upload built assets using scp
+# Upload built assets using rsync (incremental)
 echo "📤 Uploading built assets to droplet..."
-echo "⚠️  You may be prompted for the SSH password..."
-# Create a tar archive for faster upload
-cd public
-tar -czf build.tar.gz build/
-scp build.tar.gz ${DROPLET_USER}@${DROPLET_IP}:${PROJECT_PATH}/public/
-rm build.tar.gz
-cd ..
+echo ""
+
+# Detect which modules have been built locally
+MODULES_TO_DEPLOY=()
+if [ -d "public/build/assets" ] && [ -f "public/build/manifest.json" ]; then
+    MODULES_TO_DEPLOY+=("main")
+    echo "  ✓ main module detected"
+fi
+
+for module in admin bizboost bizdocs bms employee growbuilder growfinance growmart grownet growstream lifephus marketplace primeedge stockflow venture zamstay; do
+    if [ -d "public/build/$module" ]; then
+        MODULES_TO_DEPLOY+=("$module")
+        echo "  ✓ $module module detected"
+    fi
+done
+
+if [ ${#MODULES_TO_DEPLOY[@]} -eq 0 ]; then
+    echo "❌ No built modules found in public/build/"
+    echo "Please run 'npm run build' or 'npm run build:MODULE' first"
+    exit 1
+fi
+
+echo ""
+echo "📦 Deploying ${#MODULES_TO_DEPLOY[@]} module(s) incrementally..."
+echo ""
+
+# Use rsync for incremental deployment (only uploads changed files)
+if command -v rsync &> /dev/null; then
+    echo "🔄 Using rsync for efficient incremental upload..."
+    for module in "${MODULES_TO_DEPLOY[@]}"; do
+        if [ "$module" = "main" ]; then
+            echo "  Syncing main module assets..."
+            rsync -avz --delete public/build/assets/ ${DROPLET_USER}@${DROPLET_IP}:${PROJECT_PATH}/public/build/assets/
+            rsync -avz public/build/manifest.json ${DROPLET_USER}@${DROPLET_IP}:${PROJECT_PATH}/public/build/
+            if [ -d "public/build/.vite" ]; then
+                rsync -avz public/build/.vite/ ${DROPLET_USER}@${DROPLET_IP}:${PROJECT_PATH}/public/build/.vite/
+            fi
+        else
+            echo "  Syncing $module module..."
+            rsync -avz --delete public/build/$module/ ${DROPLET_USER}@${DROPLET_IP}:${PROJECT_PATH}/public/build/$module/
+        fi
+    done
+else
+    echo "⚠️  rsync not found, using tar method (will preserve other modules)..."
+    echo "⚠️  You may be prompted for the SSH password..."
+    
+    # Create tar with only the modules we're deploying
+    cd public
+    tar -czf build-partial.tar.gz \
+        $([ -d "build/assets" ] && echo "build/assets") \
+        $([ -f "build/manifest.json" ] && echo "build/manifest.json") \
+        $([ -d "build/.vite" ] && echo "build/.vite") \
+        $(for m in "${MODULES_TO_DEPLOY[@]}"; do [ "$m" != "main" ] && [ -d "build/$m" ] && echo "build/$m"; done)
+    
+    scp build-partial.tar.gz ${DROPLET_USER}@${DROPLET_IP}:${PROJECT_PATH}/public/
+    rm build-partial.tar.gz
+    cd ..
+fi
 
 # SSH and run deployment commands
 ssh ${DROPLET_USER}@${DROPLET_IP} << ENDSSH
 
 cd ${PROJECT_PATH}
 
-# Extract uploaded assets
-echo "📦 Extracting assets..."
-cd public
-tar -xzf build.tar.gz
-rm build.tar.gz
-cd ..
+# Extract uploaded assets (only if using tar method, rsync already synced)
+if [ -f public/build-partial.tar.gz ]; then
+    echo "📦 Extracting assets (incremental update)..."
+    cd public
+    tar -xzf build-partial.tar.gz
+    rm build-partial.tar.gz
+    cd ..
+else
+    echo "✓ Assets already synced via rsync"
+fi
 
 # Verify manifest location on server
 echo "📦 Verifying Vite manifest location..."
@@ -115,9 +172,10 @@ echo ""
 echo "✅ Deployment complete!"
 echo ""
 echo "📊 Deployment verification:"
-echo "  • Modules deployed: \$(ls -d public/build/*/ 2>/dev/null | wc -l) subdirectories"
+echo "  • Modules in build dir: \$(ls -d public/build/*/ 2>/dev/null | wc -l) subdirectories"
+echo "  • Modules deployed this run: ${#MODULES_TO_DEPLOY[@]} (${MODULES_TO_DEPLOY[@]})"
 echo "  • Main manifest: \$([ -f public/build/manifest.json ] && echo '✓' || echo '✗')"
-echo "  • Main assets: \$(find public/build/assets -type f 2>/dev/null | wc -l) files"
+echo "  • Total asset files: \$(find public/build -name '*.js' -o -name '*.css' 2>/dev/null | wc -l)"
 echo ""
 
 ENDSSH
