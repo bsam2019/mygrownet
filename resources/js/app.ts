@@ -8,37 +8,42 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 registerModuleSW('/sw.js', 'MyGrowNet');
 
 // Only include pages that are actually needed for the main app
-// Module-specific pages are handled by their own entry points
+// Module-specific pages are handled by their own entry points (app-*.ts files)
 const pageGlobs: Record<string, () => Promise<DefineComponent>> = {
-    ...import.meta.glob<DefineComponent>('./pages/*.vue'), // Root level pages
-    ...import.meta.glob<DefineComponent>('./pages/Workspace/**/*.vue'), // Workspace pages
-    ...import.meta.glob<DefineComponent>('./pages/Auth/**/*.vue'), // Auth pages
-    ...import.meta.glob<DefineComponent>('./pages/BMS/**/*.vue'), // BMS pages
-    ...import.meta.glob<DefineComponent>('./pages/Department/**/*.vue'), // Department pages
-    ...import.meta.glob<DefineComponent>('./pages/Investment/**/*.vue'), // Investment pages
-    ...import.meta.glob<DefineComponent>('./pages/Profile/**/*.vue'), // Profile pages
-    ...import.meta.glob<DefineComponent>('./pages/Withdrawal/**/*.vue'), // Withdrawal pages
-    ...import.meta.glob<DefineComponent>('./pages/Subscription/**/*.vue'), // Subscription pages
-    ...import.meta.glob<DefineComponent>('./pages/Library/**/*.vue'), // Library pages
-    ...import.meta.glob<DefineComponent>('./pages/Notification/**/*.vue'), // Notification pages
-    ...import.meta.glob<DefineComponent>('./pages/Messaging/**/*.vue'), // Messaging pages
-    ...import.meta.glob<DefineComponent>('./pages/Workshop/**/*.vue'), // Workshop pages
-    ...import.meta.glob<DefineComponent>('./pages/Investor/**/*.vue'), // Investor pages
-    ...import.meta.glob<DefineComponent>('./pages/ProfitSharing/**/*.vue'), // Profit sharing pages
-    ...import.meta.glob<DefineComponent>('./pages/Apps/**/*.vue'), // App catalog pages
-    ...import.meta.glob<DefineComponent>('./pages/GrowBuilder/**/*.vue'), // GrowBuilder pages
-    ...import.meta.glob<DefineComponent>('./pages/StockFlow/**/*.vue'), // StockFlow pages
-    ...import.meta.glob<DefineComponent>('./pages/BizDocs/**/*.vue'), // BizDocs pages
-    ...import.meta.glob<DefineComponent>('./pages/GrowBiz/**/*.vue'), // GrowBiz pages
-    ...import.meta.glob<DefineComponent>('./pages/QuickInvoice/**/*.vue'), // Quick Invoice pages
-    ...import.meta.glob<DefineComponent>('./pages/GrowNet/**/*.vue'), // GrowNet pages
-    ...import.meta.glob<DefineComponent>('./pages/GrowFinance/**/*.vue'), // GrowFinance pages
-    ...import.meta.glob<DefineComponent>('./pages/GrowMart/**/*.vue'), // GrowMart pages
-    ...import.meta.glob<DefineComponent>('./pages/ZamStay/**/*.vue'), // ZamStay pages
-    ...import.meta.glob<DefineComponent>('./pages/PrimeEdge/**/*.vue'), // PrimeEdge pages
-    ...import.meta.glob<DefineComponent>('./pages/LifePlus/**/*.vue'), // LifePlus pages
-    ...import.meta.glob<DefineComponent>('./pages/GrowStorage/**/*.vue'), // GrowStorage pages
-    ...import.meta.glob<DefineComponent>('./pages/Ventures/**/*.vue'), // Ventures pages
+    ...import.meta.glob<DefineComponent>('./pages/*.vue'), // Root level pages (Welcome, About, Contact, etc.)
+    ...import.meta.glob<DefineComponent>('./pages/Workspace/**/*.vue'), // Workspace/Platform Core
+    ...import.meta.glob<DefineComponent>('./pages/Auth/**/*.vue'), // Authentication
+    ...import.meta.glob<DefineComponent>('./pages/Apps/**/*.vue'), // App catalog
+    
+    // Core Platform pages (NOT modules with their own entry points)
+    ...import.meta.glob<DefineComponent>('./pages/Department/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Investment/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Withdrawals/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Module/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Notification/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Wallet/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Transactions/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Reports/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Portal/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Settings/**/*.vue'),
+    
+    // Note: The following modules have their own entry points and should NOT be here:
+    // - BMS (app-bms.ts)
+    // - GrowNet (app-grownet.ts)
+    // - GrowBuilder (app-growbuilder.ts)
+    // - StockFlow (app-stockflow.ts)
+    // - BizDocs (app-bizdocs.ts)
+    // - GrowFinance (app-growfinance.ts)
+    // - GrowMart (app-growmart.ts)
+    // - ZamStay (app-zamstay.ts)
+    // - PrimeEdge (app-primeedge.ts)
+    // - LifePlus (app-lifephus.ts)
+    // - BizBoost (app-bizboost.ts)
+    // - GrowStream (app-growstream.ts)
+    // - Marketplace (app-marketplace.ts)
+    // - Ventures (app-venture.ts)
+    // - Admin (app-admin.ts)
+    // - Employee (app-employee.ts)
 };
 
 bootInertia(appName, (name: string) => {
