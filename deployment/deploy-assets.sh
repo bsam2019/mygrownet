@@ -71,30 +71,54 @@ echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod 664 config/modules.php
 echo "🚀 Optimizing..."
 php artisan optimize
 
-# Clean up old unused asset files (keep files referenced in current manifest)
+# Clean up old unused asset files (keep files referenced in current manifests)
 echo "🧹 Cleaning up old unused asset files..."
-cd public/build/assets
 
-# Get list of files referenced in manifest
-MANIFEST_FILES=\$(grep -oP '"file":\\s*"assets/\\K[^"]+' ../manifest.json | sort | uniq)
-
-# Remove files NOT in manifest (older versions)
-for file in *; do
-    if [ -f "\$file" ]; then
-        if ! echo "\$MANIFEST_FILES" | grep -q "^\$file\$"; then
-            # Only remove if file is older than 1 hour (safety check)
-            if [ \$(find "\$file" -mmin +60 2>/dev/null | wc -l) -gt 0 ]; then
-                echo "  Removing old file: \$file"
-                rm "\$file"
-            fi
+# Function to clean assets for a module
+cleanup_module_assets() {
+    local module_dir=\$1
+    if [ -d "public/build/\${module_dir}/assets" ]; then
+        cd "public/build/\${module_dir}/assets"
+        
+        # Get list of files referenced in this module's manifest
+        if [ -f "../manifest.json" ]; then
+            MANIFEST_FILES=\$(grep -oP '"file":\\s*"assets/\\K[^"]+' ../manifest.json | sort | uniq)
+            
+            # Remove files NOT in manifest (older versions)
+            for file in *; do
+                if [ -f "\$file" ]; then
+                    if ! echo "\$MANIFEST_FILES" | grep -q "^\$file\$"; then
+                        # Only remove if file is older than 1 hour (safety check)
+                        if [ \$(find "\$file" -mmin +60 2>/dev/null | wc -l) -gt 0 ]; then
+                            echo "  [\${module_dir}] Removing old file: \$file"
+                            rm "\$file"
+                        fi
+                    fi
+                fi
+            done
         fi
+        cd ../../..
     fi
+}
+
+# Clean up main build assets
+cleanup_module_assets ""
+
+# Clean up module-specific assets
+for module_dir in admin bizboost bizdocs bms employee growbuilder growfinance growmart grownet growstream lifephus marketplace primeedge stockflow venture zamstay; do
+    cleanup_module_assets "\$module_dir"
 done
 
-cd ../../..
 echo "✅ Cleanup complete"
 
+echo ""
 echo "✅ Deployment complete!"
+echo ""
+echo "📊 Deployment verification:"
+echo "  • Modules deployed: \$(ls -d public/build/*/ 2>/dev/null | wc -l) subdirectories"
+echo "  • Main manifest: \$([ -f public/build/manifest.json ] && echo '✓' || echo '✗')"
+echo "  • Main assets: \$(find public/build/assets -type f 2>/dev/null | wc -l) files"
+echo ""
 
 ENDSSH
 
