@@ -382,7 +382,7 @@ Route::get('/org/{slug}', [\App\Http\Controllers\OrganizationWorkspaceController
     ->middleware(['auth', 'verified', 'ensure.organization.access'])
     ->name('workspace.organization');
 
-Route::post('/workspace/launch/{application}', [\App\Http\Controllers\WorkspaceController::class, 'launch'])
+Route::get('/workspace/launch/{application}', [\App\Http\Controllers\WorkspaceController::class, 'launch'])
     ->middleware(['auth', 'verified'])
     ->name('workspace.launch');
 
