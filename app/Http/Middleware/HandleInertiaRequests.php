@@ -58,6 +58,9 @@ class HandleInertiaRequests extends Middleware
             'growfinance'                       => 'growfinance',
             'growmarket'                        => 'marketplace',
             'growstream'                        => 'growstream',
+            'venturebuilder'                    => 'venture',
+            'ventures'                          => 'venture',
+            'grownet'                           => 'grownet',
         ];
 
         foreach ($pathMap as $prefix => $view) {

@@ -121,11 +121,14 @@ Route::get('/products', function () {
 })->name('platform.products');
 
 Route::get('/grownet', function () {
-    if (auth()->check()) {
-        return redirect()->route('grownet.dashboard');
-    }
     return Inertia::render('GrowNet/Welcome');
 })->name('grownet.welcome');
+
+Route::prefix('grownet')->name('grownet.')->group(function () {
+    Route::get('/about', fn() => Inertia::render('GrowNet/About'))->name('about');
+    Route::get('/terms', fn() => Inertia::render('GrowNet/Terms'))->name('terms');
+    Route::get('/privacy', fn() => Inertia::render('GrowNet/Privacy'))->name('privacy');
+});
 
 Route::get('/bizdocs', function () {
     if (auth()->check()) {
@@ -140,6 +143,11 @@ Route::get('/growbuilder', function () {
     }
     return Inertia::render('GrowBuilder/Welcome');
 })->name('growbuilder.welcome');
+
+Route::get('/stockflow', function () {
+    return Inertia::render('StockFlow/Welcome');
+})->name('stockflow.welcome');
+
 
 // 301 Redirects for old URLs (maintain SEO and bookmarks)
 Route::permanentRedirect('/investment', '/starter-kits');
@@ -381,6 +389,14 @@ Route::post('/workspace/launch/{application}', [\App\Http\Controllers\WorkspaceC
 Route::get('/apps', [\App\Http\Controllers\WorkspaceController::class, 'catalog'])
     ->middleware(['auth', 'verified'])
     ->name('apps.catalog');
+
+Route::get('/apps/{slug}', [\App\Http\Controllers\WorkspaceController::class, 'show'])
+    ->middleware(['auth', 'verified'])
+    ->name('apps.show');
+
+Route::post('/apps/toggle-pin', [\App\Http\Controllers\WorkspaceController::class, 'togglePin'])
+    ->middleware(['auth', 'verified'])
+    ->name('apps.toggle-pin');
 
 Route::get('/organizations/create', [\App\Http\Controllers\OrganizationWorkspaceController::class, 'create'])
     ->middleware(['auth', 'verified'])
@@ -1127,17 +1143,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Note: Main /dashboard route now shows the Universal App Launcher (HomeHub)
     // Users can access the GrowNet dashboard directly via /grownet
     
-    // GrowNet - Primary route (clean URL)
-    Route::get('/grownet', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'mobileIndex'])
+    // GrowNet - Product Hub (landing dashboard)
+    Route::get('/grownet/dashboard', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'productHub'])
         ->middleware(['auth'])
         ->name('grownet.dashboard');
+
+    // GrowNet - Network & Referral Dashboard
+    Route::get('/grownet/network', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'mobileIndex'])
+        ->middleware(['auth'])
+        ->name('grownet.network');
     
     // Legacy /mygrownet routes (keep for backward compatibility)
     Route::prefix('mygrownet')->name('mygrownet.')->middleware(['auth'])->group(function () {
         
-        // Redirect /mygrownet to /grownet
+        // Redirect /mygrownet to /grownet/network
         Route::get('/', function () {
-            return redirect()->route('grownet.dashboard');
+            return redirect()->route('grownet.network');
         })->name('dashboard');
         
         // Member Membership Routes

@@ -36,10 +36,10 @@
           <div class="flex items-center gap-1 flex-shrink-0">
             <NotificationBell />
             <Link
-              :href="route('workspace')"
-              aria-label="Go to Dashboard"
+              :href="route('grownet.dashboard')"
+              aria-label="Product Hub"
               class="p-2.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm transition-all duration-200 active:scale-95 border border-white/20"
-              title="Dashboard"
+              title="Product Hub"
             >
               <Squares2X2Icon class="h-5 w-5" aria-hidden="true" />
             </Link>

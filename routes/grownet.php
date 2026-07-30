@@ -159,13 +159,23 @@ Route::domain('grownet.mygrownet.com')->group(function () use ($registerGrowNetS
         return Inertia::render('GrowNet/Welcome');
     })->name('grownet.sub.welcome');
 
-    // GrowNet SPA dashboard
-    Route::get('/dashboard', [DashboardController::class, 'mobileIndex'])
+    // GrowNet product hub (landing dashboard)
+    Route::get('/dashboard', [DashboardController::class, 'productHub'])
         ->middleware(['auth'])
         ->name('grownet.sub.dashboard');
 
+    // GrowNet network & referral dashboard
+    Route::get('/network', [DashboardController::class, 'mobileIndex'])
+        ->middleware(['auth'])
+        ->name('grownet.sub.network');
+
     // Authenticated routes (served at root, no prefix)
     $registerGrowNetSubdomainRoutes('', 'grownet.sub.');
+
+    // Info pages (public)
+    Route::get('/about', [GuestController::class, 'about'])->name('grownet.sub.about');
+    Route::get('/terms', [GuestController::class, 'terms'])->name('grownet.sub.terms');
+    Route::get('/privacy', [GuestController::class, 'privacy'])->name('grownet.sub.privacy');
 
     // Guest-only auth routes
     Route::middleware(['guest'])->group(function () {

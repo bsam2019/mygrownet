@@ -36,6 +36,24 @@ class DashboardController extends Controller
         private TicketRepository $ticketRepository,
     ) {}
 
+    public function productHub(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) return redirect()->route('login');
+
+        $stats = [
+            'referrals' => $user->direct_referrals,
+            'earnings' => number_format($user->total_earnings, 0),
+            'team' => $user->referral_count,
+            'tier' => $user->growNetData?->current_tier ?? '—',
+        ];
+
+        return Inertia::render('GrowNet/ProductHub', [
+            'stats' => $stats,
+            'user' => $user->only('id', 'name', 'email'),
+        ]);
+    }
+
     public function mobileIndex(Request $request)
     {
         try {

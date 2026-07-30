@@ -66,8 +66,27 @@ class GrowNetDashboardController extends Controller
     }
 
     /**
-     * Main Dashboard (Mobile-first, responsive design)
-     * This is now the primary dashboard experience
+     * Product Hub — landing dashboard showing GrowNet products
+     */
+    public function productHub(Request $request)
+    {
+        $user = $request->user();
+
+        $stats = [
+            'referrals' => $user->direct_referrals,
+            'earnings' => number_format($user->total_earnings, 0),
+            'team' => $user->referral_count,
+            'tier' => $user->growNetData?->current_tier ?? '—',
+        ];
+
+        return Inertia::render('GrowNet/ProductHub', [
+            'stats' => $stats,
+            'user' => $user->only('id', 'name', 'email'),
+        ]);
+    }
+
+    /**
+     * Network & Referral Dashboard
      */
     public function mobileIndex(Request $request)
     {

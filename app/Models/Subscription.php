@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
 
 class Subscription extends Model
 {

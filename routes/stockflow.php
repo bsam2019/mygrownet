@@ -75,7 +75,7 @@ Route::middleware(['auth', 'verified'])->prefix('stockflow')->name('stockflow.')
     Route::post('/logout', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     // Dashboard
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Import/Export (cross-cutting, no feature flag — templates always downloadable)
     Route::prefix('templates')->name('templates.')->group(function () {

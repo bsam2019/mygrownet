@@ -93,6 +93,50 @@ class WorkspaceController extends Controller
         return redirect()->route('workspace');
     }
 
+    public function show(Request $request, string $slug)
+    {
+        $user = $request->user();
+        $context = $request->attributes->get('workspace_context');
+
+        if (!$context) {
+            $context = $this->contextResolver->resolve($user, null);
+        }
+
+        $app = Application::where('slug', $slug)->where('is_active', true)->firstOrFail();
+
+        $canAccess = $this->appAccess->canAccess($user, $app, $context);
+        $reason = $this->appAccess->getUnavailabilityReason($user, $app, $context);
+        $hasSubscription = $user->applicationSubscriptions()
+            ->where('application_id', $app->id)
+            ->where('status', 'active')
+            ->exists();
+        $isPinned = $user->applications()->where('application_id', $app->id)->exists();
+
+        return Inertia::render('Apps/Show', [
+            'app' => [
+                'id' => $app->id,
+                'name' => $app->name,
+                'slug' => $app->slug,
+                'type' => $app->type,
+                'category' => $app->category,
+                'url' => $app->url,
+                'lifecycle' => $app->lifecycle,
+                'operational_status' => $app->operational_status,
+                'access_model' => $app->access_model,
+                'context_support' => $app->context_support,
+                'subscription_required' => $app->subscription_required,
+                'requires_organization_context' => $app->requires_organization_context,
+            ],
+            'access' => [
+                'can_access' => $canAccess,
+                'reason' => $reason,
+                'has_subscription' => $hasSubscription,
+                'is_pinned' => $isPinned,
+            ],
+            'context' => $context->toArray(),
+        ]);
+    }
+
     public function launch(Request $request, Application $application)
     {
         $user = $request->user();
@@ -107,5 +151,29 @@ class WorkspaceController extends Controller
         }
 
         return $this->appLaunch->launch($application, $context, $user);
+    }
+
+    public function togglePin(Request $request)
+    {
+        $validated = $request->validate([
+            'application_id' => 'required|integer|exists:applications,id',
+        ]);
+
+        $user = $request->user();
+        $app = Application::findOrFail($validated['application_id']);
+        $exists = $user->applications()->where('application_id', $app->id)->exists();
+
+        if ($exists) {
+            $user->applications()->detach($app->id);
+            $pinned = false;
+        } else {
+            $user->applications()->attach($app->id, [
+                'relationship_type' => 'customer',
+                'status' => 'active',
+            ]);
+            $pinned = true;
+        }
+
+        return back()->with('message', $pinned ? "{$app->name} added to your workspace" : "{$app->name} removed from your workspace");
     }
 }

@@ -27,7 +27,7 @@ const submit = () => {
         <div class="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
             <div class="w-full max-w-md">
                 <div class="text-center mb-8">
-                    <div class="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-700 to-indigo-800 flex items-center justify-center shadow-lg mb-4">
+                    <div class="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center shadow-lg mb-4">
                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
                         </svg>
@@ -36,12 +36,12 @@ const submit = () => {
                     <p class="text-gray-600 mt-1">Access lessons, videos, e-books, and more</p>
                 </div>
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
-                    <div class="mb-5 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
-                        <p class="text-xs text-indigo-800 leading-relaxed">
+                    <div class="mb-5 p-3 bg-violet-50 border border-violet-200 rounded-lg">
+                        <p class="text-xs text-violet-800 leading-relaxed">
                             GrowNet uses your <strong>MyGrowNet</strong> account.
                             Already have one? Sign in below.
                             New here?
-                            <Link :href="route('grownet.sub.register')" class="text-indigo-700 font-medium hover:underline">Create an account</Link>
+                            <Link :href="route('grownet.sub.register')" class="text-violet-700 font-medium hover:underline">Create an account</Link>
                             &mdash; it's shared across all MyGrowNet services.
                         </p>
                     </div>
@@ -61,7 +61,7 @@ const submit = () => {
                             <Input id="password" type="password" autocomplete="current-password" v-model="form.password" placeholder="Enter your password" class="mt-1" />
                             <InputError :message="form.errors.password" class="mt-1" />
                         </div>
-                        <Button type="submit" class="w-full bg-gradient-to-r from-slate-700 to-indigo-800 hover:from-slate-800 hover:to-indigo-900 text-white font-medium py-5 shadow-sm" :disabled="form.processing">
+                        <Button type="submit" class="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white font-medium py-5 shadow-lg shadow-violet-500/25" :disabled="form.processing">
                             <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin mr-2" />
                             Sign in
                         </Button>
@@ -80,7 +80,7 @@ const submit = () => {
                         </a>
                         <div class="text-center text-sm text-gray-600 pt-2">
                             Don't have an account?
-                            <Link :href="route('grownet.sub.register')" class="text-indigo-600 hover:text-indigo-700 font-medium">Sign up</Link>
+                            <Link :href="route('grownet.sub.register')" class="text-violet-600 hover:text-violet-700 font-medium">Sign up</Link>
                         </div>
                     </form>
                 </div>

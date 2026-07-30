@@ -38,12 +38,20 @@ $registerVentureMemberRoutes = function (string $prefix, string $namePrefix) {
 // ============================================================
 
 // Venture Builder Landing Page
-Route::get('/venturebuilder', fn() => Inertia::render('Ventures/Welcome'))->name('venturebuilder.welcome');
+Route::get('/venturebuilder', function () {
+    $featured = app(\App\Domain\VentureBuilder\Repositories\VentureRepositoryInterface::class)
+        ->findFeatured(3);
+    return Inertia::render('Ventures/Welcome', [
+        'featuredVentures' => $featured,
+    ]);
+})->name('venturebuilder.welcome');
 
 // Public Venture Routes (No authentication required)
 Route::middleware(['module:venture_builder'])->prefix('ventures')->name('ventures.')->group(function () {
     Route::get('/about', fn() => Inertia::render('Ventures/About'))->name('about');
     Route::get('/policy', fn() => Inertia::render('Ventures/Policy'))->name('policy');
+    Route::get('/terms', fn() => Inertia::render('Ventures/Terms'))->name('terms');
+    Route::get('/privacy', fn() => Inertia::render('Ventures/Privacy'))->name('privacy');
     Route::get('/', [VentureController::class, 'index'])->name('index');
     Route::get('/{venture:slug}', [VentureController::class, 'show'])->name('show');
 });
@@ -159,6 +167,8 @@ Route::domain('venture.mygrownet.com')->group(function () use ($registerVentureM
 
     // Public welcome page at root
     Route::get('/', fn() => Inertia::render('Ventures/Welcome'))->name('venture.sub.welcome');
+    Route::get('/about', fn() => Inertia::render('Ventures/About'))->name('venture.sub.about');
+    Route::get('/policy', fn() => Inertia::render('Ventures/Policy'))->name('venture.sub.policy');
 
     // Public venture browsing
     Route::middleware(['module:venture_builder'])->group(function () {
@@ -188,5 +198,8 @@ Route::domain('venture.mygrownet.com')->group(function () use ($registerVentureM
 
         Route::get('/auth/google', [\App\Http\Controllers\Auth\SocialiteController::class, 'redirectToGoogle'])->name('venture.sub.auth.google');
         Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\SocialiteController::class, 'handleGoogleCallback'])->name('venture.sub.auth.google.callback');
+
+        Route::get('/terms', [GuestController::class, 'terms'])->name('venture.sub.terms');
+        Route::get('/privacy', [GuestController::class, 'privacy'])->name('venture.sub.privacy');
     });
 });

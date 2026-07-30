@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TierSetting;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TierQualification;
 
 class InvestmentTier extends Model
 {

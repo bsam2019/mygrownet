@@ -22,6 +22,18 @@ use App\Models\BGF\BgfRepayment;
 use App\Models\Community\CommunityProject;
 use App\Infrastructure\Persistence\Eloquent\GrowNet\Achievement;
 use App\Infrastructure\Persistence\Eloquent\GrowNet\UserAchievement;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\MatrixPosition;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\ReferralCommission;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TeamVolume;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\UserNetwork;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\UserPoints;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PointTransaction;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\UserBadge;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\LeaderboardEntry;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\TierUpgrade;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\AchievementBonus;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\PhysicalReward;
+use App\Infrastructure\Persistence\Eloquent\GrowNet\CommissionClawback;
 
 class User extends Authenticatable
 {
@@ -652,6 +664,13 @@ class User extends Authenticatable
     public function applicationSubscriptions(): HasMany
     {
         return $this->hasMany(\App\Domain\Core\Models\UserApplicationSubscription::class);
+    }
+
+    public function applications(): BelongsToMany
+    {
+        return $this->belongsToMany(\App\Domain\Core\Models\Application::class, 'user_applications')
+            ->withPivot('relationship_type', 'status')
+            ->withTimestamps();
     }
 
     public function socialAccounts(): HasMany
