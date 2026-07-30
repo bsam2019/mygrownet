@@ -152,12 +152,12 @@ class WorkspaceController extends Controller
 
         $result = $this->appLaunch->launch($application, $context, $user);
 
-        // If service returns array (external URL), return as Inertia props
-        if (is_array($result)) {
-            return Inertia::render('Workspace/Index', $result);
+        // If service returns array (external URL), do direct redirect
+        if (is_array($result) && isset($result['redirect_url'])) {
+            return redirect()->away($result['redirect_url']);
         }
 
-        // Otherwise it's a RedirectResponse
+        // Otherwise it's a RedirectResponse for internal routes
         return $result;
     }
 

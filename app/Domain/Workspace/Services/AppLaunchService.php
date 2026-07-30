@@ -49,8 +49,14 @@ class AppLaunchService
             $url = url($url);
         }
 
-        // For external URLs (subdomains), return JSON to avoid CORS
+        // For external URLs (subdomains), append /dashboard if user is authenticated
+        // This ensures they land on the app's dashboard, not the public landing page
         if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+            // Only append /dashboard if URL doesn't already have a path
+            if (parse_url($url, PHP_URL_PATH) === '/' || parse_url($url, PHP_URL_PATH) === null) {
+                $url = rtrim($url, '/') . '/dashboard';
+            }
+            
             return ['redirect_url' => $url];
         }
 
