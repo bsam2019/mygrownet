@@ -35,7 +35,7 @@ const homeUrl = computed(() => isSubdomain.value ? '/' : '/growbuilder');
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 sm:p-10 space-y-8 text-gray-700 text-sm leading-relaxed">
                 <section>
                     <h2 class="text-lg font-bold text-gray-900 mb-3">1. Acceptance of Terms</h2>
-                    <p>These Terms of Service ("Terms") govern your use of GrowBuilder, a website building platform provided by Rockshield Investments Limited t/a MyGrowNet ("we", "us", "our"). By using GrowBuilder, you agree to these Terms.</p>
+                    <p>These Terms of Service ("Terms") govern your use of GrowBuilder, a website building platform provided by MyGrowNet Technologies Limited ("we", "us", "our"). By using GrowBuilder, you agree to these Terms.</p>
                 </section>
 
                 <section>
@@ -79,7 +79,7 @@ const homeUrl = computed(() => isSubdomain.value ? '/' : '/growbuilder');
 
                 <section>
                     <h2 class="text-lg font-bold text-gray-900 mb-3">8. Intellectual Property</h2>
-                    <p>GrowBuilder, its logo, templates, and platform code are owned by Rockshield Investments Limited. Templates are provided as a starting point — modifications become your content. You may not resell or redistribute platform templates in their original form.</p>
+                    <p>GrowBuilder, its logo, templates, and platform code are owned by MyGrowNet Technologies Limited. Templates are provided as a starting point — modifications become your content. You may not resell or redistribute platform templates in their original form.</p>
                 </section>
 
                 <section>
@@ -106,7 +106,7 @@ const homeUrl = computed(() => isSubdomain.value ? '/' : '/growbuilder');
                     <h2 class="text-lg font-bold text-gray-900 mb-3">Contact</h2>
                     <div class="space-y-1 text-gray-600">
                         <p><strong>Email:</strong> growbuilder@mygrownet.com</p>
-                        <p><strong>Company:</strong> Rockshield Investments Limited, Lusaka, Zambia</p>
+                        <p><strong>Company:</strong> MyGrowNet Technologies Limited, Lusaka, Zambia</p>
                     </div>
                 </section>
             </div>

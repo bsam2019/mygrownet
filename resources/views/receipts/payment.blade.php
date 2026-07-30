@@ -218,11 +218,11 @@
                 @endif
             </div>
             <div class="company-name">MYGROWNET</div>
-            <div class="company-subtitle">(Operated by Rockshield Investments Limited)</div>
+            <div class="company-subtitle">(Operated by MyGrowNet Technologies Limited)</div>
             <div style="font-size: 11px; color: #999; margin-bottom: 12px;">Community Empowerment Platform</div>
             <div class="company-contact">
                 Email: info@mygrownet.com<br>
-                Phone: +260 977 563 730<br>
+                Phone: 0779872676<br>
                 Web: www.mygrownet.com
             </div>
         </div>
@@ -311,7 +311,7 @@
             </div>
             @endif
             <div class="payment-row">
-                <span class="info-label">Received By:</span> <span class="info-value">Rockshield Investments Limited</span>
+                <span class="info-label">Received By:</span> <span class="info-value">MyGrowNet Technologies Limited</span>
             </div>
         </div>
 
@@ -345,7 +345,7 @@
                         </div>
                     </div>
                     <div class="signature-line">Authorized by MyGrowNet System</div>
-                    <div class="signature-title">Rockshield Investments Limited</div>
+                    <div class="signature-title">MyGrowNet Technologies Limited</div>
                     <div class="signature-title" style="font-size: 10px; color: #999; margin-top: 3px;">
                         (MyGrowNet Platform)
                     </div>
@@ -353,7 +353,7 @@
             </div>
             <div class="signature-note">
                 This is a digitally generated receipt. No physical signature required.<br>
-                For verification, contact us at info@mygrownet.com or +260 977 563 730
+                For verification, contact us at info@mygrownet.com or 0779872676
             </div>
         </div>
     </div>

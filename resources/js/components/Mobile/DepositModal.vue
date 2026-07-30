@@ -171,7 +171,7 @@
                   <div class="bg-white rounded px-3 py-2 mb-2">
                     <p class="text-xs text-gray-600">Company Number</p>
                     <p class="text-xl font-bold text-gray-900">0760491206</p>
-                    <p class="text-xs text-gray-600 mt-1">Rockshield Investments Ltd</p>
+                    <p class="text-xs text-gray-600 mt-1">MyGrowNet Technologies Ltd</p>
                   </div>
                   <div class="bg-yellow-100 border border-yellow-300 rounded p-2 mb-3">
                     <p class="text-xs font-semibold text-yellow-900">⚠️ IMPORTANT:</p>

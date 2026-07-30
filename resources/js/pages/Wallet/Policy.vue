@@ -260,7 +260,7 @@
               <p class="text-gray-700 mb-4">Our support team is here to help!</p>
               <div class="space-y-2 text-gray-700">
                 <p><strong>Email:</strong> support@mygrownet.com</p>
-                <p><strong>Phone:</strong> +260 977 563 730</p>
+                <p><strong>Phone:</strong> 0779872676</p>
                 <p><strong>Hours:</strong> Monday - Friday, 8 AM - 5 PM</p>
                 <p><strong>Response Time:</strong> 24-48 hours</p>
               </div>

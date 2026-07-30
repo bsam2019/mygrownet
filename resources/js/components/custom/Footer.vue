@@ -145,7 +145,7 @@
           {
             icon: 'PhoneIcon',
             label: 'Phone',
-            value: '+260 977 563 730'
+            value: '0779872676'
           },
           {
             icon: 'MapPinIcon',

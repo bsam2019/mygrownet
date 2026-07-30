@@ -34,7 +34,7 @@ const homeUrl = computed(() => isSubdomain.value ? '/' : '/growbuilder');
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 sm:p-10 space-y-8 text-gray-700 text-sm leading-relaxed">
                 <section>
                     <h2 class="text-lg font-bold text-gray-900 mb-3">1. Who We Are</h2>
-                    <p>GrowBuilder is operated by Rockshield Investments Limited t/a MyGrowNet ("we", "us", "our"). This Privacy Policy explains how we handle your personal data when you use the GrowBuilder website builder platform.</p>
+                    <p>GrowBuilder is operated by MyGrowNet Technologies Limited ("we", "us", "our"). This Privacy Policy explains how we handle your personal data when you use the GrowBuilder website builder platform.</p>
                 </section>
 
                 <section>
@@ -116,7 +116,7 @@ const homeUrl = computed(() => isSubdomain.value ? '/' : '/growbuilder');
                     <div class="space-y-1 text-gray-600">
                         <p><strong>Email:</strong> growbuilder@mygrownet.com</p>
                         <p><strong>Privacy:</strong> privacy@mygrownet.com</p>
-                        <p><strong>Company:</strong> Rockshield Investments Limited, Lusaka, Zambia</p>
+                        <p><strong>Company:</strong> MyGrowNet Technologies Limited, Lusaka, Zambia</p>
                     </div>
                 </section>
             </div>

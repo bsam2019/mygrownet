@@ -19,10 +19,10 @@
             Terms of Service
           </h1>
           <p class="text-gray-600">
-            Last Updated: October 31, 2025
+            Last Updated: July 30, 2026
           </p>
           <p class="text-gray-600 mt-2">
-            Effective Date: October 31, 2025
+            Effective Date: July 30, 2026
           </p>
         </div>
 
@@ -32,8 +32,7 @@
           <section>
             <h2 class="text-2xl font-semibold text-gray-900 mb-4">1. Agreement to Terms</h2>
             <p class="text-gray-700 leading-relaxed mb-4">
-              These Terms of Service ("Terms") constitute a legally binding agreement between you and Rockshield 
-              Investments Limited, operating as MyGrowNet ("Company," "we," "us," or "our"), concerning your access 
+              These Terms of Service ("Terms") constitute a legally binding agreement between you and MyGrowNet Technologies Limited, operating as MyGrowNet ("Company," "we," "us," or "our"), concerning your access 
               to and use of the MyGrowNet platform and services.
             </p>
             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -98,32 +97,107 @@
           <!-- Services Description -->
           <section>
             <h2 class="text-2xl font-semibold text-gray-900 mb-4">4. Description of Services</h2>
-            <p class="text-gray-700 mb-4">MyGrowNet provides the following services:</p>
-            
-            <div class="grid md:grid-cols-2 gap-4">
-              <div class="bg-gray-50 rounded-lg p-4">
-                <h4 class="font-medium text-gray-900 mb-2">Membership Platform</h4>
-                <p class="text-gray-700 text-sm">7-level professional growth system with training and mentorship</p>
+            <p class="text-gray-700 mb-4">MyGrowNet provides a multi-product digital platform. The specific services available to you depend on your account type, subscriptions, and access level. Our platform includes the following categories:</p>
+
+            <div class="space-y-6">
+              <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">4.1 Digital Products</h3>
+                <div class="grid md:grid-cols-2 gap-3">
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">GrowStream</h4>
+                    <p class="text-gray-700 text-sm">Digital content streaming and media platform</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">GrowLearn</h4>
+                    <p class="text-gray-700 text-sm">Online learning and skill development</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">GrowTemplates</h4>
+                    <p class="text-gray-700 text-sm">Professional design templates and digital assets</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">GrowBackup</h4>
+                    <p class="text-gray-700 text-sm">Cloud backup and data storage services</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">GrowAI</h4>
+                    <p class="text-gray-700 text-sm">AI-powered tools and automation services</p>
+                  </div>
+                </div>
               </div>
-              <div class="bg-gray-50 rounded-lg p-4">
-                <h4 class="font-medium text-gray-900 mb-2">Venture Builder</h4>
-                <p class="text-gray-700 text-sm">Co-investment opportunities in vetted business ventures</p>
+
+              <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">4.2 SaaS Business Applications</h3>
+                <p class="text-gray-700 text-sm mb-3">Each SaaS application is governed by its own service-specific terms in addition to these Terms:</p>
+                <div class="grid md:grid-cols-2 gap-3">
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">BizBoost</h4>
+                    <p class="text-gray-700 text-sm">Business directory and lead generation platform</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">GrowMart</h4>
+                    <p class="text-gray-700 text-sm">E-commerce and marketplace platform</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">BizDocs</h4>
+                    <p class="text-gray-700 text-sm">Document management and invoicing</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">StockFlow</h4>
+                    <p class="text-gray-700 text-sm">Inventory and stock audit management</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">GrowBuilder</h4>
+                    <p class="text-gray-700 text-sm">Website building and hosting platform</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">QuickInvoice</h4>
+                    <p class="text-gray-700 text-sm">Invoice generation and payment tracking</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">ZamStay</h4>
+                    <p class="text-gray-700 text-sm">Accommodation and hospitality management</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">PrimeEdge</h4>
+                    <p class="text-gray-700 text-sm">Advisory and professional services platform</p>
+                  </div>
+                </div>
               </div>
-              <div class="bg-gray-50 rounded-lg p-4">
-                <h4 class="font-medium text-gray-900 mb-2">Business Growth Fund</h4>
-                <p class="text-gray-700 text-sm">Short-term financing for verified business orders</p>
+
+              <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">4.3 Financial Services</h3>
+                <div class="grid md:grid-cols-2 gap-3">
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">MyGrow Wallet</h4>
+                    <p class="text-gray-700 text-sm">Digital wallet for platform transactions, withdrawals, and transfers</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">Venture Builder</h4>
+                    <p class="text-gray-700 text-sm">Co-investment opportunities in vetted business ventures</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">Business Growth Fund</h4>
+                    <p class="text-gray-700 text-sm">Short-term financing for verified business orders</p>
+                  </div>
+                  <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">GrowFinance</h4>
+                    <p class="text-gray-700 text-sm">Accounting, budgeting, and financial management tools</p>
+                  </div>
+                </div>
               </div>
-              <div class="bg-gray-50 rounded-lg p-4">
-                <h4 class="font-medium text-gray-900 mb-2">MyGrow Wallet</h4>
-                <p class="text-gray-700 text-sm">Digital wallet for platform transactions</p>
+
+              <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">4.4 Network and Referral Program</h3>
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <p class="text-gray-700 text-sm">Eligible members may participate in the MyGrowNet referral and commission program, which rewards network growth and platform activity. Participation is subject to the specific program terms.</p>
+                </div>
               </div>
-              <div class="bg-gray-50 rounded-lg p-4">
-                <h4 class="font-medium text-gray-900 mb-2">Commission System</h4>
-                <p class="text-gray-700 text-sm">7-level referral commission structure</p>
-              </div>
-              <div class="bg-gray-50 rounded-lg p-4">
-                <h4 class="font-medium text-gray-900 mb-2">Learning Resources</h4>
-                <p class="text-gray-700 text-sm">Educational content and skill development</p>
+
+              <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p class="text-yellow-900 text-sm">
+                  <strong>Important:</strong> Each SaaS application and financial product may have additional terms and conditions specific to that service. In the event of any conflict between these general Terms and service-specific terms, the service-specific terms will prevail for that service.
+                </p>
               </div>
             </div>
           </section>
@@ -170,32 +244,49 @@
             
             <div class="space-y-4">
               <div>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">6.1 Payments and Fees</h3>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">6.1 Subscriptions, Fees, and Payments</h3>
                 <ul class="list-disc list-inside text-gray-700 space-y-1 ml-4">
-                  <li>All fees are stated in Zambian Kwacha (ZMW)</li>
-                  <li>Membership fees are non-refundable unless otherwise stated</li>
-                  <li>Payment processing fees may apply</li>
-                  <li>We reserve the right to change fees with 30 days notice</li>
+                  <li>All fees are stated in Zambian Kwacha (ZMW) unless otherwise indicated</li>
+                  <li>Subscription fees are billed in advance on a monthly or annual basis as selected during sign-up</li>
+                  <li>Subscriptions automatically renew at the end of each billing period unless cancelled at least 48 hours before the renewal date</li>
+                  <li>You may cancel your subscription at any time through your account settings; cancellation takes effect at the end of the current billing period</li>
+                  <li>No prorated refunds for partial billing periods unless otherwise stated in service-specific terms</li>
+                  <li>One-time membership fees are refundable within 14 days of payment, after which they become non-refundable</li>
+                  <li>Payment processing fees may apply and are non-refundable once processed</li>
+                  <li>We reserve the right to change fees with 30 days notice via email or platform notification</li>
                 </ul>
               </div>
 
               <div>
                 <h3 class="text-lg font-medium text-gray-900 mb-2">6.2 Commissions and Earnings</h3>
                 <ul class="list-disc list-inside text-gray-700 space-y-1 ml-4">
-                  <li>Commissions are earned based on network activity and performance</li>
-                  <li>Minimum activity points required for monthly qualification</li>
-                  <li>Earnings are subject to applicable taxes</li>
-                  <li>We reserve the right to withhold earnings if fraud is suspected</li>
+                  <li>Commissions are earned based on network activity and performance as defined in the program terms</li>
+                  <li>Minimum activity points may be required for monthly qualification</li>
+                  <li>Earnings are subject to applicable taxes and withholding where required by law</li>
+                  <li>We reserve the right to withhold earnings if fraud, abuse, or policy violation is suspected pending investigation</li>
+                  <li>Unclaimed earnings may be forfeited after 12 months of account inactivity</li>
                 </ul>
               </div>
 
               <div>
                 <h3 class="text-lg font-medium text-gray-900 mb-2">6.3 Withdrawals</h3>
                 <ul class="list-disc list-inside text-gray-700 space-y-1 ml-4">
-                  <li>Minimum withdrawal amounts apply</li>
-                  <li>Processing time: 1-5 business days</li>
-                  <li>Withdrawal fees may apply</li>
-                  <li>We may request additional verification for large withdrawals</li>
+                  <li>Minimum and maximum withdrawal limits apply as specified in your account</li>
+                  <li>Processing time: 1–5 business days after approval</li>
+                  <li>Withdrawal fees may apply and are disclosed at the time of request</li>
+                  <li>We may request additional verification for withdrawals exceeding standard thresholds</li>
+                  <li>Withdrawals are subject to anti-money laundering checks and may be delayed or refused accordingly</li>
+                  <li>Funds from pending or disputed transactions are not available for withdrawal</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">6.4 Refund Policy</h3>
+                <ul class="list-disc list-inside text-gray-700 space-y-1 ml-4">
+                  <li>Digital product purchases are non-refundable once delivered or accessed</li>
+                  <li>Subscription fees are non-refundable except as required by consumer protection law</li>
+                  <li>Investment and BGF contributions are not refundable — see Section 7 for risk disclosures</li>
+                  <li>Refund requests must be submitted via support@mygrownet.com</li>
                 </ul>
               </div>
             </div>
@@ -269,7 +360,7 @@
           <section>
             <h2 class="text-2xl font-semibold text-gray-900 mb-4">10. Indemnification</h2>
             <p class="text-gray-700">
-              You agree to indemnify, defend, and hold harmless MyGrowNet, Rockshield Investments Limited, and our 
+              You agree to indemnify, defend, and hold harmless MyGrowNet, MyGrowNet Technologies Limited, and our 
               officers, directors, employees, and agents from any claims, damages, losses, liabilities, and expenses 
               (including legal fees) arising from:
             </p>
@@ -327,7 +418,10 @@
               </ul>
               <p class="text-gray-700 mt-4">
                 Upon termination, your right to use the platform ceases immediately. We may retain your information 
-                as required by law or for legitimate business purposes.
+                as required by law or for legitimate business purposes, including the preservation of transaction 
+                records, audit trails, and compliance with anti-money laundering regulations. Any outstanding 
+                obligations (including unpaid fees, loan repayments, or BGF repayments) remain enforceable after 
+                termination. Account balances may be forfeited after 12 months of inactivity following termination.
               </p>
             </div>
           </section>
@@ -377,6 +471,10 @@
                 <h4 class="font-medium text-gray-900">Assignment</h4>
                 <p class="text-gray-700 text-sm">You may not assign these Terms without our consent. We may assign them freely.</p>
               </div>
+              <div>
+                <h4 class="font-medium text-gray-900">Force Majeure</h4>
+                <p class="text-gray-700 text-sm">We shall not be liable for any failure or delay in performance caused by events beyond our reasonable control, including but not limited to acts of God, power outages, internet disruptions, government actions, pandemics, civil unrest, or natural disasters.</p>
+              </div>
             </div>
           </section>
 
@@ -389,8 +487,8 @@
               </p>
               <div class="space-y-2 text-gray-700">
                 <p><strong>Email:</strong> legal@mygrownet.com</p>
-                <p><strong>Phone:</strong> +260 977 563 730</p>
-                <p><strong>Address:</strong> Rockshield Investments Limited, Lusaka, Zambia</p>
+                <p><strong>Phone:</strong> 0779872676</p>
+                <p><strong>Address:</strong> MyGrowNet Technologies Limited, Lusaka, Zambia</p>
               </div>
             </div>
           </section>

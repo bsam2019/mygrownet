@@ -442,7 +442,7 @@ const close = () => {
                                             <span class="font-semibold text-gray-900">MTN MoMo</span>
                                         </div>
                                         <p class="text-lg font-bold text-gray-900 mb-1">0760491206</p>
-                                        <p class="text-xs text-gray-600">Rockshield Investments Ltd</p>
+                                        <p class="text-xs text-gray-600">MyGrowNet Technologies Ltd</p>
                                         <p class="text-xs text-yellow-700 mt-1">⚠️ Use WITHDRAW method (Agent Number)</p>
                                     </div>
                                     

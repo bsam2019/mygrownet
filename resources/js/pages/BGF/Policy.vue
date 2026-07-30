@@ -339,9 +339,9 @@
                 <strong>For BGF inquiries:</strong>
               </p>
               <p class="text-gray-700">Email: bgf@mygrownet.com</p>
-              <p class="text-gray-700">Phone: +260 977 563 730</p>
+              <p class="text-gray-700">Phone: 0779872676</p>
               <p class="text-gray-700 mt-4">
-                <strong>MyGrowNet / Rockshield Investments Limited</strong><br>
+                <strong>MyGrowNet Technologies Limited</strong><br>
                 Lusaka, Zambia
               </p>
             </div>

@@ -27,7 +27,7 @@ return [
     'manual_payment' => [
         'mtn' => [
             'number' => env('MANUAL_PAYMENT_MTN_NUMBER', '0760491206'),
-            'name' => env('MANUAL_PAYMENT_MTN_NAME', 'Rockshield Investments Ltd'),
+            'name' => env('MANUAL_PAYMENT_MTN_NAME', 'MyGrowNet Technologies Ltd'),
             'method' => 'withdraw', // 'withdraw' or 'send'
         ],
         'airtel' => [

@@ -204,7 +204,7 @@ const deliveryFee = computed(() => props.checkoutData.delivery_method === 'yango
                                         <p class="text-xs text-gray-600 mb-1">Company Number</p>
                                         <p class="text-2xl font-bold text-gray-900 tracking-wide">0760491206</p>
                                     </div>
-                                    <p class="text-sm text-gray-700">Name: <strong class="text-gray-900">Rockshield Investments Ltd</strong></p>
+                                    <p class="text-sm text-gray-700">Name: <strong class="text-gray-900">MyGrowNet Technologies Ltd</strong></p>
                                     <div class="bg-yellow-100 border border-yellow-300 rounded p-3 mt-2">
                                         <p class="text-xs font-semibold text-yellow-900 mb-1">⚠️ WITHDRAWAL:</p>
                                         <p class="text-xs text-yellow-800">Dial *115# → Withdraw → Cash Out → Agent Number → 0760491206</p>

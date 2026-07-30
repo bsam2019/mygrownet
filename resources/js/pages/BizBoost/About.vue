@@ -71,7 +71,7 @@ const homeUrl = computed(() => user.value ? '/workspace' : route('bizboost.sub.w
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
                         <h2 class="text-xl font-semibold text-gray-900 mb-3">Powered by MyGrowNet</h2>
                         <p class="text-gray-600 leading-relaxed">
-                            BizBoost is part of the MyGrowNet ecosystem, a comprehensive platform by Rockshield
+                            BizBoost is part of the MyGrowNet ecosystem, a comprehensive platform by MyGrowNet Technologies Limited
                             Investments Limited that provides digital tools for business growth, financial management,
                             and community development across Africa.
                         </p>

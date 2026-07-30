@@ -454,7 +454,7 @@ const goToManualPayment = () => {
                                     <p class="text-xs text-gray-600">Company Number</p>
                                     <p class="text-2xl font-bold text-gray-900">0760491206</p>
                                 </div>
-                                <p class="text-sm text-gray-700">Rockshield Investments Ltd</p>
+                                <p class="text-sm text-gray-700">MyGrowNet Technologies Ltd</p>
                                 <div class="bg-yellow-100 border border-yellow-300 rounded-lg p-2 mt-2">
                                     <p class="text-xs font-semibold text-yellow-900">⚠️ IMPORTANT:</p>
                                     <p class="text-xs text-yellow-800">Use <strong>WITHDRAW</strong> method (Agent Number), not Send Money.</p>

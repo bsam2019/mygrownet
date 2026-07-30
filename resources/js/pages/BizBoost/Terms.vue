@@ -40,7 +40,7 @@ const homeUrl = computed(() => user.value ? '/workspace' : route('bizboost.sub.w
                         <p class="text-gray-600 leading-relaxed">
                             By accessing or using BizBoost ("the Service"), you agree to be bound by these Terms of Service.
                             If you do not agree, do not use the Service. BizBoost is a product of MyGrowNet, operated by
-                            Rockshield Investments Limited.
+                            MyGrowNet Technologies Limited.
                         </p>
                     </section>
 
@@ -73,7 +73,7 @@ const homeUrl = computed(() => user.value ? '/workspace' : route('bizboost.sub.w
                         <h2 class="text-xl font-semibold text-gray-900 mb-3">5. Limitation of Liability</h2>
                         <p class="text-gray-600 leading-relaxed">
                             BizBoost is provided "as is" without warranty. To the maximum extent permitted by law,
-                            Rockshield Investments Limited shall not be liable for any indirect, incidental, or
+                            MyGrowNet Technologies Limited shall not be liable for any indirect, incidental, or
                             consequential damages.
                         </p>
                     </section>

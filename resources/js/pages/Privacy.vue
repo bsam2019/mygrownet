@@ -19,10 +19,10 @@
             Privacy Policy
           </h1>
           <p class="text-gray-600">
-            Last Updated: October 31, 2025
+            Last Updated: July 30, 2026
           </p>
           <p class="text-gray-600 mt-2">
-            Effective Date: October 31, 2025
+            Effective Date: July 30, 2026
           </p>
         </div>
 
@@ -32,13 +32,20 @@
           <section>
             <h2 class="text-2xl font-semibold text-gray-900 mb-4">1. Introduction</h2>
             <p class="text-gray-700 leading-relaxed mb-4">
-              MyGrowNet, operated by Rockshield Investments Limited ("we," "us," or "our"), is committed to 
+              MyGrowNet, operated by MyGrowNet Technologies Limited ("we," "us," or "our"), is committed to 
               protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard 
               your information when you use our platform and services.
             </p>
             <p class="text-gray-700 leading-relaxed">
               By accessing or using MyGrowNet, you agree to this Privacy Policy. If you do not agree with our 
               policies and practices, please do not use our services.
+            </p>
+            <p class="text-gray-700 leading-relaxed mt-4">
+              MyGrowNet complies with the <strong>Data Protection Act No. 3 of 2021</strong> of the Republic of Zambia 
+              and any other applicable data protection laws. We process your personal data on the following lawful 
+              bases: (i) performance of a contract with you, (ii) compliance with legal and regulatory obligations, 
+              (iii) our legitimate interests in operating, securing, and improving the platform, and (iv) your 
+              consent, where required by law.
             </p>
           </section>
 
@@ -166,7 +173,7 @@
 
               <div class="bg-gray-50 rounded-lg p-4">
                 <h4 class="font-medium text-gray-900 mb-2">Service Providers</h4>
-                <p class="text-gray-700 text-sm">Payment processors, SMS providers, email services, and hosting providers who help us operate the platform</p>
+                <p class="text-gray-700 text-sm">Payment processors, mobile money providers, SMS providers, email services, cloud hosting, and analytics services who help us operate the platform. These providers are contractually bound to protect your data and use it only for the services they perform on our behalf.</p>
               </div>
 
               <div class="bg-gray-50 rounded-lg p-4">
@@ -207,6 +214,22 @@
               However, no method of transmission over the internet is 100% secure. While we strive to protect your 
               information, we cannot guarantee absolute security.
             </p>
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
+              <p class="text-yellow-900 text-sm">
+                <strong>Breach Notification:</strong> In the event of a data breach that is likely to result in a 
+                risk to your rights and freedoms, we will notify the Zambia Data Protection Authority and affected 
+                users within 72 hours of becoming aware of the breach, as required by the Data Protection Act No. 3 
+                of 2021.
+              </p>
+            </div>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-4">
+              <p class="text-gray-700 text-sm">
+                <strong>Automated Decision-Making:</strong> We use automated systems for certain decisions, including 
+                commission calculations, network tier advancement, transaction screening for fraud prevention, and 
+                account qualification. You have the right to request human review of automated decisions that 
+                significantly affect you. To request a review, contact us at privacy@mygrownet.com.
+              </p>
+            </div>
           </section>
 
           <!-- Data Retention -->
@@ -263,17 +286,28 @@
 
           <!-- Cookies -->
           <section>
-            <h2 class="text-2xl font-semibold text-gray-900 mb-4">8. Cookies and Tracking</h2>
-            <p class="text-gray-700 mb-4">We use cookies and similar technologies to:</p>
-            <ul class="list-disc list-inside text-gray-700 space-y-2 ml-4">
-              <li>Maintain your session and keep you logged in</li>
-              <li>Remember your preferences and settings</li>
-              <li>Analyze platform usage and performance</li>
-              <li>Provide personalized content and recommendations</li>
-            </ul>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4">8. Cookies and Tracking Technologies</h2>
+            <p class="text-gray-700 mb-4">We use cookies and similar tracking technologies to enhance your experience. The types of cookies we use include:</p>
+            
+            <div class="space-y-4">
+              <div class="bg-gray-50 rounded-lg p-4">
+                <h4 class="font-medium text-gray-900 mb-2">Essential Cookies</h4>
+                <p class="text-gray-700 text-sm">Required for the platform to function. These include session cookies, authentication cookies, and security tokens. Duration: session to 24 hours.</p>
+              </div>
+              <div class="bg-gray-50 rounded-lg p-4">
+                <h4 class="font-medium text-gray-900 mb-2">Preference Cookies</h4>
+                <p class="text-gray-700 text-sm">Remember your settings and preferences (language, theme, layout). Duration: up to 12 months.</p>
+              </div>
+              <div class="bg-gray-50 rounded-lg p-4">
+                <h4 class="font-medium text-gray-900 mb-2">Analytics Cookies</h4>
+                <p class="text-gray-700 text-sm">Help us understand how you use the platform so we can improve performance and features. Duration: up to 24 months.</p>
+              </div>
+            </div>
+
             <p class="text-gray-700 mt-4">
-              You can control cookies through your browser settings. However, disabling cookies may limit your ability 
-              to use certain features of our platform.
+              You can control and manage cookies through your browser settings. Most browsers allow you to block 
+              or delete cookies. However, disabling essential cookies may prevent you from logging in or using 
+              core platform features. We will seek your consent before placing non-essential cookies on your device.
             </p>
           </section>
 
@@ -301,9 +335,12 @@
           <section>
             <h2 class="text-2xl font-semibold text-gray-900 mb-4">11. International Data Transfers</h2>
             <p class="text-gray-700">
-              Your information is primarily stored and processed in Zambia. If we transfer data internationally, 
-              we ensure appropriate safeguards are in place to protect your information in accordance with this 
-              Privacy Policy and applicable laws.
+              Your information is primarily stored and processed in Zambia. Where we transfer your personal data 
+              to jurisdictions outside Zambia (for example, to third-party cloud service providers), we ensure 
+              appropriate safeguards are in place, including standard contractual clauses or equivalent data 
+              protection agreements that provide a level of protection equivalent to the Data Protection Act No. 3 
+              of 2021. We also conduct due diligence on our service providers to verify their data protection 
+              practices.
             </p>
           </section>
 
@@ -333,8 +370,21 @@
               </p>
               <div class="space-y-2 text-gray-700">
                 <p><strong>Email:</strong> privacy@mygrownet.com</p>
-                <p><strong>Phone:</strong> +260 977 563 730</p>
-                <p><strong>Address:</strong> Rockshield Investments Limited, Lusaka, Zambia</p>
+                <p><strong>Phone:</strong> 0779872676</p>
+                <p><strong>Address:</strong> MyGrowNet Technologies Limited, Lusaka, Zambia</p>
+              </div>
+
+              <div class="mt-4 pt-4 border-t border-gray-200">
+                <h4 class="font-medium text-gray-900 mb-2">Complaint Procedure</h4>
+                <p class="text-gray-700 text-sm">
+                  If you believe we have not adequately addressed your privacy concern, you have the right to lodge 
+                  a complaint with the <strong>Zambia Data Protection Authority</strong>:
+                </p>
+                <ul class="list-disc list-inside text-gray-700 text-sm mt-2 ml-4">
+                  <li>Website: <a href="https://www.dpa.gov.zm" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">www.dpa.gov.zm</a></li>
+                  <li>Email: info@dpa.gov.zm</li>
+                  <li>Phone: +260 211 123 456</li>
+                </ul>
               </div>
             </div>
           </section>

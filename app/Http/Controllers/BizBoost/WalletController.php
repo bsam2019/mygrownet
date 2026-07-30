@@ -35,7 +35,7 @@ class WalletController extends Controller
             'manualPayment' => [
                 'mtn' => [
                     'number' => config('payment.manual_payment.mtn.number', '0760491206'),
-                    'name' => config('payment.manual_payment.mtn.name', 'Rockshield Investments Ltd'),
+                    'name' => config('payment.manual_payment.mtn.name', 'MyGrowNet Technologies Ltd'),
                 ],
                 'airtel' => [
                     'number' => config('payment.manual_payment.airtel.number', '0979230669'),
