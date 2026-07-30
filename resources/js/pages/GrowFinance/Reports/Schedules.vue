@@ -214,11 +214,11 @@ function editSchedule(s: any) {
     form.frequency = s.frequency
     form.format = s.format
     form.recipients = s.recipients?.length ? s.recipients : [{ email: '', name: '' }]
-    showCreateForm = true
+    showCreateForm.value = true
 }
 
 function cancelForm() {
-    showCreateForm = false
+    showCreateForm.value = false
     editingSchedule.value = null
     resetForm()
 }
