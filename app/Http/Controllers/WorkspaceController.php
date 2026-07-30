@@ -150,7 +150,15 @@ class WorkspaceController extends Controller
             abort(403, 'No access to this application');
         }
 
-        return $this->appLaunch->launch($application, $context, $user);
+        $result = $this->appLaunch->launch($application, $context, $user);
+
+        // If service returns array (external URL), return as Inertia props
+        if (is_array($result)) {
+            return Inertia::render('Workspace/Index', $result);
+        }
+
+        // Otherwise it's a RedirectResponse
+        return $result;
     }
 
     public function togglePin(Request $request)

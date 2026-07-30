@@ -35,7 +35,7 @@ class AppLaunchService
         ];
     }
 
-    public function launch(Application $app, WorkspaceContext $context, User $user): RedirectResponse
+    public function launch(Application $app, WorkspaceContext $context, User $user): RedirectResponse|array
     {
         $payload = $this->buildPayload($app, $context, $user);
 
@@ -47,6 +47,11 @@ class AppLaunchService
         }
         if (str_starts_with($url, '/')) {
             $url = url($url);
+        }
+
+        // For external URLs (subdomains), return JSON to avoid CORS
+        if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+            return ['redirect_url' => $url];
         }
 
         return redirect()->away($url);

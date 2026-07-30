@@ -80,7 +80,16 @@ function trackRecent(app: App) {
 
 function launch(app: App) {
     trackRecent(app);
-    router.post(route('workspace.launch', { application: app.id }));
+    
+    router.post(route('workspace.launch', { application: app.id }), {}, {
+        onSuccess: (page) => {
+            // If backend returns redirect_url (external), navigate via window
+            if (page.props.redirect_url) {
+                window.location.href = page.props.redirect_url as string;
+            }
+            // Otherwise, Inertia handles the redirect automatically
+        }
+    });
 }
 </script>
 
