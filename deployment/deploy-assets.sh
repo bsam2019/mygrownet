@@ -128,6 +128,12 @@ echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod 664 config/modules.php
 echo "🚀 Optimizing..."
 php artisan optimize
 
+echo ""
+echo "📊 Updating workspace catalog..."
+php artisan db:seed --class=ApplicationRegistrySeeder --force
+php artisan db:seed --class=WorkspaceDataSeeder --force
+echo "✅ Workspace catalog updated"
+
 # Clean up old unused asset files (keep files referenced in current manifests)
 echo "🧹 Cleaning up old unused asset files..."
 
