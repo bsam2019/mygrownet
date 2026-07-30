@@ -63,7 +63,7 @@ const showApproveConfirm = ref(false);
 const pendingExpenseId = ref<number | null>(null);
 
 const applyFilters = () => {
-    router.get../BMS/expenses', {
+    router.get('/BMS/expenses', {
         category_id: selectedCategory.value,
         approval_status: selectedStatus.value,
         search: search.value,
