@@ -84,10 +84,11 @@ class DetectSubdomain
                     return $this->handleWowthemSubdomain($request);
                 }
                 
-                // Handle BMS subdomain - dispatch directly to controller
+                // Handle BMS subdomain - use standard routing (routes defined in bms-subdomain.php)
                 if ($subdomain === 'bms') {
                     $branch = 'bms';
-                    return $this->handleBmsSubdomain($request, $next);
+                    $this->configureSubdomainUrl($subdomain);
+                    return $next($request);
                 }
                 
                 // Handle GrowMart subdomain
