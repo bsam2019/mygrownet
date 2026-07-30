@@ -16,6 +16,7 @@ const pageGlobs: Record<string, () => Promise<DefineComponent>> = {
     ...import.meta.glob<DefineComponent>('./pages/Apps/**/*.vue'), // App catalog
     
     // Core Platform pages (NOT modules with their own entry points)
+    ...import.meta.glob<DefineComponent>('./pages/QuickInvoice/**/*.vue'), // Quick Invoice (no dedicated module)
     ...import.meta.glob<DefineComponent>('./pages/Department/**/*.vue'),
     ...import.meta.glob<DefineComponent>('./pages/Investment/**/*.vue'),
     ...import.meta.glob<DefineComponent>('./pages/Withdrawals/**/*.vue'),
