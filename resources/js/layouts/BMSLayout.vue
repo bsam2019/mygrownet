@@ -2007,7 +2007,9 @@ const handleFormSuccess = () => {
 }
 
 const logout = () => {
-  router.post(route('logout'))
+  // Check if on BMS subdomain
+  const isBMSSubdomain = window.location.hostname === 'bms.mygrownet.com'
+  router.post(route(isBMSSubdomain ? 'bms.subdomain.logout' : 'logout'))
 }
 </script>
 

@@ -17,6 +17,13 @@ class StockFlowCompany
         $companyId = $request->attributes->get('stockflow_company_id');
         $request->session()->put('stockflow_company_id', $companyId);
 
+        // Extract account from route parameter for Ziggy default binding
+        $account = $request->route('account');
+        if ($account) {
+            // Bind default route parameter for Ziggy
+            app('url')->defaults(['account' => $account]);
+        }
+
         return $next($request);
     }
 }

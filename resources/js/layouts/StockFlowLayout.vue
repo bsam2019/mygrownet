@@ -202,11 +202,16 @@ const isCurrentRoute = (routeName: string) => {
 
 const logout = () => {
     if (isSubdomain.value) {
-        const hostParts = window.location.hostname.split('.');
-        const account = hostParts.length > 2 ? hostParts[0] : '';
+        // Extract account from current subdomain
+        const hostname = window.location.hostname;
+        const parts = hostname.split('.');
+        const account = parts[0]; // e.g., 'taradasi' from 'taradasi.mygrownet.com'
+        
+        // Pass account as domain parameter (not route parameter)
         router.post(route('stockflow.sub.logout', { account }));
     } else {
-        router.post(route('stockflow.sub.logout'));
+        // Main domain - use main logout route
+        router.post(route('logout'));
     }
 };
 
