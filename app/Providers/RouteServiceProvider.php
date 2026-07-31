@@ -94,6 +94,10 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->group(base_path('routes/bms.php'));
                 
+            // BMS subdomain routes (bms.mygrownet.com)
+            Route::middleware('web')
+                ->group(base_path('routes/bms-subdomain.php'));
+                
             Route::middleware('web')
                 ->group(base_path('routes/venture.php'));
                 
@@ -109,6 +113,10 @@ class RouteServiceProvider extends ServiceProvider
             // StockFlow module - main domain routes
             Route::middleware('web')
                 ->group(base_path('routes/stockflow.php'));
+
+            // StockFlow subdomain routes ({account}.mygrownet.com)
+            Route::middleware('web')
+                ->group(base_path('routes/stockflow-subdomain.php'));
 
             // StockFlow API routes
             Route::middleware('web')
