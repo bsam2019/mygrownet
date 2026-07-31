@@ -212,12 +212,13 @@ return [
         'email_verify_url'     => env('IDENTITY_EMAIL_VERIFY_URL', 'https://auth.mygrownet.com/email/verify'),
         'signing_key'          => env('IDENTITY_SIGNING_KEY'),
         'return_url_ttl'       => (int) env('IDENTITY_RETURN_URL_TTL', 300),
-        'allowed_return_hosts' => ['*.mygrownet.com', '127.0.0.1', 'localhost'],
+        'allowed_return_hosts' => ['*.mygrownet.com', 'mygrownet.com', '127.0.0.1', 'localhost'],
         'app_redirect_enabled' => [
             'stockflow'   => env('IDENTITY_REDIRECT_STOCKFLOW', false),
             'primeedge'   => env('IDENTITY_REDIRECT_PRIMEEDGE', false),
             'growbuilder' => env('IDENTITY_REDIRECT_GROWBUILDER', false),
             'growstream'  => env('IDENTITY_REDIRECT_GROWSTREAM', false),
+            'bms'         => env('IDENTITY_REDIRECT_BMS', false),
         ],
         'rate_limiting' => [
             'per_ip'       => (int) env('IDENTITY_RATE_LIMIT_PER_IP', 20),

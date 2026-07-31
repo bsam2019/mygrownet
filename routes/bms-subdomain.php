@@ -67,7 +67,7 @@ Route::domain('bms.mygrownet.com')->name('bms.subdomain.')->group(function () {
 
 
     // Protected BMS Routes
-    Route::middleware(['auth', 'verified', 'bms.auto-login', 'bms.access', \App\Http\Middleware\BMS\EnforcePasswordChange::class])
+    Route::middleware(['identity.redirect:bms', 'auth', 'verified', 'bms.auto-login', 'bms.access', \App\Http\Middleware\BMS\EnforcePasswordChange::class])
         ->group(function () {
             
             // Dashboard

@@ -98,7 +98,7 @@ Route::prefix('bms')->name('bms.')->group(function () {
 // Protected BMS Routes
 Route::prefix('bms')
     ->name('bms.')
-    ->middleware(['auth', 'verified', 'bms.auto-login', 'bms.access', \App\Http\Middleware\BMS\EnforcePasswordChange::class])
+    ->middleware(['identity.redirect:bms', 'auth', 'verified', 'bms.auto-login', 'bms.access', \App\Http\Middleware\BMS\EnforcePasswordChange::class])
     ->group(function () {
         
         // Dashboard

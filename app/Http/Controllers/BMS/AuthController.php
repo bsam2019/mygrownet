@@ -9,6 +9,7 @@ use App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel;
 use App\Models\User;
 use App\Domain\BMS\Core\Services\IndustryPresetService;
 use App\Services\BMS\SecurityService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -25,138 +26,31 @@ class AuthController extends Controller
 
     /**
      * Show the login page
+     *
+     * Redirects to the MyGrow Identity Gateway (auth.mygrownet.com) so BMS uses
+     * the platform-wide centralized login, matching StockFlow/PrimeEdge.
      */
-    public function showLogin()
+    public function showLogin(Request $request): RedirectResponse
     {
-        return Inertia::render('BMS/Auth/Login');
+        $returnUrl = $request->getSchemeAndHttpHost() . '/bms';
+        $expires = time() + config('platform.identity.return_url_ttl', 300);
+        $payload = $returnUrl . '|' . $expires;
+        $signingKey = config('platform.identity.signing_key') ?? '';
+        $signature = hash_hmac('sha256', $payload, $signingKey);
+
+        return redirect()->away(config('platform.identity.login_url')
+            . '?return_url=' . urlencode($returnUrl)
+            . '&expires=' . $expires
+            . '&signature=' . $signature
+            . '&app=bms');
     }
 
     /**
-     * Handle login request
+     * Handle login request — delegated to the identity gateway.
      */
-    public function login(Request $request)
+    public function login(Request $request): RedirectResponse
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
-            'remember' => ['boolean'],
-        ]);
-
-        $remember = $credentials['remember'] ?? false;
-        $email = $credentials['email'];
-        $password = $credentials['password'];
-
-        // Find user by email
-        $user = User::where('email', $email)->first();
-
-        // Check if user exists and has CMS access
-        if (!$user) {
-            $this->securityService->recordLoginAttempt(
-                email: $email,
-                userId: null,
-                successful: false,
-                ipAddress: $request->ip(),
-                userAgent: $request->userAgent(),
-                failureReason: 'user_not_found'
-            );
-
-            return back()->withErrors([
-                'email' => 'The provided credentials do not match our records.',
-            ])->onlyInput('email');
-        }
-
-        $cmsUser = CmsUserModel::where('user_id', $user->id)->first();
-
-        if (!$cmsUser) {
-            // User exists but has no company yet — allow login, redirect to hub
-            if (!Auth::attempt(['email' => $email, 'password' => $password], $remember)) {
-                $this->securityService->recordLoginAttempt(email: $email, userId: $user->id, successful: false, ipAddress: $request->ip(), userAgent: $request->userAgent(), failureReason: 'invalid_password');
-                return back()->withErrors(['email' => 'The provided credentials do not match our records.'])->onlyInput('email');
-            }
-            $request->session()->regenerate();
-            return redirect()->route('bms.companies.hub');
-        }
-
-        // Check if account is locked
-        if ($this->securityService->isAccountLocked($user)) {
-            $lockoutMinutes = ceil($user->locked_until->diffInMinutes(now()));
-            
-            $this->securityService->recordLoginAttempt(
-                email: $email,
-                userId: $user->id,
-                successful: false,
-                ipAddress: $request->ip(),
-                userAgent: $request->userAgent(),
-                failureReason: 'account_locked'
-            );
-
-            return back()->withErrors([
-                'email' => "Account is locked due to multiple failed login attempts. Please try again in {$lockoutMinutes} minutes.",
-            ])->onlyInput('email');
-        }
-
-        // Attempt authentication
-        if (!Auth::attempt(['email' => $email, 'password' => $password], $remember)) {
-            // Failed login
-            $this->securityService->recordLoginAttempt(
-                email: $email,
-                userId: $user->id,
-                successful: false,
-                ipAddress: $request->ip(),
-                userAgent: $request->userAgent(),
-                failureReason: 'invalid_password'
-            );
-
-            $this->securityService->handleFailedLogin($user, $cmsUser->company_id);
-
-            // Check if account was just locked
-            $user->refresh();
-            if ($this->securityService->isAccountLocked($user)) {
-                $settings = $this->securityService->getSecuritySettings($cmsUser->company_id);
-                return back()->withErrors([
-                    'email' => "Account locked after {$settings['max_login_attempts']} failed attempts. Please try again in {$settings['lockout_duration_minutes']} minutes.",
-                ])->onlyInput('email');
-            }
-
-            return back()->withErrors([
-                'email' => 'The provided credentials do not match our records.',
-            ])->onlyInput('email');
-        }
-
-        // Successful login
-        $request->session()->regenerate();
-
-        // Record successful login
-        $this->securityService->recordLoginAttempt(
-            email: $email,
-            userId: $user->id,
-            successful: true,
-            ipAddress: $request->ip(),
-            userAgent: $request->userAgent()
-        );
-
-        $this->securityService->handleSuccessfulLogin($user);
-
-        // Check if password change is required
-        if ($user->force_password_change || $this->securityService->isPasswordExpired($user, $cmsUser->company_id)) {
-            return redirect()->route('bms.password.change')
-                ->with('warning', 'Your password has expired. Please change it to continue.');
-        }
-
-        // Determine where to send the user based on company count & default preference
-        $activeCompanies = CmsUserModel::where('user_id', $user->id)->where('status', 'active')->get();
-        $companyCount = $activeCompanies->count();
-
-        if ($companyCount === 0) {
-            return redirect()->route('bms.companies.hub');
-        }
-
-        // Multi-company user with no default set → hub to choose
-        if ($companyCount > 1 && !$user->default_company_id) {
-            return redirect()->route('bms.companies.hub');
-        }
-
-        return redirect()->intended(route('bms.dashboard'));
+        return $this->showLogin($request);
     }
 
     /**
