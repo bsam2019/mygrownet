@@ -31,6 +31,16 @@ Route::domain('stockflow.mygrownet.com')
         // Landing page
         Route::get('/', [LandingController::class, 'index'])->name('home');
 
+        // Dashboard target used by the workspace launcher (AppLaunchService appends /dashboard)
+        Route::get('/dashboard', [LandingController::class, 'index'])->name('dashboard');
+
+        // Login — redirects to the MyGrow Identity Gateway (Phase 8d)
+        Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+        Route::post('/login', [AuthController::class, 'login'])->name('login.store');
+
+        // Marketing page "Admin Login" button target
+        Route::get('/admin/login', [AuthController::class, 'showLogin'])->name('admin.login');
+
         // About/Features/Pricing pages (to be implemented)
         // Route::get('/features', [LandingController::class, 'features'])->name('features');
         // Route::get('/pricing', [LandingController::class, 'pricing'])->name('pricing');
@@ -40,7 +50,4 @@ Route::domain('stockflow.mygrownet.com')
         // Demo/Trial signup (to be implemented)
         // Route::get('/request-demo', [LandingController::class, 'requestDemo'])->name('request-demo');
         // Route::post('/request-demo', [LandingController::class, 'storeDemo'])->name('request-demo.store');
-
-        // Admin login removed Phase 8d — all users authenticate via web guard
-        // Route::get('/admin/login', [AuthController::class, 'showAdminLogin'])->name('admin.login');
     });

@@ -60,7 +60,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::domain('{account}.mygrownet.com')
     ->middleware(['web', 'stockflow.company'])
-    ->where(['account' => '^(?!stockflow$)[a-z0-9-]+$']) // Exclude 'stockflow' subdomain
+    ->where(['account' => '^(?!stockflow\.|bms\.|growfinance\.|growmart\.|grownet\.|growbuilder\.|bizboost\.|bizdocs\.|zamstay\.|growstorage\.|primeedge\.|growstream\.|lifeplus\.|venture\.|auth\.|geopamu\.|wowthem\.|www\.)[a-z0-9-]+$']) // Exclude reserved app subdomains
     ->group(function () {
         // Public routes (no auth required)
         Route::get('/login', [AuthController::class, 'showLogin'])->name('stockflow.sub.login');

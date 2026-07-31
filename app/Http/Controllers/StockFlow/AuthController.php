@@ -10,7 +10,7 @@ class AuthController extends Controller
 {
     public function showLogin(Request $request): RedirectResponse
     {
-        $returnUrl = $request->fullUrl();
+        $returnUrl = $request->getSchemeAndHttpHost() . '/';
         $expires = time() + config('platform.identity.return_url_ttl', 300);
         $payload = $returnUrl . '|' . $expires;
         $signingKey = config('platform.identity.signing_key') ?? '';
