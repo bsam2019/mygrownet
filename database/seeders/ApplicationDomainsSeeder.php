@@ -23,7 +23,7 @@ class ApplicationDomainsSeeder extends Seeder
             'growbuilder' => 'growbuilder.mygrownet.com',
             'bms' => 'bms.mygrownet.com',
             'stockflow' => 'stockflow.mygrownet.com',
-            'growfinance' => 'finance.mygrownet.com',
+            'growfinance' => 'growfinance.mygrownet.com',
             'bizdocs' => 'bizdocs.mygrownet.com',
             'bizboost' => 'bizboost.mygrownet.com',
             'growstorage' => 'growstorage.mygrownet.com',

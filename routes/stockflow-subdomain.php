@@ -65,7 +65,11 @@ Route::domain('{account}.mygrownet.com')
         // Public routes (no auth required)
         Route::get('/login', [AuthController::class, 'showLogin'])->name('stockflow.sub.login');
         Route::post('/login', [AuthController::class, 'login'])->name('stockflow.sub.login.store');
-        Route::post('/logout', [AuthController::class, 'logout'])->name('stockflow.sub.logout');
+        
+        // Logout - moved outside auth middleware but still requires authentication
+        Route::post('/logout', [AuthController::class, 'logout'])
+            ->middleware('auth:web')
+            ->name('stockflow.sub.logout');
 
         // Root — show company landing page if unauthenticated, dashboard if authenticated
         Route::get('/', [LandingController::class, 'index'])->name('stockflow.sub.dashboard');

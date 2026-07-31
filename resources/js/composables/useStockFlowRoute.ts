@@ -48,6 +48,14 @@ export function useStockflowRoute() {
                 return routeHelper(mainName, params);
             }
 
+            // Routes that don't need account parameter (handled by subdomain)
+            const noAccountRoutes = ['stockflow.sub.logout', 'stockflow.sub.login', 'stockflow.sub.login.store'];
+            
+            if (noAccountRoutes.includes(name)) {
+                // These routes use subdomain for account resolution, no URL parameter needed
+                return routeHelper(name, params);
+            }
+
             let mergedParams: Record<string, any>;
             if (typeof params === 'object' && params !== null && !Array.isArray(params)) {
                 mergedParams = { ...params, account: account.value };

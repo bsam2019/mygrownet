@@ -55,7 +55,7 @@ class ApplicationRegistrySeeder extends Seeder
                 'context_support' => 'organization',
                 'requires_organization_context' => true,
                 'subscription_required' => false,
-                'url' => 'https://finance.mygrownet.com',
+                'url' => 'https://growfinance.mygrownet.com',
                 'lifecycle' => 'active',
                 'operational_status' => 'online',
                 'is_visible' => true,

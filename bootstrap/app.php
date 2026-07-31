@@ -75,6 +75,10 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('web')
                 ->group(base_path('routes/bms.php'));
             
+            // GrowFinance subdomain routes - loaded BEFORE main growfinance.php
+            Route::middleware('web')
+                ->group(base_path('routes/growfinance-subdomain.php'));
+            
             // GrowBuilder subdomain routes - NO LONGER LOADED
             // All subdomain handling (including CMS, geopamu, wowthem, and GrowBuilder sites)
             // is now done in DetectSubdomain middleware to prevent route conflicts

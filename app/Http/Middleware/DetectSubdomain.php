@@ -119,6 +119,13 @@ class DetectSubdomain
                     return $next($request);
                 }
 
+                // Handle GrowFinance subdomain
+                if ($subdomain === 'growfinance') {
+                    $branch = 'growfinance';
+                    $this->configureSubdomainUrl($subdomain);
+                    return $next($request);
+                }
+
                 // Handle GrowStream subdomain
                 // Routes are defined via Route::domain('growstream.mygrownet.com') in growstream.php
                 if ($subdomain === 'growstream') {
