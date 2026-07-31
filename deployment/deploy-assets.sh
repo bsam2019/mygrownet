@@ -113,7 +113,10 @@ fi
 
 # Clear caches
 echo "🧹 Clearing caches..."
-php artisan optimize:clear
+php artisan view:clear
+php artisan route:clear
+php artisan config:clear
+php artisan cache:clear
 
 # Fix permissions
 echo "🔧 Fixing permissions..."
@@ -124,8 +127,10 @@ echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R 775 storage bootstrap/cache
 echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chown www-data:www-data config/modules.php
 echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod 664 config/modules.php
 
-# Optimize
-echo "🚀 Optimizing..."
+# Rebuild caches
+echo "🚀 Rebuilding caches..."
+php artisan route:cache
+php artisan config:cache
 php artisan optimize
 
 echo ""
