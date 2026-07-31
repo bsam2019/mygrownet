@@ -98,6 +98,10 @@ const getProductUrl = (product: Product) => {
     return `/marketplace/products/${product.slug}`;
 };
 
+const buyNow = (product: Product) => {
+    window.location.href = getProductUrl(product);
+};
+
 onMounted(() => {
     loadProducts();
 });
@@ -208,7 +212,7 @@ onMounted(() => {
                                 v-if="content.showAddToCart !== false && product.stock_quantity > 0"
                                 type="button"
                                 class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                                @click.prevent="window.location.href = getProductUrl(product)"
+                                @click.prevent="buyNow(product)"
                             >
                                 Buy Now
                             </button>

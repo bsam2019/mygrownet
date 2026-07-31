@@ -57,6 +57,10 @@ const sendForSigning = () => {
   router.post(route('bms.contracts.send-for-signing', props.contract.id), {}, { preserveScroll: true })
 }
 
+const openSignedPdf = () => {
+  window.open(props.signedPdfUrl)
+}
+
 const activate = () => router.post(route('bms.contracts.activate', props.contract.id), {}, { preserveScroll: true })
 const terminate = () => router.post(route('bms.contracts.terminate', props.contract.id), {}, { preserveScroll: true })
 
@@ -108,7 +112,7 @@ const isFullySigned = props.contract.signed_by_customer && props.contract.signed
         <button v-if="contract.status === 'active' && !contract.signed_by_customer && contract.customer?.email" @click="sendForSigning" class="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-medium hover:bg-purple-700">
           <PaperAirplaneIcon class="h-4 w-4" /> Send for Signing
         </button>
-        <button v-if="isFullySigned && signedPdfUrl" @click="window.open(signedPdfUrl)" class="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700">
+        <button v-if="isFullySigned && signedPdfUrl" @click="openSignedPdf" class="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700">
           <DocumentArrowDownIcon class="h-4 w-4" /> View Signed PDF
         </button>
         <button v-if="contract.status === 'active'" @click="openRenewModal" class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700">

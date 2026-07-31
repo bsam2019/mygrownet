@@ -168,6 +168,15 @@ watch(currentStep, () => {
     updateHighlight();
 });
 
+const popoverStyle = computed(() => highlightRect.value ? {
+    top: `${highlightRect.value.bottom + 20}px`,
+    left: `${Math.max(16, Math.min(highlightRect.value.left, window.innerWidth - 420))}px`,
+} : {
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+});
+
 onMounted(() => {
     if (shouldShowTour()) {
         // Delay to let page render
@@ -223,14 +232,7 @@ defineExpose({ startTour });
             <div
                 v-if="isVisible"
                 class="fixed z-[101] w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden"
-                :style="highlightRect ? {
-                    top: `${highlightRect.bottom + 20}px`,
-                    left: `${Math.max(16, Math.min(highlightRect.left, window.innerWidth - 420))}px`,
-                } : {
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                }"
+                :style="popoverStyle"
             >
                 <!-- Progress bar -->
                 <div class="h-1 bg-slate-100 dark:bg-slate-700">
