@@ -30,6 +30,14 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         return $model ? $this->toDomain($model) : null;
     }
 
+    public function findByReference(string $reference): ?PaymentTransaction
+    {
+        $model = PaymentTransactionModel::where('provider_reference', $reference)
+            ->orWhere('provider_transaction_id', $reference)
+            ->first();
+        return $model ? $this->toDomain($model) : null;
+    }
+
     public function findPending(): array
     {
         return PaymentTransactionModel::whereIn('status', ['initiated', 'pending'])

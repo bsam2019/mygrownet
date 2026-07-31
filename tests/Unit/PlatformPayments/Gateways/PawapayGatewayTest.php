@@ -185,4 +185,61 @@ class PawapayGatewayTest extends TestCase
     {
         $this->assertTrue($this->gateway->supportsTestMode());
     }
+
+    public function test_verify_webhook_signature_valid_hex(): void
+    {
+        $gateway = new PawapayGateway(
+            ['api_token' => 'test-token', 'webhook_secret' => 'whsec_test'],
+            true,
+        );
+
+        $payload = '{"depositId":"DEP-001","status":"COMPLETED"}';
+        $signature = hash_hmac('sha256', $payload, 'whsec_test');
+
+        $this->assertTrue($gateway->verifyWebhookSignature($payload, $signature));
+    }
+
+    public function test_verify_webhook_signature_valid_base64(): void
+    {
+        $gateway = new PawapayGateway(
+            ['api_token' => 'test-token', 'webhook_secret' => 'whsec_test'],
+            true,
+        );
+
+        $payload = '{"depositId":"DEP-001","status":"COMPLETED"}';
+        $signature = base64_encode(hash_hmac('sha256', $payload, 'whsec_test', true));
+
+        $this->assertTrue($gateway->verifyWebhookSignature($payload, $signature));
+    }
+
+    public function test_verify_webhook_signature_invalid(): void
+    {
+        $gateway = new PawapayGateway(
+            ['api_token' => 'test-token', 'webhook_secret' => 'whsec_test'],
+            true,
+        );
+
+        $payload = '{"depositId":"DEP-001","status":"COMPLETED"}';
+
+        $this->assertFalse($gateway->verifyWebhookSignature($payload, 'wrong-signature'));
+        $this->assertFalse($gateway->verifyWebhookSignature($payload, ''));
+    }
+
+    public function test_verify_webhook_signature_skipped_without_secret(): void
+    {
+        $gateway = new PawapayGateway(['api_token' => 'test-token'], true);
+
+        $this->assertTrue($gateway->verifyWebhookSignature('{}', ''));
+    }
+
+    public function test_map_status_mappings(): void
+    {
+        $this->assertEquals(PaymentStatus::COMPLETED, $this->gateway->mapStatus('COMPLETED'));
+        $this->assertEquals(PaymentStatus::COMPLETED, $this->gateway->mapStatus('accepted'));
+        $this->assertEquals(PaymentStatus::FAILED, $this->gateway->mapStatus('REJECTED'));
+        $this->assertEquals(PaymentStatus::CANCELLED, $this->gateway->mapStatus('CANCELLED'));
+        $this->assertEquals(PaymentStatus::EXPIRED, $this->gateway->mapStatus('EXPIRED'));
+        $this->assertEquals(PaymentStatus::PENDING, $this->gateway->mapStatus('SUBMITTED'));
+        $this->assertEquals(PaymentStatus::PROCESSING, $this->gateway->mapStatus('UNKNOWN'));
+    }
 }

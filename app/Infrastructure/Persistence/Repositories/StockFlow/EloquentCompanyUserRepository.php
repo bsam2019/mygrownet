@@ -42,6 +42,16 @@ class EloquentCompanyUserRepository implements CompanyUserRepositoryInterface
         return $model ? $this->toDomainEntity($model) : null;
     }
 
+    public function findActiveByUserId(int $userId): array
+    {
+        return SaCompanyUserModel::with('role')
+            ->where('user_id', $userId)
+            ->where('status', 'active')
+            ->get()
+            ->map(fn($m) => $this->toDomainEntity($m))
+            ->all();
+    }
+
     public function findPendingInvitations(CompanyId $companyId): array
     {
         return SaCompanyUserModel::with('role')

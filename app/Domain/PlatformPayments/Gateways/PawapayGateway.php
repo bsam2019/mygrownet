@@ -205,6 +205,54 @@ class PawapayGateway extends AbstractPaymentGateway
         return true;
     }
 
+    /**
+     * Verify the webhook signature received from PawaPay.
+     *
+     * When PAWAPAY_WEBHOOK_SECRET is configured, the payload must be signed
+     * with HMAC-SHA256 (hex or base64 encoded) using the webhook secret.
+     * If no secret is configured, signature verification is skipped.
+     *
+     * Note: PawaPay also supports RFC-9421 signed callbacks (ECDSA public
+     * keys). That scheme can be layered on top of this when "signed
+     * callbacks" are enabled in the PawaPay dashboard.
+     */
+    public function verifyWebhookSignature(string $payload, string $signature = ''): bool
+    {
+        $secret = $this->credentials['webhook_secret']
+            ?? config('services.pawapay.webhook_secret')
+            ?? config('payment.pawapay.webhook_secret');
+
+        if (empty($secret)) {
+            // Signature verification disabled — accept (matches laravel-pawapay behaviour)
+            return true;
+        }
+
+        if (empty($signature)) {
+            return false;
+        }
+
+        // Support both hex and base64 encodings of the HMAC-SHA256 digest
+        $hex = hash_hmac('sha256', $payload, $secret);
+        $base64 = base64_encode(hash_hmac('sha256', $payload, $secret, true));
+
+        return hash_equals($hex, $signature) || hash_equals($base64, $signature);
+    }
+
+    /**
+     * Map a PawaPay deposit/payout/refund status to the platform PaymentStatus.
+     */
+    public function mapStatus(string $pawapayStatus): PaymentStatus
+    {
+        return match(strtoupper($pawapayStatus)) {
+            'COMPLETED', 'ACCEPTED' => PaymentStatus::COMPLETED,
+            'FAILED', 'REJECTED' => PaymentStatus::FAILED,
+            'CANCELLED' => PaymentStatus::CANCELLED,
+            'EXPIRED' => PaymentStatus::EXPIRED,
+            'SUBMITTED', 'ENQUEUED', 'PENDING' => PaymentStatus::PENDING,
+            default => PaymentStatus::PROCESSING,
+        };
+    }
+
     private function detectCorrespondent(string $phoneNumber): string
     {
         $cleanNumber = preg_replace('/[^0-9]/', '', $phoneNumber);
@@ -229,16 +277,5 @@ class PawapayGateway extends AbstractPaymentGateway
         }
         
         return 'MTN_MOMO_ZMB'; // Default
-    }
-
-    private function mapStatus(string $pawapayStatus): PaymentStatus
-    {
-        return match($pawapayStatus) {
-            'COMPLETED' => PaymentStatus::COMPLETED,
-            'FAILED' => PaymentStatus::FAILED,
-            'CANCELLED' => PaymentStatus::CANCELLED,
-            'PENDING' => PaymentStatus::PENDING,
-            default => PaymentStatus::PROCESSING,
-        };
     }
 }

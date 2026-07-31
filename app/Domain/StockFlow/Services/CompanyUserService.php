@@ -200,6 +200,32 @@ class CompanyUserService
     }
 
     /**
+     * Check if a user is an active member of a company
+     */
+    public function isActiveMember(int $companyId, int $userId): bool
+    {
+        $companyUser = $this->userRepository->findByCompanyIdAndUserId(
+            CompanyId::fromInt($companyId),
+            $userId
+        );
+
+        return $companyUser !== null && $companyUser->isActive();
+    }
+
+    /**
+     * Get company ids the user is an active member of
+     *
+     * @return int[]
+     */
+    public function activeCompanyIdsForUser(int $userId): array
+    {
+        return array_map(
+            fn(CompanyUser $user) => $user->getCompanyId()->toInt(),
+            $this->userRepository->findActiveByUserId($userId)
+        );
+    }
+
+    /**
      * Check if user has a specific permission for a company
      */
     public function userHasPermission(int $companyId, int $userId, string $permission): bool

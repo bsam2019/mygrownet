@@ -13,6 +13,7 @@ interface CompanyUserRepositoryInterface
     public function findById(CompanyUserId $id): ?CompanyUser;
     public function findByCompanyId(CompanyId $companyId, ?string $status = null): array;
     public function findByCompanyIdAndUserId(CompanyId $companyId, int $userId): ?CompanyUser;
+    public function findActiveByUserId(int $userId): array;
     public function findPendingInvitations(CompanyId $companyId): array;
     public function save(CompanyUser $companyUser): CompanyUser;
     public function delete(CompanyUserId $id): void;
