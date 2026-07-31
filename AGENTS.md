@@ -885,3 +885,28 @@ Implemented 15 new files + 2 migrations for the Financial Services Core:
 - `SiteTemplate` fillable uses `industry`/`is_active`/`is_premium` not `category`/`is_free`/`features`
 - Template index returns `{templates: [...]}` not paginated or bare list
 
+## Session Log — 2026-07-31 (Identity Gateway Login Fix + QuickInvoice)
+
+### Identity Gateway Routes Were Being Silently Overwritten (FIXED)
+- **Bug**: `auth.mygrownet.com/login` rendered the main-site "unified" Blade auth page (looks like a modal with dark gradient) instead of the clean `identity/login.blade.php` page. POSTing credentials returned 419 Session Expired.
+- **Root cause**: Laravel's `RouteCollection` keys routes by `method+domain+uri` with **last-write-wins**. `routes/my-grow-identity.php` loads *before* `routes/web.php` (which `require`s `auth.php`) in `bootstrap/app.php`, so the domain-less legacy Blade auth routes silently overwrote the identity routes:
+  - `identity.login` (GET /login) ← `web.php:160` `BladeAuthController@showLogin`
+  - `identity.login.store` (POST /login) ← `web.php:161`
+  - `identity.register` / `.store` ← `web.php:162-163`
+  - `identity.logout` (POST /logout) ← `auth.php:47`
+  - `identity.verification.send` ← `auth.php:38`
+  - The identity routes that *did* register (password, 2fa, session/validate) were exactly those with **no URI collision** — confirming the collision theory.
+  - Reproduced locally too (not prod-specific); verified via `route:list` and a boot-script dumping `RouteCollection`.
+- **Fix**: Scoped the identity guest + auth:web groups to `Route::domain('auth.mygrownet.com')` so they no longer collide with domain-less legacy routes. `identity.session.validate` intentionally left domain-less (bootstrap comment says "accessible from any domain"). Commit `285c1bb`.
+- **Verification** (local + prod):
+  - All 16 `identity.*` routes now register (was 10).
+  - `auth.mygrownet.com GET /login` → `identity.login`; POST → `identity.login.store`; main site `mygrownet.com/login` still → `BladeAuthController` (unchanged).
+  - `route('identity.*')` URL generation produces `https://auth.mygrownet.com/...`.
+  - Prod page is now `Sign In — MyGrowNet` (3.4KB, no `auth-card`/`bg-decoration` markers); form posts to `https://auth.mygrownet.com/login`.
+  - Full curl flow: GET 200 → POST wrong creds → 302 back to login with "These credentials do not match" (no 419).
+  - StockFlow redirect chain intact: `stockflow.mygrownet.com/login` and `taradasi.mygrownet.com/login` → 302 → `auth.mygrownet.com/login?return_url=...&signature=...&app=stockflow`.
+- **Deployed**: pull `285c1bb` + `route:clear && config:clear && cache:clear && route:cache && config:cache && optimize` on droplet.
+
+### QuickInvoice "can't save user data" (FIXED EARLIER)
+- `EloquentProfileRepository::save()` writes `organization_id` to `quick_invoice_profiles`; migration `core/2026_07_20_210003_add_organization_id_to_quick_invoice_profiles.php` was pending on prod → 1054 Unknown column. Applied migration with `php artisan migrate --path=... --force`; save path verified in rolled-back transaction.
+
