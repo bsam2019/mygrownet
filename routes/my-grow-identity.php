@@ -23,7 +23,11 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Guest routes — unauthenticated users
-Route::middleware('guest')->group(function () {
+// Scoped to auth.mygrownet.com so they don't collide with the domain-less
+// legacy Blade auth routes in web.php (RouteCollection is keyed by
+// method+domain+uri with last-write-wins, so load order would otherwise
+// silently overwrite these identity routes).
+Route::domain('auth.mygrownet.com')->middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLogin'])->name('identity.login');
     Route::post('/login', [LoginController::class, 'login'])->name('identity.login.store');
 
@@ -37,7 +41,7 @@ Route::middleware('guest')->group(function () {
 });
 
 // Authenticated routes
-Route::middleware('auth:web')->group(function () {
+Route::domain('auth.mygrownet.com')->middleware('auth:web')->group(function () {
     Route::post('/logout', [LogoutController::class, 'logout'])->name('identity.logout');
 
     Route::get('/email/verify', [EmailVerificationController::class, 'showNotice'])->name('identity.verification.notice');
