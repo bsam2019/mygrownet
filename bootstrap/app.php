@@ -4,7 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Session\TokenMismatchException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -172,8 +172,15 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Handle 419 CSRF/session expiry — redirect to login with a message
-        $exceptions->render(function (TokenMismatchException $e, $request) {
+        // Handle 419 CSRF/session expiry — redirect to login with a message.
+        // NOTE: Laravel 13's Handler::prepareException() converts TokenMismatchException
+        // into a plain HttpException(419) BEFORE renderCallbacks are consulted, so we
+        // must match on HttpException with status 419, not TokenMismatchException.
+        $exceptions->render(function (HttpException $e, $request) {
+            if ($e->getStatusCode() !== 419) {
+                return;
+            }
+
             // Detect StockFlow subdomain
             $host = $request->getHost();
             $isStockFlowSubdomain = preg_match('/^[a-z0-9-]+\.mygrownet\.com$/i', $host)
@@ -187,10 +194,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json(['message' => 'Session expired.'], 419);
-            }
-
-            if ($request->header('X-Inertia')) {
-                return redirect()->guest($loginUrl)->with('warning', 'Your session has expired. Please log in again.');
             }
 
             return redirect()->guest($loginUrl)->with('warning', 'Your session has expired. Please log in again.');
