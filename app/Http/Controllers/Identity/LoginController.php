@@ -69,13 +69,14 @@ class LoginController extends Controller
 
         $returnUrl = session('identity_return_url');
 
-        if ($returnUrl && $this->identity->validateReturnUrl(
-            $returnUrl,
-            hash_hmac('sha256', $returnUrl . '|' . time(), config('platform.identity.signing_key') ?? ''),
-            time() + config('platform.identity.return_url_ttl', 300)
-        )) {
-            session()->forget('identity_return_url');
-            return redirect()->away($returnUrl);
+        if ($returnUrl) {
+            $expires = time() + config('platform.identity.return_url_ttl', 300);
+            $signature = hash_hmac('sha256', $returnUrl . '|' . $expires, config('platform.identity.signing_key') ?? '');
+
+            if ($this->identity->validateReturnUrl($returnUrl, $signature, $expires)) {
+                session()->forget('identity_return_url');
+                return redirect()->away($returnUrl);
+            }
         }
 
         return redirect()->intended(route('workspace'));
