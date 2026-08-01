@@ -1515,6 +1515,20 @@ Route::middleware(['auth', 'verified'])->prefix('wallet')->name('wallet.')->grou
 // Currency System Test Page
 Route::middleware(['auth'])->get('/test-currency', fn() => Inertia::render('TestCurrency'))->name('test.currency');
 
+// Shared Payment Checkout Page — used by every module's pay flows
+Route::middleware(['auth'])->get('/payments/checkout', function (\Illuminate\Http\Request $request) {
+    return Inertia::render('Payments/SharedCheckout', [
+        'amount' => (float) $request->query('amount', 0),
+        'currency' => strtoupper($request->query('currency', 'ZMW')),
+        'description' => $request->query('description'),
+        'gateway' => $request->query('gateway', 'pawapay'),
+        'reference' => $request->query('reference'),
+        'returnUrl' => $request->query('return_url'),
+        'organizationId' => $request->query('organization_id') ? (int) $request->query('organization_id') : null,
+    ]);
+})->name('payments.checkout');
+
+
 // Social Share Tracking Routes (for LGR activity tracking)
 Route::middleware(['auth', 'verified'])->prefix('social-shares')->name('social-shares.')->group(function () {
     Route::post('/record', [App\Http\Controllers\GrowNet\SocialShareController::class, 'recordShare'])->name('record');
@@ -1663,7 +1677,7 @@ Route::get('/{path}', function ($path) {
     }
     // If it doesn't look like a username, let it fall through to 404
     abort(404);
-})->where('path', '^(?!growbuilder|quick-invoice|growfinance|bizboost|marketplace|bms|lifeplus|pos|growmart|zamstay|grownet|bizdocs|growbackup|services|products|solutions|venturebuilder|stockflow)[a-zA-Z0-9\/_-]+$');
+})->where('path', '^(?!api|growbuilder|quick-invoice|growfinance|bizboost|marketplace|bms|lifeplus|pos|growmart|zamstay|grownet|bizdocs|growbackup|services|products|solutions|venturebuilder|stockflow)[a-zA-Z0-9\/_-]+$');
 
 // Fallback route for GrowBuilder custom domains
 // This catches any unmatched routes and checks if they should be handled by GrowBuilder

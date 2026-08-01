@@ -32,6 +32,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="PAWAPAY_BASE_URL" value="https://api.sandbox.pawapay.io"/>
         <env name="APP_KEY" value="base64:Lcmz12NfqAV2zQDtjs+QINm72LebO9fbkd7URwAaByE="/>
     </php>
 </phpunit>

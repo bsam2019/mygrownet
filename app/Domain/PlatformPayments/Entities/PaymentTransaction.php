@@ -93,6 +93,13 @@ class PaymentTransaction
         );
     }
 
+    public function markPending(string $providerTransactionId, ?string $reference = null): void
+    {
+        $this->status = TransactionStatus::Pending;
+        $this->providerTransactionId = $providerTransactionId;
+        $this->providerReference = $reference;
+    }
+
     public function markCompleted(string $providerTransactionId, ?string $reference = null): void
     {
         $this->status = TransactionStatus::Completed;
@@ -115,6 +122,12 @@ class PaymentTransaction
         $this->status = TransactionStatus::Settled;
     }
 
+    public function markRefunded(string $refundReference): void
+    {
+        $this->status = TransactionStatus::Refunded;
+        $this->providerReference = $refundReference;
+    }
+
     public function markReconciled(): void
     {
         $this->status = TransactionStatus::Reconciled;
@@ -127,6 +140,7 @@ class PaymentTransaction
     public function paymentMethod(): PaymentMethod { return $this->paymentMethod; }
     public function status(): TransactionStatus { return $this->status; }
     public function providerTransactionId(): ?string { return $this->providerTransactionId; }
+    public function providerReference(): ?string { return $this->providerReference; }
     public function provider(): string { return $this->provider; }
     public function attemptCount(): int { return $this->attemptCount; }
     public function failureReason(): ?string { return $this->failureReason; }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ReferralController;
 use App\Http\Controllers\Api\DeviceController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PaymentWebhookController;
+use App\Http\Controllers\Api\SharedPaymentController;
 use App\Http\Controllers\Api\Admin\ReferralController as AdminReferralController;
 
 // API routes have been moved to web.php
@@ -43,6 +44,15 @@ Route::middleware(['web', 'auth'])->prefix('payments')->group(function () {
     Route::post('/collect', [PaymentController::class, 'collect']);
     Route::post('/disburse', [PaymentController::class, 'disburse']);
     Route::get('/status/{transactionId}', [PaymentController::class, 'status']);
+});
+
+// Shared payment API (used by every module's checkout page)
+Route::middleware(['web', 'auth'])->prefix('payments/shared')->name('payments.shared.')->group(function () {
+    Route::get('/gateways', [SharedPaymentController::class, 'gateways'])->name('gateways');
+    Route::get('/fields/{gateway}', [SharedPaymentController::class, 'fields'])->name('fields');
+    Route::post('/initiate', [SharedPaymentController::class, 'initiate'])->name('initiate');
+    Route::get('/status/{reference}', [SharedPaymentController::class, 'status'])->name('status');
+    Route::post('/refund', [SharedPaymentController::class, 'refund'])->name('refund');
 });
 
 // Payment Webhooks (no auth - verified by signature)
