@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('subscription_tier', 50);
             
             // Status
-            $table->enum('status', ['active', 'trial', 'suspended', 'cancelled'])->default('active');
+            $table->enum('status', ['active', 'trial', 'pending', 'suspended', 'cancelled'])->default('active');
             
             // Dates
             $table->timestamp('started_at');

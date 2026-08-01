@@ -4,7 +4,6 @@ namespace App\Http\Controllers\GrowBuilder;
 
 use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\Module\Services\TierConfigurationService;
-use App\Domain\GrowBuilder\Services\GrowBuilderBillingIntegration;
 use App\Domain\GrowNet\Wallet\Services\WalletService;
 use App\Http\Controllers\Controller;
 use App\Services\GrowBuilder\StorageService;
@@ -21,7 +20,6 @@ class SubscriptionController extends Controller
         private TierConfigurationService $tierConfigService,
         private WalletService $walletService,
         private StorageService $storageService,
-        private GrowBuilderBillingIntegration $billingIntegration,
     ) {}
 
     /**
@@ -87,125 +85,42 @@ class SubscriptionController extends Controller
     }
 
     /**
-     * Purchase subscription using wallet balance
+     * Purchase subscription — routes through the unified PawaPay checkout.
      */
     public function purchase(Request $request)
     {
         $request->validate([
             'tier' => 'required|string',
-            'amount' => 'required|numeric|min:0',
-            'billing_cycle' => 'required|in:monthly,yearly',
+            'billing_cycle' => 'required|in:monthly,yearly,annual',
         ]);
 
         $user = $request->user();
-        $amount = (float) $request->input('amount');
         $tier = $request->input('tier');
+        $billingCycle = $request->input('billing_cycle') === 'yearly'
+            ? 'annual'
+            : $request->input('billing_cycle');
 
-        // Log the purchase attempt
-        \Log::info('GrowBuilder subscription purchase attempt', [
+        $currentTier = $this->subscriptionService->getUserTier($user, self::MODULE_ID);
+        $tierOrder = ['free' => 0, 'starter' => 1, 'business' => 2, 'agency' => 3];
+        $tierOrder[$tier] = $tierOrder[$tier] ?? 0;
+
+        // Can't downgrade through checkout
+        if (isset($tierOrder[$currentTier]) && $tierOrder[$tier] <= $tierOrder[$currentTier]) {
+            return back()->with('error', 'Please contact support to change your plan.');
+        }
+
+        \Log::info('GrowBuilder subscription checkout', [
             'user_id' => $user->id,
             'tier' => $tier,
-            'amount' => $amount,
-            'billing_cycle' => $request->input('billing_cycle'),
-            'wallet_balance' => $this->walletService->calculateBalance($user),
+            'billing_cycle' => $billingCycle,
         ]);
 
-        // Free tier doesn't need payment
-        if ($amount > 0) {
-            $balance = $this->walletService->calculateBalance($user);
-            if ($balance < $amount) {
-                \Log::warning('GrowBuilder subscription purchase failed: insufficient balance', [
-                    'user_id' => $user->id,
-                    'required' => $amount,
-                    'balance' => $balance,
-                ]);
-                return back()->with('error', 'Insufficient wallet balance. Please top up your wallet.');
-            }
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $expiresAt = $request->input('billing_cycle') === 'yearly'
-                ? now()->addYear()
-                : now()->addMonth();
-
-            // Create or update subscription
-            DB::table('module_subscriptions')->updateOrInsert(
-                [
-                    'user_id' => $user->id,
-                    'module_id' => self::MODULE_ID,
-                ],
-                [
-                    'subscription_tier' => $tier,
-                    'status' => 'active',
-                    'started_at' => now(),
-                    'expires_at' => $expiresAt,
-                    'billing_cycle' => $request->input('billing_cycle'),
-                    'amount' => $amount,
-                    'currency' => 'ZMW',
-                    'auto_renew' => $amount > 0,
-                    'updated_at' => now(),
-                ]
-            );
-
-            // Record transaction if paid
-            if ($amount > 0) {
-                DB::table('transactions')->insert([
-                    'user_id' => $user->id,
-                    'transaction_type' => 'subscription_payment',
-                    'transaction_source' => self::MODULE_ID, // Track which module generated this revenue
-                    'amount' => -$amount,
-                    'status' => 'completed',
-                    'reference_number' => 'GB-SUB-' . strtoupper(uniqid()),
-                    'description' => "GrowBuilder {$tier} subscription ({$request->input('billing_cycle')})",
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                // Record platform billing
-                $subscription = DB::table('module_subscriptions')
-                    ->where('user_id', $user->id)
-                    ->where('module_id', self::MODULE_ID)
-                    ->first();
-
-                $this->billingIntegration->processPayment(
-                    userId: $user->id,
-                    organizationId: $user->organization_id ?? 0,
-                    amount: $amount,
-                    tier: $tier,
-                    moduleSubscriptionId: $subscription->id,
-                );
-
-                $this->walletService->clearCache($user);
-            }
-
-            $this->subscriptionService->clearCache($user, self::MODULE_ID);
-
-            DB::commit();
-
-            \Log::info('GrowBuilder subscription purchase successful', [
-                'user_id' => $user->id,
-                'tier' => $tier,
-                'amount' => $amount,
-            ]);
-
-            return redirect()->route('growbuilder.subscription.index')
-                ->with('success', 'Subscription activated successfully!');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            
-            \Log::error('GrowBuilder subscription purchase failed', [
-                'user_id' => $user->id,
-                'tier' => $tier,
-                'amount' => $amount,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            
-            return back()->with('error', 'An error occurred. Please try again.');
-        }
+        return redirect()->route('subscriptions.checkout', [
+            'module' => self::MODULE_ID,
+            'tier' => $tier,
+            'billing_cycle' => $billingCycle,
+            'return_url' => route('growbuilder.subscription.index'),
+        ]);
     }
 
     /**

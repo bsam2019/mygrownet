@@ -29,7 +29,9 @@ class ModuleSubscription
         private string $billingCycle,
         private Money $amount,
         private ?int $userLimit,
-        private ?int $storageLimitMb
+        private ?int $storageLimitMb,
+        private ?string $providerReference = null,
+        private ?string $providerTransactionId = null
     ) {}
 
     public static function create(
@@ -123,6 +125,24 @@ class ModuleSubscription
         $this->status = 'active';
     }
 
+    /**
+     * Mark the subscription as awaiting payment confirmation.
+     */
+    public function markPending(): void
+    {
+        $this->status = 'pending';
+    }
+
+    /**
+     * Activate the subscription once payment has been confirmed.
+     */
+    public function markActive(): void
+    {
+        $this->status = 'active';
+        $this->cancelledAt = null;
+        $this->expiresAt = self::calculateExpiration($this->billingCycle);
+    }
+
     public function convertFromTrial(Money $amount, string $billingCycle): void
     {
         if (!$this->isTrial()) {
@@ -161,6 +181,36 @@ class ModuleSubscription
         $this->storageLimitMb = $storageLimitMb;
     }
 
+    public function setProviderReference(?string $providerReference): void
+    {
+        $this->providerReference = $providerReference;
+    }
+
+    public function setProviderTransactionId(?string $providerTransactionId): void
+    {
+        $this->providerTransactionId = $providerTransactionId;
+    }
+
+    public function setStatus(string $status): void
+    {
+        $this->status = $status;
+    }
+
+    public function setSubscriptionTier(string $subscriptionTier): void
+    {
+        $this->subscriptionTier = $subscriptionTier;
+    }
+
+    public function setExpiresAt(?\DateTimeImmutable $expiresAt): void
+    {
+        $this->expiresAt = $expiresAt;
+    }
+
+    public static function calculateExpirationFor(string $billingCycle, ?\DateTimeImmutable $from = null): \DateTimeImmutable
+    {
+        return self::calculateExpiration($billingCycle, $from);
+    }
+
     private static function calculateExpiration(
         string $billingCycle,
         ?\DateTimeImmutable $from = null
@@ -190,4 +240,29 @@ class ModuleSubscription
     public function getCancelledAt(): ?\DateTimeImmutable { return $this->cancelledAt; }
     public function getUserLimit(): ?int { return $this->userLimit; }
     public function getStorageLimitMb(): ?int { return $this->storageLimitMb; }
+    public function getProviderReference(): ?string { return $this->providerReference; }
+    public function getProviderTransactionId(): ?string { return $this->providerTransactionId; }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id?->value(),
+            'user_id' => $this->userId,
+            'module_id' => $this->moduleId,
+            'subscription_tier' => $this->subscriptionTier,
+            'status' => $this->status,
+            'started_at' => $this->startedAt->format(\DateTimeInterface::ATOM),
+            'trial_ends_at' => $this->trialEndsAt?->format(\DateTimeInterface::ATOM),
+            'expires_at' => $this->expiresAt?->format(\DateTimeInterface::ATOM),
+            'cancelled_at' => $this->cancelledAt?->format(\DateTimeInterface::ATOM),
+            'auto_renew' => $this->autoRenew,
+            'billing_cycle' => $this->billingCycle,
+            'amount' => $this->amount->amount(),
+            'currency' => $this->amount->currency(),
+            'user_limit' => $this->userLimit,
+            'storage_limit_mb' => $this->storageLimitMb,
+            'provider_reference' => $this->providerReference,
+            'provider_transaction_id' => $this->providerTransactionId,
+        ];
+    }
 }

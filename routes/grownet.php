@@ -28,6 +28,8 @@ use Inertia\Inertia;
 $registerGrowNetSubdomainRoutes = function (string $prefix, string $namePrefix) {
     Route::prefix($prefix)->name($namePrefix)->middleware(['auth'])->group(function () {
 
+        Route::get('/subscription', fn() => redirect()->route('subscriptions.plans', ['module' => 'grownet']))->name('subscription');
+
         Route::get('/profit-shares', [ProfitShareController::class, 'index'])->name('profit-shares');
 
         Route::get('/my-membership', [MembershipController::class, 'show'])->name('membership.show');

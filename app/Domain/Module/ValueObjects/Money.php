@@ -18,6 +18,11 @@ class Money
         return new self($amount, $currency);
     }
 
+    public static function fromFloat(float $amount, string $currency = 'ZMW'): self
+    {
+        return new self((int) round($amount), $currency);
+    }
+
     public static function zero(string $currency = 'ZMW'): self
     {
         return new self(0, $currency);
@@ -26,6 +31,11 @@ class Money
     public static function fromCents(int $cents, string $currency = 'ZMW'): self
     {
         return new self((int) ($cents / 100), $currency);
+    }
+
+    public function toFloat(): float
+    {
+        return (float) $this->amount;
     }
 
     public function amount(): int

@@ -1528,6 +1528,15 @@ Route::middleware(['auth'])->get('/payments/checkout', function (\Illuminate\Htt
     ]);
 })->name('payments.checkout');
 
+// Unified module subscription checkout (shared by all modules)
+Route::middleware(['auth'])->get('/subscriptions/{module}/plans', [\App\Http\Controllers\SubscriptionCheckoutController::class, 'pricing'])
+    ->where('module', '[a-z0-9_-]+')
+    ->name('subscriptions.plans');
+
+Route::middleware(['auth'])->get('/subscriptions/{module}/checkout', [\App\Http\Controllers\SubscriptionCheckoutController::class, 'show'])
+    ->where('module', '[a-z0-9_-]+')
+    ->name('subscriptions.checkout');
+
 
 // Social Share Tracking Routes (for LGR activity tracking)
 Route::middleware(['auth', 'verified'])->prefix('social-shares')->name('social-shares.')->group(function () {

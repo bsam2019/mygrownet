@@ -27,6 +27,7 @@ const pageGlobs: Record<string, () => Promise<DefineComponent>> = {
     ...import.meta.glob<DefineComponent>('./pages/Reports/**/*.vue'),
     ...import.meta.glob<DefineComponent>('./pages/Portal/**/*.vue'),
     ...import.meta.glob<DefineComponent>('./pages/Settings/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Payments/**/*.vue'), // Shared payment checkout
     
     // Note: The following modules have their own entry points and should NOT be here:
     // - BMS (app-bms.ts)

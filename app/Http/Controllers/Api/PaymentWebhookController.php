@@ -103,10 +103,10 @@ class PaymentWebhookController extends Controller
         }
 
         $paymentStatus = $this->mapToPaymentStatus($status);
-        $reference = $data['depositId'] ?? $data['payoutId'] ?? $data['refundId'] ?? null;
+        $providerTransactionId = $data['depositId'] ?? $data['payoutId'] ?? $data['refundId'] ?? null;
 
         if ($paymentStatus === PaymentStatus::COMPLETED) {
-            $transaction->markCompleted($reference, $reference);
+            $transaction->markCompleted($providerTransactionId, $transaction->providerReference());
             $this->transactions->save($transaction);
 
             $this->events->dispatch(new PaymentCompleted(
@@ -114,7 +114,7 @@ class PaymentWebhookController extends Controller
                 organizationId: $transaction->organizationId(),
                 amount: $transaction->amount(),
                 currency: $transaction->currency(),
-                providerTransactionId: $reference,
+                providerTransactionId: $providerTransactionId,
             ));
 
             return;

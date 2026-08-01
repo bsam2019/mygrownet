@@ -22,13 +22,16 @@ const props = defineProps<Props>();
 
 const form = useForm({
     tier: props.selectedTier,
-    billing_cycle: props.billingCycle,
-    payment_method: 'mobile_money',
-    phone_number: '',
+    billing_cycle: props.billingCycle === 'yearly' ? 'annual' : props.billingCycle,
 });
 
 const submit = () => {
-    form.post(route('bizboost.subscription.process'));
+    window.location.href = route('subscriptions.checkout', {
+        module: 'bizboost',
+        tier: form.tier,
+        billing_cycle: form.billing_cycle,
+        return_url: route('bizboost.settings.subscription'),
+    });
 };
 
 import { formatBizBoostPriceShort as formatPrice } from '@/composables/useBizBoostCurrency';

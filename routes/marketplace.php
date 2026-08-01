@@ -53,6 +53,9 @@ Route::middleware(['auth', 'verified', 'marketplace.data'])
     ->name('marketplace.')
     ->group(function () {
         
+        // Subscription & plans — unified PawaPay checkout
+        Route::get('/subscription', fn() => redirect()->route('subscriptions.plans', ['module' => 'growmarket']))->name('subscription');
+
         // Checkout
         Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
         Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');

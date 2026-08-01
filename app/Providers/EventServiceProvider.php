@@ -102,6 +102,11 @@ class EventServiceProvider extends ServiceProvider
             \App\Domain\GrowFinance\Listeners\PlatformPaymentsListener::class,
         ],
 
+        // Platform Payments → Module Subscription Activation
+        \App\Domain\PlatformPayments\Events\PaymentCompleted::class => [
+            \App\Domain\Module\Listeners\ActivateSubscriptionOnPaymentCompleted::class,
+        ],
+
         // BMS Events → GrowFinance Auto-Journaling
         'bms.invoice.created.v1' => [
             \App\Domain\GrowFinance\Listeners\BmsInvoiceCreatedListener::class,

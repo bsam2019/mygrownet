@@ -44,11 +44,41 @@ class EloquentModuleSubscriptionRepository implements ModuleSubscriptionReposito
             $record = DB::table('module_subscriptions')
                 ->where('user_id', $userId)
                 ->where('module_id', $moduleIdValue)
-                ->where('status', 'active')
+                ->whereIn('status', ['active', 'pending', 'trial'])
                 ->first();
 
             return $record ? $this->toEntity($record) : null;
         });
+    }
+
+    public function findPendingByUserAndModule(int $userId, string|ModuleId $moduleId): ?ModuleSubscription
+    {
+        if (!$this->tableExists()) {
+            return null;
+        }
+
+        $moduleIdValue = $moduleId instanceof ModuleId ? $moduleId->value() : $moduleId;
+
+        $record = DB::table('module_subscriptions')
+            ->where('user_id', $userId)
+            ->where('module_id', $moduleIdValue)
+            ->where('status', 'pending')
+            ->first();
+
+        return $record ? $this->toEntity($record) : null;
+    }
+
+    public function findByProviderReference(string $providerReference): ?ModuleSubscription
+    {
+        if (!$this->tableExists()) {
+            return null;
+        }
+
+        $record = DB::table('module_subscriptions')
+            ->where('provider_reference', $providerReference)
+            ->first();
+
+        return $record ? $this->toEntity($record) : null;
     }
 
     public function findByUser(int $userId): array
@@ -121,10 +151,20 @@ class EloquentModuleSubscriptionRepository implements ModuleSubscriptionReposito
         $data = [
             'user_id' => $subscription->getUserId(),
             'module_id' => $subscription->getModuleId(),
-            'tier' => $subscription->getSubscriptionTier(),
+            'subscription_tier' => $subscription->getSubscriptionTier(),
             'status' => $subscription->getStatus(),
             'started_at' => $subscription->getStartedAt()->format('Y-m-d H:i:s'),
+            'trial_ends_at' => $subscription->getTrialEndsAt()?->format('Y-m-d H:i:s'),
             'expires_at' => $subscription->getExpiresAt()?->format('Y-m-d H:i:s'),
+            'cancelled_at' => $subscription->getCancelledAt()?->format('Y-m-d H:i:s'),
+            'auto_renew' => $subscription->isAutoRenew(),
+            'billing_cycle' => $subscription->getBillingCycle(),
+            'amount' => $subscription->getAmount()->amount(),
+            'currency' => $subscription->getAmount()->currency(),
+            'user_limit' => $subscription->getUserLimit(),
+            'storage_limit_mb' => $subscription->getStorageLimitMb(),
+            'provider_reference' => $subscription->getProviderReference(),
+            'provider_transaction_id' => $subscription->getProviderTransactionId(),
             'updated_at' => now(),
         ];
 
@@ -134,7 +174,8 @@ class EloquentModuleSubscriptionRepository implements ModuleSubscriptionReposito
                 ->update($data);
         } else {
             $data['created_at'] = now();
-            DB::table('module_subscriptions')->insert($data);
+            $id = DB::table('module_subscriptions')->insertGetId($data);
+            $subscription->setId(SubscriptionId::fromInt((int) $id));
         }
 
         $this->clearCache($subscription->getUserId(), $subscription->getModuleId());
@@ -182,9 +223,11 @@ class EloquentModuleSubscriptionRepository implements ModuleSubscriptionReposito
             cancelledAt: isset($record->cancelled_at) ? new \DateTimeImmutable($record->cancelled_at) : null,
             autoRenew: $record->auto_renew ?? true,
             billingCycle: $record->billing_cycle ?? 'monthly',
-            amount: Money::fromCents($record->amount ?? 0, $record->currency ?? 'ZMW'),
+            amount: Money::fromFloat((float) ($record->amount ?? 0), $record->currency ?? 'ZMW'),
             userLimit: $record->user_limit ?? null,
-            storageLimitMb: $record->storage_limit_mb ?? null
+            storageLimitMb: $record->storage_limit_mb ?? null,
+            providerReference: $record->provider_reference ?? null,
+            providerTransactionId: $record->provider_transaction_id ?? null
         );
 
         return $subscription;

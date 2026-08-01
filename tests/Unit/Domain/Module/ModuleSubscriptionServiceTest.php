@@ -253,4 +253,130 @@ class ModuleSubscriptionServiceTest extends TestCase
 
         $this->assertEquals(0, $this->service->processExpiredSubscriptions());
     }
+
+    #[Test]
+    public function startCheckout_creates_pending_subscription_with_reference()
+    {
+        $this->repository->expects($this->once())
+            ->method('findByUserAndModule')
+            ->with(1, 'bizboost')
+            ->willReturn(null);
+
+        $this->repository->expects($this->once())
+            ->method('save')
+            ->willReturnCallback(function (ModuleSubscription $subscription) {
+                $this->assertEquals('pending', $subscription->getStatus());
+                $this->assertNotNull($subscription->getProviderReference());
+                $this->assertStringStartsWith('sub_1_', $subscription->getProviderReference());
+                $this->assertNull($subscription->getExpiresAt());
+            });
+
+        $result = $this->service->startCheckout(
+            userId: 1,
+            moduleId: ModuleId::fromString('bizboost'),
+            tier: SubscriptionTier::pro(),
+            amount: Money::fromAmount(9900),
+            billingCycle: 'annual',
+        );
+
+        $this->assertEquals('pending', $result->getStatus());
+        $this->assertEquals('bizboost', $result->getModuleId());
+        $this->assertEquals('pro', $result->getTier());
+        $this->assertEquals('annual', $result->getBillingCycle());
+    }
+
+    #[Test]
+    public function startCheckout_reuses_existing_pending_subscription()
+    {
+        $existing = ModuleSubscription::create(
+            userId: 1,
+            moduleId: 'bizboost',
+            subscriptionTier: 'basic',
+            amount: Money::fromAmount(1000),
+        );
+        $existing->setStatus('pending');
+
+        $this->repository->expects($this->once())
+            ->method('findByUserAndModule')
+            ->with(1, 'bizboost')
+            ->willReturn($existing);
+
+        $this->repository->expects($this->once())
+            ->method('save')
+            ->with($existing);
+
+        $result = $this->service->startCheckout(
+            userId: 1,
+            moduleId: ModuleId::fromString('bizboost'),
+            tier: SubscriptionTier::pro(),
+            amount: Money::fromAmount(9900),
+        );
+
+        $this->assertSame($existing, $result);
+        $this->assertEquals('pending', $result->getStatus());
+        $this->assertEquals('pro', $result->getTier());
+    }
+
+    #[Test]
+    public function startCheckout_throws_when_already_active()
+    {
+        $existing = ModuleSubscription::create(
+            userId: 1,
+            moduleId: 'bizboost',
+            subscriptionTier: 'pro',
+            amount: Money::fromAmount(9900),
+        );
+        $existing->markActive();
+
+        $this->repository->expects($this->once())
+            ->method('findByUserAndModule')
+            ->with(1, 'bizboost')
+            ->willReturn($existing);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('User already has an active subscription to this module');
+
+        $this->service->startCheckout(1, ModuleId::fromString('bizboost'), SubscriptionTier::pro(), Money::fromAmount(9900));
+    }
+
+    #[Test]
+    public function activateOnPayment_finds_and_activates()
+    {
+        $subscription = ModuleSubscription::create(
+            userId: 1,
+            moduleId: 'bizboost',
+            subscriptionTier: 'pro',
+            amount: Money::fromAmount(9900),
+        );
+        $subscription->setStatus('pending');
+        $subscription->setProviderReference('sub_1_12345');
+
+        $this->repository->expects($this->once())
+            ->method('findByProviderReference')
+            ->with('sub_1_12345')
+            ->willReturn($subscription);
+
+        $this->repository->expects($this->once())
+            ->method('save')
+            ->with($subscription);
+
+        $result = $this->service->activateOnPayment('sub_1_12345');
+
+        $this->assertEquals('active', $result->getStatus());
+        $this->assertNotNull($result->getExpiresAt());
+        $this->assertNull($result->getCancelledAt());
+    }
+
+    #[Test]
+    public function activateOnPayment_throws_when_not_found()
+    {
+        $this->repository->expects($this->once())
+            ->method('findByProviderReference')
+            ->with('sub_1_999')
+            ->willReturn(null);
+
+        $this->expectException(\DomainException::class);
+
+        $this->service->activateOnPayment('sub_1_999');
+    }
 }

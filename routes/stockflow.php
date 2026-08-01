@@ -44,6 +44,9 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->prefix('stockflow')->name('stockflow.')->group(function () {
+    // Subscription & plans — unified PawaPay checkout
+    Route::get('/subscription', fn() => redirect()->route('subscriptions.plans', ['module' => 'stockflow']))->name('subscription');
+
     // Comments API (cross-cutting, no feature flag)
     Route::prefix('comments')->name('comments.')->group(function () {
         Route::get('/', [CommentController::class, 'index'])->name('index');

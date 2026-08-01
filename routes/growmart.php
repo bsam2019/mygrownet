@@ -51,6 +51,8 @@ $registerGrowMartCustomerRoutes = function (string $prefix, string $namePrefix) 
         Route::delete('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
         Route::delete('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
 
+        Route::get('/subscription', fn() => redirect()->route('subscriptions.plans', ['module' => 'growmart']))->name('subscription');
+
         Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
         Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
         Route::post('/checkout/validate-coupon', [CheckoutController::class, 'validateCoupon'])->name('checkout.validate-coupon');

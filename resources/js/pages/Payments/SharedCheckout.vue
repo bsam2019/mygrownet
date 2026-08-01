@@ -25,6 +25,12 @@ const props = defineProps<{
     reference?: string;
     returnUrl?: string;
     organizationId?: number | null;
+    subscription?: {
+        module_id: string;
+        tier: string;
+        billing_cycle: string;
+        provider_reference: string;
+    };
 }>();
 
 const phoneNumber = ref('');
@@ -81,6 +87,7 @@ const initiate = async () => {
             metadata: {
                 return_url: props.returnUrl,
                 organization_id: props.organizationId,
+                subscription: props.subscription ?? null,
             },
         });
 

@@ -4,9 +4,9 @@ namespace App\Domain\Module\Services;
 
 use App\Domain\Module\Entities\ModuleSubscription;
 use App\Domain\Module\Repositories\ModuleSubscriptionRepositoryInterface;
-use App\Domain\Module\ValueObjects\SubscriptionId;
 use App\Domain\Module\ValueObjects\ModuleId;
 use App\Domain\Module\ValueObjects\SubscriptionTier;
+use App\Domain\Module\ValueObjects\SubscriptionId;
 use App\Domain\Module\ValueObjects\Money;
 
 /**
@@ -29,19 +29,31 @@ class ModuleSubscriptionService
     ): ModuleSubscription {
         // Check if subscription already exists
         $existing = $this->repository->findByUserAndModule($userId, $moduleId);
-        
+
         if ($existing && $existing->isActive()) {
             throw new \DomainException('User already has an active subscription to this module');
         }
 
-        $subscription = ModuleSubscription::create(
-            id: SubscriptionId::fromInt($this->generateId()),
+        $subscription = $existing ?? new ModuleSubscription(
+            id: null,
             userId: $userId,
-            moduleId: $moduleId,
-            tier: $tier,
+            moduleId: $moduleId->value(),
+            subscriptionTier: $tier->value(),
+            status: 'pending',
+            startedAt: new \DateTimeImmutable(),
+            trialEndsAt: null,
+            expiresAt: null,
+            cancelledAt: null,
+            autoRenew: true,
+            billingCycle: $billingCycle,
             amount: $amount,
-            billingCycle: $billingCycle
+            userLimit: null,
+            storageLimitMb: null,
         );
+
+        $subscription->setStatus('active');
+        $subscription->setExpiresAt($subscription->getExpiresAt() ?? ModuleSubscription::calculateExpirationFor($billingCycle));
+        $subscription->setSubscriptionTier($tier->value());
 
         $this->repository->save($subscription);
 
@@ -62,10 +74,9 @@ class ModuleSubscriptionService
         }
 
         $subscription = ModuleSubscription::createTrial(
-            id: SubscriptionId::fromInt($this->generateId()),
             userId: $userId,
-            moduleId: $moduleId,
-            tier: $tier,
+            moduleId: $moduleId->value(),
+            subscriptionTier: $tier->value(),
             trialDays: $trialDays
         );
 
@@ -138,6 +149,79 @@ class ModuleSubscriptionService
         $this->repository->save($subscription);
     }
 
+    /**
+     * Start a checkout for a module subscription.
+     *
+     * Creates (or reuses) a pending subscription row linked to a payment
+     * provider reference. The subscription is activated only after the
+     * payment completes (see activateOnPayment).
+     */
+    public function startCheckout(
+        int $userId,
+        ModuleId $moduleId,
+        SubscriptionTier $tier,
+        Money $amount,
+        string $billingCycle = 'monthly'
+    ): ModuleSubscription {
+        $existing = $this->repository->findByUserAndModule($userId, $moduleId);
+
+        if ($existing && $existing->isActive()) {
+            throw new \DomainException('User already has an active subscription to this module');
+        }
+
+        $subscription = $existing
+            ?? new ModuleSubscription(
+                id: null,
+                userId: $userId,
+                moduleId: $moduleId->value(),
+                subscriptionTier: $tier->value(),
+                status: 'pending',
+                startedAt: new \DateTimeImmutable(),
+                trialEndsAt: null,
+                expiresAt: null,
+                cancelledAt: null,
+                autoRenew: true,
+                billingCycle: $billingCycle,
+                amount: $amount,
+                userLimit: null,
+                storageLimitMb: null,
+            );
+
+        $subscription->setStatus('pending');
+        $subscription->setExpiresAt(null);
+        $subscription->setSubscriptionTier($tier->value());
+        $subscription->setProviderReference($this->generatePaymentReference($subscription));
+
+        $this->repository->save($subscription);
+
+        return $subscription;
+    }
+
+    /**
+     * Activate a pending subscription once payment has been confirmed.
+     *
+     * @return ModuleSubscription
+     */
+    public function activateOnPayment(string $providerReference): ModuleSubscription
+    {
+        $subscription = $this->repository->findByProviderReference($providerReference);
+
+        if (!$subscription) {
+            throw new \DomainException("No pending subscription found for payment reference [{$providerReference}]");
+        }
+
+        $subscription->markActive();
+        $this->repository->save($subscription);
+
+        return $subscription;
+    }
+
+    private function generatePaymentReference(ModuleSubscription $subscription): string
+    {
+        $id = $subscription->getId()?->value() ?? (int) (microtime(true) * 1000);
+        return "sub_{$subscription->getUserId()}_{$id}";
+    }
+
     public function processExpiredSubscriptions(): int
     {
         $expired = $this->repository->findExpired();
@@ -160,12 +244,5 @@ class ModuleSubscriptionService
         }
 
         return $count;
-    }
-
-    private function generateId(): int
-    {
-        // This would typically use a sequence or auto-increment
-        // For now, return a placeholder
-        return time();
     }
 }

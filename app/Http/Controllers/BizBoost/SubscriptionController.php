@@ -167,29 +167,27 @@ class SubscriptionController extends Controller
     {
         $validated = $request->validate([
             'tier' => 'required|string|in:basic,professional,business',
-            'billing_cycle' => 'required|string|in:monthly,annual',
+            'billing_cycle' => 'required|string|in:monthly,annual,yearly',
+            'return_url' => 'nullable|string',
         ]);
 
         $user = $request->user();
         $currentTier = $this->subscriptionService->getUserTier($user, self::MODULE_ID);
-        
+
         // Can't downgrade through checkout
         $tierOrder = ['free' => 0, 'basic' => 1, 'professional' => 2, 'business' => 3];
         if ($tierOrder[$validated['tier']] <= $tierOrder[$currentTier]) {
             return back()->with('error', 'Please contact support to change your plan.');
         }
 
-        $tierConfig = $this->tierConfigService->getTierConfig(self::MODULE_ID, $validated['tier']);
-        $price = $validated['billing_cycle'] === 'annual' 
-            ? $tierConfig['price_annual'] 
-            : $tierConfig['price_monthly'];
+        $billingCycle = $validated['billing_cycle'] === 'yearly' ? 'annual' : $validated['billing_cycle'];
 
-        return Inertia::render('BizBoost/Checkout', [
-            'selectedTier' => $validated['tier'],
-            'tierConfig' => $tierConfig,
-            'billingCycle' => $validated['billing_cycle'],
-            'price' => $price,
-            'currentTier' => $currentTier,
+        // Route through the unified PawaPay checkout flow
+        return redirect()->route('subscriptions.checkout', [
+            'module' => self::MODULE_ID,
+            'tier' => $validated['tier'],
+            'billing_cycle' => $billingCycle,
+            'return_url' => $validated['return_url'] ?? route('bizboost.settings.subscription'),
         ]);
     }
 

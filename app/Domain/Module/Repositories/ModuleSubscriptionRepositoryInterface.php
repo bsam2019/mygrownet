@@ -20,6 +20,21 @@ interface ModuleSubscriptionRepositoryInterface
      * @return ModuleSubscription|null
      */
     public function findByUserAndModule(int $userId, string $moduleId): ?ModuleSubscription;
+
+    /**
+     * Find a pending subscription for a user and module
+     * @param int $userId User ID
+     * @param string $moduleId Module ID
+     * @return ModuleSubscription|null
+     */
+    public function findPendingByUserAndModule(int $userId, string $moduleId): ?ModuleSubscription;
+
+    /**
+     * Find a subscription by its payment provider reference
+     * @param string $providerReference Provider reference
+     * @return ModuleSubscription|null
+     */
+    public function findByProviderReference(string $providerReference): ?ModuleSubscription;
     
     /**
      * Find all subscriptions for a user

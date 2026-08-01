@@ -6,6 +6,7 @@ enum SubscriptionStatus: string
 {
     case ACTIVE = 'active';
     case TRIAL = 'trial';
+    case PENDING = 'pending';
     case SUSPENDED = 'suspended';
     case CANCELLED = 'cancelled';
 
@@ -17,6 +18,11 @@ enum SubscriptionStatus: string
     public function isTrial(): bool
     {
         return $this === self::TRIAL;
+    }
+
+    public function isPending(): bool
+    {
+        return $this === self::PENDING;
     }
 
     public function isSuspended(): bool
@@ -34,6 +40,7 @@ enum SubscriptionStatus: string
         return match($this) {
             self::ACTIVE => 'Active',
             self::TRIAL => 'Trial',
+            self::PENDING => 'Pending',
             self::SUSPENDED => 'Suspended',
             self::CANCELLED => 'Cancelled',
         };

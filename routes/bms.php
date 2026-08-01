@@ -46,6 +46,9 @@ Route::prefix('bms')->name('bms.')->group(function () {
         ]);
     })->name('landing');
 
+    // Subscription & plans — unified PawaPay checkout
+    Route::get('/subscription', fn() => redirect()->route('subscriptions.plans', ['module' => 'bms']))->name('subscription');
+
     // Offline Page (for PWA)
     Route::get('/offline', function () {
         return Inertia::render('BMS/Offline');
