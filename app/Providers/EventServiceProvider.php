@@ -105,6 +105,7 @@ class EventServiceProvider extends ServiceProvider
         // Platform Payments → Module Subscription Activation
         \App\Domain\PlatformPayments\Events\PaymentCompleted::class => [
             \App\Domain\Module\Listeners\ActivateSubscriptionOnPaymentCompleted::class,
+            \App\Domain\QuickInvoice\Listeners\MirrorQuickInvoiceSubscriptionOnPaymentCompleted::class,
         ],
 
         // BMS Events → GrowFinance Auto-Journaling

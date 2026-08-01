@@ -165,6 +165,18 @@ class EloquentDocumentRepository implements DocumentRepositoryInterface
         return $query->count();
     }
 
+    public function countByBusinessSince(int $businessId, \DateTimeInterface $since, ?DocumentType $type = null): int
+    {
+        $query = DocumentModel::where('business_id', $businessId)
+            ->where('created_at', '>=', $since->format('Y-m-d H:i:s'));
+
+        if ($type) {
+            $query->where('document_type', $type->value());
+        }
+
+        return $query->count();
+    }
+
     private function toDomainEntity(DocumentModel $model): Document
     {
         $items = $model->items->map(function ($itemModel) use ($model) {

@@ -14,6 +14,9 @@ use Inertia\Inertia;
 $registerBizDocsAuthRoutes = function (string $prefix, string $namePrefix, string $dashboardPath) {
     Route::prefix($prefix)->name($namePrefix)->middleware(['auth'])->group(function () use ($dashboardPath) {
 
+        // Subscription & plans — unified PawaPay checkout
+        Route::get('/subscription', fn() => redirect()->route('subscriptions.plans', ['module' => 'bizdocs']))->name('subscription');
+
         // Business Profile Setup
         Route::get('/setup', [BusinessProfileController::class, 'setup'])->name('setup');
         Route::post('/setup', [BusinessProfileController::class, 'store'])->name('setup.store');

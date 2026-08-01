@@ -54,7 +54,8 @@ Route::prefix('quick-invoice')->name('quick-invoice.')->group(function () {
     
     // Subscription & billing routes
     Route::middleware('auth')->prefix('subscription')->name('subscription.')->group(function () {
-        Route::get('/', [QuickInvoiceController::class, 'subscriptionPlans'])->name('plans');
+        // Redirect to the unified PawaPay subscription flow (module-tier based)
+        Route::get('/', fn() => redirect()->route('subscriptions.plans', ['module' => 'quickinvoice']))->name('plans');
         Route::get('/checkout/{tierId}', [QuickInvoiceController::class, 'checkout'])->name('checkout');
         Route::post('/upgrade', [QuickInvoiceController::class, 'upgrade'])->name('upgrade');
     });

@@ -20,6 +20,15 @@ import { computed } from 'vue';
 
 interface Props {
     businessProfile?: any;
+    subscription?: {
+        tier: string;
+        tier_name: string;
+        documents_per_month: number;
+        documents_used: number;
+        remaining_documents: number | string;
+        plans_url: string;
+        requires_upgrade: boolean;
+    };
 }
 
 const props = defineProps<Props>();
@@ -172,6 +181,38 @@ const quickActions = [
                             <p class="text-xs text-slate-400 mt-1">{{ stat.name }}</p>
                             <p class="text-xs text-slate-300 mt-0.5">{{ stat.sub }}</p>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Subscription Status -->
+                <div v-if="subscription" class="mb-6">
+                    <div
+                        class="rounded-xl border p-4 flex items-center justify-between gap-4"
+                        :class="subscription.requires_upgrade ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-200'"
+                    >
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" :class="subscription.requires_upgrade ? 'bg-amber-500' : 'bg-blue-500'">
+                                <DocumentTextIcon class="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-900">
+                                    {{ subscription.tier_name }} Plan
+                                    <span v-if="subscription.requires_upgrade" class="ml-2 text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">LIMIT REACHED</span>
+                                </p>
+                                <p class="text-xs text-slate-500 mt-0.5">
+                                    <template v-if="subscription.documents_per_month === -1">Unlimited documents</template>
+                                    <template v-else>{{ subscription.documents_used }} / {{ subscription.documents_per_month }} documents this month</template>
+                                </p>
+                            </div>
+                        </div>
+                        <Link
+                            :href="subscription.plans_url"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white hover:opacity-90 transition-all"
+                            :class="subscription.requires_upgrade ? 'bg-amber-600' : 'bg-slate-900 hover:bg-blue-600'"
+                        >
+                            {{ subscription.requires_upgrade ? 'Upgrade Plan' : 'Manage Plan' }}
+                            <ArrowRightIcon class="w-3.5 h-3.5" />
+                        </Link>
                     </div>
                 </div>
 

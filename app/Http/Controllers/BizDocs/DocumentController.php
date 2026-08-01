@@ -13,6 +13,8 @@ use App\Domain\BizDocs\CustomerManagement\Repositories\CustomerRepositoryInterfa
 use App\Domain\BizDocs\DocumentManagement\Repositories\DocumentRepositoryInterface;
 use App\Domain\BizDocs\DocumentManagement\Repositories\DocumentTemplateRepositoryInterface;
 use App\Domain\BizDocs\DocumentManagement\ValueObjects\DocumentType;
+use App\Domain\Module\Services\SubscriptionService as ModuleSubscriptionService;
+use App\Domain\Module\Services\TierConfigurationService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -34,7 +36,9 @@ class DocumentController extends Controller
         private readonly DocumentTemplateRepositoryInterface $templateRepository,
         private readonly PdfGenerationService $pdfGenerationService,
         private readonly WhatsAppSharingService $whatsAppSharingService,
-        private readonly \App\Application\BizDocs\Services\FileStorageService $fileStorageService
+        private readonly \App\Application\BizDocs\Services\FileStorageService $fileStorageService,
+        private readonly ModuleSubscriptionService $subscriptionService,
+        private readonly TierConfigurationService $tierConfig
     ) {
     }
 
@@ -158,6 +162,7 @@ class DocumentController extends Controller
         }, $validated['items']);
 
         try {
+            $this->enforceDocumentLimit($user, $businessProfile);
             $dto = CreateDocumentDTO::fromArray([
                 'business_id' => $businessProfile->id(),
                 'customer_id' => $validated['customer_id'],
@@ -1119,5 +1124,43 @@ class DocumentController extends Controller
             ->header('Expires', now()->addHour()->toRfc7231String())
             ->header('X-Content-Type-Options', 'nosniff')
             ->header('Vary', 'Accept-Encoding'); // Enable compression
+    }
+
+    /**
+     * Enforce the tier's monthly document limit before creating a new document.
+     * Admins and unlimited tiers bypass the check.
+     */
+    private function enforceDocumentLimit($user, $businessProfile): void
+    {
+        $tier = $this->subscriptionService->getUserTier($user, 'bizdocs');
+
+        if ($tier === 'business' || $tier === 'pro') {
+            return;
+        }
+
+        $limits = $this->tierConfig->getTierLimits('bizdocs', $tier);
+        $documentsLimit = $limits['documents'] ?? -1;
+
+        if ($documentsLimit === -1) {
+            return;
+        }
+
+        $monthlyCount = $this->documentRepository->countByBusinessSince(
+            $businessProfile->id(),
+            now()->startOfMonth()
+        );
+
+        if ($monthlyCount >= $documentsLimit) {
+            $plansUrl = route('subscriptions.plans', ['module' => 'bizdocs']);
+
+            if (request()->expectsJson()) {
+                abort(403, "You've reached your monthly document limit. Upgrade your BizDocs plan to continue.");
+            }
+
+            throw new \DomainException(
+                "You've reached your monthly document limit of {$documentsLimit}. " .
+                "Please upgrade to continue. <a href=\"{$plansUrl}\">View plans</a>"
+            );
+        }
     }
 }

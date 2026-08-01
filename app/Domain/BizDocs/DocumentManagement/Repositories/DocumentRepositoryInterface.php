@@ -21,4 +21,9 @@ interface DocumentRepositoryInterface
     public function delete(int $id): bool;
 
     public function countByBusiness(int $businessId, ?DocumentType $type = null): int;
+
+    /**
+     * Count documents for a business created on or after a given date.
+     */
+    public function countByBusinessSince(int $businessId, \DateTimeInterface $since, ?DocumentType $type = null): int;
 }

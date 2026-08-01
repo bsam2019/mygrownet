@@ -5,7 +5,10 @@ namespace App\Http\Controllers\BizDocs;
 use App\Application\BizDocs\Services\FileStorageService;
 use App\Domain\BizDocs\BusinessIdentity\Entities\BusinessProfile;
 use App\Domain\BizDocs\BusinessIdentity\Repositories\BusinessProfileRepositoryInterface;
+use App\Domain\BizDocs\DocumentManagement\Repositories\DocumentRepositoryInterface;
 use App\Domain\BizDocs\DocumentManagement\Repositories\DocumentTemplateRepositoryInterface;
+use App\Domain\Module\Services\SubscriptionService as ModuleSubscriptionService;
+use App\Domain\Module\Services\TierConfigurationService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,7 +18,10 @@ class BusinessProfileController extends Controller
     public function __construct(
         private readonly BusinessProfileRepositoryInterface $businessProfileRepository,
         private readonly DocumentTemplateRepositoryInterface $templateRepository,
-        private readonly FileStorageService $fileStorageService
+        private readonly FileStorageService $fileStorageService,
+        private readonly DocumentRepositoryInterface $documentRepository,
+        private readonly ModuleSubscriptionService $subscriptionService,
+        private readonly TierConfigurationService $tierConfig
     ) {
     }
 
@@ -37,6 +43,7 @@ class BusinessProfileController extends Controller
 
         return Inertia::render('BizDocs/Dashboard', [
             'businessProfile' => $profileData,
+            'subscription' => $this->getSubscriptionData($user, $businessProfile?->id()),
         ]);
     }
 
@@ -217,5 +224,27 @@ class BusinessProfileController extends Controller
         return Inertia::render('BizDocs/BusinessProfile/Edit', [
             'businessProfile' => $profileData,
         ]);
+    }
+
+    /**
+     * Build the subscription status payload for the BizDocs dashboard.
+     */
+    private function getSubscriptionData($user, ?int $businessId): array
+    {
+        $tier = $this->subscriptionService->getUserTier($user, 'bizdocs');
+
+        $limits = $this->tierConfig->getTierLimits('bizdocs', $tier);
+        $documentsLimit = $limits['documents'] ?? -1;
+        $documentsUsed = $businessId ? $this->documentRepository->countByBusiness($businessId) : 0;
+
+        return [
+            'tier' => $tier,
+            'tier_name' => ucfirst($tier),
+            'documents_per_month' => $documentsLimit,
+            'documents_used' => $documentsUsed,
+            'remaining_documents' => $documentsLimit === -1 ? 'Unlimited' : max(0, $documentsLimit - $documentsUsed),
+            'plans_url' => route('subscriptions.plans', ['module' => 'bizdocs']),
+            'requires_upgrade' => $documentsLimit !== -1 && $documentsUsed >= $documentsLimit,
+        ];
     }
 }
