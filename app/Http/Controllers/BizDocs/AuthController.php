@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\GrowFinance;
+namespace App\Http\Controllers\BizDocs;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
@@ -13,7 +13,7 @@ class AuthController extends Controller
         return $this->redirectToIdentity(
             $request,
             config('platform.identity.login_url'),
-            'growfinance'
+            'bizdocs'
         );
     }
 
@@ -27,7 +27,7 @@ class AuthController extends Controller
         return $this->redirectToIdentity(
             $request,
             config('platform.identity.register_url'),
-            'growfinance'
+            'bizdocs'
         );
     }
 
@@ -42,6 +42,16 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->away(config('platform.identity.login_url'));
+    }
+
+    public function forgotPassword(Request $request): RedirectResponse
+    {
+        return redirect()->away(config('platform.identity.password_reset_url'));
+    }
+
+    public function resetPassword(Request $request): RedirectResponse
+    {
+        return redirect()->away(config('platform.identity.password_reset_url'));
     }
 
     private function redirectToIdentity(Request $request, string $targetUrl, string $app): RedirectResponse

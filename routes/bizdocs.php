@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BizDocs\AuthController;
 use App\Http\Controllers\BizDocs\BusinessProfileController;
 use App\Http\Controllers\BizDocs\CustomerController;
 use App\Http\Controllers\BizDocs\DocumentController;
@@ -11,8 +12,9 @@ use Inertia\Inertia;
 
 // ── Helper register all authenticated BizDocs routes ──
 // These are the same routes on both domains, just with different prefix/name
-$registerBizDocsAuthRoutes = function (string $prefix, string $namePrefix, string $dashboardPath) {
-    Route::prefix($prefix)->name($namePrefix)->middleware(['auth'])->group(function () use ($dashboardPath) {
+// $extraMiddleware is prepended BEFORE 'auth' so identity redirect runs first
+$registerBizDocsAuthRoutes = function (string $prefix, string $namePrefix, string $dashboardPath, array $extraMiddleware = []) {
+    Route::prefix($prefix)->name($namePrefix)->middleware(array_merge($extraMiddleware, ['auth']))->group(function () use ($dashboardPath) {
 
         // Subscription & plans — unified PawaPay checkout
         Route::get('/subscription', fn() => redirect()->route('subscriptions.plans', ['module' => 'bizdocs']))->name('subscription');
@@ -93,20 +95,19 @@ Route::domain('bizdocs.mygrownet.com')->group(function () use ($registerBizDocsA
     })->name('bizdocs.sub.welcome');
 
     // Authenticated routes (served at root, no prefix)
-    $registerBizDocsAuthRoutes('', 'bizdocs.sub.', '/dashboard');
+    // identity.redirect:bizdocs prepended so unauthenticated users go to auth.mygrownet.com
+    $registerBizDocsAuthRoutes('', 'bizdocs.sub.', '/dashboard', ['identity.redirect:bizdocs']);
 
-    // Guest-only auth routes
+    // Guest-only auth routes — all redirect to MyGrow Identity Gateway
     Route::middleware(['guest'])->group(function () {
-        Route::get('/login', [GuestController::class, 'login'])->name('bizdocs.sub.login');
-        Route::post('/login', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store']);
-        Route::get('/register', [GuestController::class, 'register'])->name('bizdocs.sub.register');
-        Route::post('/register', [\App\Http\Controllers\Auth\RegisteredUserController::class, 'store']);
+        Route::get('/login', [AuthController::class, 'showLogin'])->name('bizdocs.sub.login');
+        Route::post('/login', [AuthController::class, 'login']);
+        Route::get('/register', [AuthController::class, 'showRegister'])->name('bizdocs.sub.register');
+        Route::post('/register', [AuthController::class, 'register']);
 
-        // Password reset
-        Route::get('/forgot-password', [GuestController::class, 'forgotPassword'])->name('bizdocs.sub.password.request');
-        Route::post('/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'store'])->name('bizdocs.sub.password.email');
-        Route::get('/reset-password/{token}', [GuestController::class, 'resetPassword'])->name('bizdocs.sub.password.reset');
-        Route::post('/reset-password', [\App\Http\Controllers\Auth\NewPasswordController::class, 'store'])->name('bizdocs.sub.password.update');
+        // Password reset — delegate to identity gateway
+        Route::get('/forgot-password', [AuthController::class, 'forgotPassword'])->name('bizdocs.sub.password.request');
+        Route::get('/reset-password/{token}', [AuthController::class, 'resetPassword'])->name('bizdocs.sub.password.reset');
 
         // Social Login - Google
         Route::get('/auth/google', [\App\Http\Controllers\Auth\SocialiteController::class, 'redirectToGoogle'])->name('bizdocs.sub.auth.google');

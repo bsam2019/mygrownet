@@ -21,11 +21,11 @@ Route::domain('growfinance.mygrownet.com')->name('growfinance.subdomain.')->grou
         ]);
     })->name('landing');
 
-    // Authentication Routes (Guest only)
+    // Authentication Routes (Guest only) — all redirect to MyGrow Identity Gateway
     Route::middleware('guest')->group(function () {
         Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
         Route::post('/login', [AuthController::class, 'login']);
-        
+
         Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
         Route::post('/register', [AuthController::class, 'register']);
 
@@ -40,7 +40,8 @@ Route::domain('growfinance.mygrownet.com')->name('growfinance.subdomain.')->grou
         ->name('logout');
 
     // Protected GrowFinance Routes
-    Route::middleware(['auth', 'verified'])
+    // identity.redirect:growfinance prepended so unauthenticated users go to auth.mygrownet.com
+    Route::middleware(['identity.redirect:growfinance', 'auth', 'verified'])
         ->group(function () {
             
             // Dashboard
