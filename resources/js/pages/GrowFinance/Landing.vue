@@ -14,12 +14,12 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-4">
-                        <Link
+                        <a
                             :href="route('growfinance.subdomain.login')"
-                            class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+                            class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 inline-block"
                         >
                             Sign In
-                        </Link>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -117,12 +117,12 @@
                 <h3 class="text-3xl font-bold text-white">Ready to Transform Your Finances?</h3>
                 <p class="mt-4 text-lg text-blue-100">Start your free trial today. No credit card required.</p>
                 <div class="mt-10">
-                    <Link
+                    <a
                         :href="route('growfinance.subdomain.register')"
-                        class="rounded-lg bg-white px-8 py-4 text-base font-semibold text-blue-600 shadow-sm hover:bg-gray-50"
+                        class="rounded-lg bg-white px-8 py-4 text-base font-semibold text-blue-600 shadow-sm hover:bg-gray-50 inline-block"
                     >
                         Get Started Free
-                    </Link>
+                    </a>
                 </div>
             </div>
         </section>

@@ -98,8 +98,8 @@ const docTypes = [
                         <Link href="/contact" class="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">Contact</Link>
                     </nav>
                     <div class="flex items-center gap-3">
-                        <Link href="/login" class="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">Log in</Link>
-                        <Link href="/register" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-lg shadow-emerald-500/30">Get Started</Link>
+                        <a href="/login" class="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">Log in</a>
+                        <a href="/register" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-lg shadow-emerald-500/30 inline-block">Get Started</a>
                     </div>
                 </div>
             </div>
@@ -125,10 +125,10 @@ const docTypes = [
                             Generate invoices, receipts, purchase orders, contracts, and reports with professional templates. Add your branding and export to PDF — no design skills needed.
                         </p>
                         <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                            <Link href="/register" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-lg shadow-emerald-500/30">
+                            <a href="/register" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-lg shadow-emerald-500/30">
                                 Start Creating Free
                                 <ArrowRightIcon class="h-5 w-5" />
-                            </Link>
+                            </a>
                             <a href="#features" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 rounded-xl transition-colors">Explore Features</a>
                         </div>
                         <div class="mt-10 flex items-center gap-6 justify-center lg:justify-start text-sm text-slate-500">
@@ -262,10 +262,10 @@ const docTypes = [
                             </li>
                         </ul>
                         <div class="mt-8">
-                            <Link href="/register" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-lg shadow-emerald-500/30">
+                            <a href="/register" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-lg shadow-emerald-500/30">
                                 Start Using BizDocs
                                 <ArrowRightIcon class="h-5 w-5" />
-                            </Link>
+                            </a>
                         </div>
                     </div>
                     <div class="mt-12 lg:mt-0">
@@ -307,10 +307,10 @@ const docTypes = [
                         <h2 class="text-3xl sm:text-4xl font-bold text-white">Ready to Create Professional Documents?</h2>
                         <p class="mt-4 text-lg text-emerald-100 max-w-2xl mx-auto">Join hundreds of businesses using BizDocs to generate invoices, receipts, and business documents.</p>
                         <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-                            <Link href="/register" class="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-emerald-700 bg-white hover:bg-emerald-50 rounded-xl transition-colors">
+                            <a href="/register" class="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-emerald-700 bg-white hover:bg-emerald-50 rounded-xl transition-colors">
                                 Get Started Free
                                 <ArrowRightIcon class="h-5 w-5" />
-                            </Link>
+                            </a>
                             <Link href="/contact" class="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-white bg-white/20 hover:bg-white/30 rounded-xl transition-colors">Contact Sales</Link>
                         </div>
                     </div>
