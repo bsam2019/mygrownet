@@ -85,6 +85,48 @@ class SubdomainIdentityRedirectTest extends TestCase
         $this->assertTrue($response->isRedirect());
     }
 
+    // ── Authenticated root redirects to dashboard ────────────────────────
+
+    public function test_bizdocs_subdomain_root_redirects_authenticated_user_to_dashboard(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->withServerVariables(['HTTP_HOST' => 'bizdocs.mygrownet.com'])
+            ->get(self::BIZDOCS_HOST . '/');
+
+        $response->assertRedirect();
+        $this->assertStringEndsWith('/dashboard', $response->headers->get('Location'));
+    }
+
+    public function test_bizdocs_subdomain_root_renders_welcome_for_guest(): void
+    {
+        $response = $this->withServerVariables(['HTTP_HOST' => 'bizdocs.mygrownet.com'])
+            ->get(self::BIZDOCS_HOST . '/');
+
+        $response->assertOk();
+    }
+
+    public function test_growfinance_subdomain_root_redirects_authenticated_user_to_dashboard(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->withServerVariables(['HTTP_HOST' => 'growfinance.mygrownet.com'])
+            ->get(self::GROWFINANCE_HOST . '/');
+
+        $response->assertRedirect();
+        $this->assertStringEndsWith('/dashboard', $response->headers->get('Location'));
+    }
+
+    public function test_growfinance_subdomain_root_renders_landing_for_guest(): void
+    {
+        $response = $this->withServerVariables(['HTTP_HOST' => 'growfinance.mygrownet.com'])
+            ->get(self::GROWFINANCE_HOST . '/');
+
+        $response->assertOk();
+    }
+
     // ── Signature validity ───────────────────────────────────────────────
 
     public function test_redirect_signature_is_valid_hmac(): void

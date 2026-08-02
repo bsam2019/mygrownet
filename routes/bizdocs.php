@@ -7,6 +7,7 @@ use App\Http\Controllers\BizDocs\DocumentController;
 use App\Http\Controllers\BizDocs\GuestController;
 use App\Http\Controllers\BizDocs\SettingsController;
 use App\Http\Controllers\BizDocs\StationeryController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -91,6 +92,10 @@ Route::domain('bizdocs.mygrownet.com')->group(function () use ($registerBizDocsA
 
     // Public welcome page at root
     Route::get('/', function () {
+        if (Auth::guard('web')->check()) {
+            return redirect()->route('bizdocs.sub.dashboard');
+        }
+
         return Inertia::render('BizDocs/Welcome');
     })->name('bizdocs.sub.welcome');
 

@@ -37,12 +37,12 @@
                         Real-time insights, automated workflows, and powerful analytics.
                     </p>
                     <div class="mt-10 flex items-center justify-center gap-x-6">
-                        <Link
+                        <a
                             :href="route('growfinance.subdomain.register')"
-                            class="rounded-lg bg-blue-600 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-blue-700"
+                            class="rounded-lg bg-blue-600 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-blue-700 inline-block"
                         >
                             Get Started
-                        </Link>
+                        </a>
                         <a href="#features" class="text-base font-semibold leading-7 text-gray-900">
                             Learn more <span aria-hidden="true">→</span>
                         </a>
@@ -139,7 +139,6 @@
 </template>
 
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
 import {
     ChartBarIcon,
     DocumentTextIcon,

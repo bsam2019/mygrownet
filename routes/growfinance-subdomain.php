@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\GrowFinance\AuthController;
 use App\Http\Controllers\GrowFinance\DashboardController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -16,6 +17,10 @@ use Inertia\Inertia;
 Route::domain('growfinance.mygrownet.com')->name('growfinance.subdomain.')->group(function () {
     // Landing Page
     Route::get('/', function () {
+        if (Auth::guard('web')->check()) {
+            return redirect()->route('growfinance.subdomain.dashboard');
+        }
+
         return Inertia::render('GrowFinance/Landing', [
             'routePrefix' => 'growfinance.subdomain'
         ]);
