@@ -65,24 +65,30 @@ class SubdomainIdentityRedirectTest extends TestCase
 
     // ── Protected routes require auth ────────────────────────────────────
 
-    public function test_bizdocs_subdomain_protected_route_requires_auth(): void
+    public function test_bizdocs_subdomain_protected_route_redirects_to_identity(): void
     {
         config(['platform.identity.app_redirect_enabled.bizdocs' => true]);
 
         $response = $this->withServerVariables(['HTTP_HOST' => 'bizdocs.mygrownet.com'])
             ->get(self::BIZDOCS_HOST . '/dashboard');
 
-        $this->assertTrue($response->isRedirect());
+        $response->assertRedirect();
+        $target = $response->headers->get('Location');
+        $this->assertStringStartsWith(config('platform.identity.login_url'), $target);
+        $this->assertStringContainsString('app=bizdocs', $target);
     }
 
-    public function test_growfinance_subdomain_protected_route_requires_auth(): void
+    public function test_growfinance_subdomain_protected_route_redirects_to_identity(): void
     {
         config(['platform.identity.app_redirect_enabled.growfinance' => true]);
 
         $response = $this->withServerVariables(['HTTP_HOST' => 'growfinance.mygrownet.com'])
             ->get(self::GROWFINANCE_HOST . '/dashboard');
 
-        $this->assertTrue($response->isRedirect());
+        $response->assertRedirect();
+        $target = $response->headers->get('Location');
+        $this->assertStringStartsWith(config('platform.identity.login_url'), $target);
+        $this->assertStringContainsString('app=growfinance', $target);
     }
 
     // ── Authenticated root redirects to dashboard ────────────────────────

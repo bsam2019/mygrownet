@@ -170,6 +170,20 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\PreventBrowserCaching::class,
             \App\Http\Middleware\RefreshCsrfToken::class,
         ]);
+
+        // CRITICAL: Laravel sorts middleware by priority. The `auth` alias resolves to
+        // Authenticate, which implements the AuthenticatesRequests contract sitting at
+        // priority 5 in the framework default list — so `auth` gets moved EARLY in the
+        // pipeline, before any custom middleware that is not in the priority map.
+        // Without this, RedirectToMyGrowIdentity (identity.redirect) runs AFTER `auth`,
+        // so unauthenticated users get redirected to the subdomain /login by the auth
+        // middleware before the identity.redirect middleware can send them to the
+        // MyGrow Identity Gateway (auth.mygrownet.com). Prepending it before the
+        // AuthenticatesRequests contract guarantees identity.redirect runs first.
+        $middleware->prependToPriorityList(
+            \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+            \App\Http\Middleware\RedirectToMyGrowIdentity::class,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Handle 419 CSRF/session expiry — redirect to login with a message.
