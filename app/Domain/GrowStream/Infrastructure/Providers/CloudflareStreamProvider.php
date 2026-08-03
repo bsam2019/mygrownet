@@ -235,7 +235,7 @@ class CloudflareStreamProvider implements VideoProviderInterface
     protected function directUploadFormData(array $metadata): array
     {
         return [
-            'maxDurationSeconds' => (int) ($metadata['max_duration_seconds'] ?? 3600),
+            'maxDurationSeconds' => (string) ($metadata['max_duration_seconds'] ?? 3600),
             'expiry' => now()->addHour()->toIso8601String(),
         ];
     }
