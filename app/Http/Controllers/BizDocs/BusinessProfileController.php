@@ -7,6 +7,7 @@ use App\Domain\BizDocs\BusinessIdentity\Entities\BusinessProfile;
 use App\Domain\BizDocs\BusinessIdentity\Repositories\BusinessProfileRepositoryInterface;
 use App\Domain\BizDocs\DocumentManagement\Repositories\DocumentRepositoryInterface;
 use App\Domain\BizDocs\DocumentManagement\Repositories\DocumentTemplateRepositoryInterface;
+use App\Domain\Core\Services\OrganizationEntryResolver;
 use App\Domain\Module\Services\SubscriptionService as ModuleSubscriptionService;
 use App\Domain\Module\Services\TierConfigurationService;
 use App\Http\Controllers\Controller;
@@ -21,7 +22,8 @@ class BusinessProfileController extends Controller
         private readonly FileStorageService $fileStorageService,
         private readonly DocumentRepositoryInterface $documentRepository,
         private readonly ModuleSubscriptionService $subscriptionService,
-        private readonly TierConfigurationService $tierConfig
+        private readonly TierConfigurationService $tierConfig,
+        private readonly OrganizationEntryResolver $orgResolver,
     ) {
     }
 
@@ -44,6 +46,7 @@ class BusinessProfileController extends Controller
         return Inertia::render('BizDocs/Dashboard', [
             'businessProfile' => $profileData,
             'subscription' => $this->getSubscriptionData($user, $businessProfile?->id()),
+            'companyDetails' => $this->orgResolver->companyDetails($user),
         ]);
     }
 
@@ -65,6 +68,7 @@ class BusinessProfileController extends Controller
 
         return Inertia::render('BizDocs/BusinessProfile/Setup', [
             'businessProfile' => $profileData,
+            'companyDetails' => $this->orgResolver->companyDetails($user),
         ]);
     }
 

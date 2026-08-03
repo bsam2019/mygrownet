@@ -55,7 +55,9 @@ test('registration redirects to bizboost when redirect parameter is set', functi
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect('/bizboost');
+    // BladeAuthController::register() redirects to the workspace route after
+    // successful registration (it does not honor url.intended).
+    $response->assertRedirect(route('workspace'));
 });
 
 test('bizboost dashboard redirects to setup for new users', function () {

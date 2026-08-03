@@ -8,6 +8,7 @@ use App\Http\Controllers\BizBoost\ProductController;
 use App\Http\Controllers\BizBoost\CustomerController;
 use App\Http\Controllers\BizBoost\PostController;
 use App\Http\Controllers\BizBoost\AiContentController;
+use App\Http\Controllers\BizBoost\AuthController;
 use App\Http\Controllers\BizBoost\SubscriptionController;
 use App\Http\Controllers\BizBoost\WelcomeController;
 
@@ -26,8 +27,8 @@ use App\Http\Controllers\BizBoost\WelcomeController;
 
 // ── Helper register all authenticated BizBoost routes ──
 // These are the same routes on both domains, just with different prefix/name
-$registerBizBoostAuthRoutes = function (string $prefix, string $namePrefix, string $dashboardPath) {
-    Route::prefix($prefix)->name($namePrefix)->middleware(['auth', 'verified'])->group(function () use ($dashboardPath) {
+$registerBizBoostAuthRoutes = function (string $prefix, string $namePrefix, string $dashboardPath, array $extraMiddleware = []) {
+    Route::prefix($prefix)->name($namePrefix)->middleware(array_merge($extraMiddleware, ['auth', 'verified']))->group(function () use ($dashboardPath) {
 
         // Setup Wizard
         Route::get('/setup', [SetupController::class, 'index'])->name('setup');
@@ -238,7 +239,7 @@ $registerBizBoostAuthRoutes = function (string $prefix, string $namePrefix, stri
         Route::post('/subscription/purchase', [SubscriptionController::class, 'purchase'])->name('subscription.purchase');
 
         // Logout
-        Route::post('/logout', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'destroy'])->name('logout');
+        Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
         // Feature upgrade required page
         Route::get('/feature-upgrade', function (\Illuminate\Http\Request $request) {
@@ -472,24 +473,24 @@ Route::domain('bizboost.mygrownet.com')->group(function () use ($registerBizBoos
     });
 
     // Authenticated routes — served at root (no prefix)
+    // identity.redirect:bizboost prepended so unauthenticated users go to auth.mygrownet.com
     $registerBizBoostAuthRoutes(
         prefix: '',
         namePrefix: 'bizboost.sub.',
-        dashboardPath: '/dashboard'
+        dashboardPath: '/dashboard',
+        extraMiddleware: ['identity.redirect:bizboost']
     );
 
-    // Subdomain-specific guest-only auth routes
+    // Subdomain-specific guest-only auth routes — all redirect to MyGrow Identity Gateway
     Route::middleware(['guest', \App\Http\Middleware\BizBoostStandalone::class])->group(function () {
-        Route::get('/login', [\App\Http\Controllers\BizBoost\GuestController::class, 'login'])->name('bizboost.sub.login');
-        Route::post('/login', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store']);
-        Route::get('/register', [\App\Http\Controllers\BizBoost\GuestController::class, 'register'])->name('bizboost.sub.register');
-        Route::post('/register', [\App\Http\Controllers\Auth\RegisteredUserController::class, 'store']);
+        Route::get('/login', [AuthController::class, 'showLogin'])->name('bizboost.sub.login');
+        Route::post('/login', [AuthController::class, 'login']);
+        Route::get('/register', [AuthController::class, 'showRegister'])->name('bizboost.sub.register');
+        Route::post('/register', [AuthController::class, 'register']);
 
-        // Password reset
-        Route::get('/forgot-password', [\App\Http\Controllers\BizBoost\GuestController::class, 'forgotPassword'])->name('bizboost.sub.password.request');
-        Route::post('/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'store'])->name('bizboost.sub.password.email');
-        Route::get('/reset-password/{token}', [\App\Http\Controllers\BizBoost\GuestController::class, 'resetPassword'])->name('bizboost.sub.password.reset');
-        Route::post('/reset-password', [\App\Http\Controllers\Auth\NewPasswordController::class, 'store'])->name('bizboost.sub.password.update');
+        // Password reset — delegate to identity gateway
+        Route::get('/forgot-password', [AuthController::class, 'forgotPassword'])->name('bizboost.sub.password.request');
+        Route::get('/reset-password/{token}', [AuthController::class, 'resetPassword'])->name('bizboost.sub.password.reset');
 
         // Social Login - Google (subdomain)
         Route::get('/auth/google', [\App\Http\Controllers\Auth\SocialiteController::class, 'redirectToGoogle'])->name('bizboost.sub.auth.google');

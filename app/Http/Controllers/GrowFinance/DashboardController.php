@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\GrowFinance;
 
+use App\Domain\Core\Services\OrganizationEntryResolver;
 use App\Domain\GrowFinance\Services\DashboardService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -12,6 +13,7 @@ class DashboardController extends Controller
 {
     public function __construct(
         private readonly DashboardService $dashboardService,
+        private readonly OrganizationEntryResolver $orgResolver,
     ) {}
 
     public function index(Request $request): Response
@@ -19,9 +21,17 @@ class DashboardController extends Controller
         $user = $request->user();
         $businessId = $user->id;
 
+        // Company details can be entered once at the platform organization and
+        // flow into GrowFinance rather than being re-entered here. Resolved
+        // from the active org context (decoupled) with an empty fallback when
+        // no organization is active.
+        $companyDetails = $this->orgResolver->companyDetails($user);
+
         // Check if setup is complete
         if (!$this->dashboardService->hasSetupCompleted($businessId)) {
-            return Inertia::render('GrowFinance/Setup/Index');
+            return Inertia::render('GrowFinance/Setup/Index', [
+                'companyDetails' => $companyDetails,
+            ]);
         }
 
         $financialSummary = $this->dashboardService->getFinancialSummary($businessId);
@@ -38,6 +48,7 @@ class DashboardController extends Controller
             'overdueInvoices' => $overdueInvoices,
             'expensesByCategory' => $expensesByCategory,
             'monthlyTrend' => $monthlyTrend,
+            'companyDetails' => $companyDetails,
         ]);
     }
 }

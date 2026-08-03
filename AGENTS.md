@@ -272,6 +272,18 @@ interface WorkspaceShared {
 ```
 Available in Vue as `usePage().props.workspace`.
 
+### Canonical Company Details & Decoupled Org-Context Entry (Aug 2026)
+Eliminated duplicate company-details entry across apps (bizdocs, bizboost, bms, growfinance, stockflow).
+
+- **Canonical source:** the platform `organizations` table is the single source of truth for company details, extended with `logo_path`, `address`, `phone`, `email`, `website`, `tax_number`, `registration_number` (migration `core/2026_08_02_240020_add_company_details_to_organizations_table.php`).
+- **Read via contract:** apps never import the Organization model directly. They use `CompanyDetailsProvider` (contract) → `CompanyDetailsService` (Eloquent impl), both in App\Domain\Core. Bound in `CoreServiceProvider`.
+- **Entry resolution:** `OrganizationEntryResolver::activeOrganizationId(user)` / `companyDetails(user)` reads the session-driven active org context via `ContextResolverService::resolve($user, domainType: null)` — **no new global middleware**, decoupled from any specific app's tenant tables.
+- **Each app keeps its own tenant tables** (e.g. `sa_companies`, `cms_companies`, `growfinance_profiles` keyed by `organization_id`). Platform org migration is NOT performed; only the boundary (how the app learns its active org/company) changed.
+- **Seeding/sync:** `OrganizationWorkspaceController::updateCompanyDetails()` (PUT `/org/{slug}/company-details`, route `workspace.organization.company-details`) + `syncCompanyDetailsToApps()` push canonical org details into each installed app's own profile. `createStubIfNeeded()` seeds `bms` (BMS CompanyModel) and `growfinance` (GrowFinanceProfileModel) on org install.
+- **Entry controllers** for bizdocs (BusinessProfileController), bizboost (DashboardController), bms (DashboardController), growfinance (DashboardController), stockflow (DashboardController) all inject `OrganizationEntryResolver` and pass a `companyDetails` Inertia prop.
+
+Migrations: `core/2026_08_02_240020`, `core/2026_08_02_240021` (adds `organization_id` to `growfinance_profiles`). Test: `tests/Feature/Platform/CompanyDetailsRoundTripTest.php`.
+
 ## Platform Evolution
 - 11-phase roadmap at `docs/platform-evolution/FULL_IMPLEMENTATION_ROADMAP.md` (phases 1-9 implemented, 10-11 design/cleanup)
 - Implementation plan at `docs/platform-evolution/IMPLEMENTATION_PLAN.md` (12 migrations, 5 services, 4 middleware, 2 controllers, Vue tree)

@@ -46,6 +46,11 @@ abstract class BizBoostTestCase extends TestCase
         return $this->actingAs($this->user);
     }
 
+    protected function createUserWithBusiness(): User
+    {
+        return $this->user;
+    }
+
     protected function createProduct(array $attributes = []): \App\Infrastructure\Persistence\Eloquent\BizBoostProductModel
     {
         return \App\Infrastructure\Persistence\Eloquent\BizBoostProductModel::create(array_merge([

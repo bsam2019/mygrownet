@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\GrowNet\GuestController;
+use App\Http\Controllers\GrowNet\AuthController;
 use App\Http\Controllers\GrowNet\DashboardController;
 use App\Http\Controllers\GrowNet\MembershipController;
 use App\Http\Controllers\GrowNet\MyGrowNetStarterKitController;
@@ -25,8 +26,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // ── Helper register all authenticated GrowNet subdomain routes ──
-$registerGrowNetSubdomainRoutes = function (string $prefix, string $namePrefix) {
-    Route::prefix($prefix)->name($namePrefix)->middleware(['auth'])->group(function () {
+$registerGrowNetSubdomainRoutes = function (string $prefix, string $namePrefix, array $extraMiddleware = []) {
+    Route::prefix($prefix)->name($namePrefix)->middleware(array_merge($extraMiddleware, ['auth']))->group(function () {
 
         Route::get('/subscription', fn() => redirect()->route('subscriptions.plans', ['module' => 'grownet']))->name('subscription');
 
@@ -163,34 +164,35 @@ Route::domain('grownet.mygrownet.com')->group(function () use ($registerGrowNetS
 
     // GrowNet product hub (landing dashboard)
     Route::get('/dashboard', [DashboardController::class, 'productHub'])
-        ->middleware(['auth'])
+        ->middleware(['identity.redirect:grownet', 'auth'])
         ->name('grownet.sub.dashboard');
 
     // GrowNet network & referral dashboard
     Route::get('/network', [DashboardController::class, 'mobileIndex'])
-        ->middleware(['auth'])
+        ->middleware(['identity.redirect:grownet', 'auth'])
         ->name('grownet.sub.network');
 
     // Authenticated routes (served at root, no prefix)
-    $registerGrowNetSubdomainRoutes('', 'grownet.sub.');
+    // identity.redirect:grownet prepended so unauthenticated users go to auth.mygrownet.com
+    $registerGrowNetSubdomainRoutes('', 'grownet.sub.', ['identity.redirect:grownet']);
 
     // Info pages (public)
     Route::get('/about', [GuestController::class, 'about'])->name('grownet.sub.about');
     Route::get('/terms', [GuestController::class, 'terms'])->name('grownet.sub.terms');
     Route::get('/privacy', [GuestController::class, 'privacy'])->name('grownet.sub.privacy');
 
-    // Guest-only auth routes
+    // Guest-only auth routes — all redirect to MyGrow Identity Gateway
     Route::middleware(['guest'])->group(function () {
-        Route::get('/login', [GuestController::class, 'login'])->name('grownet.sub.login');
-        Route::post('/login', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store']);
-        Route::get('/register', [GuestController::class, 'register'])->name('grownet.sub.register');
-        Route::post('/register', [\App\Http\Controllers\Auth\RegisteredUserController::class, 'store']);
+        Route::get('/login', [AuthController::class, 'showLogin'])->name('grownet.sub.login');
+        Route::post('/login', [AuthController::class, 'login']);
+        Route::get('/register', [AuthController::class, 'showRegister'])->name('grownet.sub.register');
+        Route::post('/register', [AuthController::class, 'register']);
 
-        Route::get('/forgot-password', [GuestController::class, 'forgotPassword'])->name('grownet.sub.password.request');
-        Route::post('/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'store'])->name('grownet.sub.password.email');
-        Route::get('/reset-password/{token}', [GuestController::class, 'resetPassword'])->name('grownet.sub.password.reset');
-        Route::post('/reset-password', [\App\Http\Controllers\Auth\NewPasswordController::class, 'store'])->name('grownet.sub.password.update');
+        // Password reset — delegate to identity gateway
+        Route::get('/forgot-password', [AuthController::class, 'forgotPassword'])->name('grownet.sub.password.request');
+        Route::get('/reset-password/{token}', [AuthController::class, 'resetPassword'])->name('grownet.sub.password.reset');
 
+        // Social Login - Google
         Route::get('/auth/google', [\App\Http\Controllers\Auth\SocialiteController::class, 'redirectToGoogle'])->name('grownet.sub.auth.google');
         Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\SocialiteController::class, 'handleGoogleCallback'])->name('grownet.sub.auth.google.callback');
     });

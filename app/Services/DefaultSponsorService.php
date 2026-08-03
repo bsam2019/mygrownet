@@ -27,9 +27,17 @@ class DefaultSponsorService
                 return $admin;
             }
             
-            // Fallback: Find the first user with Administrator role
-            $admin = User::role('Administrator')->first();
-            
+            // Fallback: Find the first user with Administrator role.
+            // Spatie's role() scope calls Role::findByName()->firstOrFail() internally,
+            // which throws ModelNotFoundException when the role row is absent (e.g. on a
+            // fresh/empty database or when seeds haven't run). Treat that as "no admin"
+            // and fall through to the next strategy instead of crashing registration.
+            try {
+                $admin = User::role('Administrator')->first();
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+                $admin = null;
+            }
+
             if ($admin) {
                 return $admin;
             }

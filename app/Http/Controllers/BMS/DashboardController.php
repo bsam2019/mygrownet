@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\BMS;
 
 use App\Domain\BMS\Core\Services\InvoiceService;
+use App\Domain\Core\Services\OrganizationEntryResolver;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\BMS\Concerns\HasBmsAccess;
 use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
@@ -18,7 +19,8 @@ class DashboardController extends Controller
 {
     use HasBmsAccess;
     public function __construct(
-        private readonly InvoiceService $invoiceService
+        private readonly InvoiceService $invoiceService,
+        private readonly OrganizationEntryResolver $orgResolver,
     ) {}
 
     public function index(Request $request): Response
@@ -93,6 +95,7 @@ class DashboardController extends Controller
             'customers'          => $customers,
             'hasFabrication'     => $hasFabrication,
             'recentMeasurements' => $recentMeasurements,
+            'companyDetails'     => $this->orgResolver->companyDetails($request->user()),
         ]);
     }
 }

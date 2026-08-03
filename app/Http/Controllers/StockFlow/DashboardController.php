@@ -5,6 +5,7 @@ namespace App\Http\Controllers\StockFlow;
 use App\Http\Controllers\Controller;
 use App\Domain\StockFlow\Services\DashboardService;
 use App\Domain\StockFlow\Services\CompanyUserService;
+use App\Domain\Core\Services\OrganizationEntryResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -14,6 +15,7 @@ class DashboardController extends Controller
     public function __construct(
         private DashboardService $dashboardService,
         private CompanyUserService $companyUserService,
+        private OrganizationEntryResolver $orgResolver,
     ) {}
 
     public function index(Request $request)
@@ -65,6 +67,7 @@ class DashboardController extends Controller
             'unresolved_audits' => $data['unresolved_audits'] ?? [],
             'recent_audits' => $data['recent_audits'] ?? [],
             'recent_counts' => $data['recent_counts'] ?? [],
+            'companyDetails' => $this->orgResolver->companyDetails($user),
         ]);
     }
 

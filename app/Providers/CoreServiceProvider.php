@@ -6,6 +6,7 @@ use App\Domain\Core\Contracts\HealthService;
 use App\Domain\Core\Contracts\IdentityProvider;
 use App\Domain\Core\Contracts\MediaProvider;
 use App\Domain\Core\Contracts\NotificationProvider;
+use App\Domain\Core\Contracts\CompanyDetailsProvider;
 use App\Domain\Core\Infrastructure\MediaProviderImpl;
 use App\Domain\Core\Infrastructure\NotificationProviderImpl;
 use App\Domain\Core\Services\AlertService;
@@ -15,6 +16,8 @@ use App\Domain\Core\Services\ApplicationProvisioningService;
 use App\Domain\Core\Contracts\IntegrationEventDispatcher;
 use App\Domain\Core\Services\CacheKeyHelper;
 use App\Domain\Core\Services\DimensionResolver;
+use App\Domain\Core\Services\CompanyDetailsService;
+use App\Domain\Core\Services\OrganizationEntryResolver;
 use App\Domain\Core\Services\LaravelEventDispatcher;
 use App\Domain\Core\Services\CapabilityRegistry;
 use App\Domain\Core\Services\ContractInvoker;
@@ -75,6 +78,8 @@ class CoreServiceProvider extends ServiceProvider
         $this->app->singleton(ContractInvoker::class);
         $this->app->bind(NotificationProvider::class, NotificationProviderImpl::class);
         $this->app->bind(MediaProvider::class, MediaProviderImpl::class);
+        $this->app->bind(CompanyDetailsProvider::class, CompanyDetailsService::class);
+        $this->app->singleton(OrganizationEntryResolver::class);
 
         // Stage 3: Cross-process event transport
         $this->app->singleton(EventTransport::class, function ($app) {

@@ -11,28 +11,23 @@ class DashboardTest extends BizBoostTestCase
         // Create user without business
         $user = \App\Models\User::factory()->create();
 
-        $response = $this->actingAs($user)->get('/bizboost');
+        $response = $this->actingAs($user)->get('/bizboost/dashboard');
 
-        $response->assertStatus(200);
-        $response->assertInertia(fn ($page) => $page->component('BizBoost/Setup/Index'));
+        $response->assertRedirect(route('bizboost.setup'));
     }
 
     public function test_dashboard_redirects_to_setup_when_onboarding_incomplete(): void
     {
         $this->business->update(['onboarding_completed' => false]);
 
-        $response = $this->actingAsUser()->get('/bizboost');
+        $response = $this->actingAsUser()->get('/bizboost/dashboard');
 
-        $response->assertStatus(200);
-        $response->assertInertia(fn ($page) => $page
-            ->component('BizBoost/Setup/Index')
-            ->has('business')
-        );
+        $response->assertRedirect(route('bizboost.setup'));
     }
 
     public function test_dashboard_shows_when_onboarding_complete(): void
     {
-        $response = $this->actingAsUser()->get('/bizboost');
+        $response = $this->actingAsUser()->get('/bizboost/dashboard');
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
@@ -40,15 +35,16 @@ class DashboardTest extends BizBoostTestCase
             ->has('business')
             ->has('stats')
             ->has('recentPosts')
-            ->has('upcomingPosts')
             ->has('recentSales')
-            ->has('topProducts')
+            ->has('recommendations')
+            ->has('sparklineData')
+            ->has('pendingTasks')
         );
     }
 
     public function test_dashboard_requires_authentication(): void
     {
-        $response = $this->get('/bizboost');
+        $response = $this->get('/bizboost/dashboard');
 
         $response->assertRedirect('/login');
     }
@@ -66,8 +62,8 @@ class DashboardTest extends BizBoostTestCase
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
             ->component('BizBoost/Dashboard')
-            ->where('stats.products.total', 2)
-            ->where('stats.customers.total', 1)
+            ->where('stats.products', 2)
+            ->where('stats.customers', 1)
         );
     }
 }

@@ -29,6 +29,7 @@ class Organization extends Model
     protected $fillable = [
         'uuid', 'name', 'slug', 'type', 'status', 'owner_id', 'settings',
         'country', 'currency', 'timezone', 'language',
+        'logo_path', 'address', 'phone', 'email', 'website', 'tax_number', 'registration_number',
     ];
 
     protected function casts(): array

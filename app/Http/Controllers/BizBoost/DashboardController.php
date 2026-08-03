@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\BizBoost;
 
 use App\Domain\Module\Services\SubscriptionService;
+use App\Domain\Core\Services\OrganizationEntryResolver;
 use App\Http\Controllers\Controller;
 use App\Domain\BizBoost\Services\BusinessService;
 use App\Domain\BizBoost\Services\DashboardService;
@@ -31,6 +32,7 @@ class DashboardController extends Controller
         private FollowUpReminderRepositoryInterface $reminderRepo,
         private ProductRepositoryInterface $productRepo,
         private PostRepositoryInterface $postRepo,
+        private OrganizationEntryResolver $orgResolver,
     ) {}
 
     public function index(Request $request): Response|\Illuminate\Http\RedirectResponse
@@ -78,6 +80,7 @@ class DashboardController extends Controller
             'lowStockProducts' => $lowStockProducts,
             'subscriptionTier' => $request->get('subscription_tier', 'free'),
             'subscriptionLimits' => $request->get('subscription_limits', []),
+            'companyDetails' => $this->orgResolver->companyDetails($user),
         ]);
     }
 

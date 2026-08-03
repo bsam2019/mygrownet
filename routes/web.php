@@ -405,10 +405,14 @@ Route::get('/organizations/create', [\App\Http\Controllers\OrganizationWorkspace
 Route::post('/organizations', [\App\Http\Controllers\OrganizationWorkspaceController::class, 'store'])
     ->middleware(['auth', 'verified'])
     ->name('workspace.organization.store');
-
 Route::post('/org/{slug}/install/{application}', [\App\Http\Controllers\OrganizationWorkspaceController::class, 'install'])
+
     ->middleware(['auth', 'verified', 'ensure.organization.access'])
     ->name('workspace.organization.install');
+
+Route::put('/org/{slug}/company-details', [\App\Http\Controllers\OrganizationWorkspaceController::class, 'updateCompanyDetails'])
+    ->middleware(['auth', 'verified', 'ensure.organization.access'])
+    ->name('workspace.organization.company-details');
 
 // Investor routes
 Route::middleware(['auth', 'verified'])->group(function () {

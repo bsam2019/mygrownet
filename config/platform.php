@@ -221,6 +221,7 @@ return [
             'bms'         => env('IDENTITY_REDIRECT_BMS', false),
             'bizdocs'     => env('IDENTITY_REDIRECT_BIZDOCS', false),
             'growfinance' => env('IDENTITY_REDIRECT_GROWFINANCE', false),
+            'grownet'     => env('IDENTITY_REDIRECT_GROWNET', false),
         ],
         'rate_limiting' => [
             'per_ip'       => (int) env('IDENTITY_RATE_LIMIT_PER_IP', 20),

@@ -45,7 +45,7 @@ class WelcomeControllerTest extends TestCase
             ->component('BizBoost/Welcome')
             ->has('features')
             ->where('features', fn ($features) => 
-                is_array($features) && count($features) > 0
+                (is_array($features) || $features instanceof \Illuminate\Support\Collection) && count($features) > 0
             )
         );
     }
