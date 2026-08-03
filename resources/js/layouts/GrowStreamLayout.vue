@@ -5,12 +5,10 @@ import { useDataSaver } from '@/composables/useDataSaver';
 
 interface Props {
     title?: string;
-    showCreatorStudio?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     title: 'GrowStream',
-    showCreatorStudio: false,
 });
 
 const page = usePage();
@@ -167,7 +165,6 @@ const logout = () => {
                         </Link>
 
                         <Link
-                            v-if="props.showCreatorStudio"
                             :href="route('growstream.creator.dashboard')"
                             class="gs-btn gs-btn-outline"
                         >

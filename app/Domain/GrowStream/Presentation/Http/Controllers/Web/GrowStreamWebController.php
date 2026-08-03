@@ -180,7 +180,7 @@ class GrowStreamWebController
             ->get();
 
         return Inertia::render('GrowStream/Browse', [
-            'videos' => $videos,
+            'videos' => $this->paginateShape($videos),
             'categories' => $categories,
             'filters' => $request->only(['search', 'category', 'content_type', 'access_level', 'sort_by']),
         ]);
@@ -402,7 +402,7 @@ class GrowStreamWebController
         $videos = $query->latest()->paginate(20);
 
         return Inertia::render('GrowStream/Admin/Videos', [
-            'videos' => $videos,
+            'videos' => $this->paginateShape($videos),
         ]);
     }
 
@@ -455,7 +455,26 @@ class GrowStreamWebController
         $creators = $query->latest()->paginate(20);
 
         return Inertia::render('GrowStream/Admin/Creators', [
-            'creators' => $creators,
+            'creators' => $this->paginateShape($creators),
         ]);
+    }
+
+    /**
+     * Convert a LengthAwarePaginator into the { data, meta } shape the
+     * frontend types (PaginatedResponse) expect. Laravel serializes a raw
+     * paginator flat (current_page, last_page at top level), but the Vue
+     * components read nested videos.meta / videos.data.
+     */
+    private function paginateShape(\Illuminate\Contracts\Pagination\LengthAwarePaginator $paginator): array
+    {
+        return [
+            'data' => $paginator->items(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+            ],
+        ];
     }
 }
