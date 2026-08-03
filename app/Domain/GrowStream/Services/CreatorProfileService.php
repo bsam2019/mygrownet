@@ -6,15 +6,19 @@ namespace App\Domain\GrowStream\Services;
 
 use App\Domain\GrowStream\Entities\CreatorProfile as CreatorProfileEntity;
 use App\Domain\GrowStream\Exceptions\CreatorNotFoundException;
+use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\CreatorProfile;
+use App\Domain\GrowStream\Repositories\CreatorAgreementRepositoryInterface;
 use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Domain\GrowStream\ValueObjects\CreatorTier;
+use Illuminate\Database\Eloquent\Collection;
 
 class CreatorProfileService
 {
     public function __construct(
         private CreatorProfileRepositoryInterface $repo,
         private ?VideoRepositoryInterface $videoRepo = null,
+        private ?CreatorAgreementRepositoryInterface $agreementRepo = null,
     ) {}
 
     public function createProfile(int $userId, string $displayName, ?CreatorTier $tier = null, ?string $bio = null, ?string $avatarUrl = null): array
@@ -78,6 +82,107 @@ class CreatorProfileService
         $updated = $this->repo->update($profile, $updateData);
 
         return $updated->toArray();
+    }
+
+    public function applyForCreator(int $userId, array $application): array
+    {
+        if ($this->repo->findByUserId($userId)) {
+            throw CreatorNotFoundException::alreadyExistsForUser($userId);
+        }
+
+        $data = [
+            'user_id' => $userId,
+            'display_name' => $application['display_name'],
+            'channel_name' => $application['channel_name'] ?? null,
+            'bio' => $application['bio'] ?? null,
+            'website_url' => $application['website_url'] ?? null,
+            'facebook_url' => $application['facebook_url'] ?? null,
+            'twitter_url' => $application['twitter_url'] ?? null,
+            'instagram_url' => $application['instagram_url'] ?? null,
+            'youtube_url' => $application['youtube_url'] ?? null,
+            'status' => 'pending',
+            'is_active' => false,
+            'is_verified' => false,
+            'creator_tier' => CreatorTier::Bronze->value,
+            'can_upload' => false,
+            'upload_limit_per_month' => (int) config('growstream.creator.upload_limit_per_month', 50),
+            'revenue_share_percentage' => (float) config('growstream.creator.default_revenue_share', 70),
+        ];
+
+        $saved = $this->repo->save($data);
+
+        return $saved->toArray();
+    }
+
+    public function approveCreator(int $profileId): array
+    {
+        $profile = $this->repo->findById($profileId);
+        if (! $profile) {
+            throw CreatorNotFoundException::forId($profileId);
+        }
+
+        return $this->repo->update($profile, [
+            'status' => 'approved',
+            'is_active' => true,
+            'can_upload' => true,
+            'rejected_reason' => null,
+        ])->toArray();
+    }
+
+    public function rejectCreator(int $profileId, string $reason): array
+    {
+        $profile = $this->repo->findById($profileId);
+        if (! $profile) {
+            throw CreatorNotFoundException::forId($profileId);
+        }
+
+        return $this->repo->update($profile, [
+            'status' => 'rejected',
+            'is_active' => false,
+            'can_upload' => false,
+            'rejected_reason' => $reason,
+        ])->toArray();
+    }
+
+    public function acceptAgreement(int $profileId, string $version, ?string $ipAddress = null, ?string $userAgent = null): void
+    {
+        $profile = $this->repo->findById($profileId);
+        if (! $profile) {
+            throw CreatorNotFoundException::forId($profileId);
+        }
+
+        if ($this->agreementRepo) {
+            $this->agreementRepo->recordAcceptance($profileId, $version, $ipAddress, $userAgent);
+        }
+    }
+
+    public function hasAcceptedAgreement(int $profileId, string $version): bool
+    {
+        return $this->agreementRepo && $this->agreementRepo->hasAccepted($profileId, $version);
+    }
+
+    public function pendingCreators(array $relations = []): Collection
+    {
+        return $this->repo->query()
+            ->where('status', 'pending')
+            ->with($relations)
+            ->latest()
+            ->get();
+    }
+
+    public function pendingCreatorCount(): int
+    {
+        return $this->repo->query()->where('status', 'pending')->count();
+    }
+
+    private function findOrFail(int $profileId): CreatorProfile
+    {
+        $profile = $this->repo->findById($profileId);
+        if (! $profile) {
+            throw CreatorNotFoundException::forId($profileId);
+        }
+
+        return $profile;
     }
 
     public function getProfile(int $profileId): ?array

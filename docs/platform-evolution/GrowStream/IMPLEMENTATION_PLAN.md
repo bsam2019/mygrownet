@@ -1,9 +1,38 @@
 # GrowStream — Implementation Plan
 
-**Version:** 1.1  
+**Version:** 1.2  
 **Date:** August 2026  
 **Based on:** PRODUCT_STRATEGIC_PLAN.md v1.0 + current codebase audit  
-**Status:** Phase 1 ✅ Complete (Aug 2026); Phases 2–5 not started
+**Status:** Phase 1 ✅, Phase 2 ✅ (Aug 2026); Phases 3–5 not started
+
+---
+
+## Phase 2 Completion Log (Aug 2026)
+
+All Phase 2 tasks implemented and tested:
+
+| Task | Status |
+|---|---|
+| **2.1 Creator registration & onboarding** | ✅ Creator application flow (register → pending → admin approve/reject). `growstream_creator_profiles.status` enum (pending/approved/rejected/suspended) + `channel_name` + `rejected_reason`/`suspension_reason`/`suspended_at`. `growstream_creator_agreements` table + `CreatorAgreementRepository` for version-tracked digital acceptance. `CreatorProfileService::applyForCreator/approveCreator/rejectCreator/acceptAgreement/pendingCreators`. `CreatorOnboardingController` + `GrowStream/Creator/Register.vue` + `PendingApproval.vue` + `Dashboard.vue`. |
+| **2.2 Creator self-service upload** | ✅ `CreatorVideoController` (index/create/store/edit/update/destroy/analytics) + `GrowStream/Creator/Videos.vue` + `Upload.vue` + `Analytics.vue`. Upload via `VideoProviderFactory` (Cloudflare) with file OR video URL; monthly upload limit via `canUploadMore()`; category/tag handling. |
+| **2.3 Content moderation workflow** | ✅ `growstream_videos.moderation_status` enum (pending_review/approved/rejected) + `moderation_reason` + `reviewed_at` + `reviewed_by`. `VideoManagementService::submitForReview/approveVideoReview/rejectVideoReview`. `ModerationController` (queue/approve/reject/publish) + `GrowStream/Admin/Moderation.vue`. Rights declaration required at upload; verified creators' uploads auto-approved; `CreatorAdminController` gained reject + improved approve. |
+| **Bug fix** | ✅ `growstream_videos` was missing the `video_url` column (model/admin referenced it but no migration created it) — added via migration. |
+| **Platform fix** | ✅ Registered `role` + `permission` middleware aliases in `bootstrap/app.php` (spatie auto-alias wasn't resolving, so `role:admin` failed in tests). |
+| **Tests** | ✅ 23 new feature tests (creator service onboarding, HTTP onboarding, video upload + moderation). **Total: 382 GrowStream tests passing.** |
+
+**Schema additions (4 migrations in `database/migrations/growstream/`):**
+- `2026_08_03_000001` — creator profile onboarding fields (status, channel_name, rejection/suspension)
+- `2026_08_03_000002` — `growstream_creator_agreements`
+- `2026_08_03_000003` — video moderation fields
+- `2026_08_03_000004` — `growstream_videos.video_url` (schema gap fix)
+
+---
+
+## Current State Summary
+
+The GrowStream backend is ~95% complete. 11 database tables, 9 Eloquent models, 8 repository interfaces (all implemented), 7 domain services, 43 API endpoints, 6 web controllers, 4 jobs, 3 events, 4 listeners, 15 Vue pages, 4 console commands.
+
+**Critical gaps remaining:** no subscription/payment integration (Phase 3), revenue analytics placeholder, no DRM.
 
 ---
 

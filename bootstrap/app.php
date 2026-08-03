@@ -154,6 +154,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'ensure.organization.access' => \App\Http\Middleware\EnsureOrganizationAccess::class,
             'ensure.application.access' => \App\Http\Middleware\EnsureApplicationAccess::class,
             'identity.redirect' => \App\Http\Middleware\RedirectToMyGrowIdentity::class,
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
         ]);
 
         // Add Inertia and cache prevention to web middleware group

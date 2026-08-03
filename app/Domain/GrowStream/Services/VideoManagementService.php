@@ -188,6 +188,37 @@ final class VideoManagementService
         }
     }
 
+    public function submitForReview(int $videoId): void
+    {
+        $eloquent = $this->findOrFail($videoId);
+
+        $this->videoRepository->update($eloquent, ['moderation_status' => 'pending_review']);
+    }
+
+    public function approveVideoReview(int $videoId, ?int $reviewedBy = null): void
+    {
+        $eloquent = $this->findOrFail($videoId);
+
+        $this->videoRepository->update($eloquent, [
+            'moderation_status' => 'approved',
+            'moderation_reason' => null,
+            'reviewed_at' => now(),
+            'reviewed_by' => $reviewedBy,
+        ]);
+    }
+
+    public function rejectVideoReview(int $videoId, string $reason, ?int $reviewedBy = null): void
+    {
+        $eloquent = $this->findOrFail($videoId);
+
+        $this->videoRepository->update($eloquent, [
+            'moderation_status' => 'rejected',
+            'moderation_reason' => $reason,
+            'reviewed_at' => now(),
+            'reviewed_by' => $reviewedBy,
+        ]);
+    }
+
     private function findOrFail(int $videoId): Video
     {
         $video = $this->videoRepository->findById($videoId);

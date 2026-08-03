@@ -11,7 +11,7 @@ return [
     |
     */
     'default_provider' => env('GROWSTREAM_VIDEO_PROVIDER', 'digitalocean'),
-    
+
     /*
     |--------------------------------------------------------------------------
     | Video Providers Configuration
@@ -26,7 +26,7 @@ return [
             'endpoint' => env('DO_SPACES_ENDPOINT'),
             'cdn_endpoint' => env('DO_SPACES_CDN_ENDPOINT'),
         ],
-        
+
         'cloudflare' => [
             'account_id' => env('CLOUDFLARE_ACCOUNT_ID'),
             'api_token' => env('CLOUDFLARE_API_TOKEN'),
@@ -34,13 +34,13 @@ return [
             'signing_key_id' => env('CLOUDFLARE_SIGNING_KEY_ID'),
             'signing_key' => env('CLOUDFLARE_SIGNING_KEY'),
         ],
-        
+
         'local' => [
             'disk' => env('GROWSTREAM_LOCAL_DISK', 'local'),
             'path' => 'videos',
         ],
     ],
-    
+
     /*
     |--------------------------------------------------------------------------
     | Upload Configuration
@@ -57,7 +57,7 @@ return [
         ],
         'chunk_size' => 5 * 1024 * 1024, // 5MB
     ],
-    
+
     /*
     |--------------------------------------------------------------------------
     | Storage Paths
@@ -71,7 +71,7 @@ return [
         'subtitles' => 'growstream/subtitles',
         'resources' => 'growstream/resources',
     ],
-    
+
     /*
     |--------------------------------------------------------------------------
     | Access Control
@@ -86,7 +86,7 @@ return [
         ],
         'signed_url_expiration' => 86400, // 24 hours
     ],
-    
+
     /*
     |--------------------------------------------------------------------------
     | Creator Settings
@@ -97,8 +97,9 @@ return [
         'minimum_payout' => 100, // K100 minimum
         'payout_schedule' => 'monthly', // monthly, weekly
         'upload_limit_per_month' => 50,
+        'agreement_version' => '1.0',
     ],
-    
+
     /*
     |--------------------------------------------------------------------------
     | Analytics
@@ -109,7 +110,7 @@ return [
         'aggregate_after_days' => 90,
         'update_interval' => 10, // Update progress every 10 seconds
     ],
-    
+
     /*
     |--------------------------------------------------------------------------
     | Player Settings
@@ -122,7 +123,7 @@ return [
         'playback_speeds' => [0.5, 0.75, 1, 1.25, 1.5, 2],
         'completion_threshold' => 95, // Mark as completed at 95%
     ],
-    
+
     /*
     |--------------------------------------------------------------------------
     | Content Types
@@ -137,7 +138,7 @@ return [
         'workshop' => 'Workshop',
         'webinar' => 'Webinar',
     ],
-    
+
     /*
     |--------------------------------------------------------------------------
     | Access Levels

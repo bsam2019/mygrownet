@@ -2,7 +2,6 @@
 
 namespace App\Domain\GrowStream\Infrastructure\Persistence\Eloquent;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -29,6 +28,10 @@ class Video extends Model
         'playback_url',
         'playback_policy',
         'upload_status',
+        'moderation_status',
+        'moderation_reason',
+        'reviewed_at',
+        'reviewed_by',
         'upload_progress',
         'processing_started_at',
         'processing_completed_at',
@@ -203,8 +206,8 @@ class Video extends Model
     // Helper Methods
     public function isPublished(): bool
     {
-        return $this->is_published 
-            && $this->published_at 
+        return $this->is_published
+            && $this->published_at
             && $this->published_at->isPast();
     }
 
@@ -220,12 +223,12 @@ class Video extends Model
 
     public function isPartOfSeries(): bool
     {
-        return !is_null($this->series_id);
+        return ! is_null($this->series_id);
     }
 
     public function getNextEpisode(): ?self
     {
-        if (!$this->isPartOfSeries()) {
+        if (! $this->isPartOfSeries()) {
             return null;
         }
 
@@ -238,7 +241,7 @@ class Video extends Model
 
     public function getPreviousEpisode(): ?self
     {
-        if (!$this->isPartOfSeries()) {
+        if (! $this->isPartOfSeries()) {
             return null;
         }
 
@@ -251,7 +254,7 @@ class Video extends Model
 
     public function getFormattedDuration(): string
     {
-        if (!$this->duration) {
+        if (! $this->duration) {
             return '0:00';
         }
 
@@ -273,9 +276,9 @@ class Video extends Model
 
     public function getStarterKitTierLabel(): string
     {
-        return match($this->starter_kit_tier) {
+        return match ($this->starter_kit_tier) {
             'basic' => 'Basic Tier',
-            'premium' => 'Premium Tier', 
+            'premium' => 'Premium Tier',
             'elite' => 'Elite Tier',
             'all' => 'All Tiers',
             default => 'Not Set',

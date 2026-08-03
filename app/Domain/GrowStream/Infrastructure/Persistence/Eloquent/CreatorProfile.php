@@ -27,6 +27,9 @@ class CreatorProfile extends Model
         'instagram_url',
         'youtube_url',
         'status',
+        'rejected_reason',
+        'suspension_reason',
+        'suspended_at',
         'is_verified',
         'is_active',
         'verified_at',
@@ -46,6 +49,7 @@ class CreatorProfile extends Model
         'is_active' => 'boolean',
         'can_upload' => 'boolean',
         'verified_at' => 'datetime',
+        'suspended_at' => 'datetime',
         'revenue_share_percentage' => 'decimal:2',
         'total_earnings' => 'decimal:2',
         'pending_payout' => 'decimal:2',
@@ -86,7 +90,7 @@ class CreatorProfile extends Model
     // Helper Methods
     public function canUploadMore(): bool
     {
-        if (!$this->can_upload || !$this->is_active) {
+        if (! $this->can_upload || ! $this->is_active) {
             return false;
         }
 

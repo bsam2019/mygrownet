@@ -18,6 +18,7 @@ use App\Domain\GrowStream\Presentation\Console\Commands\AggregateAnalyticsComman
 use App\Domain\GrowStream\Presentation\Console\Commands\CleanupOldAnalyticsCommand;
 use App\Domain\GrowStream\Presentation\Console\Commands\GrowStreamStatsCommand;
 use App\Domain\GrowStream\Presentation\Console\Commands\ProcessPendingVideosCommand;
+use App\Domain\GrowStream\Repositories\CreatorAgreementRepositoryInterface;
 use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoCategoryRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
@@ -26,6 +27,7 @@ use App\Domain\GrowStream\Repositories\VideoTagRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoViewRepositoryInterface;
 use App\Domain\GrowStream\Repositories\WatchHistoryRepositoryInterface;
 use App\Domain\GrowStream\Repositories\WatchlistRepositoryInterface;
+use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorAgreementRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorProfileRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoCategoryRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoRepository;
@@ -73,6 +75,7 @@ class GrowStreamServiceProvider extends ServiceProvider
         $this->app->bind(WatchlistRepositoryInterface::class, EloquentWatchlistRepository::class);
         $this->app->bind(VideoViewRepositoryInterface::class, EloquentVideoViewRepository::class);
         $this->app->bind(VideoTagRepositoryInterface::class, EloquentVideoTagRepository::class);
+        $this->app->bind(CreatorAgreementRepositoryInterface::class, EloquentCreatorAgreementRepository::class);
     }
 
     /**

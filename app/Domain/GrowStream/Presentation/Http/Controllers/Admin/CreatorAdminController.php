@@ -22,7 +22,7 @@ class CreatorAdminController extends Controller
         if ($request->search) {
             $query->whereHas('user', function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
-                  ->orWhere('email', 'like', "%{$request->search}%");
+                    ->orWhere('email', 'like', "%{$request->search}%");
             });
         }
 
@@ -71,7 +71,7 @@ class CreatorAdminController extends Controller
     public function show(int $id)
     {
         $creator = $this->creatorRepo->findById($id);
-        if (!$creator) {
+        if (! $creator) {
             return back()->with('error', 'Creator not found.');
         }
 
@@ -83,7 +83,7 @@ class CreatorAdminController extends Controller
             ->orderBy('created_at', 'desc')
             ->take(10)
             ->get()
-            ->map(fn($video) => [
+            ->map(fn ($video) => [
                 'id' => $video->id,
                 'title' => $video->title,
                 'thumbnail_url' => $video->thumbnail_url,
@@ -127,19 +127,45 @@ class CreatorAdminController extends Controller
     public function approve(int $id)
     {
         $creator = $this->creatorRepo->findById($id);
-        if (!$creator) {
+        if (! $creator) {
             return back()->with('error', 'Creator not found.');
         }
 
-        $this->creatorRepo->update($creator, ['status' => 'approved']);
+        $this->creatorRepo->update($creator, [
+            'status' => 'approved',
+            'is_active' => true,
+            'can_upload' => true,
+            'rejected_reason' => null,
+        ]);
 
         return back()->with('success', 'Creator approved successfully.');
+    }
+
+    public function reject(Request $request, int $id)
+    {
+        $request->validate([
+            'reason' => 'required|string|max:2000',
+        ]);
+
+        $creator = $this->creatorRepo->findById($id);
+        if (! $creator) {
+            return back()->with('error', 'Creator not found.');
+        }
+
+        $this->creatorRepo->update($creator, [
+            'status' => 'rejected',
+            'is_active' => false,
+            'can_upload' => false,
+            'rejected_reason' => $request->reason,
+        ]);
+
+        return back()->with('success', 'Creator application rejected.');
     }
 
     public function suspend(int $id)
     {
         $creator = $this->creatorRepo->findById($id);
-        if (!$creator) {
+        if (! $creator) {
             return back()->with('error', 'Creator not found.');
         }
 
@@ -155,7 +181,7 @@ class CreatorAdminController extends Controller
     public function activate(int $id)
     {
         $creator = $this->creatorRepo->findById($id);
-        if (!$creator) {
+        if (! $creator) {
             return back()->with('error', 'Creator not found.');
         }
 
