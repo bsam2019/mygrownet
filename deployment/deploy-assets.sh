@@ -59,8 +59,8 @@ if command -v rsync &> /dev/null; then
     echo "🔄 Using rsync for efficient incremental upload..."
     for module in "${MODULES_TO_DEPLOY[@]}"; do
         if [ "$module" = "main" ]; then
-            echo "  Syncing main module assets..."
-            rsync -avz --delete public/build/assets/ ${DROPLET_USER}@${DROPLET_IP}:${PROJECT_PATH}/public/build/assets/
+            echo "  Syncing main module assets (incremental, no delete)..."
+            rsync -avz public/build/assets/ ${DROPLET_USER}@${DROPLET_IP}:${PROJECT_PATH}/public/build/assets/
             rsync -avz public/build/manifest.json ${DROPLET_USER}@${DROPLET_IP}:${PROJECT_PATH}/public/build/
             if [ -d "public/build/.vite" ]; then
                 rsync -avz public/build/.vite/ ${DROPLET_USER}@${DROPLET_IP}:${PROJECT_PATH}/public/build/.vite/

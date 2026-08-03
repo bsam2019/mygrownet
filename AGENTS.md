@@ -285,11 +285,11 @@ Eliminated duplicate company-details entry across apps (bizdocs, bizboost, bms, 
 Migrations: `core/2026_08_02_240020`, `core/2026_08_02_240021` (adds `organization_id` to `growfinance_profiles`). Test: `tests/Feature/Platform/CompanyDetailsRoundTripTest.php`.
 
 ## Platform Evolution
-- 11-phase roadmap at `docs/platform-evolution/FULL_IMPLEMENTATION_ROADMAP.md` (phases 1-9 implemented, 10-11 design/cleanup)
-- Implementation plan at `docs/platform-evolution/IMPLEMENTATION_PLAN.md` (12 migrations, 5 services, 4 middleware, 2 controllers, Vue tree)
+- 11-phase roadmap at `docs/platform-evolution/roadmap/FULL_IMPLEMENTATION_ROADMAP.md` (phases 1-9 implemented, 10-11 design/cleanup)
+- Implementation plan at `docs/platform-evolution/implementation/IMPLEMENTATION_PLAN.md` (12 migrations, 5 services, 4 middleware, 2 controllers, Vue tree)
 - Architecture Decision Records at `docs/adr/ADR-001` through `ADR-007`
 - Platform event bus: OrganizationCreated, OrganizationArchived, MemberAdded, ApplicationSubscribed events dispatch automatically; listeners live in target modules (StockFlow, CMS)
-- Shared services contracts reserved at `docs/platform-evolution/SHARED_SERVICES.md` (Storage, Search, Payment, Audit, AI, Reporting)
+- Shared services contracts reserved at `docs/platform-evolution/integration/SHARED_SERVICES.md` (Storage, Search, Payment, Audit, AI, Reporting)
 
 ### Application Authentication Rule
 Applications do not authenticate users. They only verify that the Platform Core has already authenticated the user and that the user has permission to access the application.
@@ -381,7 +381,7 @@ The remaining 24 controllers in `app/Http/Controllers/MyGrowNet/` still directly
 
 Applied 8 fixes from Claude architecture critique to `PLATFORM_INTEGRATION_ARCHITECTURE.md`:
 
-1. **Reliable Event Delivery (§11)** — Stripped detailed outbox/inbox/replay design to a brief stub referencing [`FUTURE_VISION.md`](docs/platform-evolution/FUTURE_VISION.md#1-reliable-event-delivery). Kept current-state summary and failure-behavior table.
+1. **Reliable Event Delivery (§11)** — Stripped detailed outbox/inbox/replay design to a brief stub referencing [`FUTURE_VISION.md`](docs/platform-evolution/roadmap/FUTURE_VISION.md#1-reliable-event-delivery). Kept current-state summary and failure-behavior table.
 2. **Version bump** — Updated §23 Future Vision cross-reference from "§23" to point to correct section after renumbering.
 3. **Tenant isolation CI** — Added lint step to test CI job descriptions in §18, spelled out isolation-mechanism table with `id` vs `organization_id` column rule.
 4. **Registry contract boundary** — Wired `IntegrationRegistry` into all boundary-layer diagrams and dependency-check docs. Updated §4.3 to clarify registry is an explicit component.
@@ -389,7 +389,7 @@ Applied 8 fixes from Claude architecture critique to `PLATFORM_INTEGRATION_ARCHI
 6. **Event version removal** — `eventVersion` removed from event schema and documentation. Events use `event_name` only.
 7. **IntegrationGuard split** — Renamed §4.4 from "Guard Layer" to "IntegrationGuard", updated TOC/anchor. Refined wording: "proxy" → "bouncer" with gate/open semantics.
 8. **Supplier ownership** — Cross-referenced Supplier from PurchasingService to Inventory domain in §12.3.
-9. **Document split (§23 → FUTURE_VISION.md)** — Extracted Stages 3–4 (Distributed Services, Independent Deployments) from Evolution Roadmap and Phase 5 (Advanced Platform Services) from Implementation Order into [`FUTURE_VISION.md`](docs/platform-evolution/FUTURE_VISION.md). §23 now contains Stages 1–2 only with stub references. Updated `IMPLEMENTATION_PLAN.md` cross-references from `§11.4` to `FUTURE_VISION.md §1.4`.
+9. **Document split (§23 → FUTURE_VISION.md)** — Extracted Stages 3–4 (Distributed Services, Independent Deployments) from Evolution Roadmap and Phase 5 (Advanced Platform Services) from Implementation Order into [`FUTURE_VISION.md`](docs/platform-evolution/roadmap/FUTURE_VISION.md). §23 now contains Stages 1–2 only with stub references. Updated `IMPLEMENTATION_PLAN.md` cross-references from `§11.4` to `FUTURE_VISION.md §1.4`.
 
 **Created:** `FUTURE_VISION.md` v1.0 — houses outbox/inbox/replay design, Stages 3–4, Phase 5, extended ADRs.
 **Version:** `PLATFORM_INTEGRATION_ARCHITECTURE.md` → 10.1

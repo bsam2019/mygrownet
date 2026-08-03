@@ -1181,7 +1181,7 @@ The `ContractInvoker` class already implements this pattern for all contract-bas
 
 ### Manual replay procedure
 
-See `docs/platform-evolution/REPLAY_RUNBOOK.md` for the complete replay procedure. Key steps:
+See `docs/platform-evolution/operations/REPLAY_RUNBOOK.md` for the complete replay procedure. Key steps:
 
 1. Identify the failed events in DLQ
 2. Fix the root cause (add missing rule, restart service, etc.)
