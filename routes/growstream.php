@@ -7,6 +7,7 @@ use App\Domain\GrowStream\Presentation\Http\Controllers\Web\Creator\CreatorOnboa
 use App\Domain\GrowStream\Presentation\Http\Controllers\Web\Creator\CreatorSponsorshipController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Web\Creator\CreatorVideoController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Web\GrowStreamWebController;
+use App\Domain\GrowStream\Presentation\Http\Controllers\Web\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,6 +25,15 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
     Route::middleware(['web', 'auth'])->prefix($prefix)->name($namePrefix)->group(function () {
         Route::get('/subscription', fn () => redirect()->route('subscriptions.plans', ['module' => 'growstream']))->name('subscription');
         Route::get('/my-videos', [GrowStreamWebController::class, 'myVideos'])->name('my-videos');
+
+        // Notifications
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
+        Route::get('/notifications/dropdown', [NotificationController::class, 'dropdown'])->name('notifications.dropdown');
+        Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+        Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+        Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+        Route::post('/notifications/{id}/archive', [NotificationController::class, 'archive'])->name('notifications.archive');
+        Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
         // Creator onboarding
         Route::get('/creator/register', [CreatorOnboardingController::class, 'showRegister'])->name('creator.register');
@@ -72,6 +82,8 @@ $registerGrowStreamPublicRoutes = function (string $prefix, string $namePrefix) 
     Route::middleware('web')->prefix($prefix)->name($namePrefix)->group(function () {
         Route::get('/', [GrowStreamWebController::class, 'home'])->name('home');
         Route::get('/browse', [GrowStreamWebController::class, 'browse'])->name('browse');
+        Route::get('/search', [GrowStreamWebController::class, 'search'])->name('search');
+        Route::get('/channel/{slug}', [GrowStreamWebController::class, 'creatorProfile'])->name('creator.profile');
         Route::get('/video/{slug}', [GrowStreamWebController::class, 'videoDetail'])->name('video.detail');
         Route::get('/series/{slug}', [GrowStreamWebController::class, 'seriesDetail'])->name('series.detail');
     });

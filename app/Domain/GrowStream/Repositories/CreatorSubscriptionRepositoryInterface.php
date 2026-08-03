@@ -24,5 +24,10 @@ interface CreatorSubscriptionRepositoryInterface
 
     public function subscriberCount(int $creatorId): int;
 
+    /**
+     * @return int[] user ids with an active subscription to the creator
+     */
+    public function activeSubscriberIdsForCreator(int $creatorId): array;
+
     public function query(): Builder;
 }

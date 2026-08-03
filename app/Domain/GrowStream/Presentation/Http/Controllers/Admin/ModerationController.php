@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\GrowStream\Presentation\Http\Controllers\Admin;
 
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
+use App\Domain\GrowStream\Services\NotificationService;
 use App\Domain\GrowStream\Services\VideoManagementService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
@@ -17,6 +18,7 @@ class ModerationController extends Controller
     public function __construct(
         private VideoRepositoryInterface $videoRepo,
         private VideoManagementService $videoManagementService,
+        private NotificationService $notifications,
     ) {}
 
     public function queue(Request $request): Response
@@ -51,6 +53,8 @@ class ModerationController extends Controller
     {
         $this->videoManagementService->approveVideoReview($id, auth()->id());
 
+        $this->notifyCreatorOfDecision($id, published: false);
+
         return back()->with('success', 'Video approved.');
     }
 
@@ -61,6 +65,16 @@ class ModerationController extends Controller
         ]);
 
         $this->videoManagementService->rejectVideoReview($id, $request->reason, auth()->id());
+
+        $video = $this->videoRepo->findById($id);
+        if ($video?->creator?->user) {
+            $this->notifications->notifyContentRejected(
+                $video->creator->user,
+                $video->title,
+                $video->id,
+                $request->reason,
+            );
+        }
 
         return back()->with('success', 'Video rejected.');
     }
@@ -77,6 +91,30 @@ class ModerationController extends Controller
             ]);
         }
 
+        $this->notifyCreatorOfDecision($id, published: true);
+
+        if ($video) {
+            $this->notifications->notifySubscribersOfNewVideo(
+                $video->creator_id,
+                $video->title,
+                $video->slug,
+            );
+        }
+
         return back()->with('success', 'Video approved and published.');
+    }
+
+    private function notifyCreatorOfDecision(int $id, bool $published): void
+    {
+        $video = $this->videoRepo->findById($id);
+        if ($video?->creator?->user) {
+            $this->notifications->notifyContentApproved(
+                $video->creator->user,
+                $video->title,
+                $video->id,
+                $video->slug,
+                $published,
+            );
+        }
     }
 }

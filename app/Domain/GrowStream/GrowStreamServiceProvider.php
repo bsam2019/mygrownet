@@ -37,6 +37,7 @@ use App\Domain\GrowStream\Repositories\WatchHistoryRepositoryInterface;
 use App\Domain\GrowStream\Repositories\WatchlistRepositoryInterface;
 use App\Domain\GrowStream\Services\AccessControlService;
 use App\Domain\GrowStream\Services\CreatorSubscriptionService;
+use App\Domain\GrowStream\Services\NotificationService;
 use App\Domain\GrowStream\Services\PayoutService;
 use App\Domain\GrowStream\Services\RentalService;
 use App\Domain\GrowStream\Services\RevenuePoolService;
@@ -107,6 +108,7 @@ class GrowStreamServiceProvider extends ServiceProvider
         $this->app->singleton(AccessControlService::class);
         $this->app->singleton(RentalService::class);
         $this->app->singleton(CreatorSubscriptionService::class);
+        $this->app->singleton(NotificationService::class);
         $this->app->singleton(TipService::class);
         $this->app->singleton(RevenuePoolService::class);
         $this->app->singleton(PayoutService::class);

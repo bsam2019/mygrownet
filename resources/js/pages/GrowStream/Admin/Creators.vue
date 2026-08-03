@@ -1,22 +1,22 @@
 <template>
-    <AppLayout title="Creator Management - GrowStream Admin">
-        <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <AdminLayout title="Creator Management - GrowStream Admin">
+        <div class="mx-auto max-w-7xl">
             <!-- Header -->
             <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-900">Creator Management</h1>
-                <p class="mt-2 text-gray-600">Manage content creators and their permissions</p>
+                <h1 class="text-3xl font-bold text-[var(--gs-text)]">Creator Management</h1>
+                <p class="mt-2 text-[var(--gs-muted)]">Manage content creators and their permissions</p>
             </div>
 
             <!-- Stats Cards -->
-            <div class="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                <div class="rounded-lg bg-white p-6 shadow">
+            <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="gs-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-600">Total Creators</p>
-                            <p class="mt-2 text-3xl font-bold text-gray-900">{{ stats.total }}</p>
+                            <p class="text-sm font-medium text-[var(--gs-muted)]">Total Creators</p>
+                            <p class="mt-2 text-3xl font-bold text-[var(--gs-text)]">{{ stats.total }}</p>
                         </div>
-                        <div class="rounded-full bg-blue-100 p-3">
-                            <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="rounded-full bg-[var(--gs-primary-soft)] p-3">
+                            <svg class="h-6 w-6 text-[var(--gs-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
@@ -28,28 +28,28 @@
                     </div>
                 </div>
 
-                <div class="rounded-lg bg-white p-6 shadow">
+                <div class="gs-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-600">Verified</p>
-                            <p class="mt-2 text-3xl font-bold text-green-600">{{ stats.verified }}</p>
+                            <p class="text-sm font-medium text-[var(--gs-muted)]">Verified</p>
+                            <p class="mt-2 text-3xl font-bold text-[var(--gs-primary)]">{{ stats.verified }}</p>
                         </div>
-                        <div class="rounded-full bg-green-100 p-3">
-                            <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="rounded-full bg-[var(--gs-primary-soft)] p-3">
+                            <svg class="h-6 w-6 text-[var(--gs-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
                     </div>
                 </div>
 
-                <div class="rounded-lg bg-white p-6 shadow">
+                <div class="gs-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-600">Active</p>
-                            <p class="mt-2 text-3xl font-bold text-blue-600">{{ stats.active }}</p>
+                            <p class="text-sm font-medium text-[var(--gs-muted)]">Active</p>
+                            <p class="mt-2 text-3xl font-bold text-[var(--gs-primary)]">{{ stats.active }}</p>
                         </div>
-                        <div class="rounded-full bg-blue-100 p-3">
-                            <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="rounded-full bg-[var(--gs-primary-soft)] p-3">
+                            <svg class="h-6 w-6 text-[var(--gs-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
@@ -61,14 +61,14 @@
                     </div>
                 </div>
 
-                <div class="rounded-lg bg-white p-6 shadow">
+                <div class="gs-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-600">Suspended</p>
-                            <p class="mt-2 text-3xl font-bold text-red-600">{{ stats.suspended }}</p>
+                            <p class="text-sm font-medium text-[var(--gs-muted)]">Suspended</p>
+                            <p class="mt-2 text-3xl font-bold text-red-400">{{ stats.suspended }}</p>
                         </div>
-                        <div class="rounded-full bg-red-100 p-3">
-                            <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="rounded-full bg-red-500/15 p-3">
+                            <svg class="h-6 w-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
@@ -87,12 +87,12 @@
                     v-model="filters.search"
                     type="text"
                     placeholder="Search creators..."
-                    class="flex-1 min-w-[300px] rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    class="gs-input flex-1 min-w-[300px]"
                     @input="debouncedSearch"
                 />
                 <select
                     v-model="filters.status"
-                    class="rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    class="gs-input w-auto"
                     @change="applyFilters"
                 >
                     <option value="">All Status</option>
@@ -101,7 +101,7 @@
                 </select>
                 <select
                     v-model="filters.verified"
-                    class="rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    class="gs-input w-auto"
                     @change="applyFilters"
                 >
                     <option value="">All Creators</option>
@@ -111,32 +111,32 @@
             </div>
 
             <!-- Creators Table -->
-            <div class="overflow-hidden rounded-lg bg-white shadow">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+            <div class="gs-surface overflow-x-auto">
+                <table class="min-w-full divide-y divide-[var(--gs-border)]">
+                    <thead>
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--gs-muted)]">
                                 Creator
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--gs-muted)]">
                                 Status
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--gs-muted)]">
                                 Videos
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--gs-muted)]">
                                 Total Views
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--gs-muted)]">
                                 Revenue Share
                             </th>
-                            <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                            <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-[var(--gs-muted)]">
                                 Actions
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white">
-                        <tr v-for="creator in creators.data" :key="creator.id" class="hover:bg-gray-50">
+                    <tbody class="divide-y divide-[var(--gs-border)]">
+                        <tr v-for="creator in creators.data" :key="creator.id" class="hover:bg-[var(--gs-card-hover)]">
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     <img
@@ -146,10 +146,10 @@
                                     />
                                     <div>
                                         <div class="flex items-center gap-2">
-                                            <span class="font-medium text-gray-900">{{ creator.display_name }}</span>
+                                            <span class="font-medium text-[var(--gs-text)]">{{ creator.display_name }}</span>
                                             <svg
                                                 v-if="creator.is_verified"
-                                                class="h-5 w-5 text-blue-600"
+                                                class="h-5 w-5 text-[var(--gs-primary)]"
                                                 fill="currentColor"
                                                 viewBox="0 0 20 20"
                                             >
@@ -160,7 +160,7 @@
                                                 />
                                             </svg>
                                         </div>
-                                        <div class="text-sm text-gray-500">{{ creator.user.email }}</div>
+                                        <div class="text-sm text-[var(--gs-muted)]">{{ creator.user.email }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -168,21 +168,20 @@
                                 <span
                                     :class="[
                                         creator.status === 'active'
-                                            ? 'bg-green-100 text-green-800'
-                                            : 'bg-red-100 text-red-800',
-                                        'inline-flex rounded-full px-2 py-1 text-xs font-semibold',
+                                            ? 'gs-chip gs-chip-primary'
+                                            : 'gs-chip bg-red-500/15 text-red-400',
                                     ]"
                                 >
                                     {{ creator.status }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-sm text-gray-900">
+                            <td class="px-6 py-4 text-sm text-[var(--gs-text)]">
                                 {{ creator.total_videos }}
                             </td>
-                            <td class="px-6 py-4 text-sm text-gray-900">
+                            <td class="px-6 py-4 text-sm text-[var(--gs-text)]">
                                 {{ creator.total_views.toLocaleString() }}
                             </td>
-                            <td class="px-6 py-4 text-sm text-gray-900">
+                            <td class="px-6 py-4 text-sm text-[var(--gs-text)]">
                                 {{ creator.revenue_share_percentage }}%
                             </td>
                             <td class="px-6 py-4 text-right text-sm font-medium">
@@ -190,8 +189,8 @@
                                     <button
                                         v-if="!creator.is_verified"
                                         @click="verifyCreator(creator.id)"
-                                        class="text-green-600 hover:text-green-900"
-                                        title="Verify"
+                                        class="text-[var(--gs-primary)] hover:text-[var(--gs-primary-hover)]"
+                                        aria-label="Verify" title="Verify"
                                     >
                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path
@@ -205,8 +204,8 @@
                                     <button
                                         v-if="creator.status === 'active'"
                                         @click="suspendCreator(creator.id)"
-                                        class="text-red-600 hover:text-red-900"
-                                        title="Suspend"
+                                        class="text-red-400 hover:text-red-300"
+                                        aria-label="Suspend" title="Suspend"
                                     >
                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path
@@ -220,8 +219,8 @@
                                     <button
                                         v-else
                                         @click="unsuspendCreator(creator.id)"
-                                        class="text-green-600 hover:text-green-900"
-                                        title="Unsuspend"
+                                        class="text-[var(--gs-primary)] hover:text-[var(--gs-primary-hover)]"
+                                        aria-label="Unsuspend" title="Unsuspend"
                                     >
                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path
@@ -234,8 +233,8 @@
                                     </button>
                                     <button
                                         @click="editLimits(creator)"
-                                        class="text-blue-600 hover:text-blue-900"
-                                        title="Edit Limits"
+                                        class="text-[var(--gs-accent)] hover:opacity-85"
+                                        aria-label="Edit Limits" title="Edit Limits"
                                     >
                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path
@@ -259,8 +258,8 @@
                 </table>
 
                 <!-- Pagination -->
-                <div class="flex items-center justify-between border-t border-gray-200 bg-white px-6 py-4">
-                    <div class="text-sm text-gray-700">
+                <div class="flex items-center justify-between border-t border-[var(--gs-border)] px-6 py-4">
+                    <div class="text-sm text-[var(--gs-muted)]">
                         Showing {{ (creators.meta.current_page - 1) * creators.meta.per_page + 1 }} to
                         {{ Math.min(creators.meta.current_page * creators.meta.per_page, creators.meta.total) }} of
                         {{ creators.meta.total }} results
@@ -269,14 +268,14 @@
                         <button
                             :disabled="creators.meta.current_page === 1"
                             @click="changePage(creators.meta.current_page - 1)"
-                            class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            class="gs-btn gs-btn-outline px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             Previous
                         </button>
                         <button
                             :disabled="creators.meta.current_page === creators.meta.last_page"
                             @click="changePage(creators.meta.current_page + 1)"
-                            class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            class="gs-btn gs-btn-outline px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             Next
                         </button>
@@ -288,47 +287,47 @@
         <!-- Edit Limits Modal -->
         <div v-if="showLimitsModal" class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex min-h-screen items-center justify-center px-4">
-                <div class="fixed inset-0 bg-black/50" @click="showLimitsModal = false"></div>
-                <div class="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-                    <h3 class="mb-4 text-lg font-semibold text-gray-900">Edit Creator Limits</h3>
+                <div class="fixed inset-0 bg-black/70" @click="showLimitsModal = false"></div>
+                <div class="gs-card relative w-full max-w-md p-6">
+                    <h3 class="mb-4 text-lg font-semibold text-[var(--gs-text)]">Edit Creator Limits</h3>
                     <form @submit.prevent="saveLimits">
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700">Max Upload Size (MB)</label>
+                            <label class="gs-label">Max Upload Size (MB)</label>
                             <input
                                 v-model.number="limitsForm.max_upload_size_mb"
                                 type="number"
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                class="gs-input"
                             />
                         </div>
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700">Max Videos Per Month</label>
+                            <label class="gs-label">Max Videos Per Month</label>
                             <input
                                 v-model.number="limitsForm.max_videos_per_month"
                                 type="number"
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                class="gs-input"
                             />
                         </div>
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700">Revenue Share (%)</label>
+                            <label class="gs-label">Revenue Share (%)</label>
                             <input
                                 v-model.number="limitsForm.revenue_share_percentage"
                                 type="number"
                                 min="0"
                                 max="100"
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                class="gs-input"
                             />
                         </div>
                         <div class="flex justify-end gap-3">
                             <button
                                 type="button"
                                 @click="showLimitsModal = false"
-                                class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                class="gs-btn gs-btn-outline"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
-                                class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                                class="gs-btn gs-btn-primary"
                             >
                                 Save Changes
                             </button>
@@ -337,13 +336,13 @@
                 </div>
             </div>
         </div>
-    </AppLayout>
+    </AdminLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { useGrowStreamAdmin } from '@/composables/useGrowStreamAdmin';
 import type { CreatorProfile, PaginatedResponse } from '@/types/growstream';
 
@@ -452,3 +451,4 @@ const saveLimits = async () => {
     }
 };
 </script>
+

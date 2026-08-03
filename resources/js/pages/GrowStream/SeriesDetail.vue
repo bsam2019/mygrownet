@@ -1,5 +1,5 @@
 <template>
-    <AppLayout :title="`${series.title} - GrowStream`">
+    <GrowStreamLayout :title="`${series.title} - GrowStream`">
         <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             <!-- Series Header -->
             <div class="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -10,16 +10,16 @@
                             v-if="series.poster_url"
                             :src="series.poster_url"
                             :alt="series.title"
-                            class="w-full rounded-lg shadow-lg"
+                            class="w-full rounded-[var(--gs-radius)] shadow-lg"
                         />
-                        <div v-else class="aspect-[2/3] w-full rounded-lg bg-gray-200"></div>
+                        <div v-else class="aspect-[2/3] w-full rounded-[var(--gs-radius)] bg-[var(--gs-bg-elevated)]"></div>
                         
                         <!-- Actions -->
                         <div class="mt-4 space-y-3">
                             <button
                                 @click="toggleWatchlist"
                                 :disabled="watchlistLoading"
-                                class="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                                class="gs-btn gs-btn-outline w-full"
                             >
                                 <svg
                                     :class="[isInWatchlist ? 'fill-current' : 'fill-none']"
@@ -37,7 +37,7 @@
                                 {{ isInWatchlist ? 'In Watchlist' : 'Add to Watchlist' }}
                             </button>
                             
-                            <button class="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50">
+<button class="gs-btn gs-btn-outline w-full">
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path
                                         stroke-linecap="round"
@@ -54,10 +54,10 @@
 
                 <!-- Info -->
                 <div class="lg:col-span-2">
-                    <h1 class="mb-4 text-4xl font-bold text-gray-900">{{ series.title }}</h1>
+                    <h1 class="mb-4 text-4xl font-bold text-[var(--gs-text)]">{{ series.title }}</h1>
                     
                     <!-- Metadata -->
-                    <div class="mb-6 flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                    <div class="mb-6 flex flex-wrap items-center gap-4 text-sm text-[var(--gs-muted)]">
                         <span>{{ series.total_episodes }} episodes</span>
                         <span v-if="series.total_seasons > 1">{{ series.total_seasons }} seasons</span>
                         <span v-if="series.release_year">{{ series.release_year }}</span>
@@ -68,20 +68,20 @@
 
                     <!-- Description -->
                     <div class="mb-6">
-                        <p class="whitespace-pre-line text-gray-700">
+                        <p class="whitespace-pre-line text-[var(--gs-text)]">
                             {{ series.long_description || series.description }}
                         </p>
                     </div>
 
                     <!-- Categories -->
                     <div v-if="series.categories && series.categories.length > 0" class="mb-6">
-                        <h3 class="mb-2 text-sm font-medium text-gray-900">Categories</h3>
+                        <h3 class="mb-2 text-sm font-medium text-[var(--gs-text)]">Categories</h3>
                         <div class="flex flex-wrap gap-2">
                             <Link
                                 v-for="category in series.categories"
                                 :key="category.id"
                                 :href="route('growstream.browse', { category: category.slug })"
-                                class="rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800 hover:bg-blue-200"
+                                class="gs-chip gs-chip-primary"
                             >
                                 {{ category.name }}
                             </Link>
@@ -89,35 +89,40 @@
                     </div>
 
                     <!-- Creator -->
-                    <div v-if="series.creator" class="flex items-center gap-4 rounded-lg border border-gray-200 p-4">
-                        <div class="h-12 w-12 overflow-hidden rounded-full bg-gray-200">
-                            <img
-                                v-if="series.creator.avatar"
-                                :src="series.creator.avatar"
-                                :alt="series.creator.name"
-                                class="h-full w-full object-cover"
-                            />
-                            <div v-else class="flex h-full w-full items-center justify-center text-lg font-medium text-gray-600">
-                                {{ series.creator.name.charAt(0).toUpperCase() }}
+                    <div v-if="series.creator" class="flex items-center gap-4 gs-surface p-4">
+                        <Link
+                            :href="route('growstream.creator.profile', { slug: String(series.creator.id) })"
+                            class="flex items-center gap-4"
+                        >
+                            <div class="h-12 w-12 overflow-hidden rounded-full bg-[var(--gs-bg-elevated)]">
+                                <img
+                                    v-if="series.creator.avatar_url"
+                                    :src="series.creator.avatar_url"
+                                    :alt="series.creator.display_name"
+                                    class="h-full w-full object-cover"
+                                />
+                                <div v-else class="flex h-full w-full items-center justify-center text-lg font-medium text-[var(--gs-muted)]">
+                                    {{ (series.creator.display_name || 'C').charAt(0).toUpperCase() }}
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <h3 class="font-semibold text-gray-900">{{ series.creator.name }}</h3>
-                            <p class="text-sm text-gray-600">Content Creator</p>
-                        </div>
+                            <div>
+                                <h3 class="font-semibold text-[var(--gs-text)] hover:text-[var(--gs-accent)]">{{ series.creator.display_name }}</h3>
+                                <p class="text-sm text-[var(--gs-muted)]">Content Creator</p>
+                            </div>
+                        </Link>
                     </div>
                 </div>
             </div>
 
             <!-- Episodes -->
             <div class="mb-8">
-                <h2 class="mb-6 text-2xl font-bold text-gray-900">Episodes</h2>
+                <h2 class="mb-6 text-2xl font-bold text-[var(--gs-text)]">Episodes</h2>
                 
                 <!-- Season Selector (if multiple seasons) -->
                 <div v-if="series.total_seasons > 1" class="mb-6">
                     <select
                         v-model="selectedSeason"
-                        class="rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        class="gs-input w-auto"
                     >
                         <option v-for="season in series.total_seasons" :key="season" :value="season">
                             Season {{ season }}
@@ -130,10 +135,10 @@
                     <Link
                         v-for="episode in filteredEpisodes"
                         :key="episode.id"
-                        :href="route('growstream.video.detail', episode.slug)"
-                        class="flex gap-4 rounded-lg border border-gray-200 p-4 transition hover:bg-gray-50"
+:href="route('growstream.video.detail', episode.slug)"
+                        class="gs-card gs-card-hover flex gap-4 p-4"
                     >
-                        <div class="relative h-24 w-40 flex-shrink-0 overflow-hidden rounded-lg bg-gray-200">
+                        <div class="relative h-24 w-40 flex-shrink-0 overflow-hidden rounded-[var(--gs-radius)] bg-[var(--gs-bg-elevated)]">
                             <img
                                 v-if="episode.thumbnail_url"
                                 :src="episode.thumbnail_url"
@@ -144,16 +149,16 @@
                                 {{ formatDuration(episode.duration) }}
                             </div>
                             <!-- Progress bar -->
-                            <div v-if="getWatchProgress(episode.id) > 0" class="absolute bottom-0 left-0 right-0 h-1 bg-gray-700">
-                                <div :style="{ width: `${getWatchProgress(episode.id)}%` }" class="h-full bg-blue-600"></div>
+                            <div v-if="getWatchProgress(episode.id) > 0" class="absolute bottom-0 left-0 right-0 h-1 bg-[var(--gs-border)]">
+                                <div :style="{ width: `${getWatchProgress(episode.id)}%` }" class="gs-progress-fill"></div>
                             </div>
                         </div>
                         <div class="flex-1">
                             <div class="mb-1 flex items-start justify-between">
-                                <h3 class="font-semibold text-gray-900">
+                                <h3 class="font-semibold text-[var(--gs-text)]">
                                     {{ episode.episode_number }}. {{ episode.title }}
                                 </h3>
-                                <span v-if="getWatchProgress(episode.id) === 100" class="text-green-600">
+                                <span v-if="getWatchProgress(episode.id) === 100" class="text-[var(--gs-primary)]">
                                     <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                                         <path
                                             fill-rule="evenodd"
@@ -163,8 +168,8 @@
                                     </svg>
                                 </span>
                             </div>
-                            <p class="line-clamp-2 text-sm text-gray-600">{{ episode.description }}</p>
-                            <div class="mt-2 flex items-center gap-4 text-xs text-gray-500">
+                            <p class="line-clamp-2 text-sm text-[var(--gs-muted)]">{{ episode.description }}</p>
+                            <div class="mt-2 flex items-center gap-4 text-xs text-[var(--gs-muted)]">
                                 <span>{{ formatViews(episode.view_count) }} views</span>
                                 <span v-if="getWatchProgress(episode.id) > 0 && getWatchProgress(episode.id) < 100">
                                     {{ Math.round(getWatchProgress(episode.id)) }}% watched
@@ -175,13 +180,13 @@
                 </div>
             </div>
         </div>
-    </AppLayout>
+    </GrowStreamLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import GrowStreamLayout from '@/Layouts/GrowStreamLayout.vue';
 import { useGrowStream } from '@/composables/useGrowStream';
 import type { VideoSeries, Watchlist } from '@/types/growstream';
 
@@ -235,3 +240,4 @@ const formatViews = (views: number): string => {
     return views.toString();
 };
 </script>
+

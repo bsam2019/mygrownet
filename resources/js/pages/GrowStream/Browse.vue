@@ -1,10 +1,10 @@
 <template>
-    <AppLayout title="Browse Videos - GrowStream">
-        <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <!-- Hero Section -->
-            <div class="mb-8 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-white">
-                <h1 class="mb-2 text-4xl font-bold">GrowStream</h1>
-                <p class="text-lg text-blue-100">Discover educational content to grow your skills and knowledge</p>
+    <GrowStreamLayout title="Browse Videos - GrowStream">
+        <div class="mx-auto max-w-7xl">
+            <!-- Page Header -->
+            <div class="mb-8">
+                <h1 class="mb-2 text-4xl font-bold text-[var(--gs-text)]">Discover</h1>
+                <p class="text-lg text-[var(--gs-muted)]">Explore content across categories and creators</p>
             </div>
 
             <!-- Filters -->
@@ -15,7 +15,7 @@
                         v-model="filters.search"
                         type="text"
                         placeholder="Search videos..."
-                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        class="gs-input"
                         @input="debouncedSearch"
                     />
                 </div>
@@ -23,7 +23,7 @@
                 <!-- Category Filter -->
                 <select
                     v-model="filters.category"
-                    class="rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    class="gs-input w-auto"
                     @change="applyFilters"
                 >
                     <option value="">All Categories</option>
@@ -35,7 +35,7 @@
                 <!-- Content Type Filter -->
                 <select
                     v-model="filters.content_type"
-                    class="rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    class="gs-input w-auto"
                     @change="applyFilters"
                 >
                     <option value="">All Types</option>
@@ -49,7 +49,7 @@
                 <!-- Sort -->
                 <select
                     v-model="filters.sort_by"
-                    class="rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    class="gs-input w-auto"
                     @change="applyFilters"
                 >
                     <option value="created_at">Newest</option>
@@ -78,15 +78,14 @@
                 @page-change="handlePageChange"
             />
         </div>
-    </AppLayout>
+    </GrowStreamLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive } from 'vue';
 import { router } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import GrowStreamLayout from '@/Layouts/GrowStreamLayout.vue';
 import VideoGrid from '@/Components/GrowStream/VideoGrid.vue';
-import { useGrowStream } from '@/composables/useGrowStream';
 import type { Video, VideoCategory, PaginatedResponse } from '@/types/growstream';
 
 interface Props {
@@ -97,8 +96,6 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-
-const { getVideos, getFeaturedVideos } = useGrowStream();
 
 const loading = ref(false);
 const filters = reactive({
@@ -123,7 +120,7 @@ const applyFilters = () => {
         route('growstream.browse'),
         {
             ...filters,
-            page: 1, // Reset to first page on filter change
+            page: 1,
         },
         {
             preserveState: true,

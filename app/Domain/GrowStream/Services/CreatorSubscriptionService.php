@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Domain\GrowStream\Services;
 
+use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
 use App\Domain\GrowStream\Repositories\CreatorSubscriptionRepositoryInterface;
+use App\Models\User;
 
 class CreatorSubscriptionService
 {
     public function __construct(
         private CreatorSubscriptionRepositoryInterface $subscriptionRepo,
+        private CreatorProfileRepositoryInterface $creatorRepo,
+        private NotificationService $notifications,
     ) {}
 
     public function subscribe(int $userId, int $creatorId, float $priceMonthly, ?string $providerReference = null): array
@@ -30,6 +34,12 @@ class CreatorSubscriptionService
             'provider_reference' => $providerReference,
         ]);
 
+        $user = User::find($userId);
+        $creator = $this->creatorRepo->findById($creatorId);
+        if ($user && $creator) {
+            $this->notifications->notifySubscriptionConfirmation($user, $creator->display_name, $priceMonthly);
+        }
+
         return $subscription->toArray();
     }
 
@@ -44,6 +54,12 @@ class CreatorSubscriptionService
             'status' => 'cancelled',
             'cancelled_at' => now(),
         ]);
+
+        $user = User::find($userId);
+        $creator = $this->creatorRepo->findById($creatorId);
+        if ($user && $creator) {
+            $this->notifications->notifySubscriptionCancelled($user, $creator->display_name);
+        }
     }
 
     public function isSubscribed(int $userId, int $creatorId): bool

@@ -58,6 +58,15 @@ class EloquentCreatorSubscriptionRepository implements CreatorSubscriptionReposi
             ->count();
     }
 
+    public function activeSubscriberIdsForCreator(int $creatorId): array
+    {
+        return CreatorSubscription::where('creator_id', $creatorId)
+            ->where('status', 'active')
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->pluck('user_id')
+            ->all();
+    }
+
     public function query(): Builder
     {
         return CreatorSubscription::query();

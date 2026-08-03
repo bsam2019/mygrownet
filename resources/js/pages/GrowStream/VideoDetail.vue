@@ -1,5 +1,5 @@
 <template>
-    <AppLayout :title="`${video.title} - GrowStream`">
+    <GrowStreamLayout :title="`${video.title} - GrowStream`">
         <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             <!-- Video Player -->
             <div class="mb-8">
@@ -18,10 +18,10 @@
                 <div class="lg:col-span-2">
                     <!-- Video Info -->
                     <div class="mb-6">
-                        <h1 class="mb-2 text-3xl font-bold text-gray-900">{{ video.title }}</h1>
+                        <h1 class="mb-2 text-3xl font-bold text-[var(--gs-text)]">{{ video.title }}</h1>
                         
                         <!-- Metadata -->
-                        <div class="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                        <div class="mb-4 flex flex-wrap items-center gap-4 text-sm text-[var(--gs-muted)]">
                             <span class="flex items-center gap-1">
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path
@@ -50,7 +50,7 @@
                             <button
                                 @click="toggleWatchlist"
                                 :disabled="watchlistLoading"
-                                class="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                                class="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[var(--gs-text)] hover:bg-[var(--gs-bg-elevated)] disabled:opacity-50"
                             >
                                 <svg
                                     :class="[isInWatchlist ? 'fill-current' : 'fill-none']"
@@ -68,7 +68,7 @@
                                 {{ isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist' }}
                             </button>
 
-                            <button class="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            <button class="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[var(--gs-text)] hover:bg-[var(--gs-bg-elevated)]">
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path
                                         stroke-linecap="round"
@@ -83,9 +83,9 @@
                     </div>
 
                     <!-- Description -->
-                    <div class="mb-6 rounded-lg bg-gray-50 p-6">
-                        <h2 class="mb-3 text-lg font-semibold text-gray-900">About</h2>
-                        <p class="whitespace-pre-line text-gray-700">
+                    <div class="mb-6 gs-surface p-6">
+                        <h2 class="mb-3 text-lg font-semibold text-[var(--gs-text)]">About</h2>
+                        <p class="whitespace-pre-line text-[var(--gs-text)]">
                             {{ video.long_description || video.description }}
                         </p>
 
@@ -94,7 +94,7 @@
                             <span
                                 v-for="tag in video.tags"
                                 :key="tag.id"
-                                class="rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800"
+                                class="gs-chip gs-chip-primary"
                             >
                                 #{{ tag.name }}
                             </span>
@@ -102,25 +102,40 @@
                     </div>
 
                     <!-- Creator Info -->
-                    <div v-if="video.creator" class="mb-6 flex items-center gap-4 rounded-lg border border-gray-200 p-4">
-                        <div class="h-16 w-16 overflow-hidden rounded-full bg-gray-200">
-                            <img
-                                v-if="video.creator.avatar"
-                                :src="video.creator.avatar"
-                                :alt="video.creator.name"
-                                class="h-full w-full object-cover"
-                            />
-                            <div v-else class="flex h-full w-full items-center justify-center text-2xl font-medium text-gray-600">
-                                {{ video.creator.name.charAt(0).toUpperCase() }}
+                    <div v-if="video.creator" class="mb-6 gs-surface p-4">
+                        <Link
+                            :href="route('growstream.creator.profile', { slug: String(video.creator.id) })"
+                            class="flex items-center gap-4"
+                        >
+                            <div class="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-[var(--gs-bg-elevated)]">
+                                <img
+                                    v-if="video.creator.avatar_url"
+                                    :src="video.creator.avatar_url"
+                                    :alt="video.creator.display_name"
+                                    class="h-full w-full object-cover"
+                                />
+                                <div v-else class="flex h-full w-full items-center justify-center text-2xl font-medium text-[var(--gs-muted)]">
+                                    {{ (video.creator.display_name || 'C').charAt(0).toUpperCase() }}
+                                </div>
                             </div>
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-[var(--gs-text)] hover:text-[var(--gs-accent)]">{{ video.creator.display_name }}</h3>
+                                <p class="text-sm text-[var(--gs-muted)]">
+                                    {{ video.creator.subscriber_count ?? 0 }} subscribers · {{ video.creator.total_videos ?? 0 }} videos
+                                </p>
+                            </div>
+                        </Link>
+                        <div class="mt-4 flex gap-2">
+                            <Link
+                                :href="route('growstream.creator.profile', { slug: String(video.creator.id) })"
+                                class="gs-btn gs-btn-outline flex-1"
+                            >
+                                View Profile
+                            </Link>
+                            <button class="gs-btn gs-btn-primary flex-1" @click="onFollow">
+                                Follow
+                            </button>
                         </div>
-                        <div class="flex-1">
-                            <h3 class="font-semibold text-gray-900">{{ video.creator.name }}</h3>
-                            <p class="text-sm text-gray-600">Content Creator</p>
-                        </div>
-                        <button class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                            Follow
-                        </button>
                     </div>
                 </div>
 
@@ -128,15 +143,15 @@
                 <div class="lg:col-span-1">
                     <!-- Related Videos -->
                     <div v-if="relatedVideos.length > 0">
-                        <h2 class="mb-4 text-lg font-semibold text-gray-900">Related Videos</h2>
+                        <h2 class="mb-4 text-lg font-semibold text-[var(--gs-text)]">Related Videos</h2>
                         <div class="space-y-4">
                             <Link
                                 v-for="relatedVideo in relatedVideos"
                                 :key="relatedVideo.id"
                                 :href="route('growstream.video.detail', relatedVideo.slug)"
-                                class="flex gap-3 rounded-lg transition-colors hover:bg-gray-50"
+                                class="flex gap-3 rounded-lg transition-colors hover:bg-[var(--gs-bg-elevated)]"
                             >
-                                <div class="relative h-24 w-40 flex-shrink-0 overflow-hidden rounded-lg bg-gray-200">
+                                <div class="relative h-24 w-40 flex-shrink-0 overflow-hidden rounded-lg bg-[var(--gs-bg-elevated)]">
                                     <img
                                         v-if="relatedVideo.thumbnail_url"
                                         :src="relatedVideo.thumbnail_url"
@@ -148,13 +163,13 @@
                                     </div>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <h3 class="mb-1 line-clamp-2 text-sm font-medium text-gray-900">
+                                    <h3 class="mb-1 line-clamp-2 text-sm font-medium text-[var(--gs-text)]">
                                         {{ relatedVideo.title }}
                                     </h3>
-                                    <p class="text-xs text-gray-600">
+                                    <p class="text-xs text-[var(--gs-muted)]">
                                         {{ relatedVideo.creator?.name }}
                                     </p>
-                                    <p class="text-xs text-gray-600">
+                                    <p class="text-xs text-[var(--gs-muted)]">
                                         {{ formatViews(relatedVideo.view_count) }} views
                                     </p>
                                 </div>
@@ -164,15 +179,16 @@
                 </div>
             </div>
         </div>
-    </AppLayout>
+    </GrowStreamLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { router, Link } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import GrowStreamLayout from '@/Layouts/GrowStreamLayout.vue';
 import VideoPlayer from '@/Components/GrowStream/VideoPlayer.vue';
 import { useGrowStream } from '@/composables/useGrowStream';
+import { useGrowStreamMetrics } from '@/composables/useGrowStreamMetrics';
 import type { Video, WatchHistory, Watchlist } from '@/types/growstream';
 
 interface Props {
@@ -185,6 +201,14 @@ interface Props {
 const props = defineProps<Props>();
 
 const { formatDuration, getAccessLevelBadge, addToWatchlist, removeFromWatchlist } = useGrowStream();
+
+const metrics = useGrowStreamMetrics();
+
+const onFollow = () => {
+    if (props.video.creator) {
+        metrics.trackCreatorSubscribe(props.video.creator.id);
+    }
+};
 
 const watchlistLoading = ref(false);
 const isInWatchlist = ref(!!props.watchlistItem);
@@ -242,3 +266,4 @@ const formatDate = (dateString: string): string => {
     return `${Math.floor(diffDays / 365)} years ago`;
 };
 </script>
+

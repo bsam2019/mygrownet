@@ -6,6 +6,7 @@ use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoCategory;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\WatchHistory;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\Watchlist;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\Video;
+use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\CreatorProfile;
 use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoSeriesRepositoryInterface;
@@ -177,6 +178,103 @@ class GrowStreamWebController
         return Inertia::render('GrowStream/SeriesDetail', [
             'series' => $series,
             'episodes' => $episodes,
+        ]);
+    }
+
+    public function search(Request $request): Response
+    {
+        $term = trim((string) $request->get('q', ''));
+
+        $trending = $this->videoRepo->query()
+            ->published()
+            ->with(['creator.user', 'categories'])
+            ->orderBy('view_count', 'desc')
+            ->take(8)
+            ->get();
+
+        if ($term === '') {
+            return Inertia::render('GrowStream/Search', [
+                'query' => '',
+                'videos' => [],
+                'creators' => [],
+                'categories' => [],
+                'trending' => $trending,
+            ]);
+        }
+
+        $videos = $this->videoRepo->query()
+            ->published()
+            ->with(['creator.user', 'categories'])
+            ->where(function ($q) use ($term) {
+                $q->where('title', 'like', "%{$term}%")
+                  ->orWhere('description', 'like', "%{$term}%")
+                  ->orWhereHas('tags', fn ($tq) => $tq->where('name', 'like', "%{$term}%"))
+                  ->orWhereHas('categories', fn ($cq) => $cq->where('name', 'like', "%{$term}%"));
+            })
+            ->orderBy('view_count', 'desc')
+            ->take(24)
+            ->get();
+
+        $creators = CreatorProfile::where('is_active', true)
+            ->where(function ($q) use ($term) {
+                $q->where('display_name', 'like', "%{$term}%")
+                  ->orWhere('channel_name', 'like', "%{$term}%")
+                  ->orWhere('bio', 'like', "%{$term}%");
+            })
+            ->with('user')
+            ->take(10)
+            ->get();
+
+        $categories = VideoCategory::where('is_active', true)
+            ->where('name', 'like', "%{$term}%")
+            ->withCount('videos')
+            ->orderBy('name')
+            ->take(8)
+            ->get();
+
+        return Inertia::render('GrowStream/Search', [
+            'query' => $term,
+            'videos' => $videos,
+            'creators' => $creators,
+            'categories' => $categories,
+            'trending' => $trending,
+        ]);
+    }
+
+    public function creatorProfile(string $slug): Response
+    {
+        $creator = CreatorProfile::with('user')
+            ->where('is_active', true)
+            ->where(function ($q) use ($slug) {
+                $q->where('id', (int) $slug)
+                  ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', str_replace('-', ' ', $slug)));
+            })
+            ->first();
+
+        if (!$creator) {
+            abort(404);
+        }
+
+        $videos = $this->videoRepo->query()
+            ->published()
+            ->where('creator_id', $creator->id)
+            ->with(['categories', 'tags'])
+            ->latest('published_at')
+            ->take(24)
+            ->get();
+
+        $series = $this->seriesRepo->query()
+            ->where('creator_id', $creator->id)
+            ->where('is_published', true)
+            ->with('videos')
+            ->latest()
+            ->take(12)
+            ->get();
+
+        return Inertia::render('GrowStream/CreatorProfile', [
+            'creator' => $creator,
+            'videos' => $videos,
+            'series' => $series,
         ]);
     }
 

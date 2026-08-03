@@ -10,6 +10,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('growfinance_workflow_templates')) {
+            return;
+        }
+
         Schema::create('growfinance_workflow_templates', function (Blueprint $table) {
             $table->id();
             $table->foreignId('business_id')->constrained('users')->cascadeOnDelete();

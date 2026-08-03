@@ -1,16 +1,16 @@
 <template>
-    <AppLayout title="Analytics - GrowStream Admin">
-        <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <AdminLayout title="Analytics - GrowStream Admin">
+        <div class="mx-auto max-w-7xl">
             <!-- Header -->
             <div class="mb-8 flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
-                    <p class="mt-2 text-gray-600">Platform performance and insights</p>
+                    <h1 class="text-3xl font-bold text-[var(--gs-text)]">Analytics Dashboard</h1>
+                    <p class="mt-2 text-[var(--gs-muted)]">Platform performance and insights</p>
                 </div>
                 <select
                     v-model="selectedPeriod"
                     @change="loadAnalytics"
-                    class="rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    class="gs-input w-auto"
                 >
                     <option :value="7">Last 7 days</option>
                     <option :value="30">Last 30 days</option>
@@ -19,21 +19,21 @@
             </div>
 
             <!-- Stats Grid -->
-            <div class="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <!-- Total Videos -->
-                <div class="rounded-lg bg-white p-6 shadow">
+                <div class="gs-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-600">Total Videos</p>
-                            <p class="mt-2 text-3xl font-bold text-gray-900">
+                            <p class="text-sm font-medium text-[var(--gs-muted)]">Total Videos</p>
+                            <p class="mt-2 text-3xl font-bold text-[var(--gs-text)]">
                                 {{ analytics.overview.total_videos.toLocaleString() }}
                             </p>
-                            <p class="mt-1 text-sm text-green-600">
+                            <p class="mt-1 text-sm text-[var(--gs-primary)]">
                                 +{{ analytics.overview.new_videos_this_period }} this period
                             </p>
                         </div>
-                        <div class="rounded-full bg-blue-100 p-3">
-                            <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="rounded-full bg-[var(--gs-primary-soft)] p-3">
+                            <svg class="h-8 w-8 text-[var(--gs-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
@@ -46,19 +46,19 @@
                 </div>
 
                 <!-- Total Views -->
-                <div class="rounded-lg bg-white p-6 shadow">
+                <div class="gs-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-600">Total Views</p>
-                            <p class="mt-2 text-3xl font-bold text-gray-900">
+                            <p class="text-sm font-medium text-[var(--gs-muted)]">Total Views</p>
+                            <p class="mt-2 text-3xl font-bold text-[var(--gs-text)]">
                                 {{ analytics.overview.total_views.toLocaleString() }}
                             </p>
-                            <p class="mt-1 text-sm text-green-600">
+                            <p class="mt-1 text-sm text-[var(--gs-primary)]">
                                 +{{ analytics.overview.views_this_period.toLocaleString() }} this period
                             </p>
                         </div>
-                        <div class="rounded-full bg-green-100 p-3">
-                            <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="rounded-full bg-[var(--gs-primary-soft)] p-3">
+                            <svg class="h-8 w-8 text-[var(--gs-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
@@ -77,19 +77,19 @@
                 </div>
 
                 <!-- Watch Time -->
-                <div class="rounded-lg bg-white p-6 shadow">
+                <div class="gs-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-600">Total Watch Time</p>
-                            <p class="mt-2 text-3xl font-bold text-gray-900">
+                            <p class="text-sm font-medium text-[var(--gs-muted)]">Total Watch Time</p>
+                            <p class="mt-2 text-3xl font-bold text-[var(--gs-text)]">
                                 {{ analytics.overview.total_watch_time_hours.toLocaleString() }}h
                             </p>
-                            <p class="mt-1 text-sm text-green-600">
+                            <p class="mt-1 text-sm text-[var(--gs-primary)]">
                                 +{{ analytics.overview.watch_time_this_period_hours.toLocaleString() }}h this period
                             </p>
                         </div>
-                        <div class="rounded-full bg-purple-100 p-3">
-                            <svg class="h-8 w-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="rounded-full bg-[var(--gs-accent-soft)] p-3">
+                            <svg class="h-8 w-8 text-[var(--gs-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
@@ -102,19 +102,19 @@
                 </div>
 
                 <!-- Unique Viewers -->
-                <div class="rounded-lg bg-white p-6 shadow">
+                <div class="gs-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-600">Unique Viewers</p>
-                            <p class="mt-2 text-3xl font-bold text-gray-900">
+                            <p class="text-sm font-medium text-[var(--gs-muted)]">Unique Viewers</p>
+                            <p class="mt-2 text-3xl font-bold text-[var(--gs-text)]">
                                 {{ analytics.overview.unique_viewers.toLocaleString() }}
                             </p>
-                            <p class="mt-1 text-sm text-green-600">
+                            <p class="mt-1 text-sm text-[var(--gs-primary)]">
                                 +{{ analytics.overview.unique_viewers_this_period.toLocaleString() }} this period
                             </p>
                         </div>
-                        <div class="rounded-full bg-indigo-100 p-3">
-                            <svg class="h-8 w-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="rounded-full bg-blue-500/15 p-3">
+                            <svg class="h-8 w-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
@@ -128,10 +128,10 @@
             </div>
 
             <!-- Charts Row -->
-            <div class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div class="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <!-- Daily Views Chart -->
-                <div class="rounded-lg bg-white p-6 shadow">
-                    <h2 class="mb-4 text-lg font-semibold text-gray-900">Daily Views</h2>
+                <div class="gs-card p-6">
+                    <h2 class="mb-4 text-lg font-semibold text-[var(--gs-text)]">Daily Views</h2>
                     <div class="h-64">
                         <!-- Chart placeholder -->
                         <div class="flex h-full items-end justify-around gap-2">
@@ -142,9 +142,9 @@
                             >
                                 <div
                                     :style="{ height: `${(day.views / maxDailyViews) * 100}%` }"
-                                    class="w-full rounded-t bg-blue-500"
+                                    class="w-full rounded-t bg-[var(--gs-primary)]"
                                 ></div>
-                                <span class="mt-2 text-xs text-gray-600">
+                                <span class="mt-2 text-xs text-[var(--gs-muted)]">
                                     {{ new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }) }}
                                 </span>
                             </div>
@@ -153,19 +153,19 @@
                 </div>
 
                 <!-- Top Categories -->
-                <div class="rounded-lg bg-white p-6 shadow">
-                    <h2 class="mb-4 text-lg font-semibold text-gray-900">Top Categories</h2>
+                <div class="gs-card p-6">
+                    <h2 class="mb-4 text-lg font-semibold text-[var(--gs-text)]">Top Categories</h2>
                     <div class="space-y-4">
                         <div v-for="category in analytics.top_categories" :key="category.name" class="flex items-center">
                             <div class="flex-1">
                                 <div class="mb-1 flex items-center justify-between">
-                                    <span class="text-sm font-medium text-gray-900">{{ category.name }}</span>
-                                    <span class="text-sm text-gray-600">{{ category.view_count.toLocaleString() }} views</span>
+                                    <span class="text-sm font-medium text-[var(--gs-text)]">{{ category.name }}</span>
+                                    <span class="text-sm text-[var(--gs-muted)]">{{ category.view_count.toLocaleString() }} views</span>
                                 </div>
-                                <div class="h-2 overflow-hidden rounded-full bg-gray-200">
+                                <div class="gs-progress-track h-2">
                                     <div
                                         :style="{ width: `${(category.view_count / maxCategoryViews) * 100}%` }"
-                                        class="h-full rounded-full bg-blue-600"
+                                        class="gs-progress-fill h-full rounded-full"
                                     ></div>
                                 </div>
                             </div>
@@ -175,40 +175,40 @@
             </div>
 
             <!-- Additional Metrics -->
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
                 <!-- Completion Rate -->
-                <div class="rounded-lg bg-white p-6 shadow">
-                    <h3 class="mb-2 text-sm font-medium text-gray-600">Completion Rate</h3>
-                    <p class="text-3xl font-bold text-gray-900">{{ analytics.overview.completion_rate }}%</p>
-                    <p class="mt-1 text-sm text-gray-600">Average video completion</p>
+                <div class="gs-card p-6">
+                    <h3 class="mb-2 text-sm font-medium text-[var(--gs-muted)]">Completion Rate</h3>
+                    <p class="text-3xl font-bold text-[var(--gs-text)]">{{ analytics.overview.completion_rate }}%</p>
+                    <p class="mt-1 text-sm text-[var(--gs-muted)]">Average video completion</p>
                 </div>
 
                 <!-- Avg Watch Duration -->
-                <div class="rounded-lg bg-white p-6 shadow">
-                    <h3 class="mb-2 text-sm font-medium text-gray-600">Avg Watch Duration</h3>
-                    <p class="text-3xl font-bold text-gray-900">
+                <div class="gs-card p-6">
+                    <h3 class="mb-2 text-sm font-medium text-[var(--gs-muted)]">Avg Watch Duration</h3>
+                    <p class="text-3xl font-bold text-[var(--gs-text)]">
                         {{ Math.round(analytics.overview.avg_watch_duration_seconds / 60) }}m
                     </p>
-                    <p class="mt-1 text-sm text-gray-600">Per viewing session</p>
+                    <p class="mt-1 text-sm text-[var(--gs-muted)]">Per viewing session</p>
                 </div>
 
                 <!-- Published Videos -->
-                <div class="rounded-lg bg-white p-6 shadow">
-                    <h3 class="mb-2 text-sm font-medium text-gray-600">Published Videos</h3>
-                    <p class="text-3xl font-bold text-gray-900">{{ analytics.overview.published_videos }}</p>
-                    <p class="mt-1 text-sm text-gray-600">
+                <div class="gs-card p-6">
+                    <h3 class="mb-2 text-sm font-medium text-[var(--gs-muted)]">Published Videos</h3>
+                    <p class="text-3xl font-bold text-[var(--gs-text)]">{{ analytics.overview.published_videos }}</p>
+                    <p class="mt-1 text-sm text-[var(--gs-muted)]">
                         {{ Math.round((analytics.overview.published_videos / analytics.overview.total_videos) * 100) }}% of total
                     </p>
                 </div>
             </div>
         </div>
-    </AppLayout>
+    </AdminLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import type { AnalyticsOverview } from '@/types/growstream';
 
 interface Props {

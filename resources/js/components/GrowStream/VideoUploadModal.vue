@@ -2,17 +2,17 @@
     <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto">
         <div class="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <!-- Background overlay -->
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="$emit('close')"></div>
+            <div class="fixed inset-0 bg-black/70 transition-opacity" @click="$emit('close')"></div>
 
             <!-- Modal panel -->
-            <div class="inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl sm:align-middle">
+            <div class="inline-block transform overflow-hidden rounded-[var(--gs-radius)] bg-[var(--gs-card)] text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl sm:align-middle">
                 <!-- Header -->
-                <div class="border-b border-gray-200 bg-white px-6 py-4">
+                <div class="border-b border-[var(--gs-border)] px-6 py-4">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900">Upload Video</h3>
+                        <h3 class="text-lg font-semibold text-[var(--gs-text)]">Upload Video</h3>
                         <button
                             @click="$emit('close')"
-                            class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500"
+                            class="rounded-lg p-2 text-[var(--gs-muted)] hover:bg-[var(--gs-bg-elevated)] hover:text-[var(--gs-text)]"
                         >
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -25,19 +25,19 @@
                 <form @submit.prevent="handleSubmit" class="px-6 py-4">
                     <!-- File Upload -->
                     <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700">Video File *</label>
+                        <label class="gs-label">Video File *</label>
                         <div
                             @dragover.prevent="dragOver = true"
                             @dragleave.prevent="dragOver = false"
                             @drop.prevent="handleDrop"
                             :class="[
-                                dragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300',
-                                'mt-1 flex justify-center rounded-lg border-2 border-dashed px-6 pt-5 pb-6',
+                                dragOver ? 'border-[var(--gs-primary)] bg-[var(--gs-primary-soft)]' : 'border-[var(--gs-border)]',
+                                'mt-1 flex justify-center rounded-[var(--gs-radius)] border-2 border-dashed px-6 pt-5 pb-6',
                             ]"
                         >
                             <div class="space-y-1 text-center">
                                 <svg
-                                    class="mx-auto h-12 w-12 text-gray-400"
+                                    class="mx-auto h-12 w-12 text-[var(--gs-muted)]"
                                     stroke="currentColor"
                                     fill="none"
                                     viewBox="0 0 48 48"
@@ -49,9 +49,9 @@
                                         stroke-linejoin="round"
                                     />
                                 </svg>
-                                <div class="flex text-sm text-gray-600">
+                                <div class="flex text-sm text-[var(--gs-muted)]">
                                     <label
-                                        class="relative cursor-pointer rounded-md bg-white font-medium text-blue-600 hover:text-blue-500"
+                                        class="relative cursor-pointer rounded-md bg-white font-medium text-[var(--gs-primary)] hover:text-[var(--gs-primary-hover)]"
                                     >
                                         <span>Upload a file</span>
                                         <input
@@ -64,8 +64,8 @@
                                     </label>
                                     <p class="pl-1">or drag and drop</p>
                                 </div>
-                                <p class="text-xs text-gray-500">MP4, MOV, AVI up to 2GB</p>
-                                <p v-if="form.video" class="mt-2 text-sm font-medium text-green-600">
+                                <p class="text-xs text-[var(--gs-muted)]">MP4, MOV, AVI up to 2GB</p>
+                                <p v-if="form.video" class="mt-2 text-sm font-medium text-[var(--gs-primary)]">
                                     Selected: {{ form.video.name }}
                                 </p>
                             </div>
@@ -75,24 +75,24 @@
 
                     <!-- Title -->
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700">Title *</label>
+                        <label class="gs-label">Title *</label>
                         <input
                             v-model="form.title"
                             type="text"
                             required
-                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            class="gs-input mt-1"
                         />
                         <p v-if="errors.title" class="mt-1 text-sm text-red-600">{{ errors.title }}</p>
                     </div>
 
                     <!-- Description -->
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700">Description *</label>
+                        <label class="gs-label">Description *</label>
                         <textarea
                             v-model="form.description"
                             rows="3"
                             required
-                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            class="gs-input mt-1"
                         ></textarea>
                         <p v-if="errors.description" class="mt-1 text-sm text-red-600">{{ errors.description }}</p>
                     </div>
@@ -100,11 +100,11 @@
                     <!-- Content Type & Access Level -->
                     <div class="mb-4 grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Content Type *</label>
+                            <label class="gs-label">Content Type *</label>
                             <select
                                 v-model="form.content_type"
                                 required
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                class="gs-input mt-1"
                             >
                                 <option value="lesson">Lesson</option>
                                 <option value="workshop">Workshop</option>
@@ -114,11 +114,11 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Access Level *</label>
+                            <label class="gs-label">Access Level *</label>
                             <select
                                 v-model="form.access_level"
                                 required
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                class="gs-input mt-1"
                             >
                                 <option value="free">Free</option>
                                 <option value="basic">Basic</option>
@@ -131,36 +131,36 @@
                     <!-- Upload Progress -->
                     <div v-if="uploading" class="mb-4">
                         <div class="mb-2 flex items-center justify-between text-sm">
-                            <span class="font-medium text-gray-700">Uploading...</span>
-                            <span class="text-gray-600">{{ uploadProgress }}%</span>
+                            <span class="font-medium text-[var(--gs-text)]">Uploading...</span>
+                            <span class="text-[var(--gs-muted)]">{{ uploadProgress }}%</span>
                         </div>
-                        <div class="h-2 overflow-hidden rounded-full bg-gray-200">
+                        <div class="h-2 gs-progress-track">
                             <div
                                 :style="{ width: `${uploadProgress}%` }"
-                                class="h-full bg-blue-600 transition-all duration-300"
+                                class="gs-progress-fill"
                             ></div>
                         </div>
                     </div>
 
                     <!-- Error Message -->
-                    <div v-if="errorMessage" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-800">
+                    <div v-if="errorMessage" class="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-300">
                         {{ errorMessage }}
                     </div>
 
                     <!-- Footer -->
-                    <div class="flex justify-end gap-3 border-t border-gray-200 pt-4">
+                    <div class="flex justify-end gap-3 border-t border-[var(--gs-border)] pt-4">
                         <button
                             type="button"
                             @click="$emit('close')"
                             :disabled="uploading"
-                            class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                            class="gs-btn gs-btn-outline"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             :disabled="!form.video || uploading"
-                            class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                            class="gs-btn gs-btn-primary"
                         >
                             {{ uploading ? 'Uploading...' : 'Upload Video' }}
                         </button>
@@ -264,3 +264,5 @@ const handleSubmit = async () => {
     }
 };
 </script>
+
+

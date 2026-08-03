@@ -1,34 +1,37 @@
 <template>
-    <AppLayout title="Content Moderation - GrowStream Admin">
-        <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <AdminLayout title="Content Moderation - GrowStream Admin">
+        <div class="mx-auto max-w-7xl">
             <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-900">Content Moderation</h1>
-                <p class="mt-2 text-gray-600">Review creator-submitted content before publishing</p>
+                <h1 class="text-3xl font-bold text-[var(--gs-text)]">Content Moderation</h1>
+                <p class="mt-2 text-[var(--gs-muted)]">Review creator-submitted content before publishing</p>
             </div>
 
             <!-- Stats -->
-            <div class="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
-                <div class="rounded-lg bg-white p-6 shadow">
-                    <p class="text-sm font-medium text-gray-600">Pending Review</p>
-                    <p class="mt-2 text-3xl font-bold text-amber-600">{{ stats.pending }}</p>
+            <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div class="gs-card p-6">
+                    <p class="text-sm font-medium text-[var(--gs-muted)]">Pending Review</p>
+                    <p class="mt-2 text-3xl font-bold text-[var(--gs-accent)]">{{ stats.pending }}</p>
                 </div>
-                <div class="rounded-lg bg-white p-6 shadow">
-                    <p class="text-sm font-medium text-gray-600">Approved</p>
-                    <p class="mt-2 text-3xl font-bold text-green-600">{{ stats.approved }}</p>
+                <div class="gs-card p-6">
+                    <p class="text-sm font-medium text-[var(--gs-muted)]">Approved</p>
+                    <p class="mt-2 text-3xl font-bold text-[var(--gs-primary)]">{{ stats.approved }}</p>
                 </div>
-                <div class="rounded-lg bg-white p-6 shadow">
-                    <p class="text-sm font-medium text-gray-600">Rejected</p>
-                    <p class="mt-2 text-3xl font-bold text-red-600">{{ stats.rejected }}</p>
+                <div class="gs-card p-6">
+                    <p class="text-sm font-medium text-[var(--gs-muted)]">Rejected</p>
+                    <p class="mt-2 text-3xl font-bold text-red-400">{{ stats.rejected }}</p>
                 </div>
             </div>
 
-            <div v-if="videos.data.length === 0" class="rounded-lg border-2 border-dashed border-gray-300 py-16 text-center">
-                <p class="text-lg font-medium text-gray-900">No videos pending review</p>
-                <p class="mt-1 text-sm text-gray-600">Creator uploads will appear here for moderation.</p>
+            <div
+                v-if="videos.data.length === 0"
+                class="gs-card flex flex-col items-center border-2 border-dashed border-[var(--gs-border)] py-16 text-center"
+            >
+                <p class="text-lg font-medium text-[var(--gs-text)]">No videos pending review</p>
+                <p class="mt-1 text-sm text-[var(--gs-muted)]">Creator uploads will appear here for moderation.</p>
             </div>
 
             <div v-else class="space-y-4">
-                <div v-for="video in videos.data" :key="video.id" class="rounded-lg bg-white p-6 shadow">
+                <div v-for="video in videos.data" :key="video.id" class="gs-card p-6">
                     <div class="flex items-start gap-4">
                         <img
                             v-if="video.thumbnail_url"
@@ -38,13 +41,11 @@
                         />
                         <div class="flex-1">
                             <div class="flex items-center gap-2">
-                                <h3 class="text-lg font-semibold text-gray-900">{{ video.title }}</h3>
-                                <span class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-                                    Pending Review
-                                </span>
+                                <h3 class="text-lg font-semibold text-[var(--gs-text)]">{{ video.title }}</h3>
+                                <span class="gs-chip gs-chip-accent">Pending Review</span>
                             </div>
-                            <p class="mt-1 line-clamp-2 text-sm text-gray-600">{{ video.description }}</p>
-                            <div class="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                            <p class="mt-1 line-clamp-2 text-sm text-[var(--gs-muted)]">{{ video.description }}</p>
+                            <div class="mt-2 flex flex-wrap items-center gap-3 text-xs text-[var(--gs-muted)]">
                                 <span>By {{ video.creator?.user?.name || 'Unknown' }}</span>
                                 <span v-if="video.categories?.length">· {{ video.categories.map((c: any) => c.name).join(', ') }}</span>
                                 <span>· {{ video.upload_status }}</span>
@@ -53,16 +54,16 @@
                         </div>
                     </div>
 
-                    <div class="mt-4 flex items-center gap-3 border-t border-gray-100 pt-4">
+                    <div class="mt-4 flex flex-wrap items-center gap-3 border-t border-[var(--gs-border)] pt-4">
                         <button
                             @click="approve(video.id)"
-                            class="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+                            class="gs-btn gs-btn-primary"
                         >
                             Approve
                         </button>
                         <button
                             @click="publish(video.id)"
-                            class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                            class="gs-btn gs-btn-accent"
                         >
                             Approve & Publish
                         </button>
@@ -71,12 +72,12 @@
                                 v-model="reasons[video.id]"
                                 type="text"
                                 placeholder="Rejection reason (required)"
-                                class="flex-1 rounded-md border-gray-300 text-sm focus:border-red-500 focus:ring-red-500"
+                                class="gs-input flex-1"
                                 required
                             />
                             <button
                                 type="submit"
-                                class="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                                class="gs-btn bg-red-500/15 text-red-400"
                             >
                                 Reject
                             </button>
@@ -85,21 +86,21 @@
                 </div>
 
                 <div class="flex items-center justify-between">
-                    <p class="text-sm text-gray-600">
+                    <p class="text-sm text-[var(--gs-muted)]">
                         Showing {{ videos.from }} - {{ videos.to }} of {{ videos.total }}
                     </p>
                     <div class="flex gap-2">
                         <button
                             :disabled="!videos.prev_page_url"
                             @click="page(videos.current_page - 1)"
-                            class="rounded px-3 py-1 text-sm disabled:opacity-50"
+                            class="gs-btn gs-btn-outline px-3 py-1 text-sm disabled:opacity-50"
                         >
                             Prev
                         </button>
                         <button
                             :disabled="!videos.next_page_url"
                             @click="page(videos.current_page + 1)"
-                            class="rounded px-3 py-1 text-sm disabled:opacity-50"
+                            class="gs-btn gs-btn-outline px-3 py-1 text-sm disabled:opacity-50"
                         >
                             Next
                         </button>
@@ -107,13 +108,13 @@
                 </div>
             </div>
         </div>
-    </AppLayout>
+    </AdminLayout>
 </template>
 
 <script setup lang="ts">
 import { reactive } from 'vue';
 import { router } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 interface ModerationVideo {
     id: number;

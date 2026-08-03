@@ -4,6 +4,7 @@ use App\Domain\GrowStream\Presentation\Http\Controllers\Api\VideoController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Api\SeriesController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Api\WatchController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Api\CategoryController;
+use App\Domain\GrowStream\Presentation\Http\Controllers\Api\MetricsController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoManagementController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Admin\SeriesManagementController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Admin\AnalyticsController;
@@ -30,6 +31,8 @@ Route::prefix('api/v1/growstream')->name('api.growstream.')->group(function () {
         Route::post('/watch/progress', [WatchController::class, 'updateProgress'])->name('watch.progress');
         Route::get('/watch/history', [WatchController::class, 'history'])->name('watch.history');
         Route::get('/continue-watching', [WatchController::class, 'continueWatching'])->name('continue-watching');
+
+        Route::post('/metrics', [MetricsController::class, 'record'])->name('metrics.record');
 
         Route::get('/watchlist', [WatchController::class, 'watchlist'])->name('watchlist.index');
         Route::post('/watchlist', [WatchController::class, 'addToWatchlist'])->name('watchlist.store');

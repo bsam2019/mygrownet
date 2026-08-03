@@ -31,7 +31,7 @@ export interface Video {
     season_number?: number;
     episode_number?: number;
     creator_id: number;
-    creator?: User;
+    creator?: CreatorProfile;
     series?: VideoSeries;
     categories?: VideoCategory[];
     tags?: VideoTag[];
@@ -57,7 +57,7 @@ export interface VideoSeries {
     is_published: boolean;
     is_featured: boolean;
     creator_id: number;
-    creator?: User;
+    creator?: CreatorProfile;
     videos?: Video[];
     categories?: VideoCategory[];
     created_at: string;
@@ -109,14 +109,19 @@ export interface Watchlist {
 export interface CreatorProfile {
     id: number;
     user_id: number;
+    channel_name?: string;
     display_name: string;
     bio?: string;
     avatar_url?: string;
+    banner_url?: string;
+    website_url?: string;
     is_verified: boolean;
     is_active: boolean;
+    status?: string;
+    creator_tier?: string;
     total_videos: number;
     total_views: number;
-    total_revenue: number;
+    subscriber_count?: number;
     user?: User;
 }
 

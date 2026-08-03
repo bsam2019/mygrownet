@@ -1,4 +1,5 @@
 import './bootstrap';
+import '../css/growstream.css';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import type { DefineComponent } from 'vue';
 import { bootInertia, registerModuleSW } from './modules/createApp';

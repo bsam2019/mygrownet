@@ -1,15 +1,15 @@
 <template>
-    <div class="group relative overflow-hidden rounded-lg bg-white shadow-sm transition-all hover:shadow-lg">
+    <div class="group relative overflow-hidden rounded-[var(--gs-radius)] bg-[var(--gs-card)] transition-all hover:shadow-xl">
         <!-- Thumbnail -->
-        <div class="relative aspect-video overflow-hidden bg-gray-900">
+        <div class="relative aspect-video overflow-hidden bg-[var(--gs-bg-elevated)]">
             <img
                 v-if="video.thumbnail_url"
                 :src="video.thumbnail_url"
                 :alt="video.title"
                 class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
-            <div v-else class="flex h-full w-full items-center justify-center bg-gray-800">
-                <svg class="h-16 w-16 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div v-else class="flex h-full w-full items-center justify-center bg-[var(--gs-bg-elevated)]">
+                <svg class="h-16 w-16 text-[var(--gs-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
@@ -42,30 +42,30 @@
 
             <!-- Play Overlay -->
             <div
-                class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100"
+                class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
             >
-                <div class="rounded-full bg-white/90 p-4">
-                    <svg class="h-8 w-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                <div class="rounded-full bg-[var(--gs-primary)]/90 p-4">
+                    <svg class="h-8 w-8 text-white" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M8 5v14l11-7z" />
                     </svg>
                 </div>
             </div>
 
             <!-- Progress Bar (if watching) -->
-            <div v-if="watchProgress && watchProgress > 0" class="absolute bottom-0 left-0 right-0 h-1 bg-gray-700">
-                <div :style="{ width: `${watchProgress}%` }" class="h-full bg-blue-600"></div>
+            <div v-if="watchProgress && watchProgress > 0" class="absolute bottom-0 left-0 right-0 h-1 bg-[var(--gs-border)]">
+                <div :style="{ width: `${watchProgress}%` }" class="h-full gs-progress-fill"></div>
             </div>
         </div>
 
         <!-- Content -->
         <div class="p-4">
             <!-- Title -->
-            <h3 class="mb-1 line-clamp-2 text-base font-semibold text-gray-900">
+            <h3 class="mb-1 line-clamp-2 text-base font-semibold text-[var(--gs-text)]">
                 {{ video.title }}
             </h3>
 
             <!-- Metadata -->
-            <div class="mb-2 flex items-center gap-2 text-sm text-gray-600">
+            <div class="mb-2 flex items-center gap-2 text-sm text-[var(--gs-muted)]">
                 <span>{{ contentTypeLabel }}</span>
                 <span v-if="video.view_count" class="flex items-center gap-1">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,24 +87,29 @@
             </div>
 
             <!-- Description -->
-            <p v-if="showDescription" class="mb-3 line-clamp-2 text-sm text-gray-600">
+            <p v-if="showDescription" class="mb-3 line-clamp-2 text-sm text-[var(--gs-muted)]">
                 {{ video.description }}
             </p>
 
             <!-- Creator -->
-            <div v-if="video.creator" class="flex items-center gap-2 text-sm text-gray-600">
-                <div class="h-6 w-6 overflow-hidden rounded-full bg-gray-200">
+            <div v-if="video.creator" class="flex items-center gap-2 text-sm text-[var(--gs-muted)]">
+                <div class="h-6 w-6 overflow-hidden rounded-full bg-[var(--gs-bg-elevated)]">
                     <img
-                        v-if="video.creator.avatar"
-                        :src="video.creator.avatar"
-                        :alt="video.creator.name"
+                        v-if="video.creator.avatar_url"
+                        :src="video.creator.avatar_url"
+                        :alt="video.creator.display_name"
                         class="h-full w-full object-cover"
                     />
-                    <div v-else class="flex h-full w-full items-center justify-center text-xs font-medium text-gray-600">
-                        {{ video.creator.name.charAt(0).toUpperCase() }}
+                    <div v-else class="flex h-full w-full items-center justify-center text-xs font-medium text-[var(--gs-muted)]">
+                        {{ (video.creator.display_name || 'C').charAt(0).toUpperCase() }}
                     </div>
                 </div>
-                <span>{{ video.creator.name }}</span>
+                <Link
+                    :href="route('growstream.creator.profile', { slug: String(video.creator.id) })"
+                    class="hover:text-[var(--gs-accent)]"
+                >
+                    {{ video.creator.display_name }}
+                </Link>
             </div>
         </div>
     </div>
@@ -112,6 +117,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
 import type { Video } from '@/types/growstream';
 import { useGrowStream } from '@/composables/useGrowStream';
 

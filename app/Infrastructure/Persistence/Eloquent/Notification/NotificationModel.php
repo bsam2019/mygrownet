@@ -16,8 +16,10 @@ class NotificationModel extends Model
 
     protected $fillable = [
         'id',
-        'user_id',
+        'notifiable_type',
+        'notifiable_id',
         'type',
+        'module',
         'category',
         'title',
         'message',
@@ -28,6 +30,8 @@ class NotificationModel extends Model
         'read_at',
         'archived_at',
         'expires_at',
+        'created_at',
+        'updated_at',
     ];
 
     protected $casts = [
@@ -43,6 +47,12 @@ class NotificationModel extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function scopeForUser($query, int $userId)
+    {
+        return $query->where('notifiable_type', User::class)
+            ->where('notifiable_id', $userId);
+    }
+
     public function scopeUnread($query)
     {
         return $query->whereNull('read_at');
@@ -56,6 +66,21 @@ class NotificationModel extends Model
     public function scopeNotArchived($query)
     {
         return $query->whereNull('archived_at');
+    }
+
+    public function scopeByModule($query, string $module)
+    {
+        return $query->where('module', $module);
+    }
+
+    public function markAsRead(): void
+    {
+        $this->update(['read_at' => now()]);
+    }
+
+    public function markAllAsRead(): void
+    {
+        $this->update(['read_at' => now()]);
     }
 
     public function scopeByCategory($query, string $category)

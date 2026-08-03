@@ -6,6 +6,8 @@ namespace App\Domain\GrowStream\Presentation\Http\Controllers\Web\Creator;
 
 use App\Domain\GrowStream\Exceptions\CreatorNotFoundException;
 use App\Domain\GrowStream\Services\CreatorProfileService;
+use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
+use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\Video;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,6 +18,7 @@ class CreatorOnboardingController extends Controller
 {
     public function __construct(
         private CreatorProfileService $creatorService,
+        private VideoRepositoryInterface $videoRepo,
     ) {}
 
     public function showRegister(): Response|RedirectResponse
@@ -103,8 +106,27 @@ class CreatorOnboardingController extends Controller
             return redirect()->route('growstream.creator.register');
         }
 
+        $creatorId = (int) ($profile['id'] ?? 0);
+
+        $recentVideos = $this->videoRepo->query()
+            ->where('creator_id', $creatorId)
+            ->with(['categories', 'tags'])
+            ->latest()
+            ->take(8)
+            ->get();
+
+        $earningsSummary = [
+            'total_earnings' => (float) ($profile['total_earnings'] ?? 0),
+            'pending_payout' => (float) ($profile['pending_payout'] ?? 0),
+        ];
+
+        $totalWatchSeconds = (int) $recentVideos->sum('total_watch_time');
+
         return Inertia::render('GrowStream/Creator/Dashboard', [
             'profile' => $profile,
+            'recentVideos' => $recentVideos,
+            'earningsSummary' => $earningsSummary,
+            'watchTimeHours' => round($totalWatchSeconds / 3600, 1),
         ]);
     }
 }

@@ -140,6 +140,41 @@
 
 ---
 
+### 7. **UI_PLAN.md** (Product Roadmap / UI Plan)
+**Purpose:** Phase 1 (MVP) interface and experience design  
+**Audience:** Designers, PMs, frontend developers, leadership  
+**Format:** Phase-by-phase implementation plan (v1.0, Aug 2026)
+
+**Key Contents:**
+- Design principles and visual identity (deep emerald/gold, near-black)
+- Data-consciousness defaults (Data Saver, adaptive quality, data estimates)
+- Viewer, Creator Mode, and Admin Phase 1 screens
+- Onboarding, navigation, empty/error states, notifications
+- Content safety, reporting, ratings, legal screens
+- Success metrics and instrumentation plan
+- Explicitly deferred Phase 2–4 list
+- Payments & payout open scoping questions (critical path workstream)
+
+**When to Read:** Before starting Phase 1 UI/frontend work; complements `PRODUCT_STRATEGIC_PLAN.md`
+
+---
+
+### 8. **UI_IMPLEMENTATION_PLAN.md** (Frontend Build Plan)
+**Purpose:** Concrete engineering plan for building the Phase 1 UI  
+**Audience:** Frontend developers, tech lead  
+**Format:** Phase-by-phase build plan (v1.0, Aug 2026), grounded in the codebase audit
+
+**Key Contents:**
+- Current frontend state audit (pages, components, routes, build wiring, theme gap)
+- Phase 1 foundation: dark emerald theme + `GrowStreamLayout.vue` + design tokens + `build:growstream` script
+- Viewer rework (Home, Browse, Search, Video, Creator Profile), Creator Mode, Admin, safety/legal
+- Empty/error states, notifications, metrics instrumentation
+- Prioritized sprints, risks, and payments UI blockers (depends on UI_PLAN §15)
+
+**When to Read:** Before any GrowStream frontend build work; companion to `UI_PLAN.md`
+
+---
+
 ## 🎯 Quick Start
 
 ### For Project Managers
