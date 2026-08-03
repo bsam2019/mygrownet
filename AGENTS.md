@@ -7,6 +7,7 @@
 - No duplicate user accounts — single MyGrowNet user database
 
 ## Conventions
+- **Documentation**: ALL new documentation goes inside `docs/platform-evolution/` (organized by topical subfolder: `architecture/`, `implementation/`, `roadmap/`, `integration/`, `audits/`, `operations/`, plus module folders like `GrowStream/`). Do NOT create docs elsewhere (e.g. `docs/{Module}/` at the top level) unless the user explicitly says otherwise. When creating a doc, first check whether the topic already has a folder under `docs/platform-evolution/` and reuse it; otherwise create a module subfolder there. **Always check existing folders before creating a new one.**
 - **Migrations**: Each module/domain owns its schema in `database/migrations/{module}/`. Load via `->loadMigrationsFrom()` in the module's ServiceProvider. Never put domain-scoped migrations in `database/migrations/` root (root is for global-only migrations). **Always check the table below before creating a migration folder.**
 
 ### Canonical Migration Folders

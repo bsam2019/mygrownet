@@ -162,7 +162,7 @@ Route::prefix('growstream')->name('growstream.')->group(function () {
 
 ## Related Documentation
 
-- `docs/GrowStream/POINTS_INTEGRATION.md` - Point system integration
+- `docs/platform-evolution/GrowStream/POINTS_INTEGRATION.md` - Point system integration
 - `docs/STARTER_KIT_IMPLEMENTATION.md` - Starter kit integration
 
 ## Implementation Complete

@@ -295,7 +295,7 @@ If pages load but show no content:
 ## Support
 
 For technical issues or questions:
-- Check `docs/GrowStream/DEPLOYMENT_GUIDE.md` for setup
-- Review `docs/GrowStream/ADMIN_API_REFERENCE.md` for API details
-- See `docs/GrowStream/IMPLEMENTATION_STATUS.md` for features
+- Check `docs/platform-evolution/GrowStream/DEPLOYMENT_GUIDE.md` for setup
+- Review `docs/platform-evolution/GrowStream/ADMIN_API_REFERENCE.md` for API details
+- See `docs/platform-evolution/GrowStream/IMPLEMENTATION_STATUS.md` for features
 

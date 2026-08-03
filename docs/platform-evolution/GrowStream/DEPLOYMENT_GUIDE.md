@@ -505,7 +505,7 @@ Backup `.env` and `config/` directory.
 For issues or questions:
 - Check logs: `storage/logs/laravel.log`
 - Run diagnostics: `php artisan growstream:stats`
-- Review documentation in `docs/GrowStream/`
+- Review documentation in `docs/platform-evolution/GrowStream/`
 
 ---
 
