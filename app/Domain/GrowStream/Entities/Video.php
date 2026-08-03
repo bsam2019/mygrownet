@@ -89,8 +89,8 @@ final class Video
             publishedAt: null,
             viewsCount: 0,
             starterKitTier: $starterKitTier,
-            createdAt: new \DateTimeImmutable(),
-            updatedAt: new \DateTimeImmutable(),
+            createdAt: new \DateTimeImmutable,
+            updatedAt: new \DateTimeImmutable,
         );
     }
 
@@ -132,15 +132,15 @@ final class Video
             throw new \RuntimeException('Cannot publish video that is not ready');
         }
         $this->isPublished = true;
-        $this->publishedAt = new \DateTimeImmutable();
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->publishedAt = new \DateTimeImmutable;
+        $this->updatedAt = new \DateTimeImmutable;
     }
 
     public function unpublish(): void
     {
         $this->isPublished = false;
         $this->publishedAt = null;
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable;
     }
 
     public function markReady(): void
@@ -149,14 +149,14 @@ final class Video
             throw new \RuntimeException('Cannot mark failed video as ready');
         }
         $this->uploadStatus = UploadStatus::Ready;
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable;
     }
 
     public function markFailed(): void
     {
         $this->uploadStatus = UploadStatus::Failed;
         $this->isPublished = false;
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable;
     }
 
     public function incrementViews(): void
@@ -167,13 +167,13 @@ final class Video
     public function updateThumbnail(string $url): void
     {
         $this->thumbnailUrl = $url;
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable;
     }
 
     public function updateVideoUrl(string $url): void
     {
         $this->videoUrl = $url;
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable;
     }
 
     public function updateDuration(int $seconds): void
@@ -182,27 +182,27 @@ final class Video
             throw new \InvalidArgumentException('Duration cannot be negative');
         }
         $this->durationSeconds = $seconds;
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable;
     }
 
     public function updateMetadata(array $metadata): void
     {
         $this->metadata = $metadata;
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable;
     }
 
     public function addTag(string $tag): void
     {
-        if (!in_array($tag, $this->tags, true)) {
+        if (! in_array($tag, $this->tags, true)) {
             $this->tags[] = $tag;
         }
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable;
     }
 
     public function removeTag(string $tag): void
     {
         $this->tags = array_values(array_filter($this->tags, fn (string $t) => $t !== $tag));
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable;
     }
 
     public function assignToSeries(int $seriesId, ?int $season = null, ?int $episode = null): void
@@ -210,7 +210,7 @@ final class Video
         $this->seriesId = $seriesId;
         $this->seasonNumber = $season;
         $this->episodeNumber = $episode;
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable;
     }
 
     public function canBeAccessedBy(string $userAccessLevel): bool
@@ -218,6 +218,7 @@ final class Video
         $levels = ['free' => 0, 'basic' => 1, 'premium' => 2, 'institutional' => 3];
         $required = $levels[$this->accessLevel->value] ?? 0;
         $user = $levels[$userAccessLevel] ?? -1;
+
         return $user >= $required;
     }
 

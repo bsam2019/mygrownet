@@ -2,7 +2,9 @@
 
 use App\Domain\GrowStream\Presentation\Http\Controllers\Admin\CreatorAdminController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Admin\ModerationController;
+use App\Domain\GrowStream\Presentation\Http\Controllers\Admin\SponsorshipController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Web\Creator\CreatorOnboardingController;
+use App\Domain\GrowStream\Presentation\Http\Controllers\Web\Creator\CreatorSponsorshipController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Web\Creator\CreatorVideoController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Web\GrowStreamWebController;
 use Illuminate\Support\Facades\Route;
@@ -37,6 +39,10 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
         Route::put('/creator/videos/{id}', [CreatorVideoController::class, 'update'])->name('creator.videos.update');
         Route::delete('/creator/videos/{id}', [CreatorVideoController::class, 'destroy'])->name('creator.videos.destroy');
         Route::get('/creator/analytics', [CreatorVideoController::class, 'analytics'])->name('creator.analytics');
+
+        // Creator sponsorship fund
+        Route::get('/creator/sponsorship', [CreatorSponsorshipController::class, 'index'])->name('creator.sponsorship.index');
+        Route::post('/creator/sponsorship', [CreatorSponsorshipController::class, 'store'])->name('creator.sponsorship.store');
     });
 
     Route::middleware(['web', 'auth', 'role:admin'])->prefix($prefix.'/admin')->name($namePrefix.'admin.')->group(function () {
@@ -52,6 +58,13 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
         Route::post('/moderation/{id}/approve', [ModerationController::class, 'approve'])->name('moderation.approve');
         Route::post('/moderation/{id}/publish', [ModerationController::class, 'publish'])->name('moderation.publish');
         Route::post('/moderation/{id}/reject', [ModerationController::class, 'reject'])->name('moderation.reject');
+
+        // Creator sponsorship fund
+        Route::get('/sponsorship', [SponsorshipController::class, 'index'])->name('sponsorship');
+        Route::post('/sponsorship/{id}/approve', [SponsorshipController::class, 'approve'])->name('sponsorship.approve');
+        Route::post('/sponsorship/{id}/reject', [SponsorshipController::class, 'reject'])->name('sponsorship.reject');
+        Route::post('/sponsorship/{id}/disburse', [SponsorshipController::class, 'disburse'])->name('sponsorship.disburse');
+        Route::post('/sponsorship/{id}/complete', [SponsorshipController::class, 'complete'])->name('sponsorship.complete');
     });
 };
 

@@ -26,6 +26,7 @@ use App\Domain\GrowStream\Repositories\CreatorPayoutRepositoryInterface;
 use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
 use App\Domain\GrowStream\Repositories\CreatorSubscriptionRepositoryInterface;
 use App\Domain\GrowStream\Repositories\CreatorTipRepositoryInterface;
+use App\Domain\GrowStream\Repositories\SponsorshipGrantRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoCategoryRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoRentalRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
@@ -39,6 +40,7 @@ use App\Domain\GrowStream\Services\CreatorSubscriptionService;
 use App\Domain\GrowStream\Services\PayoutService;
 use App\Domain\GrowStream\Services\RentalService;
 use App\Domain\GrowStream\Services\RevenuePoolService;
+use App\Domain\GrowStream\Services\SponsorshipService;
 use App\Domain\GrowStream\Services\TipService;
 use App\Domain\GrowStream\Services\WatchService;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorAgreementRepository;
@@ -47,7 +49,7 @@ use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorPayout
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorProfileRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorSubscriptionRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorTipRepository;
-use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoCategoryRepository;
+use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentSponsorshipGrantRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoRentalRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoSeriesRepository;
@@ -100,6 +102,7 @@ class GrowStreamServiceProvider extends ServiceProvider
         $this->app->bind(CreatorSubscriptionRepositoryInterface::class, EloquentCreatorSubscriptionRepository::class);
         $this->app->bind(CreatorTipRepositoryInterface::class, EloquentCreatorTipRepository::class);
         $this->app->bind(VideoRentalRepositoryInterface::class, EloquentVideoRentalRepository::class);
+        $this->app->bind(SponsorshipGrantRepositoryInterface::class, EloquentSponsorshipGrantRepository::class);
 
         $this->app->singleton(AccessControlService::class);
         $this->app->singleton(RentalService::class);
@@ -107,6 +110,7 @@ class GrowStreamServiceProvider extends ServiceProvider
         $this->app->singleton(TipService::class);
         $this->app->singleton(RevenuePoolService::class);
         $this->app->singleton(PayoutService::class);
+        $this->app->singleton(SponsorshipService::class);
 
         // WatchService has optional constructor dependencies (AccessControlService,
         // RentalService). Without explicit bindings the container substitutes their

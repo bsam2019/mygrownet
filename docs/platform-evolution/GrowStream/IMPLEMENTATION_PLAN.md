@@ -17,15 +17,17 @@ Creator economy monetization implemented and tested:
 | **4.2 Creator subscriptions** | ✅ `growstream_creator_subscriptions` table + `CreatorSubscription` model + repo. `CreatorSubscriptionService` (`subscribe` idempotent, `cancel`, `isSubscribed`, `subscriberCount`). |
 | **4.3 Tips & direct support** | ✅ `growstream_creator_tips` table + `CreatorTip` model + repo. `TipService` (`send` with message/anonymous/status, `totalForCreator`, `countForCreator`). |
 | **Service wiring** | ✅ Explicit `WatchService` binding in `GrowStreamServiceProvider` — the container silently substituted `= null` defaults for unbound optional class constructor deps (AccessControlService, RentalService), disabling gating. Added `use` imports so `RentalService`/`CreatorSubscriptionService`/`TipService`/`RevenuePoolService`/`PayoutService`/`WatchService` singletons bind to the correct FQCNs (they were resolving to the provider's namespace). |
+| **4.4 Sponsorship fund** | ✅ `growstream_sponsorship_grants` table + `SponsorshipGrant` model + repo. `SponsorshipService` (apply/approve/reject/disburse/complete; disburse credits the creator `pending_payout` ledger). `SponsorshipController` (admin) + `CreatorSponsorshipController` (creator) + `Admin/Sponsorship.vue` + `Creator/Sponsorship.vue`. |
 | **Bug fix** | ✅ `Video::reconstitute()` key mismatches with Eloquent columns (`creator_profile_id`→`creator_id`, `duration_seconds`→`duration`, `provider`→`video_provider`) — would crash `WatchService::authorizePlayback` on real data. Added fallbacks. |
-| **Tests** | ✅ 14 new (7 rental incl. expiry + gating integration, 7 creator economy). **Total: 417 GrowStream tests passing.** |
+| **Tests** | ✅ 23 new (7 rental incl. expiry + gating integration, 7 creator economy, 9 sponsorship). **Total: 426 GrowStream tests passing.** |
 
-**Schema additions (3 migrations):**
+**Schema additions (4 migrations):**
 - `2026_08_03_000008` — `growstream_video_rentals`
 - `2026_08_03_000009` — `growstream_creator_subscriptions`
 - `2026_08_03_000010` — `growstream_creator_tips`
+- `2026_08_03_000011` — `growstream_sponsorship_grants`
 
-**Not yet done (Phase 4.4/4.5):** sponsorship fund allocation + brand marketplace — deferred (speculative, needs product decisions).
+**Not yet done (Phase 4.5):** brand sponsorship marketplace (brand onboarding, creator-brand matching, campaign management) — deferred, requires product decisions.
 
 ---
 
