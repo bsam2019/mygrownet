@@ -56,7 +56,7 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
         Route::post('/creator/sponsorship', [CreatorSponsorshipController::class, 'store'])->name('creator.sponsorship.store');
     });
 
-    Route::middleware(['web', 'auth', 'role:admin'])->prefix($prefix.'/admin')->name($namePrefix.'admin.')->group(function () {
+    Route::middleware(['web', 'auth', 'admin.or.role'])->prefix($prefix.'/admin')->name($namePrefix.'admin.')->group(function () {
         Route::get('/videos', [GrowStreamWebController::class, 'adminVideos'])->name('videos');
         Route::get('/videos/{id}/edit', [GrowStreamWebController::class, 'adminVideoEdit'])->name('videos.edit');
         Route::get('/analytics', [GrowStreamWebController::class, 'adminAnalytics'])->name('analytics');

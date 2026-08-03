@@ -219,7 +219,7 @@ class GrowStreamWebController
 
         return Inertia::render('GrowStream/VideoDetail', [
             'video' => $video,
-            'related' => $related,
+            'relatedVideos' => $related,
             'watchProgress' => $watchProgress,
         ]);
     }
@@ -239,12 +239,13 @@ class GrowStreamWebController
             ->orderBy('season_number')
             ->orderBy('episode_number')
             ->with(['creator.user'])
-            ->get()
-            ->groupBy('season_number');
+            ->get();
+
+        $series->setRelation('videos', $episodes);
 
         return Inertia::render('GrowStream/SeriesDetail', [
             'series' => $series,
-            'episodes' => $episodes,
+            'episodes' => $episodes->groupBy('season_number'),
         ]);
     }
 

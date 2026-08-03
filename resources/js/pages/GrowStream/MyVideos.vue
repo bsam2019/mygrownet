@@ -215,26 +215,30 @@ import { useGrowStream } from '@/composables/useGrowStream';
 import type { Video, VideoSeries, WatchHistory, Watchlist } from '@/types/growstream';
 
 interface Props {
-    continueWatching: WatchHistory[];
-    watchlist: Watchlist[];
-    watchHistory: WatchHistory[];
+    continueWatching?: Video[];
+    watchlist?: Watchlist[];
+    history?: { data: WatchHistory[] };
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    continueWatching: () => [],
+    watchlist: () => [],
+    history: () => ({ data: [] }),
+});
 
 const { formatDuration, removeFromWatchlist } = useGrowStream();
 
 const activeTab = ref<'continue' | 'watchlist' | 'history'>('continue');
 
-const continueWatchingVideos = computed(() => {
-    return props.continueWatching.map((h) => h.video).filter((v): v is Video => v !== undefined);
-});
+const watchHistory = computed(() => props.history?.data ?? []);
+
+const continueWatchingVideos = computed(() => props.continueWatching ?? []);
 
 const continueWatchingProgress = computed(() => {
     const progress: Record<number, number> = {};
-    props.continueWatching.forEach((h) => {
-        if (h.video) {
-            progress[h.video.id] = h.progress_percentage;
+    (props.continueWatching ?? []).forEach((video) => {
+        if (video) {
+            progress[video.id] = 100;
         }
     });
     return progress;

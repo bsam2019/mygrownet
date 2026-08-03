@@ -193,12 +193,14 @@ import type { Video, WatchHistory, Watchlist } from '@/types/growstream';
 
 interface Props {
     video: Video;
-    relatedVideos: Video[];
+    relatedVideos?: Video[];
     watchHistory?: WatchHistory;
     watchlistItem?: Watchlist;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    relatedVideos: () => [],
+});
 
 const { formatDuration, getAccessLevelBadge, addToWatchlist, removeFromWatchlist } = useGrowStream();
 

@@ -90,12 +90,16 @@ import type { Video, VideoCategory, PaginatedResponse } from '@/types/growstream
 
 interface Props {
     videos: PaginatedResponse<Video>;
-    featuredVideos: Video[];
-    categories: VideoCategory[];
+    featuredVideos?: Video[];
+    categories?: VideoCategory[];
     watchProgress?: Record<number, number>;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    featuredVideos: () => [],
+    categories: () => [],
+    watchProgress: () => ({}),
+});
 
 const loading = ref(false);
 const filters = reactive({
