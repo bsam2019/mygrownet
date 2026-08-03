@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
-    Route::middleware(['web', 'auth'])->prefix($prefix)->name($namePrefix)->group(function () {
+    Route::middleware(['web', 'identity.redirect:growstream', 'auth'])->prefix($prefix)->name($namePrefix)->group(function () {
         Route::get('/subscription', fn () => redirect()->route('subscriptions.plans', ['module' => 'growstream']))->name('subscription');
         Route::get('/my-videos', [GrowStreamWebController::class, 'myVideos'])->name('my-videos');
 
@@ -86,6 +86,8 @@ $registerGrowStreamPublicRoutes = function (string $prefix, string $namePrefix) 
         Route::get('/channel/{slug}', [GrowStreamWebController::class, 'creatorProfile'])->name('creator.profile');
         Route::get('/video/{slug}', [GrowStreamWebController::class, 'videoDetail'])->name('video.detail');
         Route::get('/series/{slug}', [GrowStreamWebController::class, 'seriesDetail'])->name('series.detail');
+        Route::get('/login', [GrowStreamWebController::class, 'redirectToLogin'])->name('login');
+        Route::get('/register', [GrowStreamWebController::class, 'redirectToRegister'])->name('register');
     });
 };
 

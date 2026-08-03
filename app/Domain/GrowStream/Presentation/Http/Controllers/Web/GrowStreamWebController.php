@@ -10,6 +10,8 @@ use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\CreatorProfile;
 use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoSeriesRepositoryInterface;
+use App\Domain\Core\Contracts\MyGrowIdentity;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -18,8 +20,31 @@ class GrowStreamWebController
 {
     public function __construct(
         private VideoRepositoryInterface $videoRepo,
-        private VideoSeriesRepositoryInterface $seriesRepo
+        private VideoSeriesRepositoryInterface $seriesRepo,
+        private MyGrowIdentity $identity,
     ) {}
+
+    public function redirectToLogin(): RedirectResponse
+    {
+        $returnUrl = route('growstream.home');
+
+        return redirect()->away($this->identity->redirectToLogin($returnUrl));
+    }
+
+    public function redirectToRegister(): RedirectResponse
+    {
+        $returnUrl = route('growstream.home');
+        $registerUrl = config('platform.identity.register_url', 'https://auth.mygrownet.com/register');
+        $expires = time() + config('platform.identity.return_url_ttl', 300);
+        $signature = hash_hmac('sha256', $returnUrl . '|' . $expires, config('platform.identity.signing_key') ?? '');
+
+        return redirect()->away(
+            $registerUrl
+            . '?return_url=' . urlencode($returnUrl)
+            . '&expires=' . $expires
+            . '&signature=' . $signature
+        );
+    }
 
     public function home(): Response
     {

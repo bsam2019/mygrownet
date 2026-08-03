@@ -169,8 +169,8 @@ const logout = () => {
                         </div>
                     </template>
                     <template v-else>
-                        <Link href="/login" class="gs-btn gs-btn-ghost">Sign In</Link>
-                        <Link href="/register" class="gs-btn gs-btn-accent">Get Started</Link>
+                        <a :href="route('growstream.login')" class="gs-btn gs-btn-ghost">Sign In</a>
+                        <a :href="route('growstream.register')" class="gs-btn gs-btn-accent">Get Started</a>
                     </template>
                 </div>
             </div>
