@@ -158,6 +158,114 @@ class CreatorVideoController extends Controller
         }
     }
 
+    /**
+     * Initialize a resumable tus upload. Creates a pending video row and a
+     * Cloudflare tus session, returning the one-time upload URL the client
+     * streams chunks to.
+     */
+    public function tusInit(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $creator = $this->requireCreator();
+
+        abort_unless($creator->canUploadMore(), 429, 'Monthly upload limit reached.');
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:5000',
+            'content_type' => 'required|in:'.implode(',', array_keys(config('growstream.content_types', []))),
+            'access_level' => 'required|in:'.implode(',', array_keys(config('growstream.access_levels', []))),
+            'file_size' => 'required|integer|min:1|max:'.(int) config('growstream.upload.max_file_size', 5 * 1024 * 1024 * 1024),
+            'categories' => 'nullable|array',
+            'categories.*' => 'exists:growstream_video_categories,id',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string|max:50',
+            'rights_declaration' => 'required|accepted',
+        ]);
+
+        $provider = VideoProviderFactory::make();
+
+        $tus = $provider->createTusUpload(
+            (int) $request->file_size,
+            ['max_duration_seconds' => (int) config('growstream.upload.max_duration_seconds', 10800)],
+        );
+
+        DB::beginTransaction();
+        try {
+            $video = $this->videoRepo->save([
+                'title' => $request->title,
+                'slug' => Str::slug($request->title).'-'.Str::lower(Str::random(8)),
+                'description' => $request->description ?? '',
+                'content_type' => $request->content_type,
+                'access_level' => $request->access_level,
+                'creator_id' => $creator->id,
+                'is_published' => false,
+                'upload_status' => 'uploading',
+                'moderation_status' => $creator->is_verified ? 'approved' : 'pending_review',
+                'video_provider' => (string) config('growstream.default_provider', 'digitalocean'),
+                'provider_video_id' => $tus['uid'],
+            ]);
+
+            if ($request->categories) {
+                $video->categories()->attach($request->categories);
+            }
+
+            if ($request->tags) {
+                $this->videoManagementService->syncTags($video->id, $request->tags);
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            try {
+                $provider->delete($tus['uid']);
+            } catch (\Throwable $ignored) {
+            }
+
+            return response()->json(['error' => 'Failed to initialize upload: '.$e->getMessage()], 422);
+        }
+
+        return response()->json([
+            'video_id' => $video->id,
+            'provider_video_id' => $tus['uid'],
+            'upload_url' => $tus['upload_url'],
+        ]);
+    }
+
+    /**
+     * Mark a tus upload complete. The client has finished streaming all bytes
+     * to Cloudflare; we flip the video to processing so the pipeline finalizes it.
+     */
+    public function tusComplete(Request $request, int $id): \Illuminate\Http\JsonResponse
+    {
+        $creator = $this->requireCreator();
+
+        $video = $this->videoRepo->findById($id);
+        abort_unless($video !== null && $video->creator_id === $creator->id, 404);
+        abort_unless($video->upload_status === 'uploading', 422, 'Video is not in an uploading state.');
+
+        $provider = VideoProviderFactory::make();
+
+        $updates = [
+            'upload_status' => 'processing',
+            'processing_started_at' => now(),
+        ];
+
+        try {
+            $details = $provider->getVideo($video->provider_video_id);
+            $updates['playback_url'] = $details->playbackUrl;
+            $updates['thumbnail_url'] = $details->thumbnailUrl;
+        } catch (\Throwable $e) {
+            // Cloudflare may still be transcoding; the ProcessVideoJob poller
+            // will backfill playback/thumbnail URLs once ready.
+        }
+
+        $this->videoRepo->update($video, $updates);
+
+        ProcessVideoJob::dispatch($video->id);
+
+        return response()->json(['success' => true]);
+    }
+
     public function edit(int $id): Response|RedirectResponse
     {
         $creator = $this->requireCreator();

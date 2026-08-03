@@ -215,6 +215,54 @@ class CloudflareStreamProvider implements VideoProviderInterface
      * @param  array<string, mixed>  $metadata
      * @return array{uid: string, upload_url: string, expires_at: ?string}
      */
+    /**
+     * Create a Cloudflare Stream tus upload session for a file of the given
+     * size, returning the one-time resumable upload URL (from the Location
+     * header) and the Cloudflare video uid.
+     *
+     * tus is required by Cloudflare for files over 200MB and recommended
+     * otherwise for unreliable connections. The returned URL is then fed
+     * directly to a tus client (chunked PATCH requests).
+     *
+     * @param  int  $fileSize  bytes
+     * @param  array<string, mixed>  $metadata
+     * @return array{uid: string, upload_url: string}
+     */
+    public function createTusUpload(int $fileSize, array $metadata = []): array
+    {
+        $expiry = now()->addDay()->toIso8601String();
+        $maxDuration = (string) ($metadata['max_duration_seconds'] ?? 3600);
+
+        $uploadMetadata = 'maxDurationSeconds '.base64_encode($maxDuration)
+            .',expiry '.base64_encode($expiry);
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer '.$this->apiToken,
+            'Tus-Resumable' => '1.0.0',
+            'Upload-Length' => (string) $fileSize,
+            'Upload-Metadata' => $uploadMetadata,
+        ])->post($this->baseUrl().'?direct_user=true');
+
+        if (! $response->successful()) {
+            $error = $response->json('errors.0.message') ?? $response->body();
+            throw UploadFailedException::withMessage("Unable to create Cloudflare Stream tus upload: {$error}");
+        }
+
+        $uploadUrl = (string) $response->header('Location');
+        if ($uploadUrl === '') {
+            throw UploadFailedException::withMessage('Cloudflare Stream tus upload returned no Location header');
+        }
+
+        // uid is the last path segment of the tus endpoint (e.g. .../upload/{uid})
+        $segments = explode('/', rtrim($uploadUrl, '/'));
+        $uid = (string) end($segments);
+
+        return [
+            'uid' => $uid,
+            'upload_url' => $uploadUrl,
+        ];
+    }
+
     protected function createDirectUpload(array $metadata): array
     {
         $response = Http::withHeaders($this->headers())

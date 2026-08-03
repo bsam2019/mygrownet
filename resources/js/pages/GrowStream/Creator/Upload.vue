@@ -243,13 +243,27 @@
                         </div>
                     </div>
 
+                    <!-- Upload progress (file uploads via tus) -->
+                    <div v-if="uploading" class="space-y-2">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-[var(--gs-muted)]">Uploading{{ form.video_file ? ' — ' + form.video_file.name : '' }}…</span>
+                            <span class="font-medium text-[var(--gs-primary)]">{{ uploadProgress }}%</span>
+                        </div>
+                        <div class="gs-progress-track h-2">
+                            <div
+                                class="gs-progress-fill h-full rounded-full transition-all"
+                                :style="{ width: `${uploadProgress}%` }"
+                            ></div>
+                        </div>
+                    </div>
+
                     <div class="flex flex-wrap items-center gap-3">
                         <button
                             type="submit"
-                            :disabled="form.processing"
+                            :disabled="form.processing || uploading"
                             class="gs-btn gs-btn-primary"
                         >
-                            {{ form.processing ? 'Saving...' : video ? 'Update Video' : 'Submit for Moderation' }}
+                            {{ form.processing || uploading ? (uploading ? `Uploading ${uploadProgress}%…` : 'Saving...') : video ? 'Update Video' : 'Submit for Moderation' }}
                         </button>
                         <Link
                             :href="route('growstream.creator.videos.index')"
@@ -287,8 +301,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Link, useForm } from '@inertiajs/vue3';
+import { Link, useForm, router } from '@inertiajs/vue3';
 import CreatorStudioLayout from '@/Layouts/CreatorStudioLayout.vue';
+import { createTusUpload, tusUpload, completeTusUpload } from '@/composables/useTusUpload';
 
 interface Category {
     id: number;
@@ -355,11 +370,45 @@ const onDrop = (event: DragEvent) => {
     }
 };
 
-const submit = () => {
+const uploading = ref(false);
+const uploadProgress = ref(0);
+
+const submit = async () => {
     form.tags = tagsInput.value.split(',').map((t) => t.trim()).filter(Boolean);
 
     if (props.video) {
         form.put(route('growstream.creator.videos.update', props.video.id));
+        return;
+    }
+
+    // File uploads use the resumable tus protocol (Cloudflare Stream).
+    if (form.video_file) {
+        uploading.value = true;
+        uploadProgress.value = 0;
+        try {
+            const { uploadUrl, videoId } = await createTusUpload(
+                route('growstream.creator.videos.tus-init'),
+                form.video_file.size
+            );
+
+            await tusUpload(form.video_file, uploadUrl, (p) => {
+                uploadProgress.value = p.percent;
+            });
+
+            await completeTusUpload(
+                route('growstream.creator.videos.tus-complete', videoId),
+                videoId
+            );
+
+            router.visit(route('growstream.creator.videos.index'), {
+                onSuccess: () => {
+                    uploading.value = false;
+                },
+            });
+        } catch (err: any) {
+            uploading.value = false;
+            form.setError('video_file', err?.response?.data?.error || err?.message || 'Upload failed');
+        }
         return;
     }
 

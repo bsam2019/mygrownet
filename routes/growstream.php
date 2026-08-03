@@ -46,6 +46,8 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
         Route::get('/creator/videos', [CreatorVideoController::class, 'index'])->name('creator.videos.index');
         Route::get('/creator/videos/create', [CreatorVideoController::class, 'create'])->name('creator.videos.create');
         Route::post('/creator/videos', [CreatorVideoController::class, 'store'])->name('creator.videos.store');
+        Route::post('/creator/videos/tus-init', [CreatorVideoController::class, 'tusInit'])->name('creator.videos.tus-init');
+        Route::post('/creator/videos/{id}/tus-complete', [CreatorVideoController::class, 'tusComplete'])->name('creator.videos.tus-complete');
         Route::get('/creator/videos/{id}/edit', [CreatorVideoController::class, 'edit'])->name('creator.videos.edit');
         Route::put('/creator/videos/{id}', [CreatorVideoController::class, 'update'])->name('creator.videos.update');
         Route::delete('/creator/videos/{id}', [CreatorVideoController::class, 'destroy'])->name('creator.videos.destroy');
