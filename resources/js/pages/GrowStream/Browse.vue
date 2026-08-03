@@ -39,11 +39,17 @@
                     @change="applyFilters"
                 >
                     <option value="">All Types</option>
+                    <option value="movie">Movies</option>
+                    <option value="series">Series</option>
+                    <option value="episode">Episodes</option>
+                    <option value="short">Shorts</option>
+                    <option value="comedy">Comedy</option>
+                    <option value="skit">Skits</option>
+                    <option value="soap">Soap Operas</option>
+                    <option value="drama">Drama</option>
                     <option value="lesson">Lessons</option>
                     <option value="workshop">Workshops</option>
                     <option value="webinar">Webinars</option>
-                    <option value="movie">Movies</option>
-                    <option value="short">Shorts</option>
                 </select>
 
                 <!-- Sort -->

@@ -1,5 +1,5 @@
 <template>
-    <GrowStreamLayout title="GrowStream - Learn and Grow">
+    <GrowStreamLayout title="GrowStream - Watch Zambian Entertainment">
         <!-- Hero Section -->
         <div class="relative overflow-hidden rounded-[var(--gs-radius)] border border-[var(--gs-border)]">
             <div class="relative overflow-hidden bg-gradient-to-br from-[var(--gs-primary)] via-[#065f46] to-[#022c22]">
@@ -10,10 +10,10 @@
                             Made in Zambia
                         </p>
                         <h1 class="mb-6 text-4xl font-bold text-white md:text-6xl">
-                            Watch. Learn. Grow.
+                            Watch. Laugh. Binge.
                         </h1>
                         <p class="mb-8 text-lg text-white/80 md:text-2xl">
-                            Premium local and international video content — movies, series, and more.
+                            Zambian movies, comedy, skits, dramas, soaps, and series — premium local entertainment in one place.
                         </p>
                         <div class="flex flex-wrap gap-4">
                             <a

@@ -43,7 +43,7 @@ return new class extends Migration
             $table->unsignedBigInteger('trailer_video_id')->nullable();
             
             // Content Classification
-            $table->enum('content_type', ['movie', 'series', 'episode', 'lesson', 'short', 'workshop', 'webinar'])->default('lesson');
+            $table->enum('content_type', ['movie', 'series', 'episode', 'short', 'comedy', 'skit', 'soap', 'drama', 'lesson', 'workshop', 'webinar'])->default('lesson');
             $table->string('language', 5)->default('en');
             $table->json('subtitles_available')->nullable();
             
@@ -102,3 +102,4 @@ return new class extends Migration
         Schema::dropIfExists('growstream_videos');
     }
 };
+

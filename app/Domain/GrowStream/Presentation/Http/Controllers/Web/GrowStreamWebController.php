@@ -473,7 +473,66 @@ class GrowStreamWebController
 
     public function adminAnalytics(Request $request): Response
     {
-        return Inertia::render('GrowStream/Admin/Analytics');
+        $period = (int) $request->get('period', 30);
+        $startDate = now()->subDays($period);
+
+        $totalVideos = $this->videoRepo->query()->count();
+        $publishedVideos = $this->videoRepo->query()->published()->count();
+        $newVideosThisPeriod = $this->videoRepo->query()->where('created_at', '>=', $startDate)->count();
+
+        $totalViews = \App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoView::count();
+        $viewsThisPeriod = \App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoView::where('created_at', '>=', $startDate)->count();
+
+        $totalWatchTime = \App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\WatchHistory::sum('watch_duration') / 3600;
+        $watchTimeThisPeriod = \App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\WatchHistory::where('created_at', '>=', $startDate)->sum('watch_duration') / 3600;
+
+        $uniqueViewers = \App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoView::distinct('user_id')->count('user_id');
+        $uniqueViewersThisPeriod = \App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoView::where('created_at', '>=', $startDate)->distinct('user_id')->count('user_id');
+
+        $completedViews = \App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\WatchHistory::where('is_completed', true)->count();
+        $totalWatchSessions = \App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\WatchHistory::count();
+        $completionRate = $totalWatchSessions > 0 ? round(($completedViews / $totalWatchSessions) * 100, 2) : 0;
+        $avgWatchDuration = \App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\WatchHistory::avg('watch_duration');
+
+        $topCategories = \Illuminate\Support\Facades\DB::table('growstream_video_categories as c')
+            ->join('growstream_video_category as vc', 'c.id', '=', 'vc.category_id')
+            ->join('growstream_videos as v', 'vc.video_id', '=', 'v.id')
+            ->join('growstream_video_views as vv', 'v.id', '=', 'vv.video_id')
+            ->select('c.name', \Illuminate\Support\Facades\DB::raw('COUNT(vv.id) as view_count'))
+            ->groupBy('c.id', 'c.name')
+            ->orderByDesc('view_count')
+            ->limit(5)
+            ->get();
+
+        $dailyViews = \App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoView::where('created_at', '>=', $startDate)
+            ->select(
+                \Illuminate\Support\Facades\DB::raw('DATE(created_at) as date'),
+                \Illuminate\Support\Facades\DB::raw('COUNT(*) as views'),
+                \Illuminate\Support\Facades\DB::raw('COUNT(DISTINCT user_id) as unique_viewers')
+            )
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        return Inertia::render('GrowStream/Admin/Analytics', [
+            'analytics' => [
+                'overview' => [
+                    'total_videos' => $totalVideos,
+                    'published_videos' => $publishedVideos,
+                    'new_videos_this_period' => $newVideosThisPeriod,
+                    'total_views' => $totalViews,
+                    'views_this_period' => $viewsThisPeriod,
+                    'total_watch_time_hours' => round($totalWatchTime, 2),
+                    'watch_time_this_period_hours' => round($watchTimeThisPeriod, 2),
+                    'unique_viewers' => $uniqueViewers,
+                    'unique_viewers_this_period' => $uniqueViewersThisPeriod,
+                    'completion_rate' => $completionRate,
+                    'avg_watch_duration_seconds' => round($avgWatchDuration, 2),
+                ],
+                'top_categories' => $topCategories,
+                'daily_views' => $dailyViews,
+            ],
+        ]);
     }
 
     public function adminCreators(Request $request): Response

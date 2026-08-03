@@ -163,8 +163,12 @@ export function useGrowStream() {
             movie: 'Movie',
             series: 'Series',
             episode: 'Episode',
-            lesson: 'Lesson',
             short: 'Short',
+            comedy: 'Comedy',
+            skit: 'Skits',
+            soap: 'Soap Opera',
+            drama: 'Drama',
+            lesson: 'Lesson',
             workshop: 'Workshop',
             webinar: 'Webinar',
         };
