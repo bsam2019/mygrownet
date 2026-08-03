@@ -1,17 +1,34 @@
 # GrowStream — Implementation Plan
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Date:** August 2026  
 **Based on:** PRODUCT_STRATEGIC_PLAN.md v1.0 + current codebase audit  
-**Status:** Phase 1 MVP 90% complete; Phases 2–5 not started
+**Status:** Phase 1 ✅ Complete (Aug 2026); Phases 2–5 not started
+
+---
+
+## Phase 1 Completion Log (Aug 2026)
+
+All Phase 1 tasks implemented and tested:
+
+| Task | Status |
+|---|---|
+| **1.1 Cloudflare Stream provider** | ✅ `CloudflareStreamProvider` implements `VideoProviderInterface` — direct upload (TUS URL), server-side streaming PUT, status polling (ready/processing/failed), signed playback URLs (HMAC token), customer-subdomain normalization, delete. Wired in `VideoProviderFactory` + registered as singleton. |
+| **1.2 Repository implementations** | ✅ `EloquentWatchlistRepository`, `EloquentVideoViewRepository`, `EloquentVideoTagRepository` created + bound in `GrowStreamServiceProvider`. All 8 repository interfaces now have implementations. |
+| **1.3 Domain exceptions** | ✅ 9 exception classes in `app/Domain/GrowStream/Exceptions/` (base `GrowStreamException extends \RuntimeException` + 8 specific). Services updated to throw typed exceptions with messages preserved. |
+| **1.4 Thumbnail generation** | ✅ `GenerateThumbnailsJob` now: (1) reuses provider-generated thumbnails (Cloudflare), (2) FFmpeg frame extraction when the binary + local source are available, (3) content-type placeholder fallback. |
+| **1.5 Automated tests** | ✅ 15 Cloudflare provider tests + 32 repository feature tests. Existing 312 unit tests still pass. **Total: 359 GrowStream tests passing.** |
+| **Bug fix** | ✅ `ProcessVideoJob` called non-existent `getStatus()` → now uses `getVideo()`. `ProviderVideoResponse` gained `?string $error` field. `getViewsAnalytics` now handles string dates from SQLite. |
+
+**Config:** `GROWSTREAM_VIDEO_PROVIDER=cloudflare` + `CLOUDFLARE_*` env keys already present in `.env`/production. Switch default provider to `cloudflare` in production `.env` when ready to cut over from DigitalOcean Spaces.
 
 ---
 
 ## Current State Summary
 
-The GrowStream backend is ~90% complete. 10 database tables, 8 Eloquent models, 4 domain entities, 13 value objects, 8 repository interfaces (5 implemented), 7 domain services, 43 API endpoints, 4 jobs, 3 events, 4 listeners, 11 Vue pages, 4 console commands. The frontend has browse, video detail, series detail, admin video management, admin analytics, and admin creator management pages.
+The GrowStream backend is ~90% complete. 10 database tables, 8 Eloquent models, 4 domain entities, 13 value objects, 8 repository interfaces (all implemented), 7 domain services, 43 API endpoints, 4 jobs, 3 events, 4 listeners, 11 Vue pages, 4 console commands. The frontend has browse, video detail, series detail, admin video management, admin analytics, and admin creator management pages.
 
-**Critical gaps:** Cloudflare Stream not implemented, no subscription/payment integration, no creator self-service uploads, revenue analytics placeholder, no tests, no DRM.
+**Critical gaps remaining:** no subscription/payment integration, no creator self-service uploads, revenue analytics placeholder, no DRM.
 
 ---
 

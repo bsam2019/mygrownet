@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\GrowStream\Services;
 
 use App\Domain\GrowStream\Entities\Video as VideoEntity;
+use App\Domain\GrowStream\Exceptions\VideoNotFoundException;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\Video;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoTagRepositoryInterface;
@@ -192,7 +193,7 @@ final class VideoManagementService
         $video = $this->videoRepository->findById($videoId);
 
         if ($video === null) {
-            throw new \RuntimeException("Video not found: {$videoId}");
+            throw VideoNotFoundException::forId($videoId);
         }
 
         return $video;

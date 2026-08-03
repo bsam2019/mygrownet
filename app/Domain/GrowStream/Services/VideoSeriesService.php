@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\GrowStream\Services;
 
 use App\Domain\GrowStream\Entities\VideoSeries as VideoSeriesEntity;
+use App\Domain\GrowStream\Exceptions\SeriesNotFoundException;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoSeriesRepositoryInterface;
 use App\Domain\GrowStream\ValueObjects\AccessLevel;
@@ -51,14 +52,15 @@ class VideoSeriesService
         ];
 
         $saved = $this->seriesRepo->save($data);
+
         return $saved->toArray();
     }
 
     public function updateSeries(int $seriesId, array $data): array
     {
         $series = $this->seriesRepo->findById($seriesId);
-        if (!$series) {
-            throw new \RuntimeException("Series not found: {$seriesId}");
+        if (! $series) {
+            throw SeriesNotFoundException::forId($seriesId);
         }
 
         $updateData = [];
@@ -79,26 +81,29 @@ class VideoSeriesService
         }
 
         $updated = $this->seriesRepo->update($series, $updateData);
+
         return $updated->toArray();
     }
 
     public function getSeries(int $seriesId): ?array
     {
         $series = $this->seriesRepo->findById($seriesId);
+
         return $series?->toArray();
     }
 
     public function getSeriesBySlug(string $slug): ?array
     {
         $series = $this->seriesRepo->findBySlug($slug);
+
         return $series?->toArray();
     }
 
     public function publishSeries(int $seriesId): void
     {
         $series = $this->seriesRepo->findById($seriesId);
-        if (!$series) {
-            throw new \RuntimeException("Series not found: {$seriesId}");
+        if (! $series) {
+            throw SeriesNotFoundException::forId($seriesId);
         }
 
         $entity = VideoSeriesEntity::reconstitute([
@@ -129,8 +134,8 @@ class VideoSeriesService
     public function unpublishSeries(int $seriesId): void
     {
         $series = $this->seriesRepo->findById($seriesId);
-        if (!$series) {
-            throw new \RuntimeException("Series not found: {$seriesId}");
+        if (! $series) {
+            throw SeriesNotFoundException::forId($seriesId);
         }
 
         $entity = VideoSeriesEntity::reconstitute([
@@ -161,8 +166,8 @@ class VideoSeriesService
     public function deleteSeries(int $seriesId): void
     {
         $series = $this->seriesRepo->findById($seriesId);
-        if (!$series) {
-            throw new \RuntimeException("Series not found: {$seriesId}");
+        if (! $series) {
+            throw SeriesNotFoundException::forId($seriesId);
         }
 
         $videos = $this->videoRepo->findBySeries($seriesId);
@@ -176,12 +181,12 @@ class VideoSeriesService
     public function reorderEpisodes(int $seriesId, array $episodes): void
     {
         $series = $this->seriesRepo->findById($seriesId);
-        if (!$series) {
-            throw new \RuntimeException("Series not found: {$seriesId}");
+        if (! $series) {
+            throw SeriesNotFoundException::forId($seriesId);
         }
 
         foreach ($episodes as $episode) {
-            if (!isset($episode['video_id'])) {
+            if (! isset($episode['video_id'])) {
                 throw new \InvalidArgumentException('Each episode must specify a video_id');
             }
 
@@ -193,7 +198,7 @@ class VideoSeriesService
                 $updateData['episode_number'] = (int) $episode['episode_number'];
             }
 
-            if (!empty($updateData)) {
+            if (! empty($updateData)) {
                 $video = $this->videoRepo->findById((int) $episode['video_id']);
                 if ($video) {
                     $this->videoRepo->update($video, $updateData);
@@ -204,22 +209,22 @@ class VideoSeriesService
 
     public function getAllSeries(array $filters = [], int $page = 1, int $perPage = 20): array
     {
-        if (!empty($filters)) {
+        if (! empty($filters)) {
             $query = $this->seriesRepo->query();
 
-            if (!empty($filters['search'])) {
+            if (! empty($filters['search'])) {
                 $term = $filters['search'];
                 $query->where(function ($q) use ($term) {
                     $q->where('title', 'like', "%{$term}%")
-                      ->orWhere('description', 'like', "%{$term}%");
+                        ->orWhere('description', 'like', "%{$term}%");
                 });
             }
 
-            if (!empty($filters['series_type'])) {
+            if (! empty($filters['series_type'])) {
                 $query->where('series_type', $filters['series_type']);
             }
 
-            if (!empty($filters['creator_id'])) {
+            if (! empty($filters['creator_id'])) {
                 $query->where('creator_id', $filters['creator_id']);
             }
 

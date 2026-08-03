@@ -12,6 +12,7 @@ class ProviderVideoResponse
         public ?int $fileSize = null,
         public ?string $resolution = null,
         public string $status = 'ready',
+        public ?string $error = null,
         public array $metadata = []
     ) {}
 
@@ -25,6 +26,7 @@ class ProviderVideoResponse
             fileSize: $data['file_size'] ?? $data['fileSize'] ?? null,
             resolution: $data['resolution'] ?? null,
             status: $data['status'] ?? 'ready',
+            error: $data['error'] ?? null,
             metadata: $data['metadata'] ?? []
         );
     }
@@ -39,6 +41,7 @@ class ProviderVideoResponse
             'file_size' => $this->fileSize,
             'resolution' => $this->resolution,
             'status' => $this->status,
+            'error' => $this->error,
             'metadata' => $this->metadata,
         ];
     }

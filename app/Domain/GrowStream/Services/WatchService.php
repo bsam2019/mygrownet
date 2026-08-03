@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\GrowStream\Services;
 
-use App\Domain\GrowStream\Entities\WatchHistory;
 use App\Domain\GrowStream\Entities\Video as VideoEntity;
+use App\Domain\GrowStream\Entities\WatchHistory;
+use App\Domain\GrowStream\Exceptions\InsufficientAccessException;
+use App\Domain\GrowStream\Exceptions\VideoNotAvailableException;
+use App\Domain\GrowStream\Exceptions\VideoNotFoundException;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoViewRepositoryInterface;
 use App\Domain\GrowStream\Repositories\WatchHistoryRepositoryInterface;
@@ -25,18 +28,18 @@ class WatchService
     public function authorizePlayback(int $videoId, int $userId, ?string $ip = null, ?string $userAgent = null): array
     {
         $eloquentVideo = $this->videoRepo->findById($videoId);
-        if (!$eloquentVideo) {
-            throw new \RuntimeException('Video not found');
+        if (! $eloquentVideo) {
+            throw VideoNotFoundException::notFound();
         }
 
         $video = VideoEntity::reconstitute($eloquentVideo->toArray());
 
-        if (!$video->isPublished() || $video->uploadStatus() !== UploadStatus::Ready) {
-            throw new \RuntimeException('Video is not available for playback');
+        if (! $video->isPublished() || $video->uploadStatus() !== UploadStatus::Ready) {
+            throw VideoNotAvailableException::notPublished();
         }
 
-        if (!$video->canBeAccessedBy('free')) {
-            throw new \RuntimeException('Access denied');
+        if (! $video->canBeAccessedBy('free')) {
+            throw InsufficientAccessException::accessDenied();
         }
 
         $deviceType = $userAgent !== null ? self::detectDeviceType($userAgent) : null;
@@ -119,7 +122,7 @@ class WatchService
         }
 
         $eloquent = $this->videoRepo->findById($videoId);
-        if (!$eloquent) {
+        if (! $eloquent) {
             return false;
         }
 

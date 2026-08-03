@@ -2,27 +2,38 @@
 
 namespace App\Domain\GrowStream;
 
+use App\Domain\Core\Services\ModuleDiscovery;
+use App\Domain\Core\ValueObjects\ModuleManifest;
 use App\Domain\GrowStream\Infrastructure\Events\VideoProcessingCompleted;
 use App\Domain\GrowStream\Infrastructure\Events\VideoProcessingFailed;
 use App\Domain\GrowStream\Infrastructure\Events\VideoUploaded;
 use App\Domain\GrowStream\Infrastructure\Listeners\HandleVideoUpload;
 use App\Domain\GrowStream\Infrastructure\Listeners\NotifyVideoProcessingCompleted;
 use App\Domain\GrowStream\Infrastructure\Listeners\NotifyVideoProcessingFailed;
+use App\Domain\GrowStream\Infrastructure\Providers\CloudflareStreamProvider;
 use App\Domain\GrowStream\Infrastructure\Providers\DigitalOceanSpacesProvider;
-use App\Domain\GrowStream\Infrastructure\Providers\VideoProviderInterface;
 use App\Domain\GrowStream\Infrastructure\Providers\VideoProviderFactory;
+use App\Domain\GrowStream\Infrastructure\Providers\VideoProviderInterface;
+use App\Domain\GrowStream\Presentation\Console\Commands\AggregateAnalyticsCommand;
+use App\Domain\GrowStream\Presentation\Console\Commands\CleanupOldAnalyticsCommand;
+use App\Domain\GrowStream\Presentation\Console\Commands\GrowStreamStatsCommand;
+use App\Domain\GrowStream\Presentation\Console\Commands\ProcessPendingVideosCommand;
 use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoCategoryRepositoryInterface;
-use App\Domain\Core\ValueObjects\ModuleManifest;
-use App\Domain\Core\Services\ModuleDiscovery;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoSeriesRepositoryInterface;
+use App\Domain\GrowStream\Repositories\VideoTagRepositoryInterface;
+use App\Domain\GrowStream\Repositories\VideoViewRepositoryInterface;
 use App\Domain\GrowStream\Repositories\WatchHistoryRepositoryInterface;
+use App\Domain\GrowStream\Repositories\WatchlistRepositoryInterface;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorProfileRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoCategoryRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoSeriesRepository;
+use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoTagRepository;
+use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoViewRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentWatchHistoryRepository;
+use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentWatchlistRepository;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
@@ -46,7 +57,11 @@ class GrowStreamServiceProvider extends ServiceProvider
 
         // Register specific providers
         $this->app->singleton(DigitalOceanSpacesProvider::class, function ($app) {
-            return new DigitalOceanSpacesProvider();
+            return new DigitalOceanSpacesProvider;
+        });
+
+        $this->app->singleton(CloudflareStreamProvider::class, function ($app) {
+            return new CloudflareStreamProvider;
         });
 
         // Register repository bindings
@@ -55,6 +70,9 @@ class GrowStreamServiceProvider extends ServiceProvider
         $this->app->bind(VideoCategoryRepositoryInterface::class, EloquentVideoCategoryRepository::class);
         $this->app->bind(CreatorProfileRepositoryInterface::class, EloquentCreatorProfileRepository::class);
         $this->app->bind(WatchHistoryRepositoryInterface::class, EloquentWatchHistoryRepository::class);
+        $this->app->bind(WatchlistRepositoryInterface::class, EloquentWatchlistRepository::class);
+        $this->app->bind(VideoViewRepositoryInterface::class, EloquentVideoViewRepository::class);
+        $this->app->bind(VideoTagRepositoryInterface::class, EloquentVideoTagRepository::class);
     }
 
     /**
@@ -71,7 +89,7 @@ class GrowStreamServiceProvider extends ServiceProvider
         ], 'growstream-config');
 
         // Load API routes
-        $this->loadRoutesFrom(__DIR__ . '/Presentation/routes/api.php');
+        $this->loadRoutesFrom(__DIR__.'/Presentation/routes/api.php');
         // Web routes are loaded from routes/growstream.php (bootstrap/app.php)
         // to support both main-domain (/growstream) and subdomain (growstream.mygrownet.com)
         // $this->loadRoutesFrom(__DIR__ . '/Presentation/routes/web.php');
@@ -82,10 +100,10 @@ class GrowStreamServiceProvider extends ServiceProvider
         // Register console commands
         if ($this->app->runningInConsole()) {
             $this->commands([
-                \App\Domain\GrowStream\Presentation\Console\Commands\AggregateAnalyticsCommand::class,
-                \App\Domain\GrowStream\Presentation\Console\Commands\ProcessPendingVideosCommand::class,
-                \App\Domain\GrowStream\Presentation\Console\Commands\CleanupOldAnalyticsCommand::class,
-                \App\Domain\GrowStream\Presentation\Console\Commands\GrowStreamStatsCommand::class,
+                AggregateAnalyticsCommand::class,
+                ProcessPendingVideosCommand::class,
+                CleanupOldAnalyticsCommand::class,
+                GrowStreamStatsCommand::class,
             ]);
         }
 

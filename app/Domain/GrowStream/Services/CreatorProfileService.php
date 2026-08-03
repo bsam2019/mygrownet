@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\GrowStream\Services;
 
 use App\Domain\GrowStream\Entities\CreatorProfile as CreatorProfileEntity;
+use App\Domain\GrowStream\Exceptions\CreatorNotFoundException;
 use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Domain\GrowStream\ValueObjects\CreatorTier;
@@ -16,10 +17,10 @@ class CreatorProfileService
         private ?VideoRepositoryInterface $videoRepo = null,
     ) {}
 
-    public function createProfile(int $userId, string $displayName, CreatorTier $tier = null, ?string $bio = null, ?string $avatarUrl = null): array
+    public function createProfile(int $userId, string $displayName, ?CreatorTier $tier = null, ?string $bio = null, ?string $avatarUrl = null): array
     {
         if ($this->repo->findByUserId($userId)) {
-            throw new \RuntimeException("Creator profile already exists for user {$userId}");
+            throw CreatorNotFoundException::alreadyExistsForUser($userId);
         }
 
         $tier = $tier ?? CreatorTier::Bronze;
@@ -49,14 +50,15 @@ class CreatorProfileService
         ];
 
         $saved = $this->repo->save($data);
+
         return $saved->toArray();
     }
 
     public function updateProfile(int $profileId, array $data): array
     {
         $profile = $this->repo->findById($profileId);
-        if (!$profile) {
-            throw new \RuntimeException("Creator profile not found: {$profileId}");
+        if (! $profile) {
+            throw CreatorNotFoundException::forId($profileId);
         }
 
         $updateData = [];
@@ -74,26 +76,29 @@ class CreatorProfileService
         }
 
         $updated = $this->repo->update($profile, $updateData);
+
         return $updated->toArray();
     }
 
     public function getProfile(int $profileId): ?array
     {
         $profile = $this->repo->findById($profileId);
+
         return $profile?->toArray();
     }
 
     public function getProfileByUserId(int $userId): ?array
     {
         $profile = $this->repo->findByUserId($userId);
+
         return $profile?->toArray();
     }
 
     public function verifyProfile(int $profileId): void
     {
         $profile = $this->repo->findById($profileId);
-        if (!$profile) {
-            throw new \RuntimeException("Creator profile not found: {$profileId}");
+        if (! $profile) {
+            throw CreatorNotFoundException::forId($profileId);
         }
 
         $entity = CreatorProfileEntity::reconstitute([
@@ -119,8 +124,8 @@ class CreatorProfileService
     public function unverifyProfile(int $profileId): void
     {
         $profile = $this->repo->findById($profileId);
-        if (!$profile) {
-            throw new \RuntimeException("Creator profile not found: {$profileId}");
+        if (! $profile) {
+            throw CreatorNotFoundException::forId($profileId);
         }
 
         $entity = CreatorProfileEntity::reconstitute([
@@ -146,8 +151,8 @@ class CreatorProfileService
     public function promoteTier(int $profileId, CreatorTier $newTier): void
     {
         $profile = $this->repo->findById($profileId);
-        if (!$profile) {
-            throw new \RuntimeException("Creator profile not found: {$profileId}");
+        if (! $profile) {
+            throw CreatorNotFoundException::forId($profileId);
         }
 
         $entity = CreatorProfileEntity::reconstitute([
@@ -173,8 +178,8 @@ class CreatorProfileService
     public function suspendProfile(int $profileId, string $reason, bool $unpublishVideos = false): void
     {
         $profile = $this->repo->findById($profileId);
-        if (!$profile) {
-            throw new \RuntimeException("Creator profile not found: {$profileId}");
+        if (! $profile) {
+            throw CreatorNotFoundException::forId($profileId);
         }
 
         $this->repo->update($profile, [
@@ -185,7 +190,7 @@ class CreatorProfileService
         if ($unpublishVideos && $this->videoRepo) {
             $videos = $this->videoRepo->findByCreator($profileId);
             $videoIds = $videos->pluck('id')->toArray();
-            if (!empty($videoIds)) {
+            if (! empty($videoIds)) {
                 $this->videoRepo->updateInBulk($videoIds, ['is_published' => false]);
             }
         }
@@ -194,8 +199,8 @@ class CreatorProfileService
     public function unsuspendProfile(int $profileId): void
     {
         $profile = $this->repo->findById($profileId);
-        if (!$profile) {
-            throw new \RuntimeException("Creator profile not found: {$profileId}");
+        if (! $profile) {
+            throw CreatorNotFoundException::forId($profileId);
         }
 
         $this->repo->update($profile, [
@@ -207,8 +212,8 @@ class CreatorProfileService
     public function updateLimits(int $profileId, array $limits): void
     {
         $profile = $this->repo->findById($profileId);
-        if (!$profile) {
-            throw new \RuntimeException("Creator profile not found: {$profileId}");
+        if (! $profile) {
+            throw CreatorNotFoundException::forId($profileId);
         }
 
         $updateData = [];
@@ -225,8 +230,8 @@ class CreatorProfileService
     public function recordStats(int $profileId, string $metric, int $count = 1): void
     {
         $profile = $this->repo->findById($profileId);
-        if (!$profile) {
-            throw new \RuntimeException("Creator profile not found: {$profileId}");
+        if (! $profile) {
+            throw CreatorNotFoundException::forId($profileId);
         }
 
         $entity = CreatorProfileEntity::reconstitute([

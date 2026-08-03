@@ -12,7 +12,7 @@ class VideoProviderFactory
 
         return match ($provider) {
             'digitalocean' => app(DigitalOceanSpacesProvider::class),
-            'cloudflare' => throw new \Exception('Cloudflare Stream provider not yet implemented'),
+            'cloudflare' => app(CloudflareStreamProvider::class),
             'local' => throw new \Exception('Local provider not yet implemented'),
             default => throw new InvalidArgumentException("Provider {$provider} not supported")
         };

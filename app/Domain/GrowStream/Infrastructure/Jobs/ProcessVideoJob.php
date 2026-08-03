@@ -18,7 +18,9 @@ class ProcessVideoJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
+
     public $timeout = 600; // 10 minutes
+
     public $backoff = [60, 300, 900]; // 1min, 5min, 15min
 
     /**
@@ -37,13 +39,14 @@ class ProcessVideoJob implements ShouldQueue
     {
         $video = Video::find($this->videoId);
 
-        if (!$video) {
-            Log::error("ProcessVideoJob: Video not found", ['video_id' => $this->videoId]);
+        if (! $video) {
+            Log::error('ProcessVideoJob: Video not found', ['video_id' => $this->videoId]);
+
             return;
         }
 
         try {
-            Log::info("ProcessVideoJob: Starting processing", ['video_id' => $this->videoId]);
+            Log::info('ProcessVideoJob: Starting processing', ['video_id' => $this->videoId]);
 
             // Update status to processing
             $video->update(['upload_status' => 'processing']);
@@ -52,7 +55,7 @@ class ProcessVideoJob implements ShouldQueue
             $provider = VideoProviderFactory::make($video->video_provider);
 
             // Check processing status from provider
-            $status = $provider->getStatus($video->provider_video_id);
+            $status = $provider->getVideo($video->provider_video_id);
 
             // Update video with latest information
             $video->update([
@@ -64,7 +67,7 @@ class ProcessVideoJob implements ShouldQueue
             ]);
 
             if ($status->status === 'ready') {
-                Log::info("ProcessVideoJob: Processing completed", ['video_id' => $this->videoId]);
+                Log::info('ProcessVideoJob: Processing completed', ['video_id' => $this->videoId]);
 
                 // Dispatch completion event
                 event(new VideoProcessingCompleted($video));
@@ -79,11 +82,11 @@ class ProcessVideoJob implements ShouldQueue
 
             } elseif ($status->status === 'processing') {
                 // Still processing, retry in 30 seconds
-                Log::info("ProcessVideoJob: Still processing, will retry", ['video_id' => $this->videoId]);
+                Log::info('ProcessVideoJob: Still processing, will retry', ['video_id' => $this->videoId]);
                 $this->release(30);
 
             } elseif ($status->status === 'failed') {
-                Log::error("ProcessVideoJob: Processing failed", [
+                Log::error('ProcessVideoJob: Processing failed', [
                     'video_id' => $this->videoId,
                     'error' => $status->error ?? 'Unknown error',
                 ]);
@@ -92,7 +95,7 @@ class ProcessVideoJob implements ShouldQueue
             }
 
         } catch (\Exception $e) {
-            Log::error("ProcessVideoJob: Exception occurred", [
+            Log::error('ProcessVideoJob: Exception occurred', [
                 'video_id' => $this->videoId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -114,7 +117,7 @@ class ProcessVideoJob implements ShouldQueue
      */
     public function failed(\Throwable $exception): void
     {
-        Log::error("ProcessVideoJob: Job failed permanently", [
+        Log::error('ProcessVideoJob: Job failed permanently', [
             'video_id' => $this->videoId,
             'error' => $exception->getMessage(),
         ]);
@@ -123,7 +126,7 @@ class ProcessVideoJob implements ShouldQueue
         if ($video) {
             $video->update([
                 'upload_status' => 'failed',
-                'processing_error' => 'Processing failed after multiple attempts: ' . $exception->getMessage(),
+                'processing_error' => 'Processing failed after multiple attempts: '.$exception->getMessage(),
             ]);
 
             event(new VideoProcessingFailed($video, $exception->getMessage()));

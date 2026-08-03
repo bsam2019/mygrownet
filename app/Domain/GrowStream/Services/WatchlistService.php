@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\GrowStream\Services;
 
+use App\Domain\GrowStream\Exceptions\WatchlistException;
 use App\Domain\GrowStream\Repositories\WatchlistRepositoryInterface;
 
 class WatchlistService
@@ -15,7 +16,7 @@ class WatchlistService
     public function addToWatchlist(int $userId, int $videoId, ?string $notes = null): array
     {
         if ($this->watchlistRepo->isInWatchlist($userId, $videoId)) {
-            throw new \RuntimeException('Video is already in your watchlist');
+            throw WatchlistException::alreadyAdded();
         }
 
         $watchlist = $this->watchlistRepo->addToWatchlist($userId, $videoId, $notes);
