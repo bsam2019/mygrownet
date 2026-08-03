@@ -10,6 +10,7 @@ use App\Domain\GrowStream\Exceptions\InsufficientAccessException;
 use App\Domain\GrowStream\Exceptions\VideoNotAvailableException;
 use App\Domain\GrowStream\Exceptions\VideoNotFoundException;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
+use App\Domain\GrowStream\Repositories\VideoSeriesRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoViewRepositoryInterface;
 use App\Domain\GrowStream\Repositories\WatchHistoryRepositoryInterface;
 use App\Domain\GrowStream\ValueObjects\AccessLevel;
@@ -26,6 +27,7 @@ class WatchService
         private VideoViewRepositoryInterface $viewRepo,
         private ?AccessControlService $accessControl = null,
         private ?RentalService $rentalService = null,
+        private ?VideoSeriesRepositoryInterface $seriesRepo = null,
     ) {}
 
     public function authorizePlayback(int $videoId, int $userId, ?string $ip = null, ?string $userAgent = null): array
@@ -131,11 +133,17 @@ class WatchService
     }
 
     /**
-     * A viewer may watch a video when their subscription tier covers it, or
-     * when they hold an active pay-per-view rental for the video.
+     * A viewer may watch a video when:
+     *  - it is a free episode of its series (episode_number <= free_episode_count),
+     *  - their subscription tier covers it, or
+     *  - they hold an active pay-per-view rental for the video.
      */
     protected function canAccessVideo(int $videoId, ?int $userId, VideoEntity $video): bool
     {
+        if ($this->isFreeEpisode($video)) {
+            return true;
+        }
+
         if ($video->canBeAccessedBy($this->resolveUserAccess($userId))) {
             return true;
         }
@@ -145,6 +153,30 @@ class WatchService
         }
 
         return false;
+    }
+
+    /**
+     * Free-first-episode rule (v3): episode 1 (up to the series'
+     * free_episode_count) plays without a subscription. Enforced here, at the
+     * server-side authorization step, not client-side only.
+     */
+    protected function isFreeEpisode(VideoEntity $video): bool
+    {
+        $episodeNumber = $video->episodeNumber();
+        if ($episodeNumber === null || $episodeNumber < 1) {
+            return false;
+        }
+
+        if ($this->seriesRepo === null) {
+            return false;
+        }
+
+        $series = $this->seriesRepo->findById($video->seriesId());
+        if ($series === null) {
+            return false;
+        }
+
+        return $episodeNumber <= (int) ($series->free_episode_count ?? 1);
     }
 
     /**

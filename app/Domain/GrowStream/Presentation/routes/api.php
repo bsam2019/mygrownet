@@ -5,6 +5,7 @@ use App\Domain\GrowStream\Presentation\Http\Controllers\Api\SeriesController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Api\WatchController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Api\CategoryController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Api\MetricsController;
+use App\Domain\GrowStream\Presentation\Http\Controllers\Api\AttributionController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoManagementController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Admin\SeriesManagementController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Admin\AnalyticsController;
@@ -25,8 +26,13 @@ Route::prefix('api/v1/growstream')->name('api.growstream.')->group(function () {
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
     Route::get('/categories/{slug}/videos', [CategoryController::class, 'videos'])->name('categories.videos');
 
+    // Attribution (public resolve; convert is authed)
+    Route::post('/attribution/resolve', [AttributionController::class, 'resolve'])->name('attribution.resolve');
+
     // Authenticated routes
     Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/attribution/convert', [AttributionController::class, 'convert'])->name('attribution.convert');
+
         Route::post('/watch/authorize', [WatchController::class, 'authorize'])->name('watch.authorize');
         Route::post('/watch/progress', [WatchController::class, 'updateProgress'])->name('watch.progress');
         Route::get('/watch/history', [WatchController::class, 'history'])->name('watch.history');

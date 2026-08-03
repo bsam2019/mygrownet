@@ -11,6 +11,7 @@ use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoSeriesRepositoryInterface;
 use App\Domain\Core\Contracts\MyGrowIdentity;
+use App\Domain\GrowStream\Services\AttributionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -22,6 +23,7 @@ class GrowStreamWebController
         private VideoRepositoryInterface $videoRepo,
         private VideoSeriesRepositoryInterface $seriesRepo,
         private MyGrowIdentity $identity,
+        private ?AttributionService $attribution = null,
     ) {}
 
     public function redirectToLogin(Request $request): RedirectResponse
@@ -306,6 +308,49 @@ class GrowStreamWebController
             'creators' => $creators,
             'categories' => $categories,
             'trending' => $trending,
+        ]);
+    }
+
+    public function channel(string $slug, Request $request): Response
+    {
+        $creator = CreatorProfile::with('user')
+            ->where('is_active', true)
+            ->where(function ($q) use ($slug) {
+                $q->where('channel_slug', $slug)
+                  ->orWhere('id', (int) $slug);
+            })
+            ->first();
+
+        if (!$creator) {
+            abort(404);
+        }
+
+        if ($this->attribution !== null) {
+            $source = $request->query('src');
+            $session = $this->attribution->newSessionId();
+            $this->attribution->resolve((int) $creator->id, is_string($source) ? $source : null, $session);
+        }
+
+        $videos = $this->videoRepo->query()
+            ->published()
+            ->where('creator_id', $creator->id)
+            ->with(['categories', 'tags'])
+            ->latest('published_at')
+            ->take(24)
+            ->get();
+
+        $series = $this->seriesRepo->query()
+            ->where('creator_id', $creator->id)
+            ->where('is_published', true)
+            ->with('videos')
+            ->latest()
+            ->take(12)
+            ->get();
+
+        return Inertia::render('GrowStream/CreatorProfile', [
+            'creator' => $creator,
+            'videos' => $videos,
+            'series' => $series,
         ]);
     }
 

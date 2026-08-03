@@ -35,7 +35,9 @@ use App\Domain\GrowStream\Repositories\VideoTagRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoViewRepositoryInterface;
 use App\Domain\GrowStream\Repositories\WatchHistoryRepositoryInterface;
 use App\Domain\GrowStream\Repositories\WatchlistRepositoryInterface;
+use App\Domain\GrowStream\Repositories\AttributionLinkRepositoryInterface;
 use App\Domain\GrowStream\Services\AccessControlService;
+use App\Domain\GrowStream\Services\AttributionService;
 use App\Domain\GrowStream\Services\CreatorSubscriptionService;
 use App\Domain\GrowStream\Services\NotificationService;
 use App\Domain\GrowStream\Services\PayoutService;
@@ -53,6 +55,7 @@ use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorTipRep
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentSponsorshipGrantRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoRentalRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoRepository;
+use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentAttributionLinkRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoSeriesRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoTagRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoViewRepository;
@@ -104,10 +107,12 @@ class GrowStreamServiceProvider extends ServiceProvider
         $this->app->bind(CreatorTipRepositoryInterface::class, EloquentCreatorTipRepository::class);
         $this->app->bind(VideoRentalRepositoryInterface::class, EloquentVideoRentalRepository::class);
         $this->app->bind(SponsorshipGrantRepositoryInterface::class, EloquentSponsorshipGrantRepository::class);
+        $this->app->bind(AttributionLinkRepositoryInterface::class, EloquentAttributionLinkRepository::class);
 
         $this->app->singleton(AccessControlService::class);
         $this->app->singleton(RentalService::class);
         $this->app->singleton(CreatorSubscriptionService::class);
+        $this->app->singleton(AttributionService::class);
         $this->app->singleton(NotificationService::class);
         $this->app->singleton(TipService::class);
         $this->app->singleton(RevenuePoolService::class);
@@ -124,6 +129,7 @@ class GrowStreamServiceProvider extends ServiceProvider
                 $app->make(VideoViewRepositoryInterface::class),
                 $app->make(AccessControlService::class),
                 $app->make(RentalService::class),
+                $app->make(VideoSeriesRepositoryInterface::class),
             );
         });
     }

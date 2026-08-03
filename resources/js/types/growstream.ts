@@ -49,6 +49,7 @@ export interface VideoSeries {
     access_level: 'free' | 'basic' | 'premium' | 'institutional';
     total_seasons: number;
     total_episodes: number;
+    free_episode_count?: number;
     poster_url?: string;
     trailer_url?: string;
     release_year?: number;
@@ -111,6 +112,7 @@ export interface CreatorProfile {
     user_id: number;
     channel_name?: string;
     display_name: string;
+    channel_slug?: string;
     bio?: string;
     avatar_url?: string;
     banner_url?: string;

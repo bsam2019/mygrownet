@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class CreatorProfile extends Model
 {
@@ -18,6 +19,7 @@ class CreatorProfile extends Model
         'user_id',
         'channel_name',
         'display_name',
+        'channel_slug',
         'bio',
         'avatar_url',
         'banner_url',
@@ -88,6 +90,15 @@ class CreatorProfile extends Model
     }
 
     // Helper Methods
+    public function channelUrl(?string $source = null): string
+    {
+        $slug = $this->channel_slug ?: Str::slug($this->display_name ?: (string) $this->id);
+
+        return $source
+            ? "/c/{$slug}?src=".urlencode($source)
+            : "/c/{$slug}";
+    }
+
     public function canUploadMore(): bool
     {
         if (! $this->can_upload || ! $this->is_active) {

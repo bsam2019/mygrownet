@@ -148,6 +148,12 @@
                             <div class="absolute bottom-1 right-1 rounded bg-black/80 px-1 text-xs text-white">
                                 {{ formatDuration(episode.duration) }}
                             </div>
+                            <div
+                                v-if="isFreeEpisode(episode)"
+                                class="absolute left-1 top-1 rounded bg-[var(--gs-accent)] px-1.5 py-0.5 text-[11px] font-semibold text-[#1a1608]"
+                            >
+                                Free
+                            </div>
                             <!-- Progress bar -->
                             <div v-if="getWatchProgress(episode.id) > 0" class="absolute bottom-0 left-0 right-0 h-1 bg-[var(--gs-border)]">
                                 <div :style="{ width: `${getWatchProgress(episode.id)}%` }" class="gs-progress-fill"></div>
@@ -212,6 +218,11 @@ const filteredEpisodes = computed(() => {
         .filter((v) => v.season_number === selectedSeason.value)
         .sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
 });
+
+const isFreeEpisode = (episode: { episode_number?: number }): boolean => {
+    const freeCount = props.series.free_episode_count ?? 1;
+    return (episode.episode_number ?? 0) <= freeCount;
+};
 
 const getWatchProgress = (videoId: number): number => {
     return props.watchProgress?.[videoId] || 0;

@@ -86,6 +86,7 @@ $registerGrowStreamPublicRoutes = function (string $prefix, string $namePrefix) 
         Route::get('/', [GrowStreamWebController::class, 'home'])->name('home');
         Route::get('/browse', [GrowStreamWebController::class, 'browse'])->name('browse');
         Route::get('/search', [GrowStreamWebController::class, 'search'])->name('search');
+        Route::get('/c/{slug}', [GrowStreamWebController::class, 'channel'])->name('channel');
         Route::get('/channel/{slug}', [GrowStreamWebController::class, 'creatorProfile'])->name('creator.profile');
         Route::get('/video/{slug}', [GrowStreamWebController::class, 'videoDetail'])->name('video.detail');
         Route::get('/series/{slug}', [GrowStreamWebController::class, 'seriesDetail'])->name('series.detail');

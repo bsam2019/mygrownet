@@ -51,6 +51,16 @@
                             <span v-if="creator.creator_tier" class="gs-chip gs-chip-accent">
                                 {{ tierLabel(creator.creator_tier) }}
                             </span>
+                            <button
+                                class="gs-btn gs-btn-outline"
+                                :aria-label="'Copy share link for ' + (creator.display_name || 'this creator')"
+                                @click="copyShareLink"
+                            >
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 010 5.656l-4 4a4 4 0 01-5.656-5.656l1.5-1.5m5.313-2.344a4 4 0 00-5.656 0l-4 4a4 4 0 005.656 5.656l1.5-1.5M16 12l4-4a4 4 0 00-5.656-5.656l-1.5 1.5" />
+                                </svg>
+                                {{ copied ? 'Copied!' : 'Copy Link' }}
+                            </button>
                             <Link
                                 v-if="creator.website_url"
                                 :href="creator.website_url"
@@ -118,6 +128,7 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import GrowStreamLayout from '@/Layouts/GrowStreamLayout.vue';
 import VideoGrid from '@/Components/GrowStream/VideoGrid.vue';
@@ -129,11 +140,69 @@ interface Props {
     series?: VideoSeries[];
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
     creator: undefined,
     videos: () => [],
     series: () => [],
 });
+
+const copied = ref(false);
+
+// Silent attribution: capture ?src= on landing (tracking-only in Phase 1).
+onMounted(() => {
+    const creator = props.creator;
+    if (!creator?.id) return;
+
+    const url = new URL(window.location.href);
+    const source = url.searchParams.get('src');
+    if (!source) return;
+
+    let session = '';
+    try {
+        session = localStorage.getItem('gs_attribution_session') ?? '';
+    } catch {
+        session = '';
+    }
+
+    fetch('/api/v1/growstream/attribution/resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+            creator_id: creator.id,
+            source,
+            visitor_session_id: session || undefined,
+        }),
+    })
+        .then((r) => r.json())
+        .then((data) => {
+            if (data?.visitor_session_id && !session) {
+                try {
+                    localStorage.setItem('gs_attribution_session', data.visitor_session_id);
+                } catch {
+                    // ignore
+                }
+            }
+        })
+        .catch(() => {
+            // silent — attribution must never break the page
+        });
+});
+
+const copyShareLink = async () => {
+    const creator = props.creator;
+    if (!creator) return;
+
+    const slug = creator.channel_slug || creator.id;
+    const shareUrl = `${window.location.origin}/c/${slug}`;
+
+    try {
+        await navigator.clipboard.writeText(shareUrl);
+        copied.value = true;
+        setTimeout(() => (copied.value = false), 2000);
+    } catch {
+        copied.value = false;
+    }
+};
 
 const formatViews = (views: number): string => {
     if (views >= 1000000) {

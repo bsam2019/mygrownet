@@ -27,6 +27,7 @@ class VideoSeries extends Model
         'trailer_video_id',
         'total_seasons',
         'total_episodes',
+        'free_episode_count',
         'series_type',
         'is_ongoing',
         'next_episode_date',
@@ -43,6 +44,7 @@ class VideoSeries extends Model
         'is_published' => 'boolean',
         'next_episode_date' => 'date',
         'published_at' => 'datetime',
+        'free_episode_count' => 'integer',
     ];
 
     protected static function boot()
@@ -111,6 +113,16 @@ class VideoSeries extends Model
             ->distinct()
             ->orderBy('season_number')
             ->pluck('season_number');
+    }
+
+    public function isFreeEpisode(int $episodeNumber): bool
+    {
+        $freeCount = (int) ($this->free_episode_count ?? 1);
+        if ($freeCount < 1) {
+            $freeCount = 1;
+        }
+
+        return $episodeNumber <= $freeCount;
     }
 
     public function updateEpisodeCount(): void
