@@ -55,6 +55,29 @@ test('creator profile builds shareable channel url', function () {
         ->and($creator->channelUrl())->toBe('/c/'.$creator->channel_slug);
 });
 
+test('channel slug is auto-generated on create and unique', function () {
+    $user1 = User::factory()->create();
+    $creator1 = CreatorProfile::create([
+        'user_id' => $user1->id,
+        'display_name' => 'Auto Slug',
+        'status' => 'approved',
+        'is_active' => true,
+    ]);
+
+    $user2 = User::factory()->create();
+    $creator2 = CreatorProfile::create([
+        'user_id' => $user2->id,
+        'display_name' => 'Auto Slug',
+        'status' => 'approved',
+        'is_active' => true,
+    ]);
+
+    expect($creator1->channel_slug)->not->toBeNull()
+        ->and($creator2->channel_slug)->not->toBeNull()
+        ->and($creator1->channel_slug)->not->toBe($creator2->channel_slug)
+        ->and($creator1->channelUrl())->toBe('/c/'.$creator1->channel_slug);
+});
+
 test('attribution resolve deduplicates per session', function () {
     $creator = makeCreatorChannel();
     $service = app(AttributionService::class);

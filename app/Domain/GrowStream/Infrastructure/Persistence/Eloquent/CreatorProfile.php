@@ -57,6 +57,31 @@ class CreatorProfile extends Model
         'pending_payout' => 'decimal:2',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function (CreatorProfile $profile) {
+            if (empty($profile->channel_slug)) {
+                $profile->channel_slug = static::generateUniqueChannelSlug(
+                    $profile->channel_name ?: $profile->display_name ?: 'creator'
+                );
+            }
+        });
+    }
+
+    public static function generateUniqueChannelSlug(string $name): string
+    {
+        $base = Str::slug($name) ?: 'creator';
+        $slug = $base;
+
+        while (static::where('channel_slug', $slug)->exists()) {
+            $slug = $base.'-'.Str::lower(Str::random(4));
+        }
+
+        return $slug;
+    }
+
     // Relationships
     public function user(): BelongsTo
     {
