@@ -61,6 +61,24 @@ const navItems = [
     { label: 'Profile', href: () => route('growstream.my-videos'), icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
 ];
 
+// Current path (pathname + search) so identity login returns the user to the
+// page they were on. Only used for guest actions.
+const redirectQuery = computed(() => {
+    if (typeof window === 'undefined') return '';
+    const { pathname, search } = window.location;
+    return `${pathname}${search}`;
+});
+
+const loginHref = computed(() => {
+    const base = route('growstream.login');
+    return redirectQuery.value ? `${base}?redirect=${encodeURIComponent(redirectQuery.value)}` : base;
+});
+
+const registerHref = computed(() => {
+    const base = route('growstream.register');
+    return redirectQuery.value ? `${base}?redirect=${encodeURIComponent(redirectQuery.value)}` : base;
+});
+
 const logout = () => {
     router.post('/logout');
 };

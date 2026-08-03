@@ -24,16 +24,16 @@ class GrowStreamWebController
         private MyGrowIdentity $identity,
     ) {}
 
-    public function redirectToLogin(): RedirectResponse
+    public function redirectToLogin(Request $request): RedirectResponse
     {
-        $returnUrl = route('growstream.home');
+        $returnUrl = $this->resolveReturnUrl($request);
 
         return redirect()->away($this->identity->redirectToLogin($returnUrl));
     }
 
-    public function redirectToRegister(): RedirectResponse
+    public function redirectToRegister(Request $request): RedirectResponse
     {
-        $returnUrl = route('growstream.home');
+        $returnUrl = $this->resolveReturnUrl($request);
         $registerUrl = config('platform.identity.register_url', 'https://auth.mygrownet.com/register');
         $expires = time() + config('platform.identity.return_url_ttl', 300);
         $signature = hash_hmac('sha256', $returnUrl . '|' . $expires, config('platform.identity.signing_key') ?? '');
@@ -44,6 +44,48 @@ class GrowStreamWebController
             . '&expires=' . $expires
             . '&signature=' . $signature
         );
+    }
+
+    /**
+     * Determine where the user returns after identity login/register.
+     * Prefers the page they were on (passed as ?redirect=), validated to the
+     * GrowStream host to prevent open-redirect; falls back to the GrowStream home.
+     */
+    private function resolveReturnUrl(Request $request): string
+    {
+        $fallback = route('growstream.home');
+
+        $redirect = $request->query('redirect');
+        if (!is_string($redirect) || $redirect === '') {
+            return $fallback;
+        }
+
+        $parts = parse_url($redirect);
+        $host = $parts['host'] ?? null;
+        $path = $parts['path'] ?? null;
+
+        if ($host !== null) {
+            $allowed = config('platform.identity.allowed_return_hosts', ['*.mygrownet.com']);
+            $hostOk = false;
+            foreach ($allowed as $pattern) {
+                if (fnmatch($pattern, $host)) {
+                    $hostOk = true;
+                    break;
+                }
+            }
+            if (!$hostOk) {
+                return $fallback;
+            }
+        }
+
+        // Only allow paths relative to GrowStream's own surface, never the root.
+        if ($path === null || $path === '' || $path === '/') {
+            return $fallback;
+        }
+
+        $query = isset($parts['query']) ? '?' . $parts['query'] : '';
+
+        return url($path . $query);
     }
 
     public function home(): Response
