@@ -175,35 +175,34 @@
 
 ---
 
-### 9. **CREATOR_CHANNELS_STRATEGIC_PLAN.md** (v2 Strategic Spec)
-**Purpose:** Creator Channels & Series — the core product strategy that makes GrowStream a distribution + monetization layer for Zambian creators, not just a video host
+### 9. **CREATOR_CHANNELS_STRATEGIC_PLAN.md** (v3 Strategic Spec)
+**Purpose:** Creator Channels & Series — reconciled against the Phase 1 UI Plan; scopes the feature to additive work (free-first-episode paywall, shareable attribution-aware profile URL, silent attribution tracking) and defers the v2 ambition to a labeled Phase 3 candidate list
 **Audience:** Stakeholders, PMs, architects
-**Format:** Strategic spec (v2.0, Aug 2026) — supersedes the earlier creator-series draft
+**Format:** Strategic spec (v3.0, Aug 2026) — supersedes v1/v2 drafts
 
 **Key Contents:**
-- Strategic framing + the creator → social → channel → subscribe → earn loop
-- Core structural change: the permanent **Creator Channel** (series/movies/specials/music/promo all inside it)
-- Vetting vs. content review separated (creator vetted once; every production reviewed independently)
-- Data model (`creator_channels`, `productions`, `seasons`, `episodes`, `promo_assets`, `channel_follows`, `attribution_links`)
-- API surface, channel-aware paywall, creator dashboard analytics
-- Revised 3-phase build plan + resolved/open decisions
+- What already exists (Creator Profile = the channel; trailer field in upload; studio dashboard)
+- The 3 additive Phase 1 behaviors (no new screens)
+- Flat UI-compliant data model (`productions`, `episodes`, `attribution_events`)
+- Free-first-episode paywall logic slotted into the existing subscribe flow
+- Explicitly deferred Phase 3 candidates + revised open decisions
 
-**When to Read:** Before building channels/series; strategic companion to the implementation plan
+**When to Read:** Before building channels/series; keeps MVP scope honest vs. the UI Plan
 
 ---
 
 ### 10. **CREATOR_CHANNELS_IMPLEMENTATION_PLAN.md** (Channels & Series Build Plan)
-**Purpose:** Concrete engineering plan for the Creator Channels addition
+**Purpose:** Concrete engineering plan for the v3-scoped Creator Channels addition
 **Audience:** Backend/frontend developers, tech lead
-**Format:** Phase-by-phase build plan (v1.0, Aug 2026), grounded in the completed GrowStream codebase
+**Format:** Phase-by-phase build plan (v2.0, Aug 2026), grounded in the completed GrowStream codebase + v3 spec
 
 **Key Contents:**
-- Reuse map: what's already built (Cloudflare upload + tus, Tier-1 vetting, moderation, payouts, paywall)
-- 9 phases (CC1–CC9): migrations → domain/repos → services → API → admin review → creator UI → viewer channels → attribution tracking → dashboard analytics
-- DDD conventions, subdomain route-name guard, dark-theme UI reuse
-- Open questions + default assumptions, success criteria
+- Reuse map (upload/tus, Creator Profile as channel, single-tier paywall, studio dashboard, notifications)
+- 7 phases (CC1–CC7): flat migrations → domain/repos → services + paywall rule → minimal API → existing-screen frontend → silent attribution → tests
+- Explicitly deferred Phase 3 candidate list (from v3 §5)
+- Open decisions + defaults, success criteria
 
-**When to Read:** Before starting any channels/series build work; companion to the strategic spec
+**When to Read:** Before starting any channels/series build work; companion to the v3 strategic spec
 
 ---
 

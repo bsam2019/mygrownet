@@ -1,8 +1,8 @@
 # GrowStream — Creator Channels & Series Implementation Plan
 
-**Version:** 1.0
+**Version:** 2.0
 **Date:** August 2026
-**Based on:** `CREATOR_CHANNELS_STRATEGIC_PLAN.md` v2.0 + current codebase audit
+**Based on:** `CREATOR_CHANNELS_STRATEGIC_PLAN.md` v3.0 (reconciled with UI Plan Phase 1) + current codebase audit
 **Status:** Not started
 **Companion docs:** `PRODUCT_STRATEGIC_PLAN.md`, `IMPLEMENTATION_PLAN.md`, `UI_PLAN.md`
 
@@ -10,68 +10,70 @@
 
 ## Read This First
 
-This plan extends the **completed** GrowStream backend (Phases 1–4 in `IMPLEMENTATION_PLAN.md`: Cloudflare Stream provider, tiered creator vetting, self-service upload, moderation queue, watch-time payouts, creator subscriptions, tips, rentals, sponsorship) with the **Creator Channel model** from the v2 strategic spec.
+This plan implements **only what the v3 strategic spec scopes to Phase 1** — three additive behaviors layered onto the completed GrowStream backend, with **no new top-level screens, no navigation changes, and no new creator-facing UI**. The v2 ambition (seasons as structured entities, rich channel pages, creator-facing attribution dashboards) is explicitly deferred and listed in §7 so it isn't lost.
 
-The v2 spec's key structural change: **the Creator Channel is the permanent unit** — series, seasons, movies, specials, music, and promo clips all live inside one channel per Tier-1-verified creator. This plan treats that as the primary data model while reusing the existing upload/processing/payout pipeline unchanged where possible.
+**Phase 1 scope (all additive):**
+1. **Free-first-episode paywall** — episode 1 of a series plays without a subscription; the rest gate behind the existing subscribe flow.
+2. **Shareable, attribution-aware Creator Profile URL** — `growstream.co/c/{creator-slug}?src=facebook`; the profile page itself is unchanged.
+3. **Silent attribution tracking** — source/visitor-session/conversion logged from day one; not surfaced to creators yet.
 
-**Deliberately reused (no new work):**
+**Reused, not rebuilt:**
 - Cloudflare Stream upload pipeline (incl. tus for files >200MB)
-- Tier-1 creator vetting (`CreatorProfileService`, `growstream_creator_profiles.status`)
-- Video upload/processing/moderation (`growstream_videos.upload_status`, `moderation_status`, `ProcessVideoJob`)
+- Creator Profile page + follow/subscribe action (already the "channel" per UI Plan §5)
+- Upload metadata step (already has the single trailer field)
+- Single-tier subscription + paywall (`AccessControlService`, `WatchService`)
 - Watch-time revenue share / payouts (`growstream_creator_earnings`, `growstream_creator_payouts`)
-- Subscription/paywall gating (`AccessControlService`, `WatchService`)
+- Creator Studio Dashboard (already shows Views/Watch time/Earnings/status — no UI added here)
+- Platform notification system (Phase 3 follow/notify, if built)
 
 ---
 
 ## Current State Summary (relevant to this plan)
 
-| Area | Existing | Gap for channels |
+| Area | Existing | Phase 1 gap |
 |---|---|---|
-| Creator profiles | `growstream_creator_profiles` (status, tier, channel_name) | No permanent public channel object / slug / follows |
-| Series | `growstream_video_series` (title, slug, seasons count, episodes) | Not scoped to a channel; no per-production review status |
-| Episodes | `growstream_videos` (creator_id, series_id, season/episode number, upload + moderation status) | No `production_id`/free-flag attribution to a channel |
-| Promo | `growstream_videos` with content_type | No first-class trailer/clip objects tied to a production |
-| Follows | none | No channel follow table |
-| Attribution | MyGrowNet referral identity | No source-attribution (`?src=`) tracking for creator audiences |
+| Creator Profile (the "channel") | `growstream_creator_profiles` + Creator Profile page + follow/subscribe | A stable public `slug` for shareable URLs; attribution-aware link handling |
+| Content (movies/series) | `growstream_video_series` + `growstream_videos` (upload + moderation status, season/episode numbers) | A `free_episode_count` notion + `episode_number <= free` computation |
+| Paywall | `AccessControlService::canWatch()` (subscription-based) | Free-first-episode rule layered on top |
+| Attribution | MyGrowNet network-growth referral (different question/consumer) | `attribution_events` table + silent tracking |
 
 ---
 
-## Phase CC1 — Data Model & Migrations
+## Phase CC1 — Data Model & Migrations (flat, UI-compliant)
 
-New migrations live in `database/migrations/growstream/` (loaded by `GrowStreamServiceProvider`).
+New migrations in `database/migrations/growstream/` (loaded by `GrowStreamServiceProvider`). **SQLite-safe** (test DB runs `migrate:fresh`); follow the existing `id` bigint + `uuid` column convention for FK consistency (deliberate deviation from the spec's "uuid PK" for a mixed codebase).
 
 | Migration | Purpose |
 |---|---|
-| `2026_08_04_000001_create_creator_channels_table` | `creator_channels` per spec §4. One per Tier-1 verified creator. `slug` unique, `creator_id` unique FK. |
-| `2026_08_04_000002_create_productions_table` | `productions` per spec §4 — generic parent (series/movie/comedy_special/music_release) with `status` review enum + `free_episode_count` default 1. |
-| `2026_08_04_000003_create_production_seasons_table` | `production_seasons` (season_number, title) — replaces reliance on `growstream_video_series.total_seasons`. |
-| `2026_08_04_000004_add_production_columns_to_growstream_videos_table` | Add `production_id`, `production_season_id`, `episode_number` (nullable), `is_free` (bool) to existing `growstream_videos` — reuses upload pipeline. |
-| `2026_08_04_000005_create_promo_assets_table` | `promo_assets` (type trailer/clip/behind_the_scenes, `video_upload_id` FK to `growstream_videos`, `always_free` default true). |
-| `2026_08_04_000006_create_channel_follows_table` | `channel_follows` (channel_id, user_id, unique pair). |
-| `2026_08_04_000007_create_attribution_links_table` | `attribution_links` per spec §4 (source, short_code, visitor_session_id, converted_user_id, watch_minutes_attributed). |
+| `2026_08_04_000001_create_productions_table` | `productions` per v3 §3 — extends the content concept (movie/series), `free_episode_count` default 1. Not a replacement for `growstream_video_series`; it's the Phase 1 model for series-with-free-first-episode. |
+| `2026_08_04_000002_create_episodes_table` | `episodes` per v3 §3 — flat ordered list, `season_id` nullable **unpopulated** (reserved, never surfaced). `video_upload_id` FK → `growstream_videos`, reuses upload pipeline. |
+| `2026_08_04_000003_create_attribution_events_table` | `attribution_events` per v3 §3 — tracking only; `visitor_session_id` pre-auth, `converted_user_id` nullable, `watch_minutes_attributed`. |
+| `2026_08_04_000004_add_channel_slug_to_creator_profiles_table` | Add `channel_slug` (unique, nullable) to `growstream_creator_profiles` — the shareable `/c/{slug}` target. |
 
 **Design notes:**
-- `productions` uses a single generic table per the spec's resolved decision; movies/specials are `productions` with a single `growstream_videos` row and no season (mirrors the "episodes with season_id = null" approach via `production_season_id = null`).
-- `growstream_video_series` is kept for backwards-compat/legacy content but new channel content uses `productions` → `production_seasons` → `growstream_videos`. A `channel_id` FK is added to `growstream_video_series` in the same migration for legacy series tied to a channel.
-- All IDs follow the existing codebase convention (`id` bigint + `uuid` where a public slug/identity matters); the spec's uuid suggestion is honored for channel/production `uuid` columns while keeping `id` PKs consistent with every existing GrowStream table.
+- `is_free` is **computed**, not stored — `episode_number <= production.free_episode_count`.
+- `season_id` column exists but is **never populated or queried** in Phase 1; it's a forward-compat stub only.
+- No `promo_assets` table — the existing single trailer field in upload metadata covers Phase 1.
+- No `channel_follows` table change — the Creator Profile follow/subscribe already exists.
 
-**Acceptance:** `migrate` applies cleanly on MySQL and SQLite (test DB); FK graph matches spec §4.
+**Acceptance:** `migrate` applies on MySQL + SQLite; schema matches v3 §3; no new tables for seasons/promo/follows.
 
 ---
 
-## Phase CC2 — Domain Layer (entities, value objects, repositories)
+## Phase CC2 — Domain Layer
 
 Follow the existing DDD layout in `app/Domain/GrowStream/`.
 
 | Component | Notes |
 |---|---|
-| Entities | `CreatorChannel`, `Production`, `ProductionSeason`, `PromoAsset`, `ChannelFollow`, `AttributionLink` — rich entities mirroring the pattern used by `Video`, `VideoSeries` (private constructor, `create()`/`reconstitute()`, behavior methods, `toArray()`). |
-| Value objects | `ChannelSlug`, `ProductionType` (enum), `ProductionStatus` (enum), `PromoAssetType` (enum), `ReleaseCadence` (enum). |
-| Repository interfaces (11 new) | `CreatorChannelRepositoryInterface`, `ProductionRepositoryInterface`, `ProductionSeasonRepositoryInterface`, `PromoAssetRepositoryInterface`, `ChannelFollowRepositoryInterface`, `AttributionLinkRepositoryInterface` + queries for review queues and channel home feeds. |
-| Eloquent models | `CreatorChannelModel`, `ProductionModel`, `ProductionSeasonModel`, `PromoAssetModel`, `ChannelFollowModel`, `AttributionLinkModel` in `app/Domain/GrowStream/Infrastructure/Persistence/Eloquent/`. |
-| Eloquent repo impls | one per interface in `app/Infrastructure/Persistence/Repositories/GrowStream/`. |
+| Entities | `Production`, `Episode` — rich entities per the established `Video`/`VideoSeries` pattern (`create()`/`reconstitute()`, behavior methods, `toArray()`). |
+| Value objects | `ProductionType` (enum: movie, series). |
+| Repository interfaces | `ProductionRepositoryInterface`, `EpisodeRepositoryInterface`. |
+| Eloquent models | `ProductionModel`, `EpisodeModel` in `Infrastructure/Persistence/Eloquent/`. |
+| Eloquent repo impls | in `app/Infrastructure/Persistence/Repositories/GrowStream/`. |
+| `CreatorProfile` | add `channel_slug` fillable/cast; helper `channelUrl($source)` returning `/c/{slug}?src={source}`. |
 
-**Acceptance:** all interfaces bound in `GrowStreamServiceProvider`; container resolves each.
+**Acceptance:** interfaces bound in `GrowStreamServiceProvider`; container resolves each.
 
 ---
 
@@ -79,131 +81,102 @@ Follow the existing DDD layout in `app/Domain/GrowStream/`.
 
 | Service | Responsibility |
 |---|---|
-| `ChannelService` | `createChannel(creator, data)` (one per verified creator, post-Tier-1), `getBySlug`, `isFollowing`, `follow`/`unfollow`, channel home payload. |
-| `ProductionService` | `applyToPublish(production)` → status `pending_review`; `reviewDecision(production, approve/reject/needs-info)` with reason; enforces rights declaration. Separates creator trust from per-production review. |
-| `PromoService` | add trailer/clip/behind-the-scenes under a production; `always_free` default true. |
-| `AttributionService` | resolve `?src=`/short_code on landing → create `attribution_links` with `visitor_session_id`; bind `converted_user_id` on sign-up/subscription; accumulate `watch_minutes_attributed` from watch events. |
-| `ChannelAnalyticsService` | source breakdown, conversions, watch-time per channel (Phase 2 dashboard data). |
+| `ProductionService` | create production (movie/series), attach episodes, `isFreeEpisode(episode)` = `episode_number <= free_episode_count`, moderation passthrough (reuses existing video moderation). |
+| `AttributionService` | `resolve(source, visitorSessionId)` → insert `attribution_events`; `recordConversion(visitorSessionId, userId)` on sign-up/subscription; `accumulateWatchMinutes(eventId, minutes)` from watch events. Silent — no read API in Phase 1. |
 
-Reuse `VideoManagementService` for upload/moderation and `WatchService` for the paywall.
+**Paywall:** extend `AccessControlService::canWatch()` to consult `ProductionService::isFreeEpisode()` before the subscription check (per v3 §4). Enforcement stays server-side at the Cloudflare signed-URL step.
 
-**Acceptance:** unit-testable; no Eloquent imports in services beyond the established data-service boundary.
+**Acceptance:** unit-testable; free-episode gating and attribution recording work end-to-end without any UI change.
 
 ---
 
-## Phase CC4 — API Endpoints & Controllers
+## Phase CC4 — API & Routes (minimal)
 
-Add a new controller set under the existing `routes/growstream.php` (web, authed) and/or `api.php` (sanctum) per spec §5, with namespaced names (`growstream.channel.*`, `growstream.production.*`, etc.) to satisfy the subdomain route-name guard.
+Add a small, additive route set under `routes/growstream.php` (namespaced `growstream.*` to satisfy the subdomain route-name guard). No new controller surface beyond what's needed.
 
-| Route | Controller |
-|---|---|
-| `POST /creator/channel` | `ChannelController@store` (create after Tier-1) |
-| `GET /c/{slug}` + `GET /channel/{slug}` | `ChannelController@show` (public channel home) |
-| `POST /channels/{channel}/productions/apply` | `ProductionController@apply` |
-| `GET /admin/productions/pending-review` | `ProductionController@pendingReview` (admin) |
-| `POST /productions/{production}/review-decision` | `ProductionController@reviewDecision` (admin) |
-| `POST /productions/{production}/seasons` | `ProductionSeasonController@store` |
-| `POST /seasons/{season}/episodes` | `ProductionEpisodeController@store` (reuses upload/tus flow) |
-| `GET /c/{slug}/series/{production_slug}` | `ChannelController@showSeries` (public) |
-| `POST /productions/{production}/promo-assets` | `PromoAssetController@store` |
-| `POST /channels/{channel}/follow` | `ChannelController@follow` |
-| `POST /api/attribution/resolve` | `AttributionController@resolve` |
-| `GET /creator/channel/analytics` | `ChannelAnalyticsController@index` |
+| Route | Controller | Notes |
+|---|---|---|
+| `GET /c/{slug}` | `ChannelController@show` | Public channel/profile landing — **renders the existing Creator Profile page**, just via the shareable URL. Honors `?src=` (passes it to attribution). |
+| `GET /c/{slug}/series/{production_slug}` | `ChannelController@showSeries` | Public series page (existing detail layout). |
+| `POST /creator/productions` | `ProductionController@store` | Create movie/series (authed creator). |
+| `POST /creator/productions/{production}/episodes` | `ProductionController@storeEpisode` | Attach an episode (reuses upload/tus flow). |
+| `POST /api/attribution/resolve` | `AttributionController@resolve` | Records `?src=` + visitor session on landing. |
+| `POST /api/attribution/convert` | `AttributionController@convert` | Binds `converted_user_id` on sign-up/subscription. |
 
-**Paywall:** extend `AccessControlService::canWatch()` to consult `production.free_episode_count` — `episode.is_free` computed as `episode_number <= free_episode_count` (or promo `always_free`). Enforcement stays server-side at the Cloudflare signed-URL step.
+**Paywall integration:** `WatchService`/`AccessControlService` free-episode rule is wired here, no new endpoint.
 
-**Acceptance:** all routes register on the growstream subdomain; review queue and channel home render real data.
+**Acceptance:** routes register on the growstream subdomain; `/c/{slug}` renders the existing profile; `?src=` is captured silently.
 
 ---
 
-## Phase CC5 — Admin Review Queue (Production-level)
+## Phase CC5 — Frontend (no new screens)
 
-Add `Admin/Productions.vue` (or extend `Admin/Moderation.vue`) — a production-level queue where each entry (series/movie/special/release) carries its episodes' moderation state, with **approve / reject / needs-info** and a rights-declaration record. This is the spec §3 separation made operational: creator already vetted, but every production is reviewed.
+- **Creator Profile page** — unchanged visually. Add the shareable-link affordance only if it requires no new component (e.g. a copy-link button beside the existing follow/subscribe). Per v3 §2, the page itself is already the channel.
+- **Series detail / episode list** — flat episode list; episode 1 shows as free (computed), later episodes show the existing subscribe CTA on play.
+- **Attribution** — landing handler attaches `visitor_session_id` (cookie/localStorage) and fires `/api/attribution/resolve` with `?src=`. No UI surface.
 
-Reuse the existing `gs-*` dark theme and `AdminLayout` from the UI work.
-
-**Acceptance:** admin can review productions independently of creator trust level; rejection reason recorded and surfaced to the creator.
-
----
-
-## Phase CC6 — Creator Channel UI (Creator Studio)
-
-- **Create channel** — post-Tier-1 wizard (display name, slug, tagline, avatar/banner).
-- **Channel home** — creator sees their channel as viewers see it, with productions grouped by type.
-- **New production flow** — pick type (series/movie/comedy special/music release) → title/synopsis/category/poster → rights declaration → submit for review.
-- **Series builder** — seasons + episodes; each episode uses the existing 3-step upload (tus for files) → per-episode moderation.
-- **Promo clips** — add trailers/clips under a production.
-- **Attribution links** — creator copies their `?src=facebook` / `?src=tiktok` / short link for each social channel (Phase 1: link shown, no payout).
-
-**Acceptance:** a verified creator can stand up a channel, add a series with episodes, attach a trailer, and generate attribution links without touching admin.
+**Acceptance:** a guest can open `/c/{slug}?src=facebook`, watch episode 1 free, hit the paywall on episode 2, and attribution is logged — all on the existing dark-theme screens.
 
 ---
 
-## Phase CC7 — Viewer Channel Experience (dark theme)
+## Phase CC6 — Attribution Data Collection (tracking-only)
 
-- **Channel page** (`/c/{slug}`) — banner, avatar, verified badge, follows, production grid, episodes.
-- **Channel follow** — button + follow count; Phase 2 notification on new episode.
-- **Episode paywall** — `episode.is_free` vs. subscription gate, subscribe CTA tagged to channel/production.
-- **Promo/trailer playback** — always-free, prominent on the channel page.
-
-**Acceptance:** a guest can browse a channel, watch the free episode + trailer, and hits the subscribe CTA on premium episodes.
-
----
-
-## Phase CC8 — Attribution Tracking (tracking-only in Phase 1)
-
-- `?src=` / short-code resolved on landing (`AttributionService::resolve`) → `attribution_links` row with `visitor_session_id`.
+- `?src=` / session resolved on landing → `attribution_events` row (source, `visitor_session_id`).
 - On sign-up/subscription, bind `converted_user_id`.
 - Watch events accumulate `watch_minutes_attributed`.
-- **No payout in Phase 1** — data collected from day one per the spec's "collecting this data late is costlier" rationale.
+- **No payout, no dashboard in Phase 1** — data collected from day one per v3 §2.3.
 
-**Acceptance:** every channel landing records source + session; conversions and watch-minutes accrue; data queryable.
+**Acceptance:** every creator-profile landing records source + session; conversions and watch-minutes accrue; data queryable for a future Phase 3 dashboard.
 
 ---
 
-## Phase CC9 — Creator Dashboard Analytics (Phase 2)
+## Phase CC7 — Tests
 
-Channel dashboard showing the spec §7 view:
+- `ProductionServiceTest` — free-episode computation, moderation passthrough.
+- `AccessControlServiceTest` extension — free-episode rule + subscription fallthrough.
+- `AttributionServiceTest` — resolve, convert, watch-minutes accumulation.
+- Route/feature tests for `/c/{slug}` + attribution endpoints.
+- **Regression:** confirm all 426 existing GrowStream tests still pass; SQLite-safe migrations.
 
-```
-Facebook   1,842 visitors    WhatsApp 623   TikTok 417
-New subscribers   384
-Watch time    31,420 min
-```
+---
 
-Powered by `ChannelAnalyticsService` over `attribution_links` + watch events. Follow/notify-on-new-episode and release-cadence scheduling land here (Phase 2).
+## Explicitly Deferred (Phase 3 candidates — on record)
 
-**Acceptance:** creator sees per-source visitors, conversions, and watch time.
+Per v3 §5. These were in the v2 draft; not built in Phase 1. Added to the UI Plan's existing deferred list (Section 13).
+
+| Feature | Why deferred |
+|---|---|
+| Season as a structured, UI-visible entity | Already Phase 3 in the UI Plan |
+| Rich channel page (verified badge, featured banner, sections) | Conflicts with Creator Profile §5 scope |
+| Creator-facing attribution/conversion dashboard | Conflicts with "no audience segmentation" in Creator Studio |
+| Multiple promo assets (trailer + clips + BTS as objects) | Single trailer field suffices for Phase 1 |
+| Attribution payout/reward mechanics | Data collection now; compensation model once data exists |
+| Short-link service (`gs.zm/{code}`) | `?src=` on the profile URL is sufficient |
+
+---
+
+## Open Decisions (from v3 §6)
+
+1. **`free_episode_count` visibility** — read-only (platform-set) in upload UI, or invisible until a creator notices episode 2 is gated? (Affects CC5; default: invisible, platform-set.)
+2. **Episode ordering** — drag-and-drop reordering in Creator Studio Phase 1, or upload order until Season structure in Phase 3? (Affects CC5; default: upload order.)
+3. **Attribution consent** — confirm no disclosure UI needed for Phase 1 (likely covered by ToS at signup); quick legal check given mobile money + UGC are launch-risk areas. (Affects CC6.)
 
 ---
 
 ## Prioritized Build Order
 
 ```
-Sprint 1 (CC1-CC2):  migrations + domain entities/repositories + bindings
-Sprint 2 (CC3-CC4):  domain services + API endpoints + controllers
-Sprint 3 (CC5):      admin production review queue
-Sprint 4 (CC6):      creator channel/series UI in Creator Studio
-Sprint 5 (CC7-CC8):  viewer channel experience + attribution tracking
-Sprint 6 (CC9):      dashboard analytics (Phase 2)
+Sprint 1 (CC1-CC2):  migrations + domain entities/repos + bindings
+Sprint 2 (CC3-CC4):  services + paywall rule + minimal API/routes
+Sprint 3 (CC5-CC6):  frontend (existing screens, attribution wiring)
+Sprint 4 (CC7):      tests + regression
 ```
-
----
-
-## Open Questions (blocked items, from spec §10)
-
-1. **Short-link service** — does `attribution_links` need `gs.zm/{code}` short links, or is `?src=` on the standard channel URL sufficient for Phase 1? (Affects CC8: minimal path is `?src=` only.)
-2. **Promo review** — do trailers/clips go through the same content review as full episodes, or a lighter check given they're always-free? (Affects CC5: default = same queue for consistency.)
-3. **Movies/specials storage** — confirm `growstream_videos` with `production_season_id = null` (single-asset) is preferred over a separate `standalone_releases` table. (Affects CC1 schema.)
-
-**Default assumptions unless overridden:** `?src=`-only attribution in Phase 1; promo assets share the review queue; single-table episodes approach (no separate releases table).
 
 ---
 
 ## Success Criteria
 
-- A verified creator can create a channel, publish a series (seasons/episodes), add a trailer, and generate `?src=` attribution links — all self-serve.
-- Every production passes its own content/rights review regardless of creator trust level.
-- Viewers can browse channels, follow, watch free episodes/trailers, and hit the paywall on premium episodes.
-- Attribution data (source, conversion, watch minutes) is collected from day one even though payout is deferred to Phase 3.
-- All additions follow the existing DDD + dark-theme UI conventions and the subdomain route-name guard.
+- A viewer can open a creator's shareable `/c/{slug}?src=facebook` link, watch episode 1 free, and hit the existing subscribe CTA on episode 2 — **no new screens, no navigation changes**.
+- Attribution events (source, session, conversion, watch minutes) are silently collected from day one.
+- All additions follow existing DDD + dark-theme conventions, the subdomain route-name guard, and SQLite-safe migrations.
+- The v2 deferred features are documented (Phase 3 candidates), not silently dropped.
