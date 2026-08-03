@@ -218,8 +218,8 @@ class CloudflareStreamProvider implements VideoProviderInterface
     protected function createDirectUpload(array $metadata): array
     {
         $response = Http::withHeaders($this->headers())
-            ->asMultipart()
-            ->post($this->baseUrl().'/direct_upload', $this->directUploadFormData($metadata));
+            ->withBody(json_encode($this->directUploadFormData($metadata)), 'application/json')
+            ->post($this->baseUrl().'/direct_upload');
 
         $this->assertSuccess($response, 'Unable to create Cloudflare Stream direct upload');
 
@@ -235,7 +235,7 @@ class CloudflareStreamProvider implements VideoProviderInterface
     protected function directUploadFormData(array $metadata): array
     {
         return [
-            'maxDurationSeconds' => (string) ($metadata['max_duration_seconds'] ?? 3600),
+            'maxDurationSeconds' => (int) ($metadata['max_duration_seconds'] ?? 3600),
             'expiry' => now()->addHour()->toIso8601String(),
         ];
     }
