@@ -6,8 +6,9 @@ import { bootInertia, registerModuleSW } from './modules/createApp';
 registerModuleSW('/sw.js', 'GrowFinance');
 
 bootInertia('GrowFinance', (name: string) => {
-    return resolvePageComponent(
-        `./pages/${name}.vue`,
-        import.meta.glob<DefineComponent>('./pages/GrowFinance/**/*.vue')
-    );
+    const pageGlobs: Record<string, () => Promise<DefineComponent>> = {
+        ...import.meta.glob<DefineComponent>('./pages/GrowFinance/**/*.vue'),
+        ...import.meta.glob<DefineComponent>('./pages/Workspace/**/*.vue'),
+    };
+    return resolvePageComponent(`./pages/${name}.vue`, pageGlobs);
 });

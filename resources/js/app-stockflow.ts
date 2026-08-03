@@ -6,8 +6,9 @@ import { bootInertia, registerModuleSW } from './modules/createApp';
 registerModuleSW('/sw.js', 'StockFlow');
 
 bootInertia('StockFlow', (name: string) => {
-    return resolvePageComponent(
-        `./pages/${name}.vue`,
-        import.meta.glob<DefineComponent>('./pages/StockFlow/**/*.vue')
-    );
+    const pageGlobs: Record<string, () => Promise<DefineComponent>> = {
+        ...import.meta.glob<DefineComponent>('./pages/StockFlow/**/*.vue'),
+        ...import.meta.glob<DefineComponent>('./pages/Workspace/**/*.vue'),
+    };
+    return resolvePageComponent(`./pages/${name}.vue`, pageGlobs);
 });

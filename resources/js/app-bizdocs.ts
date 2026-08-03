@@ -6,8 +6,9 @@ import { bootInertia, registerModuleSW } from './modules/createApp';
 registerModuleSW('/bizdocs-sw.js', 'BizDocs');
 
 bootInertia('BizDocs', (name: string) => {
-    return resolvePageComponent(
-        `./pages/${name}.vue`,
-        import.meta.glob<DefineComponent>('./pages/BizDocs/**/*.vue')
-    );
+    const pageGlobs: Record<string, () => Promise<DefineComponent>> = {
+        ...import.meta.glob<DefineComponent>('./pages/BizDocs/**/*.vue'),
+        ...import.meta.glob<DefineComponent>('./pages/Workspace/**/*.vue'),
+    };
+    return resolvePageComponent(`./pages/${name}.vue`, pageGlobs);
 });

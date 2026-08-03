@@ -6,8 +6,9 @@ import { bootInertia, registerModuleSW } from './modules/createApp';
 registerModuleSW('/bizboost-sw.js', 'BizBoost');
 
 bootInertia('BizBoost', (name: string) => {
-    return resolvePageComponent(
-        `./pages/${name}.vue`,
-        import.meta.glob<DefineComponent>('./pages/BizBoost/**/*.vue')
-    );
+    const pageGlobs: Record<string, () => Promise<DefineComponent>> = {
+        ...import.meta.glob<DefineComponent>('./pages/BizBoost/**/*.vue'),
+        ...import.meta.glob<DefineComponent>('./pages/Workspace/**/*.vue'),
+    };
+    return resolvePageComponent(`./pages/${name}.vue`, pageGlobs);
 });
