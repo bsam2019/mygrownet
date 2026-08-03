@@ -20,8 +20,8 @@ return new class extends Migration
             $table->timestamp('closed_at')->nullable();
             $table->timestamps();
 
-            $table->index(['business_id', 'status']);
-            $table->index(['business_id', 'start_date', 'end_date']);
+            $table->index(['business_id', 'status'], 'acct_periods_biz_status_idx');
+            $table->index(['business_id', 'start_date', 'end_date'], 'acct_periods_biz_dates_idx');
         });
     }
 

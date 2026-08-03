@@ -20,8 +20,8 @@ return new class extends Migration
             $table->json('report_data');
             $table->timestamps();
 
-            $table->unique(['business_id', 'report_type', 'as_of_date']);
-            $table->index(['business_id', 'report_type']);
+            $table->unique(['business_id', 'report_type', 'as_of_date'], 'rpt_snapshots_biz_type_date_unique');
+            $table->index(['business_id', 'report_type'], 'rpt_snapshots_biz_type_idx');
         });
     }
 

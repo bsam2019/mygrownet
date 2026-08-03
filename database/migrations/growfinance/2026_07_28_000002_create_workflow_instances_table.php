@@ -23,7 +23,7 @@ return new class extends Migration
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
 
-            $table->index(['business_id', 'entity_type', 'entity_id']);
+            $table->index(['business_id', 'entity_type', 'entity_id'], 'wf_instances_biz_entity_idx');
         });
     }
 

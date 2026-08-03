@@ -21,7 +21,7 @@ return new class extends Migration
             $table->foreignId('created_by')->constrained('users');
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
-            $table->unique(['business_id', 'period_start', 'period_end']);
+            $table->unique(['business_id', 'period_start', 'period_end'], 'pe_checklists_biz_period_unique');
         });
     }
 

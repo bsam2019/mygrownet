@@ -25,7 +25,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('business_id')->references('id')->on('users')->cascadeOnDelete();
-            $table->index(['business_id', 'tax_type', 'is_active']);
+            $table->index(['business_id', 'tax_type', 'is_active'], 'tax_rates_biz_type_active_idx');
         });
 
         Schema::create('growfinance_tax_returns', function (Blueprint $table) {
@@ -49,7 +49,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('business_id')->references('id')->on('users')->cascadeOnDelete();
-            $table->index(['business_id', 'return_type', 'period_start', 'period_end']);
+            $table->index(['business_id', 'return_type', 'period_start', 'period_end'], 'tax_returns_biz_type_period_idx');
         });
     }
 

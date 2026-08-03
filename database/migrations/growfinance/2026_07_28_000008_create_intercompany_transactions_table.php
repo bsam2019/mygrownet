@@ -29,7 +29,7 @@ return new class extends Migration
             $table->foreign('from_org_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('to_org_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('matched_transaction_id')->references('id')->on('growfinance_intercompany_transactions')->onDelete('set null');
-            $table->index(['from_org_id', 'to_org_id']);
+            $table->index(['from_org_id', 'to_org_id'], 'interco_txn_from_to_idx');
             $table->index('status');
         });
     }
