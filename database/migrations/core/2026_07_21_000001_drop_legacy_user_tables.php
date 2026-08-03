@@ -33,13 +33,36 @@ return new class extends Migration
             Schema::dropIfExists('prime_edge_clients');
         }
 
-        // Drop sa_users FK constraint from sa_company_users, then the table
+        // Drop sa_users FK constraints first, then the table.
+        // sa_users is referenced by 11 FKs across StockFlow tables — all must be
+        // dropped before the table itself or MySQL throws 3730.
         if (Schema::hasTable('sa_users')) {
-            Schema::table('sa_company_users', function (Blueprint $table) {
-                if (Schema::hasColumn('sa_company_users', 'user_id')) {
-                    $table->dropForeign(['user_id']);
+            $saUserFks = [
+                ['sa_company_users', 'user_id'],
+                ['sa_comments', 'sa_user_id'],
+                ['sa_controlled_medicines', 'staff_user_id'],
+                ['sa_messages', 'recipient_id'],
+                ['sa_messages', 'sender_id'],
+                ['sa_notifications', 'sa_user_id'],
+                ['sa_purchase_requisitions', 'approved_by'],
+                ['sa_purchase_requisitions', 'requested_by'],
+                ['sa_sale_returns', 'created_by'],
+                ['sa_supplier_returns', 'created_by'],
+                ['sa_transfers', 'received_by'],
+                ['sa_transfers', 'transferred_by'],
+            ];
+
+            foreach ($saUserFks as [$table, $column]) {
+                if (Schema::hasTable($table) && Schema::hasColumn($table, $column)) {
+                    try {
+                        Schema::table($table, function (Blueprint $blueprint) use ($column) {
+                            $blueprint->dropForeign([$column]);
+                        });
+                    } catch (\Throwable $e) {
+                        // Foreign key may already be absent — ignore.
+                    }
                 }
-            });
+            }
 
             Schema::dropIfExists('sa_users');
         }
