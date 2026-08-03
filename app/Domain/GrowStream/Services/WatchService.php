@@ -25,6 +25,7 @@ class WatchService
         private WatchHistoryRepositoryInterface $watchHistoryRepo,
         private VideoViewRepositoryInterface $viewRepo,
         private ?AccessControlService $accessControl = null,
+        private ?RentalService $rentalService = null,
     ) {}
 
     public function authorizePlayback(int $videoId, int $userId, ?string $ip = null, ?string $userAgent = null): array
@@ -40,7 +41,7 @@ class WatchService
             throw VideoNotAvailableException::notPublished();
         }
 
-        if (! $video->canBeAccessedBy($this->resolveUserAccess($userId))) {
+        if (! $this->canAccessVideo($videoId, $userId, $video)) {
             throw InsufficientAccessException::accessDenied();
         }
 
@@ -126,7 +127,24 @@ class WatchService
 
         $video = VideoEntity::reconstitute($eloquent->toArray());
 
-        return $video->canBeAccessedBy($this->resolveUserAccess($userId));
+        return $this->canAccessVideo($videoId, $userId, $video);
+    }
+
+    /**
+     * A viewer may watch a video when their subscription tier covers it, or
+     * when they hold an active pay-per-view rental for the video.
+     */
+    protected function canAccessVideo(int $videoId, ?int $userId, VideoEntity $video): bool
+    {
+        if ($video->canBeAccessedBy($this->resolveUserAccess($userId))) {
+            return true;
+        }
+
+        if ($userId !== null && $this->rentalService !== null) {
+            return $this->rentalService->hasActiveRental($userId, $videoId);
+        }
+
+        return false;
     }
 
     /**

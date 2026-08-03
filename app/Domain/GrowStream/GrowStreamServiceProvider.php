@@ -24,7 +24,10 @@ use App\Domain\GrowStream\Repositories\CreatorAgreementRepositoryInterface;
 use App\Domain\GrowStream\Repositories\CreatorEarningRepositoryInterface;
 use App\Domain\GrowStream\Repositories\CreatorPayoutRepositoryInterface;
 use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
+use App\Domain\GrowStream\Repositories\CreatorSubscriptionRepositoryInterface;
+use App\Domain\GrowStream\Repositories\CreatorTipRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoCategoryRepositoryInterface;
+use App\Domain\GrowStream\Repositories\VideoRentalRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoSeriesRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoTagRepositoryInterface;
@@ -32,11 +35,20 @@ use App\Domain\GrowStream\Repositories\VideoViewRepositoryInterface;
 use App\Domain\GrowStream\Repositories\WatchHistoryRepositoryInterface;
 use App\Domain\GrowStream\Repositories\WatchlistRepositoryInterface;
 use App\Domain\GrowStream\Services\AccessControlService;
+use App\Domain\GrowStream\Services\CreatorSubscriptionService;
+use App\Domain\GrowStream\Services\PayoutService;
+use App\Domain\GrowStream\Services\RentalService;
+use App\Domain\GrowStream\Services\RevenuePoolService;
+use App\Domain\GrowStream\Services\TipService;
+use App\Domain\GrowStream\Services\WatchService;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorAgreementRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorEarningRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorPayoutRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorProfileRepository;
+use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorSubscriptionRepository;
+use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorTipRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoCategoryRepository;
+use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoRentalRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoSeriesRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoTagRepository;
@@ -85,8 +97,29 @@ class GrowStreamServiceProvider extends ServiceProvider
         $this->app->bind(CreatorAgreementRepositoryInterface::class, EloquentCreatorAgreementRepository::class);
         $this->app->bind(CreatorEarningRepositoryInterface::class, EloquentCreatorEarningRepository::class);
         $this->app->bind(CreatorPayoutRepositoryInterface::class, EloquentCreatorPayoutRepository::class);
+        $this->app->bind(CreatorSubscriptionRepositoryInterface::class, EloquentCreatorSubscriptionRepository::class);
+        $this->app->bind(CreatorTipRepositoryInterface::class, EloquentCreatorTipRepository::class);
+        $this->app->bind(VideoRentalRepositoryInterface::class, EloquentVideoRentalRepository::class);
 
         $this->app->singleton(AccessControlService::class);
+        $this->app->singleton(RentalService::class);
+        $this->app->singleton(CreatorSubscriptionService::class);
+        $this->app->singleton(TipService::class);
+        $this->app->singleton(RevenuePoolService::class);
+        $this->app->singleton(PayoutService::class);
+
+        // WatchService has optional constructor dependencies (AccessControlService,
+        // RentalService). Without explicit bindings the container substitutes their
+        // default null values, silently disabling access gating. Build it explicitly.
+        $this->app->bind(WatchService::class, function ($app) {
+            return new WatchService(
+                $app->make(VideoRepositoryInterface::class),
+                $app->make(WatchHistoryRepositoryInterface::class),
+                $app->make(VideoViewRepositoryInterface::class),
+                $app->make(AccessControlService::class),
+                $app->make(RentalService::class),
+            );
+        });
     }
 
     /**

@@ -1,9 +1,39 @@
 # GrowStream — Implementation Plan
 
-**Version:** 1.3  
+**Version:** 1.4  
 **Date:** August 2026  
 **Based on:** PRODUCT_STRATEGIC_PLAN.md v1.0 + current codebase audit  
-**Status:** Phase 1 ✅, Phase 2 ✅, Phase 3 ✅ (backend, Aug 2026); Phases 4–5 not started
+**Status:** Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅ (backend, Aug 2026); Phase 5 not started
+
+---
+
+## Phase 4 Completion Log (Aug 2026)
+
+Creator economy monetization implemented and tested:
+
+| Task | Status |
+|---|---|
+| **4.1 Pay-Per-View (Rentals)** | ✅ `growstream_video_rentals` table + `VideoRental` model + `EloquentVideoRentalRepository`. `RentalService` (`rent`, `hasActiveRental`, durations 24h/48h/7d/30d). `WatchService::canAccessVideo()` grants access via active rental (bypasses subscription gate for the rented video). |
+| **4.2 Creator subscriptions** | ✅ `growstream_creator_subscriptions` table + `CreatorSubscription` model + repo. `CreatorSubscriptionService` (`subscribe` idempotent, `cancel`, `isSubscribed`, `subscriberCount`). |
+| **4.3 Tips & direct support** | ✅ `growstream_creator_tips` table + `CreatorTip` model + repo. `TipService` (`send` with message/anonymous/status, `totalForCreator`, `countForCreator`). |
+| **Service wiring** | ✅ Explicit `WatchService` binding in `GrowStreamServiceProvider` — the container silently substituted `= null` defaults for unbound optional class constructor deps (AccessControlService, RentalService), disabling gating. Added `use` imports so `RentalService`/`CreatorSubscriptionService`/`TipService`/`RevenuePoolService`/`PayoutService`/`WatchService` singletons bind to the correct FQCNs (they were resolving to the provider's namespace). |
+| **Bug fix** | ✅ `Video::reconstitute()` key mismatches with Eloquent columns (`creator_profile_id`→`creator_id`, `duration_seconds`→`duration`, `provider`→`video_provider`) — would crash `WatchService::authorizePlayback` on real data. Added fallbacks. |
+| **Tests** | ✅ 14 new (7 rental incl. expiry + gating integration, 7 creator economy). **Total: 417 GrowStream tests passing.** |
+
+**Schema additions (3 migrations):**
+- `2026_08_03_000008` — `growstream_video_rentals`
+- `2026_08_03_000009` — `growstream_creator_subscriptions`
+- `2026_08_03_000010` — `growstream_creator_tips`
+
+**Not yet done (Phase 4.4/4.5):** sponsorship fund allocation + brand marketplace — deferred (speculative, needs product decisions).
+
+---
+
+## Current State Summary
+
+The GrowStream backend is ~99% complete. 17 database tables, 15 Eloquent models, 13 repository interfaces (all implemented), 12 domain services, 43 API endpoints, 6 web controllers, 8 console commands, 15 Vue pages.
+
+**Critical gaps remaining:** no DRM, no sponsorship fund/marketplace (Phase 4.4/4.5), no regional expansion (Phase 5).
 
 ---
 
