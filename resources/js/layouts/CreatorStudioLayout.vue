@@ -22,7 +22,7 @@ const studioNav = [
 ];
 
 const logout = () => {
-    router.post('/logout');
+    router.post(route('growstream.logout'));
 };
 </script>
 
