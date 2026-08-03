@@ -18,6 +18,7 @@ class WatchHistory extends Model
         'video_id',
         'current_position',
         'duration',
+        'watch_duration',
         'progress_percentage',
         'is_completed',
         'completed_at',
@@ -70,6 +71,7 @@ class WatchHistory extends Model
     {
         $this->current_position = $currentPosition;
         $this->duration = $duration;
+        $this->watch_duration = $currentPosition;
         $this->progress_percentage = $duration > 0 ? ($currentPosition / $duration) * 100 : 0;
         $this->last_watched_at = now();
 
@@ -84,6 +86,6 @@ class WatchHistory extends Model
 
     public function canContinue(): bool
     {
-        return !$this->is_completed && $this->progress_percentage > 0;
+        return ! $this->is_completed && $this->progress_percentage > 0;
     }
 }

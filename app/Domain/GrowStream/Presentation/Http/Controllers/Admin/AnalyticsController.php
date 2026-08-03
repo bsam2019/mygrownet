@@ -2,6 +2,8 @@
 
 namespace App\Domain\GrowStream\Presentation\Http\Controllers\Admin;
 
+use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\CreatorEarning;
+use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\CreatorPayout;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoView;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\WatchHistory;
 use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
@@ -125,7 +127,7 @@ class AnalyticsController extends Controller
     public function videoDetails(Request $request, int $id): JsonResponse
     {
         $video = $this->videoRepo->findById($id);
-        if (!$video) {
+        if (! $video) {
             return response()->json(['success' => false, 'error' => 'Video not found'], 404);
         }
 
@@ -297,19 +299,50 @@ class AnalyticsController extends Controller
 
     public function revenue(Request $request): JsonResponse
     {
-        $period = $request->get('period', '30');
+        $period = (int) $request->get('period', 30);
+        $startDate = now()->subDays($period);
+
+        $totalCreatorEarnings = CreatorEarning::sum('earned_amount');
+        $creatorEarningsThisPeriod = CreatorEarning::where('created_at', '>=', $startDate)
+            ->sum('earned_amount');
+
+        $totalPaidOut = CreatorPayout::where('status', 'completed')
+            ->sum('amount');
+        $pendingPayouts = CreatorPayout::where('status', 'pending')
+            ->sum('amount');
+
+        $subscriptionRevenue = DB::table('module_subscriptions')
+            ->where('module_id', 'growstream')
+            ->where('status', 'active')
+            ->sum('amount');
+
+        $revenueByTier = DB::table('module_subscriptions')
+            ->where('module_id', 'growstream')
+            ->where('status', 'active')
+            ->select('subscription_tier', DB::raw('SUM(amount) as total'))
+            ->groupBy('subscription_tier')
+            ->get();
+
+        $dailyCreatorEarnings = CreatorEarning::where('created_at', '>=', $startDate)
+            ->select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('SUM(earned_amount) as earnings')
+            )
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
 
         return response()->json([
             'success' => true,
             'data' => [
-                'total_revenue' => 0,
-                'revenue_this_period' => 0,
-                'creator_payouts' => 0,
-                'platform_revenue' => 0,
-                'revenue_by_access_level' => [],
-                'daily_revenue' => [],
+                'subscription_revenue' => round($subscriptionRevenue, 2),
+                'total_creator_earnings' => round($totalCreatorEarnings, 2),
+                'creator_earnings_this_period' => round($creatorEarningsThisPeriod, 2),
+                'total_paid_out' => round($totalPaidOut, 2),
+                'pending_payouts' => round($pendingPayouts, 2),
+                'revenue_by_tier' => $revenueByTier,
+                'daily_creator_earnings' => $dailyCreatorEarnings,
             ],
-            'message' => 'Revenue tracking will be available after payment integration',
         ]);
     }
 

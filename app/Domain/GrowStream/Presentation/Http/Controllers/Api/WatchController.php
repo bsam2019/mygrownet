@@ -3,11 +3,13 @@
 namespace App\Domain\GrowStream\Presentation\Http\Controllers\Api;
 
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\Video;
-use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\Watchlist;
+use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoSeries;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoView;
+use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\Watchlist;
 use App\Domain\GrowStream\Infrastructure\Providers\VideoProviderFactory;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Domain\GrowStream\Repositories\WatchHistoryRepositoryInterface;
+use App\Domain\GrowStream\Services\AccessControlService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +19,8 @@ class WatchController extends Controller
 {
     public function __construct(
         private VideoRepositoryInterface $videoRepo,
-        private WatchHistoryRepositoryInterface $watchHistoryRepo
+        private WatchHistoryRepositoryInterface $watchHistoryRepo,
+        private AccessControlService $accessControl
     ) {}
 
     public function authorize(Request $request): JsonResponse
@@ -27,20 +30,20 @@ class WatchController extends Controller
         ]);
 
         $video = $this->videoRepo->findById($request->video_id);
-        if (!$video) {
+        if (! $video) {
             return response()->json(['success' => false, 'error' => 'Video not found'], 404);
         }
 
         $user = Auth::user();
 
-        if (!$video->isPublished() || !$video->isReady()) {
+        if (! $video->isPublished() || ! $video->isReady()) {
             return response()->json([
                 'success' => false,
                 'error' => 'Video not available',
             ], 404);
         }
 
-        if (!$this->canWatch($user, $video)) {
+        if (! $this->canWatch($user, $video)) {
             return response()->json([
                 'success' => false,
                 'error' => 'Subscription required',
@@ -180,7 +183,7 @@ class WatchController extends Controller
 
         $watchlistableType = $request->watchlistable_type === 'video'
             ? Video::class
-            : \App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoSeries::class;
+            : VideoSeries::class;
 
         $watchlist = Watchlist::firstOrCreate([
             'user_id' => $user->id,
@@ -216,15 +219,7 @@ class WatchController extends Controller
 
     protected function canWatch($user, Video $video): bool
     {
-        if ($video->isFree()) {
-            return true;
-        }
-
-        if (!$user) {
-            return false;
-        }
-
-        return true;
+        return $this->accessControl->userCanAccess($user, (string) $video->access_level);
     }
 
     protected function recordView(Video $video, $user, Request $request): void

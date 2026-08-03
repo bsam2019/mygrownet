@@ -15,10 +15,14 @@ use App\Domain\GrowStream\Infrastructure\Providers\DigitalOceanSpacesProvider;
 use App\Domain\GrowStream\Infrastructure\Providers\VideoProviderFactory;
 use App\Domain\GrowStream\Infrastructure\Providers\VideoProviderInterface;
 use App\Domain\GrowStream\Presentation\Console\Commands\AggregateAnalyticsCommand;
+use App\Domain\GrowStream\Presentation\Console\Commands\CalculateRevenueCommand;
 use App\Domain\GrowStream\Presentation\Console\Commands\CleanupOldAnalyticsCommand;
 use App\Domain\GrowStream\Presentation\Console\Commands\GrowStreamStatsCommand;
+use App\Domain\GrowStream\Presentation\Console\Commands\ProcessPayoutsCommand;
 use App\Domain\GrowStream\Presentation\Console\Commands\ProcessPendingVideosCommand;
 use App\Domain\GrowStream\Repositories\CreatorAgreementRepositoryInterface;
+use App\Domain\GrowStream\Repositories\CreatorEarningRepositoryInterface;
+use App\Domain\GrowStream\Repositories\CreatorPayoutRepositoryInterface;
 use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoCategoryRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
@@ -27,7 +31,10 @@ use App\Domain\GrowStream\Repositories\VideoTagRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoViewRepositoryInterface;
 use App\Domain\GrowStream\Repositories\WatchHistoryRepositoryInterface;
 use App\Domain\GrowStream\Repositories\WatchlistRepositoryInterface;
+use App\Domain\GrowStream\Services\AccessControlService;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorAgreementRepository;
+use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorEarningRepository;
+use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorPayoutRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentCreatorProfileRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoCategoryRepository;
 use App\Infrastructure\Persistence\Repositories\GrowStream\EloquentVideoRepository;
@@ -76,6 +83,10 @@ class GrowStreamServiceProvider extends ServiceProvider
         $this->app->bind(VideoViewRepositoryInterface::class, EloquentVideoViewRepository::class);
         $this->app->bind(VideoTagRepositoryInterface::class, EloquentVideoTagRepository::class);
         $this->app->bind(CreatorAgreementRepositoryInterface::class, EloquentCreatorAgreementRepository::class);
+        $this->app->bind(CreatorEarningRepositoryInterface::class, EloquentCreatorEarningRepository::class);
+        $this->app->bind(CreatorPayoutRepositoryInterface::class, EloquentCreatorPayoutRepository::class);
+
+        $this->app->singleton(AccessControlService::class);
     }
 
     /**
@@ -107,6 +118,8 @@ class GrowStreamServiceProvider extends ServiceProvider
                 ProcessPendingVideosCommand::class,
                 CleanupOldAnalyticsCommand::class,
                 GrowStreamStatsCommand::class,
+                CalculateRevenueCommand::class,
+                ProcessPayoutsCommand::class,
             ]);
         }
 

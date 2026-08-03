@@ -16,6 +16,7 @@ use App\Domain\GrowStream\ValueObjects\AccessLevel;
 use App\Domain\GrowStream\ValueObjects\DeviceType;
 use App\Domain\GrowStream\ValueObjects\UploadStatus;
 use App\Domain\GrowStream\ValueObjects\VideoId;
+use App\Models\User;
 
 class WatchService
 {
@@ -23,6 +24,7 @@ class WatchService
         private VideoRepositoryInterface $videoRepo,
         private WatchHistoryRepositoryInterface $watchHistoryRepo,
         private VideoViewRepositoryInterface $viewRepo,
+        private ?AccessControlService $accessControl = null,
     ) {}
 
     public function authorizePlayback(int $videoId, int $userId, ?string $ip = null, ?string $userAgent = null): array
@@ -38,7 +40,7 @@ class WatchService
             throw VideoNotAvailableException::notPublished();
         }
 
-        if (! $video->canBeAccessedBy('free')) {
+        if (! $video->canBeAccessedBy($this->resolveUserAccess($userId))) {
             throw InsufficientAccessException::accessDenied();
         }
 
@@ -117,10 +119,6 @@ class WatchService
 
     public function canWatch(int $videoId, ?int $userId): bool
     {
-        if ($userId !== null) {
-            return true;
-        }
-
         $eloquent = $this->videoRepo->findById($videoId);
         if (! $eloquent) {
             return false;
@@ -128,7 +126,24 @@ class WatchService
 
         $video = VideoEntity::reconstitute($eloquent->toArray());
 
-        return $video->accessLevel() === AccessLevel::Free;
+        return $video->canBeAccessedBy($this->resolveUserAccess($userId));
+    }
+
+    /**
+     * Map the viewer to a video access-level rank. Without a paid GrowStream
+     * subscription a viewer is treated as 'free'.
+     */
+    protected function resolveUserAccess(?int $userId): string
+    {
+        if ($this->accessControl === null || $userId === null) {
+            return AccessLevel::Free->value;
+        }
+
+        $user = User::find($userId);
+
+        return $user && $this->accessControl->hasPaidSubscription($user)
+            ? AccessLevel::Premium->value
+            : AccessLevel::Free->value;
     }
 
     public static function detectDeviceType(?string $userAgent): DeviceType

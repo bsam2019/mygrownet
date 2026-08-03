@@ -395,9 +395,33 @@ final class WatchServiceTest extends TestCase
     // ---- canWatch ----
 
     #[Test]
-    public function can_watch_returns_true_for_authenticated_user(): void
+    public function can_watch_returns_true_for_authenticated_user_on_free_video(): void
     {
+        $videoMock = $this->mockVideo(['access_level' => 'free']);
+        $this->videoRepo = $this->createMock(VideoRepositoryInterface::class);
+        $this->videoRepo->expects($this->once())
+            ->method('findById')
+            ->with(1)
+            ->willReturn($videoMock);
+
+        $this->service = new WatchService($this->videoRepo, $this->watchHistoryRepo, $this->viewRepo);
+
         $this->assertTrue($this->service->canWatch(1, 42));
+    }
+
+    #[Test]
+    public function can_watch_returns_false_for_authenticated_user_on_premium_video_without_subscription(): void
+    {
+        $videoMock = $this->mockVideo(['access_level' => 'premium']);
+        $this->videoRepo = $this->createMock(VideoRepositoryInterface::class);
+        $this->videoRepo->expects($this->once())
+            ->method('findById')
+            ->with(1)
+            ->willReturn($videoMock);
+
+        $this->service = new WatchService($this->videoRepo, $this->watchHistoryRepo, $this->viewRepo);
+
+        $this->assertFalse($this->service->canWatch(1, 42));
     }
 
     #[Test]

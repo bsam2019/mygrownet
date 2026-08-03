@@ -1,9 +1,39 @@
 # GrowStream — Implementation Plan
 
-**Version:** 1.2  
+**Version:** 1.3  
 **Date:** August 2026  
 **Based on:** PRODUCT_STRATEGIC_PLAN.md v1.0 + current codebase audit  
-**Status:** Phase 1 ✅, Phase 2 ✅ (Aug 2026); Phases 3–5 not started
+**Status:** Phase 1 ✅, Phase 2 ✅, Phase 3 ✅ (backend, Aug 2026); Phases 4–5 not started
+
+---
+
+## Phase 3 Completion Log (Aug 2026)
+
+Backend for the Zambia launch implemented and tested:
+
+| Task | Status |
+|---|---|
+| **3.1 Subscription & access gating** | ✅ Leveraged the existing platform module-subscription system (PawaPay checkout via `SubscriptionCheckoutController`, `config/modules/growstream.php` tiers: free/starter/business). Added `AccessControlService` mapping module tier → video access level (free/starter/business), wired into `WatchService` (`authorizePlayback`, `canWatch`) and `WatchController::canWatch()`. Added `EnsureGrowStreamSubscription` middleware (alias `growstream.subscription`). |
+| **3.2 Watch-time revenue tracking** | ✅ `growstream_creator_earnings` table + `CreatorEarning` model + repository. `RevenuePoolService::calculateForPeriod()` distributes 70% of subscription revenue proportionally to premium watch seconds (upserts per creator/period). `growstream:calculate-revenue` artisan command. |
+| **3.3 Payout system** | ✅ `growstream_creator_payouts` table + `CreatorPayout` model + repository. `PayoutService::processEligible()` (min threshold K100, aggregates periods, marks earnings paid), `markCompleted()`, `markFailed()`. `growstream:process-payouts` artisan command. |
+| **3.4 Revenue analytics** | ✅ `AnalyticsController::revenue()` now aggregates real subscription revenue (from `module_subscriptions`), creator earnings, paid/pending payouts, revenue by tier, and daily earnings (was hardcoded zeros). |
+| **Bug fix** | ✅ Added missing `growstream_watch_history.watch_duration` column (referenced by analytics/repos but never migrated) + `watch_duration` synced in `updateProgress`. |
+| **Tests** | ✅ 20 new tests (5 AccessControlService unit, 4 RevenuePool, 6 Payout, 5 SubscriptionAccess integration incl. middleware/API gating). **Total: 403 GrowStream tests passing.** |
+
+**Schema additions (3 migrations):**
+- `2026_08_03_000005` — `growstream_creator_earnings`
+- `2026_08_03_000006` — `growstream_creator_payouts`
+- `2026_08_03_000007` — `growstream_watch_history.watch_duration`
+
+**Not yet done (Phase 3.4 remaining):** data-saving mode, offline viewing, recommendations engine, full-text search, trending algorithm polish — deferred to frontend work (requires manual build).
+
+---
+
+## Current State Summary
+
+The GrowStream backend is ~98% complete. 14 database tables, 12 Eloquent models, 10 repository interfaces (all implemented), 9 domain services, 43 API endpoints, 6 web controllers, 8 console commands, 15 Vue pages.
+
+**Critical gaps remaining:** no DRM, no creator economy expansion (Phase 4), no regional expansion (Phase 5).
 
 ---
 
