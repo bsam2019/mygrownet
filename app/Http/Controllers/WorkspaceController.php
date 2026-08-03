@@ -29,8 +29,9 @@ class WorkspaceController extends Controller
             $context = $this->contextResolver->resolve($user, null);
         }
 
-        // Auto-launch: if user landed on an app subdomain and has access, skip workspace
-        if ($request->attributes->get('auto_launch')) {
+        // Auto-launch: if user landed on an app subdomain root and has access, skip workspace.
+        // Only auto-launch the root path (/) — explicit /workspace visits always show the hub.
+        if ($request->attributes->get('auto_launch') && $request->path() === '/') {
             $resolution = $request->attributes->get('domain_resolution');
             if ($resolution?->application && $this->appAccess->canAccess($user, $resolution->application, $context)) {
                 return $this->appLaunch->launch($resolution->application, $context, $user);
