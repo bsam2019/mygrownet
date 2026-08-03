@@ -14,6 +14,37 @@
                 </Link>
             </div>
 
+            <!-- My Channel -->
+            <div class="gs-card mb-6 flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[var(--gs-primary-soft)]">
+                        <svg class="h-7 w-7 text-[var(--gs-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
+                        </svg>
+                    </div>
+                    <div class="min-w-0">
+                        <h2 class="text-lg font-semibold text-[var(--gs-text)]">My Channel</h2>
+                        <p class="truncate text-sm text-[var(--gs-muted)]">
+                            {{ channelUrl }}
+                        </p>
+                        <p class="mt-0.5 text-xs text-[var(--gs-muted)]">
+                            Share this link on Facebook, TikTok, or WhatsApp to grow your audience.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button class="gs-btn gs-btn-outline" @click="copyChannelLink">
+                        {{ copied ? 'Copied!' : 'Copy Link' }}
+                    </button>
+                    <Link
+                        :href="channelUrl"
+                        class="gs-btn gs-btn-primary"
+                    >
+                        View Channel
+                    </Link>
+                </div>
+            </div>
+
             <!-- Unverified banner -->
             <div
                 v-if="!profile.is_verified"
@@ -132,6 +163,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import CreatorStudioLayout from '@/Layouts/CreatorStudioLayout.vue';
 
@@ -152,11 +184,28 @@ interface Props {
     watchTimeHours?: number | null;
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
     recentVideos: () => [],
     earningsSummary: () => ({ total_earnings: 0, pending_payout: 0 }),
     watchTimeHours: null,
 });
+
+const copied = ref(false);
+
+const channelUrl = computed(() => {
+    const slug = props.profile.channel_slug || props.profile.display_name || 'creator';
+    return `${window.location.origin}/c/${encodeURIComponent(slug)}`;
+});
+
+const copyChannelLink = async () => {
+    try {
+        await navigator.clipboard.writeText(channelUrl.value);
+        copied.value = true;
+        setTimeout(() => (copied.value = false), 2000);
+    } catch {
+        copied.value = false;
+    }
+};
 
 const formatNumber = (value: number | undefined): string => {
     return (value ?? 0).toLocaleString();
