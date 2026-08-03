@@ -67,18 +67,8 @@ class LoginController extends Controller
         $request->session()->regenerate();
         $request->session()->save();
 
-        $returnUrl = session('identity_return_url');
+        session()->forget('identity_return_url');
 
-        if ($returnUrl) {
-            $expires = time() + config('platform.identity.return_url_ttl', 300);
-            $signature = hash_hmac('sha256', $returnUrl . '|' . $expires, config('platform.identity.signing_key') ?? '');
-
-            if ($this->identity->validateReturnUrl($returnUrl, $signature, $expires)) {
-                session()->forget('identity_return_url');
-                return redirect()->away($returnUrl);
-            }
-        }
-
-        return redirect()->intended(route('workspace'));
+        return redirect()->away(config('app.url') . '/workspace');
     }
 }

@@ -39,16 +39,22 @@ class AuthenticatedSessionController extends Controller
             $user->initializeLoanLimit();
         }
 
-        // Determine redirect based on subdomain
+        // Determine redirect based on subdomain.
+        // Centralized apps (bizboost, bms, bizdocs, stockflow, growfinance) redirect to
+        // the workspace hub instead of their local dashboard so users get the platform-
+        // first experience. Non-centralized apps keep their local dashboard.
         $host = $request->getHost();
         $redirectMap = [
-            'bizboost.mygrownet.com'     => 'bizboost.sub.dashboard',
+            'bizboost.mygrownet.com'     => 'workspace',
+            'bms.mygrownet.com'          => 'workspace',
+            'bizdocs.mygrownet.com'      => 'workspace',
+            'stockflow.mygrownet.com'    => 'workspace',
+            'growfinance.mygrownet.com'  => 'workspace',
+            'grownet.mygrownet.com'      => 'workspace',
             'growmart.mygrownet.com'     => 'growmart.sub.dashboard',
             'zamstay.mygrownet.com'      => 'zamstay.sub.dashboard',
-            'bizdocs.mygrownet.com'      => 'bizdocs.sub.dashboard',
             'growbuilder.mygrownet.com'  => 'growbuilder.sub.dashboard',
             'venture.mygrownet.com'      => 'venture.sub.dashboard',
-            'grownet.mygrownet.com'      => 'grownet.sub.dashboard',
             'growstorage.mygrownet.com'  => 'growstorage.sub.dashboard',
         ];
         $fallback = $redirectMap[$host] ?? 'workspace';
