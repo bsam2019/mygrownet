@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Cache;
  * 
  * Supports multiple AI providers:
  * - OpenAI (gpt-3.5-turbo, gpt-4)
+ * - DeepSeek (deepseek-chat, deepseek-reasoner) — direct paid API, RECOMMENDED
+ * - NVIDIA / DeepSeek (deepseek-ai/deepseek-v4-*) — via NVIDIA API
  * - Groq (llama-3.3-70b-versatile) - FREE
  * - Google Gemini (gemini-pro) - FREE tier
  * - Ollama (local, free)
@@ -35,6 +37,11 @@ class AIContentService
                 $this->apiKey = config('services.ai.nvidia_key', '');
                 $this->model = config('services.ai.nvidia_model', 'deepseek-ai/deepseek-v4-flash');
                 $this->baseUrl = config('services.ai.nvidia_url', 'https://integrate.api.nvidia.com/v1');
+                break;
+            case 'deepseek':
+                $this->apiKey = config('services.ai.deepseek_key', '');
+                $this->model = config('services.ai.deepseek_model', 'deepseek-chat');
+                $this->baseUrl = config('services.ai.deepseek_url', 'https://api.deepseek.com/v1');
                 break;
             case 'grok':
             case 'xai':

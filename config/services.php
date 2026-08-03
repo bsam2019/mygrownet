@@ -111,24 +111,30 @@ return [
     | AI Configuration (GrowBuilder AI Features)
     |--------------------------------------------------------------------------
     | Supports multiple providers:
+    | - deepseek: DeepSeek direct paid API (RECOMMENDED, OpenAI-compatible, fast)
     | - nvidia: DeepSeek models via NVIDIA API (fast, quality results)
     | - openai: OpenAI GPT models (paid)
     | - gemini: Google Gemini (FREE tier available)
     | - ollama: Local Ollama server (FREE, runs locally)
     |
-    | To use NVIDIA/DeepSeek (recommended):
-    | 1. Get your NVIDIA API key
-    | 2. Set AI_PROVIDER=nvidia and AI_NVIDIA_KEY in .env
-    | 3. Users can select between deepseek-v4-pro and deepseek-v4-flash
+    | To use DeepSeek direct API (recommended):
+    | 1. Get your API key from https://platform.deepseek.com
+    | 2. Set AI_PROVIDER=deepseek and AI_DEEPSEEK_KEY in .env
+    | 3. Model options: deepseek-chat (general), deepseek-reasoner (reasoning)
     */
 
     'ai' => [
-        'provider' => env('AI_PROVIDER', 'nvidia'), // nvidia, openai, gemini, ollama
+        'provider' => env('AI_PROVIDER', 'deepseek'), // nvidia, openai, gemini, ollama, deepseek
 
-        // NVIDIA (DeepSeek via NVIDIA API - recommended)
+        // NVIDIA (DeepSeek via NVIDIA API)
         'nvidia_key' => env('AI_NVIDIA_KEY'),
         'nvidia_model' => env('AI_NVIDIA_MODEL', 'deepseek-ai/deepseek-v4-flash'),
         'nvidia_url' => 'https://integrate.api.nvidia.com/v1',
+
+        // DeepSeek (direct paid API - OpenAI compatible)
+        'deepseek_key' => env('AI_DEEPSEEK_KEY'),
+        'deepseek_model' => env('AI_DEEPSEEK_MODEL', 'deepseek-chat'),
+        'deepseek_url' => 'https://api.deepseek.com/v1',
 
         // OpenAI (paid)
         'openai_key' => env('OPENAI_API_KEY'),

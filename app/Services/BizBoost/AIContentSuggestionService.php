@@ -15,13 +15,18 @@ class AIContentSuggestionService
 
     public function __construct()
     {
-        $this->provider = config('services.ai.provider', 'nvidia');
+        $this->provider = config('services.ai.provider', 'deepseek');
 
         switch ($this->provider) {
             case 'nvidia':
                 $this->apiKey  = config('services.ai.nvidia_key', '');
                 $this->model   = config('services.ai.nvidia_model', 'deepseek-ai/deepseek-v4-flash');
                 $this->baseUrl = config('services.ai.nvidia_url', 'https://integrate.api.nvidia.com/v1');
+                break;
+            case 'deepseek':
+                $this->apiKey  = config('services.ai.deepseek_key', '');
+                $this->model   = config('services.ai.deepseek_model', 'deepseek-chat');
+                $this->baseUrl = config('services.ai.deepseek_url', 'https://api.deepseek.com/v1');
                 break;
             case 'gemini':
                 $this->apiKey  = config('services.ai.gemini_key', '');
