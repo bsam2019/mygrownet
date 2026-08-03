@@ -10,7 +10,10 @@ return new class extends Migration
     {
         // inventory_* tables may reference each other via FKs. Disable FK checks
         // so all tables can be dropped regardless of inter-table constraints.
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        $isMysql = DB::connection()->getDriverName() === 'mysql';
+        if ($isMysql) {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        }
 
         try {
             Schema::dropIfExists('inventory_alerts');
@@ -18,7 +21,9 @@ return new class extends Migration
             Schema::dropIfExists('inventory_items');
             Schema::dropIfExists('inventory_categories');
         } finally {
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            if ($isMysql) {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            }
         }
     }
 

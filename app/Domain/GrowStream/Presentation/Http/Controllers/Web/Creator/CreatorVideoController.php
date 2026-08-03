@@ -85,12 +85,9 @@ class CreatorVideoController extends Controller
             'categories.*' => 'exists:growstream_video_categories,id',
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:50',
-            'video_file' => 'nullable|file|mimes:mp4,mov,avi,mkv,webm|max:'.(int) (config('growstream.upload.max_file_size', 5 * 1024 * 1024 * 1024) / 1024),
-            'video_url' => 'nullable|url',
+            'video_url' => 'required|url',
             'rights_declaration' => 'required|accepted',
         ]);
-
-        abort_if(! $request->hasFile('video_file') && ! $request->filled('video_url'), 422, 'Provide a video file or a video URL.');
 
         DB::beginTransaction();
         try {
@@ -102,32 +99,12 @@ class CreatorVideoController extends Controller
                 'access_level' => $request->access_level,
                 'creator_id' => $creator->id,
                 'is_published' => false,
-                'upload_status' => 'pending',
+                'video_provider' => 'local',
+                'video_url' => $request->video_url,
+                'playback_url' => $request->video_url,
+                'upload_status' => 'ready',
                 'moderation_status' => $creator->is_verified ? 'approved' : 'pending_review',
             ];
-
-            if ($request->hasFile('video_file')) {
-                $provider = VideoProviderFactory::make();
-                $response = $provider->upload($request->file('video_file'), [
-                    'max_duration_seconds' => (int) config('growstream.upload.max_duration_seconds', 10800),
-                ]);
-
-                $data = array_merge($data, [
-                    'video_provider' => (string) config('growstream.default_provider', 'digitalocean'),
-                    'provider_video_id' => $response->providerVideoId,
-                    'playback_url' => $response->playbackUrl,
-                    'thumbnail_url' => $response->thumbnailUrl,
-                    'upload_status' => 'processing',
-                    'processing_started_at' => now(),
-                ]);
-            } else {
-                $data = array_merge($data, [
-                    'video_provider' => 'local',
-                    'video_url' => $request->video_url,
-                    'playback_url' => $request->video_url,
-                    'upload_status' => 'ready',
-                ]);
-            }
 
             $video = $this->videoRepo->save($data);
 
@@ -137,10 +114,6 @@ class CreatorVideoController extends Controller
 
             if ($request->tags) {
                 $this->videoManagementService->syncTags($video->id, $request->tags);
-            }
-
-            if (($data['upload_status'] ?? '') === 'processing' && ! empty($data['provider_video_id'])) {
-                ProcessVideoJob::dispatch($video->id);
             }
 
             DB::commit();

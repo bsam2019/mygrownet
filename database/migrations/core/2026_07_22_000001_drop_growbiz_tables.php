@@ -44,7 +44,10 @@ return new class extends Migration
         // GrowBiz tables reference each other via FKs. On MySQL, dropping a
         // referenced table throws 3730. Disable FK checks for the drop so all
         // tables can be removed regardless of inter-table constraints.
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        $isMysql = DB::connection()->getDriverName() === 'mysql';
+        if ($isMysql) {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        }
 
         try {
             foreach ($this->tables as $table) {
@@ -53,7 +56,9 @@ return new class extends Migration
                 }
             }
         } finally {
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            if ($isMysql) {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            }
         }
     }
 
