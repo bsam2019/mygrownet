@@ -46,7 +46,7 @@ class AuthController extends Controller
 
     private function redirectToIdentity(Request $request, string $targetUrl, string $app): RedirectResponse
     {
-        $returnUrl = $request->getSchemeAndHttpHost() . '/';
+        $returnUrl = $request->getSchemeAndHttpHost() . '/workspace';
         $expires = time() + config('platform.identity.return_url_ttl', 300);
         $payload = $returnUrl . '|' . $expires;
         $signingKey = config('platform.identity.signing_key') ?? '';
