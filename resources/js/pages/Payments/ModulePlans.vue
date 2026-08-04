@@ -22,10 +22,16 @@ interface ModuleInfo {
     color?: string;
 }
 
+interface BackLink {
+    label: string;
+    url: string;
+}
+
 const props = defineProps<{
     module: ModuleInfo;
     tiers: Record<string, Tier>;
     currentTier?: string;
+    back?: BackLink;
 }>();
 
 const page = usePage();
@@ -162,10 +168,10 @@ const topUpUrl = () => route('subscriptions.checkout', {
             <!-- Contact -->
             <div class="mt-10 text-center">
                 <Link
-                    :href="route('workspace')"
+                    :href="back?.url ?? route('workspace')"
                     class="text-sm text-gray-500 hover:text-gray-700"
                 >
-                    &larr; Back to workspace
+                    &larr; {{ back?.label ?? 'Back to workspace' }}
                 </Link>
             </div>
         </div>

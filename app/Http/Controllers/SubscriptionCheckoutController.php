@@ -9,6 +9,7 @@ use App\Domain\Module\ValueObjects\ModuleId;
 use App\Domain\Module\ValueObjects\Money;
 use App\Domain\Module\ValueObjects\SubscriptionTier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 /**
@@ -52,6 +53,13 @@ class SubscriptionCheckoutController extends Controller
 
         $moduleConfig = $this->tierConfig->getModuleConfig($moduleId);
 
+        // Subdomain modules (growstream) have no /workspace; link back to their
+        // home page instead. Other modules return to the platform workspace.
+        $back = ['label' => 'Back to workspace', 'url' => route('workspace')];
+        if ($moduleId === 'growstream' && Route::has('growstream.home')) {
+            $back = ['label' => 'Back to GrowStream', 'url' => route('growstream.home')];
+        }
+
         return Inertia::render('Payments/ModulePlans', [
             'module' => [
                 'id' => $moduleId,
@@ -60,6 +68,7 @@ class SubscriptionCheckoutController extends Controller
             ],
             'tiers' => $tiers,
             'currentTier' => $currentTier,
+            'back' => $back,
         ]);
     }
 
