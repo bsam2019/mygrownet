@@ -27,6 +27,9 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
         Route::get('/subscription', [\App\Http\Controllers\SubscriptionCheckoutController::class, 'pricing'])
             ->defaults('moduleId', 'growstream')
             ->name('subscription');
+        Route::get('/subscriptions/growstream/checkout', [\App\Http\Controllers\SubscriptionCheckoutController::class, 'show'])
+            ->defaults('moduleId', 'growstream')
+            ->name('checkout');
         Route::get('/my-videos', [GrowStreamWebController::class, 'myVideos'])->name('my-videos');
 
         // Notifications

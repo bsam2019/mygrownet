@@ -59,8 +59,12 @@ class SubscriptionCheckoutController extends Controller
         // Subdomain modules (growstream) have no /workspace; link back to their
         // home page instead. Other modules return to the platform workspace.
         $back = ['label' => 'Back to workspace', 'url' => route('workspace')];
+        $checkoutRoute = 'subscriptions.checkout';
         if ($moduleId === 'growstream' && Route::has('growstream.home')) {
             $back = ['label' => 'Back to GrowStream', 'url' => route('growstream.home')];
+            // Checkout must run on the subdomain (route-name guard) so the
+            // page/controller are served there, not on the main domain.
+            $checkoutRoute = Route::has('growstream.checkout') ? 'growstream.checkout' : 'subscriptions.checkout';
         }
 
         return Inertia::render('Payments/ModulePlans', [
@@ -73,6 +77,7 @@ class SubscriptionCheckoutController extends Controller
             'currentTier' => $currentTier,
             'isAdmin' => $isAdmin,
             'back' => $back,
+            'checkoutRoute' => $checkoutRoute,
         ]);
     }
 

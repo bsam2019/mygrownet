@@ -33,6 +33,7 @@ const props = defineProps<{
     currentTier?: string;
     isAdmin?: boolean;
     back?: BackLink;
+    checkoutRoute?: string;
 }>();
 
 const page = usePage();
@@ -73,14 +74,14 @@ const canUpgradeTo = (key: string) => {
     return targetIndex > currentIndex;
 };
 
-const checkoutUrl = (tier: Tier) => route('subscriptions.checkout', {
+const checkoutUrl = (tier: Tier) => route(props.checkoutRoute ?? 'subscriptions.checkout', {
     module: props.module.id,
     tier: tier.key,
     billing_cycle: 'monthly',
     return_url: page.url,
 });
 
-const topUpUrl = () => route('subscriptions.checkout', {
+const topUpUrl = () => route(props.checkoutRoute ?? 'subscriptions.checkout', {
     module: props.module.id,
     tier: 'free',
     billing_cycle: 'monthly',
