@@ -11,6 +11,7 @@ use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoSeriesRepositoryInterface;
 use App\Domain\Core\Contracts\MyGrowIdentity;
+use App\Domain\GrowStream\Services\AccessControlService;
 use App\Domain\GrowStream\Services\AttributionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +25,7 @@ class GrowStreamWebController
         private VideoSeriesRepositoryInterface $seriesRepo,
         private MyGrowIdentity $identity,
         private ?AttributionService $attribution = null,
+        private ?AccessControlService $accessControl = null,
     ) {}
 
     public function redirectToLogin(Request $request): RedirectResponse
@@ -219,11 +221,41 @@ class GrowStreamWebController
                 ->first();
         }
 
+        $userCanAccess = $this->canWatchVideo($video, $watchProgress);
+
         return Inertia::render('GrowStream/VideoDetail', [
             'video' => $video,
             'relatedVideos' => $related,
             'watchProgress' => $watchProgress,
+            'userCanAccess' => $userCanAccess,
         ]);
+    }
+
+    /**
+     * Server-side access check for a video (subscription tier + free-episode rule).
+     */
+    private function canWatchVideo($video, $watchProgress = null): bool
+    {
+        // Free-first-episode / free-access-level rule
+        if ($video->access_level === 'free') {
+            return true;
+        }
+
+        // Free episode within its series (episode_number <= free_episode_count)
+        $episodeNumber = (int) ($video->episode_number ?? 0);
+        if ($episodeNumber >= 1 && $video->series_id) {
+            $series = $this->seriesRepo->findById($video->series_id);
+            if ($series && $episodeNumber <= (int) ($series->free_episode_count ?? 1)) {
+                return true;
+            }
+        }
+
+        $user = auth()->user();
+        if ($user === null || $this->accessControl === null) {
+            return false;
+        }
+
+        return $this->accessControl->hasPaidSubscription($user);
     }
 
     public function seriesDetail(string $slug): Response

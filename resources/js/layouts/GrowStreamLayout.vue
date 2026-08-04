@@ -170,6 +170,12 @@ const logout = () => {
                         >
                             Creator Studio
                         </Link>
+                        <Link
+                            :href="route('growstream.subscription')"
+                            class="gs-btn gs-btn-accent"
+                        >
+                            Subscribe
+                        </Link>
                         <div class="flex items-center gap-2">
                             <div class="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--gs-primary-soft)] text-sm font-semibold text-[var(--gs-primary)]">
                                 {{ (user?.name || 'U').charAt(0).toUpperCase() }}

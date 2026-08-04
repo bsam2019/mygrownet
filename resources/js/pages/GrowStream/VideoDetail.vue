@@ -1,16 +1,51 @@
 <template>
     <GrowStreamLayout :title="`${video.title} - GrowStream`">
         <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <!-- Video Player -->
+            <!-- Video Player / Paywall Gate -->
             <div class="mb-8">
-                <VideoPlayer
-                    :video="video"
-                    :start-position="watchHistory?.current_position || 0"
-                    :autoplay="false"
-                    @progress="handleProgress"
-                    @ended="handleEnded"
-                    @close="router.visit(route('growstream.browse'))"
-                />
+                <template v-if="userCanAccess">
+                    <VideoPlayer
+                        :video="video"
+                        :start-position="watchHistory?.current_position || 0"
+                        :autoplay="false"
+                        @progress="handleProgress"
+                        @ended="handleEnded"
+                        @close="router.visit(route('growstream.browse'))"
+                    />
+                </template>
+
+                <!-- Subscribe prompt for gated content -->
+                <div v-else class="gs-card relative flex flex-col items-center justify-center overflow-hidden p-10 text-center sm:p-16">
+                    <div class="absolute inset-0 bg-gradient-to-br from-[var(--gs-primary)]/20 via-[#065f46]/30 to-[#022c22]/40"></div>
+                    <div class="relative flex flex-col items-center">
+                        <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--gs-accent)]">
+                            <svg class="h-8 w-8 text-[#1a1608]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </div>
+                        <h2 class="mb-2 text-2xl font-bold text-[var(--gs-text)] sm:text-3xl">
+                            {{ video.access_level === 'premium' ? 'Premium Content' : 'Subscriber Content' }}
+                        </h2>
+                        <p class="mb-6 max-w-md text-[var(--gs-muted)]">
+                            {{ video.access_level === 'premium' ? 'This video is part of the premium catalogue.' : 'This video is available to subscribers.' }}
+                            Subscribe to unlock it and stream the whole catalogue on demand.
+                        </p>
+                        <div class="flex flex-wrap items-center justify-center gap-3">
+                            <Link
+                                :href="route('growstream.subscription')"
+                                class="gs-btn gs-btn-accent px-8 py-3 text-lg"
+                            >
+                                Subscribe Now
+                            </Link>
+                            <Link
+                                :href="route('growstream.browse')"
+                                class="gs-btn gs-btn-outline px-6 py-3 text-lg"
+                            >
+                                Browse Free Content
+                            </Link>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -196,10 +231,12 @@ interface Props {
     relatedVideos?: Video[];
     watchHistory?: WatchHistory;
     watchlistItem?: Watchlist;
+    userCanAccess?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     relatedVideos: () => [],
+    userCanAccess: true,
 });
 
 const { formatDuration, getAccessLevelBadge, addToWatchlist, removeFromWatchlist } = useGrowStream();
