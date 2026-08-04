@@ -9,6 +9,9 @@ registerModuleSW('/sw.js', 'GrowStream');
 bootInertia('GrowStream', (name: string) => {
     return resolvePageComponent(
         `./pages/${name}.vue`,
-        import.meta.glob<DefineComponent>('./pages/GrowStream/**/*.vue')
+        {
+            ...import.meta.glob<DefineComponent>('./pages/GrowStream/**/*.vue'),
+            ...import.meta.glob<DefineComponent>('./pages/Payments/**/*.vue'),
+        }
     );
 });
