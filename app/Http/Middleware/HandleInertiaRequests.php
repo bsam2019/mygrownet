@@ -80,7 +80,19 @@ class HandleInertiaRequests extends Middleware
     public function version(Request $request): ?string
     {
         // Use manifest file hash for asset versioning
-        // This ensures proper cache busting when assets change
+        // This ensures proper cache busting when assets change.
+        // Subdomains serve their own module build (e.g. build/growstream/),
+        // so hash the matching manifest — otherwise a module rebuild that
+        // leaves the main manifest untouched won't change the Inertia version
+        // and browsers keep running the stale JS bundle.
+        $host = (string) $request->getHost();
+
+        if (str_starts_with($host, 'growstream.')) {
+            if (file_exists(public_path('build/growstream/manifest.json'))) {
+                return md5_file(public_path('build/growstream/manifest.json'));
+            }
+        }
+
         if (file_exists(public_path('build/manifest.json'))) {
             return md5_file(public_path('build/manifest.json'));
         }
