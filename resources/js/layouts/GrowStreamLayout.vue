@@ -80,6 +80,32 @@ const registerHref = computed(() => {
 const logout = () => {
     router.post(route('growstream.logout'));
 };
+
+// Avatar dropdown (works on desktop + mobile)
+const avatarMenuOpen = ref(false);
+const avatarMenuRef = ref<HTMLElement>();
+
+const toggleAvatarMenu = () => {
+    avatarMenuOpen.value = !avatarMenuOpen.value;
+};
+
+const closeAvatarMenu = () => {
+    avatarMenuOpen.value = false;
+};
+
+const handleAvatarClickOutside = (event: MouseEvent) => {
+    if (avatarMenuRef.value && !avatarMenuRef.value.contains(event.target as Node)) {
+        closeAvatarMenu();
+    }
+};
+
+onMounted(() => {
+    document.addEventListener('click', handleAvatarClickOutside);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleAvatarClickOutside);
+});
 </script>
 
 <template>
@@ -123,7 +149,7 @@ const logout = () => {
                 <div class="flex items-center gap-1.5 sm:gap-2">
                     <!-- Data Saver Toggle -->
                     <button
-                        class="hidden items-center gap-2 rounded-full border border-[var(--gs-border)] px-3 py-2 text-sm font-medium transition-colors lg:flex"
+                        class="hidden items-center gap-2 rounded-full border border-[var(--gs-border)] px-3 py-2 text-sm font-medium transition-colors xl:flex"
                         :class="dataSaver ? 'border-[var(--gs-primary)] text-[var(--gs-primary)]' : 'text-[var(--gs-muted)] hover:text-[var(--gs-text)]'"
                         :title="dataSaver ? 'Data Saver on - autoplay off, lower quality' : 'Data Saver off'"
                         :aria-pressed="dataSaver ? 'true' : 'false'"
@@ -141,52 +167,76 @@ const logout = () => {
                         <span>{{ dataSaver ? 'Data Saver On' : 'Data Saver' }}</span>
                     </button>
 
-                    <template v-if="isAuthenticated">
-                        <!-- Notifications Bell -->
-                        <Link
-                            :href="route('growstream.notifications')"
-                            class="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--gs-border)] text-[var(--gs-muted)] transition-colors hover:text-[var(--gs-text)]"
-                            aria-label="Notifications"
+                    <!-- Notifications Bell -->
+                    <Link
+                        v-if="isAuthenticated"
+                        :href="route('growstream.notifications')"
+                        class="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--gs-border)] text-[var(--gs-muted)] transition-colors hover:text-[var(--gs-text)]"
+                        aria-label="Notifications"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                            />
+                        </svg>
+                        <span
+                            v-if="unreadCount > 0"
+                            class="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--gs-primary)] px-1 text-[10px] font-bold text-[#0a0a0c]"
                         >
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                                />
-                            </svg>
-                            <span
-                                v-if="unreadCount > 0"
-                                class="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--gs-primary)] px-1 text-[10px] font-bold text-[#0a0a0c]"
-                            >
-                                {{ unreadCount > 99 ? '99+' : unreadCount }}
-                            </span>
-                        </Link>
+                            {{ unreadCount > 99 ? '99+' : unreadCount }}
+                        </span>
+                    </Link>
 
-                        <Link
-                            :href="route('growstream.creator.dashboard')"
-                            class="gs-btn gs-btn-outline hidden sm:inline-flex"
-                        >
-                            Creator Studio
-                        </Link>
-                        <Link
-                            :href="route('growstream.subscription')"
-                            class="gs-btn gs-btn-accent hidden sm:inline-flex"
-                        >
-                            Subscribe
-                        </Link>
-                        <div class="flex items-center gap-1.5 sm:gap-2">
-                            <div class="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--gs-primary-soft)] text-sm font-semibold text-[var(--gs-primary)]">
-                                {{ (user?.name || 'U').charAt(0).toUpperCase() }}
-                            </div>
+                    <template v-if="isAuthenticated">
+                        <!-- Avatar dropdown -->
+                        <div ref="avatarMenuRef" class="relative">
                             <button
-                                class="gs-btn gs-btn-ghost hidden sm:inline-flex"
-                                aria-label="Sign out of your account"
-                                @click="logout"
+                                class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-[var(--gs-primary-soft)] text-sm font-semibold text-[var(--gs-primary)] transition hover:bg-[var(--gs-primary)]/25"
+                                :aria-expanded="avatarMenuOpen"
+                                aria-haspopup="true"
+                                aria-label="Account menu"
+                                @click.stop="toggleAvatarMenu"
                             >
-                                Sign Out
+                                {{ (user?.name || 'U').charAt(0).toUpperCase() }}
                             </button>
+
+                            <transition
+                                enter-active-class="transition duration-150 ease-out"
+                                enter-from-class="opacity-0 translate-y-1"
+                                leave-active-class="transition duration-100 ease-in"
+                                leave-to-class="opacity-0"
+                            >
+                                <div
+                                    v-if="avatarMenuOpen"
+                                    class="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-xl border border-[var(--gs-border)] bg-[var(--gs-card)] shadow-xl"
+                                    @click.stop
+                                >
+                                    <div class="border-b border-[var(--gs-border)] px-4 py-3">
+                                        <p class="truncate text-sm font-semibold text-[var(--gs-text)]">{{ user?.name }}</p>
+                                        <p class="truncate text-xs text-[var(--gs-muted)]">{{ user?.email }}</p>
+                                    </div>
+                                    <div class="flex flex-col p-1.5">
+                                        <Link :href="route('growstream.my-videos')" class="rounded-lg px-3 py-2 text-sm text-[var(--gs-muted)] hover:bg-[var(--gs-bg-elevated)] hover:text-[var(--gs-text)]" @click="closeAvatarMenu">
+                                            My Videos
+                                        </Link>
+                                        <Link :href="route('growstream.subscription')" class="rounded-lg px-3 py-2 text-sm text-[var(--gs-accent)] hover:bg-[var(--gs-bg-elevated)]" @click="closeAvatarMenu">
+                                            Subscribe
+                                        </Link>
+                                        <Link :href="route('growstream.creator.dashboard')" class="rounded-lg px-3 py-2 text-sm text-[var(--gs-muted)] hover:bg-[var(--gs-bg-elevated)] hover:text-[var(--gs-text)]" @click="closeAvatarMenu">
+                                            Creator Studio
+                                        </Link>
+                                        <Link v-if="isAdmin" :href="route('growstream.admin.videos')" class="rounded-lg px-3 py-2 text-sm text-[var(--gs-muted)] hover:bg-[var(--gs-bg-elevated)] hover:text-[var(--gs-text)]" @click="closeAvatarMenu">
+                                            Admin
+                                        </Link>
+                                        <button class="rounded-lg px-3 py-2 text-left text-sm text-red-400 hover:bg-red-500/10" @click="closeAvatarMenu; logout()">
+                                            Sign Out
+                                        </button>
+                                    </div>
+                                </div>
+                            </transition>
                         </div>
                     </template>
                     <template v-else>
@@ -202,7 +252,7 @@ const logout = () => {
             <slot />
         </main>
 
-        <!-- Mobile Bottom Nav -->
+        <!-- Mobile Bottom Nav (5 items) -->
         <nav aria-label="Bottom" class="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--gs-border)] bg-[var(--gs-bg)]/95 backdrop-blur md:hidden">
             <div class="grid grid-cols-5">
                 <Link
@@ -217,20 +267,6 @@ const logout = () => {
                     </svg>
                     {{ item.label }}
                 </Link>
-
-                <!-- Subscribe (mobile-only, always reachable) -->
-                <template v-if="isAuthenticated">
-                    <Link
-                        :href="route('growstream.subscription')"
-                        aria-label="Subscribe"
-                        class="flex min-h-[56px] flex-col items-center justify-center gap-1 py-2 text-[11px] font-semibold text-[var(--gs-accent)] active:text-[var(--gs-primary)]"
-                    >
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        Subscribe
-                    </Link>
-                </template>
             </div>
         </nav>
     </div>

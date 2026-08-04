@@ -25,9 +25,20 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
     Route::middleware(['web', 'identity.redirect:growstream', 'auth'])->prefix($prefix)->name($namePrefix)->group(function () {
         Route::post('/logout', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'destroy'])->name('logout');
         Route::get('/subscription', function () {
-            return redirect()->away(
-                rtrim((string) config('app.url'), '/') . '/subscriptions/growstream/plans'
-            );
+            // config('app.url') is overwritten by DetectSubdomain to the subdomain
+            // host, which would keep us on growstream.mygrownet.com and hit the
+            // subdomain route guard (404). Build the main-domain URL explicitly.
+            $host = request()->getHost();
+            $mainDomain = 'mygrownet.com';
+            if (str_ends_with($host, '.mygrownet.com')) {
+                $mainDomain = 'mygrownet.com';
+            } elseif (filter_var($host, FILTER_VALIDATE_IP)) {
+                // Local/dev — mirror the configured app URL host
+                $parsed = parse_url((string) config('app.url'));
+                $mainDomain = $parsed['host'] ?? $host;
+            }
+
+            return redirect()->away("https://{$mainDomain}/subscriptions/growstream/plans");
         })->name('subscription');
         Route::get('/my-videos', [GrowStreamWebController::class, 'myVideos'])->name('my-videos');
 
