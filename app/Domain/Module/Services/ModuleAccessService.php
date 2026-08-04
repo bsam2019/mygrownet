@@ -39,7 +39,7 @@ class ModuleAccessService
             if ($user->hasRole($adminRoles)) {
                 return true;
             }
-            
+
             // Also check if any of the user's roles contain 'admin' (case-insensitive)
             foreach ($user->roles as $role) {
                 if (stripos($role->name, 'admin') !== false) {
@@ -47,18 +47,27 @@ class ModuleAccessService
                 }
             }
         }
-        
+
         // Fallback: check is_admin attribute
         if (isset($user->is_admin) && $user->is_admin) {
             return true;
         }
-        
+
         // Fallback: check role attribute (legacy)
         if (isset($user->role) && stripos($user->role, 'admin') !== false) {
             return true;
         }
-        
+
         return false;
+    }
+
+    /**
+     * Public wrapper so callers (e.g. the subscription plans page) can detect
+     * admins with the same logic that grants them the highest module tier.
+     */
+    public function userIsAdmin(User $user): bool
+    {
+        return $this->isAdmin($user);
     }
 
     public function canAccess(User $user, ModuleId $moduleId): bool

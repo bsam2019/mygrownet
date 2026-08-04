@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Module\Services\ModuleAccessService;
 use App\Domain\Module\Services\ModuleSubscriptionService;
 use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\Module\Services\TierConfigurationService;
@@ -44,10 +45,12 @@ class SubscriptionCheckoutController extends Controller
 
         $user = $request->user();
         $currentTier = 'free';
+        $isAdmin = false;
 
         if ($user) {
-            $subscription = app(SubscriptionService::class)
-                ->getUserTier($user, $moduleId);
+            $subscriptionService = app(SubscriptionService::class);
+            $isAdmin = app(ModuleAccessService::class)->userIsAdmin($user);
+            $subscription = $subscriptionService->getUserTier($user, $moduleId);
             $currentTier = $subscription ?: 'free';
         }
 
@@ -68,6 +71,7 @@ class SubscriptionCheckoutController extends Controller
             ],
             'tiers' => $tiers,
             'currentTier' => $currentTier,
+            'isAdmin' => $isAdmin,
             'back' => $back,
         ]);
     }

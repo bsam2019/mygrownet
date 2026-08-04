@@ -31,6 +31,7 @@ const props = defineProps<{
     module: ModuleInfo;
     tiers: Record<string, Tier>;
     currentTier?: string;
+    isAdmin?: boolean;
     back?: BackLink;
 }>();
 
@@ -61,6 +62,11 @@ const currentTierKey = computed(() => props.currentTier ?? 'free');
 const tierOrder = computed(() => plansArray.value.map((t) => t.key));
 
 const canUpgradeTo = (key: string) => {
+    // Admins are auto-granted the highest tier, so every plan would otherwise
+    // render as the disabled "Current Plan". Allow admins to select any plan
+    // (e.g. to test the payment flow).
+    if (props.isAdmin) return true;
+
     const currentIndex = tierOrder.value.indexOf(currentTierKey.value);
     const targetIndex = tierOrder.value.indexOf(key);
     if (currentIndex === -1) return true;
