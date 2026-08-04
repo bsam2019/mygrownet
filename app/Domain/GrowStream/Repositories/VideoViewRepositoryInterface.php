@@ -33,6 +33,12 @@ interface VideoViewRepositoryInterface
      */
     public function getViewsAnalytics(int $videoId, string $period = 'daily'): array;
 
+    /**
+     * Count how many times a user has started playback of videos whose
+     * access_level is not 'free' since the given date (viewer allowance).
+     */
+    public function countPremiumViewsByUser(int $userId, ?\DateTimeInterface $from = null): int;
+
     public function deleteByVideo(int $videoId): void;
 
     public function query(): \Illuminate\Database\Eloquent\Builder;

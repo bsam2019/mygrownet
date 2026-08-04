@@ -40,6 +40,7 @@ interface Tier {
     storage_limit_mb: number | null;
     is_active: boolean;
     is_default: boolean;
+    is_popular?: boolean;
     sort_order: number;
     features: Feature[] | Record<string, any>;
     from_config?: boolean;
@@ -83,10 +84,12 @@ const tierForm = useForm({
     user_limit: null as number | null,
     is_active: true,
     is_default: false,
+    is_popular: false,
     sort_order: 0,
     pages_limit: null as number | null,
     products_limit: null as number | null,
     sites_limit: null as number | null,
+    views_per_month: null as number | null,
 });
 
 const featuresForm = useForm({
@@ -107,6 +110,7 @@ const openTierModal = (tier?: Tier) => {
         tierForm.user_limit = tier.user_limit;
         tierForm.is_active = tier.is_active;
         tierForm.is_default = tier.is_default;
+        tierForm.is_popular = tier.is_popular || false;
         tierForm.sort_order = tier.sort_order;
         
         // Extract module-specific limits from features
@@ -114,6 +118,7 @@ const openTierModal = (tier?: Tier) => {
         tierForm.pages_limit = features.find(f => f.feature_key === 'pages')?.value_limit ?? null;
         tierForm.products_limit = features.find(f => f.feature_key === 'products')?.value_limit ?? null;
         tierForm.sites_limit = features.find(f => f.feature_key === 'sites')?.value_limit ?? null;
+        tierForm.views_per_month = features.find(f => f.feature_key === 'views_per_month')?.value_limit ?? null;
     } else {
         editingTier.value = null;
         tierForm.reset();
@@ -393,6 +398,9 @@ const tc = (i: number) => tierColors[i % tierColors.length];
                                             <span v-if="getFeatureLimit(tier, 'products') !== null" class="chip"><span class="chip__key">Products</span>{{ formatLimit(getFeatureLimit(tier, 'products')) }}</span>
                                             <span v-if="getFeatureLimit(tier, 'sites') !== null" class="chip"><span class="chip__key">Sites</span>{{ formatLimit(getFeatureLimit(tier, 'sites')) }}</span>
                                         </template>
+                                        <template v-if="moduleId === 'growstream'">
+                                            <span v-if="getFeatureLimit(tier, 'views_per_month') !== null" class="chip"><span class="chip__key">Views/Mo</span>{{ formatLimit(getFeatureLimit(tier, 'views_per_month')) }}</span>
+                                        </template>
                                         <span v-if="!tier.user_limit && (!tier.features || Object.keys(tier.features).length === 0)" class="text-xs text-slate-300 italic">—</span>
                                     </div>
                                 </td>
@@ -561,6 +569,11 @@ const tc = (i: number) => tierColors[i % tierColors.length];
                                             <label class="field-label">User Limit</label>
                                             <input v-model.number="tierForm.user_limit" type="number" min="1" class="field-input" placeholder="Unlimited" />
                                         </div>
+                                        <div v-if="moduleId === 'growstream'" class="field">
+                                            <label class="field-label">Premium Views / Month</label>
+                                            <input v-model.number="tierForm.views_per_month" type="number" min="-1" class="field-input" placeholder="-1 = unlimited" />
+                                            <p class="field-hint">Viewer allowance before playback is blocked. -1 = unlimited.</p>
+                                        </div>
                                     </div>
                                 </section>
 
@@ -617,6 +630,13 @@ const tc = (i: number) => tierColors[i % tierColors.length];
                                             </span>
                                             <input v-model="tierForm.is_default" type="checkbox" class="sr-only" />
                                             <span class="text-sm text-slate-700 select-none">Default Tier</span>
+                                        </label>
+                                        <label class="check-option">
+                                            <span class="check-box" :class="tierForm.is_popular ? 'check-box--on' : ''">
+                                                <CheckIcon v-if="tierForm.is_popular" class="h-3 w-3" />
+                                            </span>
+                                            <input v-model="tierForm.is_popular" type="checkbox" class="sr-only" />
+                                            <span class="text-sm text-slate-700 select-none">Recommended (popular)</span>
                                         </label>
                                     </div>
                                 </section>

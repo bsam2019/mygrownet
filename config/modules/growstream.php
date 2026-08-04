@@ -14,89 +14,78 @@ return [
     'color' => 'fuchsia',
 
     'feature_labels' => [
-        'videos' => 'Video Hosting',
-        'livestream' => 'Live Streaming',
-        'courses' => 'Courses',
-        'analytics' => 'Viewer Analytics',
-        'branding' => 'Custom Branding',
+        'free_catalog' => 'Free Content Catalogue',
+        'hd_streaming' => 'HD Streaming',
+        '4k_streaming' => '4K Streaming',
+        'ad_free' => 'Ad-Free',
+        'offline_downloads' => 'Offline Downloads',
+        'multi_device' => 'Watch on Multiple Devices',
         'priority_support' => 'Priority Support',
+        'creator_tools' => 'Free Creator Tools',
     ],
 
     'limit_labels' => [
-        'videos' => 'Videos',
-        'storage_mb' => 'Storage (MB)',
-        'viewers' => 'Monthly Viewers',
+        'views_per_month' => 'Premium Views / Month',
     ],
 
     'tiers' => [
         'free' => [
             'name' => 'Free',
-            'description' => 'Upload and share a few videos',
+            'description' => 'Watch free content. No subscription needed.',
             'price_monthly' => 0,
             'price_annual' => 0,
             'popular' => false,
             'sort_order' => 0,
             'limits' => [
-                'videos' => 5,
-                'storage_mb' => 500,
-                'viewers' => 100,
+                'views_per_month' => 0,
             ],
             'features' => [
-                'videos',
+                'free_catalog',
+                'creator_tools',
             ],
         ],
 
         'starter' => [
             'name' => 'Starter',
-            'description' => 'For content creators getting started',
+            'description' => 'For viewers who want more premium content',
             'price_monthly' => 129,
             'price_annual' => 1238,
             'popular' => true,
             'sort_order' => 1,
             'limits' => [
-                'videos' => 50,
-                'storage_mb' => 5120,
-                'viewers' => 1000,
+                'views_per_month' => 300,
             ],
             'features' => [
-                'videos',
-                'courses',
-                'analytics',
+                'hd_streaming',
+                'ad_free',
+                'multi_device',
             ],
         ],
 
         'business' => [
             'name' => 'Business',
-            'description' => 'Full streaming platform for organisations',
+            'description' => 'Unlimited premium streaming for families & organisations',
             'price_monthly' => 549,
             'price_annual' => 5270,
             'popular' => false,
             'sort_order' => 2,
             'limits' => [
-                'videos' => -1,
-                'storage_mb' => 51200,
-                'viewers' => -1,
+                'views_per_month' => -1,
             ],
             'features' => [
-                'videos',
-                'livestream',
-                'courses',
-                'analytics',
-                'branding',
+                '4k_streaming',
+                'ad_free',
+                'offline_downloads',
+                'multi_device',
                 'priority_support',
             ],
         ],
     ],
 
     'usage_metrics' => [
-        'videos' => [
-            'label' => 'Videos',
-            'period' => 'lifetime',
-        ],
-        'storage_mb' => [
-            'label' => 'Storage',
-            'period' => 'lifetime',
-            'unit' => 'MB',
+        'views_per_month' => [
+            'label' => 'Premium Views',
+            'period' => 'monthly',
         ],
     ],
 ];

@@ -255,7 +255,8 @@ class GrowStreamWebController
             return false;
         }
 
-        return $this->accessControl->hasPaidSubscription($user);
+        return $this->accessControl->hasPaidSubscription($user)
+            && $this->accessControl->remainingPremiumViews($user) !== 0;
     }
 
     public function seriesDetail(string $slug): Response

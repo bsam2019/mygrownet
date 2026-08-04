@@ -191,7 +191,9 @@ class WatchService
 
         $user = User::find($userId);
 
-        return $user && $this->accessControl->hasPaidSubscription($user)
+        return $user
+            && $this->accessControl->hasPaidSubscription($user)
+            && $this->accessControl->remainingPremiumViews($user) !== 0
             ? AccessLevel::Premium->value
             : AccessLevel::Free->value;
     }

@@ -11,7 +11,9 @@ interface Tier {
     popular: boolean;
     sort_order?: number;
     limits?: Record<string, number | null>;
+    labeled_limits?: Record<string, { key: string; label: string; value: number }>;
     features?: string[];
+    labeled_features?: { key: string; label: string }[];
 }
 
 interface ModuleInfo {
@@ -118,25 +120,25 @@ const topUpUrl = () => route('subscriptions.checkout', {
 
                     <ul class="mt-5 space-y-2 flex-1">
                         <li
-                            v-for="(value, key) in (plan.limits ?? {})"
+                            v-for="(limit, key) in (plan.labeled_limits ?? {})"
                             :key="key"
                             class="flex items-center gap-2 text-sm text-gray-600"
                         >
                             <svg class="h-4 w-4 text-emerald-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
                             </svg>
-                            {{ key.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) }}:
-                            <span class="font-medium">{{ value === -1 ? 'Unlimited' : value }}</span>
+                            {{ limit.label ?? key }}:
+                            <span class="font-medium">{{ limit.value === -1 ? 'Unlimited' : limit.value }}</span>
                         </li>
                         <li
-                            v-for="feature in (plan.features ?? []).slice(0, 5)"
-                            :key="feature"
+                            v-for="feature in (plan.labeled_features ?? []).slice(0, 5)"
+                            :key="feature.key"
                             class="flex items-center gap-2 text-sm text-gray-600"
                         >
                             <svg class="h-4 w-4 text-emerald-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
                             </svg>
-                            {{ feature.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) }}
+                            {{ feature.label ?? feature.key }}
                         </li>
                     </ul>
 

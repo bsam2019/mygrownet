@@ -115,6 +115,20 @@ class EloquentVideoViewRepository implements VideoViewRepositoryInterface
         VideoView::where('video_id', $videoId)->delete();
     }
 
+    public function countPremiumViewsByUser(int $userId, ?\DateTimeInterface $from = null): int
+    {
+        $query = VideoView::query()
+            ->join('growstream_videos as v', 'v.id', '=', 'growstream_video_views.video_id')
+            ->where('growstream_video_views.user_id', $userId)
+            ->where('v.access_level', '!=', 'free');
+
+        if ($from !== null) {
+            $query->where('growstream_video_views.viewed_at', '>=', $from);
+        }
+
+        return $query->count();
+    }
+
     public function query(): Builder
     {
         return VideoView::query();

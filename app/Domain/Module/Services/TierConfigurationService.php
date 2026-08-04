@@ -2,13 +2,18 @@
 
 namespace App\Domain\Module\Services;
 
+use App\Models\ModuleTier;
 use Illuminate\Support\Facades\Config;
 
 /**
  * Tier Configuration Service
  * 
  * Centralized service for loading and accessing module tier configurations.
- * All tier limits, features, and pricing are defined in config/modules/*.php
+ * All tier limits, features, and pricing are defined in config/modules/*.php.
+ *
+ * Admin overrides: when the module has records in the `module_tiers` table
+ * (edited via the admin dashboard), those DB records are merged on top of the
+ * config defaults — DB wins. Config remains the fallback/seed source.
  */
 class TierConfigurationService
 {
@@ -28,12 +33,87 @@ class TierConfigurationService
     }
 
     /**
-     * Get all tiers for a module
+     * Get all tiers for a module. DB-backed admin overrides win over config.
      */
     public function getTiers(string $moduleId): array
     {
         $config = $this->getModuleConfig($moduleId);
-        return $config['tiers'] ?? [];
+        $tiers = $config['tiers'] ?? [];
+
+        $dbOverrides = $this->getDbTierOverrides($moduleId);
+        if (count($dbOverrides) > 0) {
+            $tiers = $dbOverrides;
+        }
+
+        return $tiers;
+    }
+
+    /**
+     * Drop the cached config for a module so DB overrides are re-read.
+     */
+    public function clearCache(string $moduleId): void
+    {
+        unset($this->loadedConfigs[$moduleId]);
+    }
+
+    /**
+     * Load tiers edited by an admin from the module_tiers table, converted to
+     * the same shape used by the config files (limits + features arrays).
+     * Returns [] when the module has no DB records (or the table is absent).
+     */
+    private function getDbTierOverrides(string $moduleId): array
+    {
+        try {
+            $rows = ModuleTier::forModule($moduleId)
+                ->with('activeFeatures')
+                ->ordered()
+                ->get();
+        } catch (\Throwable) {
+            // Table missing (e.g. fresh install / unit tests without migrations)
+            return [];
+        }
+
+        if ($rows->isEmpty()) {
+            return [];
+        }
+
+        $tiers = [];
+
+        foreach ($rows as $row) {
+            $limits = [];
+            $features = [];
+
+            foreach ($row->activeFeatures as $feature) {
+                if ($feature->feature_type === 'limit') {
+                    $limits[$feature->feature_key] = $feature->value_limit;
+                    $features[] = $feature->feature_key;
+                } elseif ($feature->feature_type === 'boolean') {
+                    if ($feature->value_boolean) {
+                        $features[] = $feature->feature_key;
+                    }
+                } else {
+                    $features[] = $feature->feature_key;
+                }
+            }
+
+            if ($row->user_limit !== null) {
+                $limits['user_limit'] = $row->user_limit;
+            }
+
+            $tiers[$row->tier_key] = [
+                'name' => $row->name,
+                'description' => $row->description,
+                'price_monthly' => (float) $row->price_monthly,
+                'price_annual' => (float) $row->price_annual,
+                'popular' => (bool) $row->is_popular,
+                'sort_order' => (int) $row->sort_order,
+                'limits' => $limits,
+                'features' => $features,
+                'from_db' => true,
+            ];
+        }
+
+        return $tiers;
     }
 
     /**

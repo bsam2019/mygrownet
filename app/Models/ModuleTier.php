@@ -19,6 +19,7 @@ class ModuleTier extends Model
         'storage_limit_mb',
         'is_active',
         'is_default',
+        'is_popular',
         'sort_order',
     ];
 
@@ -29,6 +30,7 @@ class ModuleTier extends Model
         'storage_limit_mb' => 'integer',
         'is_active' => 'boolean',
         'is_default' => 'boolean',
+        'is_popular' => 'boolean',
         'sort_order' => 'integer',
     ];
 
