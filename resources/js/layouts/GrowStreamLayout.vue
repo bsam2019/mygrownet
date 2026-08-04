@@ -120,10 +120,10 @@ const logout = () => {
                 </nav>
 
                 <!-- Desktop Actions -->
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5 sm:gap-2">
                     <!-- Data Saver Toggle -->
                     <button
-                        class="hidden items-center gap-2 rounded-full border border-[var(--gs-border)] px-3 py-2 text-sm font-medium transition-colors md:flex"
+                        class="hidden items-center gap-2 rounded-full border border-[var(--gs-border)] px-3 py-2 text-sm font-medium transition-colors lg:flex"
                         :class="dataSaver ? 'border-[var(--gs-primary)] text-[var(--gs-primary)]' : 'text-[var(--gs-muted)] hover:text-[var(--gs-text)]'"
                         :title="dataSaver ? 'Data Saver on - autoplay off, lower quality' : 'Data Saver off'"
                         :aria-pressed="dataSaver ? 'true' : 'false'"
@@ -166,22 +166,22 @@ const logout = () => {
 
                         <Link
                             :href="route('growstream.creator.dashboard')"
-                            class="gs-btn gs-btn-outline"
+                            class="gs-btn gs-btn-outline hidden sm:inline-flex"
                         >
                             Creator Studio
                         </Link>
                         <Link
                             :href="route('growstream.subscription')"
-                            class="gs-btn gs-btn-accent"
+                            class="gs-btn gs-btn-accent hidden sm:inline-flex"
                         >
                             Subscribe
                         </Link>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-1.5 sm:gap-2">
                             <div class="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--gs-primary-soft)] text-sm font-semibold text-[var(--gs-primary)]">
                                 {{ (user?.name || 'U').charAt(0).toUpperCase() }}
                             </div>
                             <button
-                                class="gs-btn gs-btn-ghost"
+                                class="gs-btn gs-btn-ghost hidden sm:inline-flex"
                                 aria-label="Sign out of your account"
                                 @click="logout"
                             >
@@ -202,7 +202,7 @@ const logout = () => {
             <slot />
         </main>
 
-        <!-- Mobile Bottom Nav (5 items) -->
+        <!-- Mobile Bottom Nav -->
         <nav aria-label="Bottom" class="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--gs-border)] bg-[var(--gs-bg)]/95 backdrop-blur md:hidden">
             <div class="grid grid-cols-5">
                 <Link
@@ -217,6 +217,20 @@ const logout = () => {
                     </svg>
                     {{ item.label }}
                 </Link>
+
+                <!-- Subscribe (mobile-only, always reachable) -->
+                <template v-if="isAuthenticated">
+                    <Link
+                        :href="route('growstream.subscription')"
+                        aria-label="Subscribe"
+                        class="flex min-h-[56px] flex-col items-center justify-center gap-1 py-2 text-[11px] font-semibold text-[var(--gs-accent)] active:text-[var(--gs-primary)]"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        Subscribe
+                    </Link>
+                </template>
             </div>
         </nav>
     </div>

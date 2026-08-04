@@ -24,7 +24,11 @@ use Illuminate\Support\Facades\Route;
 $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
     Route::middleware(['web', 'identity.redirect:growstream', 'auth'])->prefix($prefix)->name($namePrefix)->group(function () {
         Route::post('/logout', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'destroy'])->name('logout');
-        Route::get('/subscription', fn () => redirect()->route('subscriptions.plans', ['module' => 'growstream']))->name('subscription');
+        Route::get('/subscription', function () {
+            return redirect()->away(
+                rtrim((string) config('app.url'), '/') . '/subscriptions/growstream/plans'
+            );
+        })->name('subscription');
         Route::get('/my-videos', [GrowStreamWebController::class, 'myVideos'])->name('my-videos');
 
         // Notifications
