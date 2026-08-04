@@ -50,5 +50,12 @@ return [
         'api_secret' => env('PAWAPAY_API_SECRET'),
         'base_url' => env('PAWAPAY_BASE_URL', 'https://api.pawapay.io'),
         'webhook_secret' => env('PAWAPAY_WEBHOOK_SECRET'),
+        // Sandbox-only MSISDNs that simulate outcomes (see PawaPay docs).
+        // These must never be used in production.
+        'sandbox_test_numbers' => [
+            'mtn_momo_zmb_completed' => '260763456789',
+            'airtel_oapi_zmb_completed' => '260973456789',
+            'zamtel_zmb_completed' => '260953456700',
+        ],
     ],
 ];

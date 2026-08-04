@@ -41,9 +41,10 @@ class SharedPaymentControllerTest extends TestCase
     public function test_initiate_creates_transaction_and_calls_gateway(): void
     {
         Http::fake([
-            '*api.sandbox.pawapay.io/deposits' => Http::response([
-                'depositId' => 'DEP-100',
-                'status' => 'PENDING',
+            '*api.sandbox.pawapay.io/v2/deposits' => Http::response([
+                'depositId' => '523a7165-d0b6-4986-bd19-1a9a4ec84afc',
+                'status' => 'ACCEPTED',
+                'created' => '2026-08-04T00:46:13Z',
             ], 200),
         ]);
 
@@ -76,7 +77,7 @@ class SharedPaymentControllerTest extends TestCase
     public function test_initiate_marks_transaction_failed_on_gateway_error(): void
     {
         Http::fake([
-            '*api.sandbox.pawapay.io/deposits' => Http::response([
+            '*api.sandbox.pawapay.io/v2/deposits' => Http::response([
                 'message' => 'Invalid amount',
             ], 400),
         ]);

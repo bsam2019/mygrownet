@@ -44,12 +44,27 @@ class PaymentWebhookController extends Controller
     {
         $payload = $request->getContent();
         $gateway = $this->getPawapayGateway();
-        $signature = $request->header('X-Webhook-Signature', '');
 
-        if (!$gateway->verifyWebhookSignature($payload, $signature)) {
+        // RFC-9421 HTTP Message Signatures (V2). PawaPay sends these headers only
+        // when "signed callbacks" are enabled on the account.
+        $signature = $request->header('Signature', '');
+        $signatureInput = $request->header('Signature-Input', '');
+        $signatureDate = $request->header('Signature-Date', '');
+        $contentDigest = $request->header('Content-Digest', '');
+
+        $verified = $gateway->verifyWebhookSignature(
+            payload: $payload,
+            signatureHeader: $signature,
+            signatureInputHeader: $signatureInput,
+            signatureDate: $signatureDate,
+            contentDigest: $contentDigest,
+        );
+
+        if (!$verified) {
             Log::warning('PawaPay webhook signature verification failed', [
                 'ip' => $request->ip(),
-                'signature_present' => !empty($signature),
+                'has_signature' => !empty($signature),
+                'has_signature_input' => !empty($signatureInput),
             ]);
 
             return response()->json(['error' => 'Invalid signature'], 401);

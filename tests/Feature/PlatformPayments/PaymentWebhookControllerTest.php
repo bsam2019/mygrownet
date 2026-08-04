@@ -30,13 +30,33 @@ class PaymentWebhookControllerTest extends TestCase
     {
         config()->set('services.pawapay.webhook_secret', 'whsec_test');
 
+        // RFC-9421: a Signature header present without a matching Signature-Input
+        // cannot be verified -> the gateway rejects it.
         $response = $this->postJson('/api/webhooks/payments/pawapay', [
             'depositId' => 'DEP-001',
             'status' => 'COMPLETED',
-        ], ['X-Webhook-Signature' => 'wrong-signature']);
+        ], [
+            'Signature' => 'sig-pp=:AAAA:',
+            'Signature-Input' => '',
+        ]);
 
         $response->assertStatus(401);
         $response->assertJson(['error' => 'Invalid signature']);
+    }
+
+    public function test_pawapay_webhook_accepts_when_signed_callbacks_disabled(): void
+    {
+        config()->set('services.pawapay.webhook_secret', 'whsec_test');
+
+        // No Signature / Signature-Input headers -> PawaPay signed callbacks are
+        // not enabled on the account -> the gateway accepts (matches PawaPay docs).
+        $response = $this->postJson('/api/webhooks/payments/pawapay', [
+            'depositId' => 'DEP-ACCEPTED-NO-SIG',
+            'status' => 'FAILED',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['received' => true]);
     }
 
     public function test_pawapay_webhook_updates_transaction_and_dispatches_completed_event(): void

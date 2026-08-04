@@ -27,12 +27,13 @@ class PawapayGatewayTest extends TestCase
         $this->assertEquals('PawaPay', $this->gateway->getName());
     }
 
-    public function test_initiate_payment_success(): void
+    public function test_initiate_payment_accepted_uses_uuid_and_v2_payload(): void
     {
         Http::fake([
-            '*api.sandbox.pawapay.io/deposits' => Http::response([
-                'depositId' => 'DEP-001',
-                'status' => 'PENDING',
+            '*api.sandbox.pawapay.io/v2/deposits' => Http::response([
+                'depositId' => '523a7165-d0b6-4986-bd19-1a9a4ec84afc',
+                'status' => 'ACCEPTED',
+                'created' => '2026-08-04T00:46:13Z',
             ], 200),
         ]);
 
@@ -40,7 +41,7 @@ class PawapayGatewayTest extends TestCase
             amount: '50.00',
             currency: 'ZMW',
             phoneNumber: '260977123456',
-            reference: 'REF-001',
+            reference: '42', // non-UUID -> gateway must generate a UUID depositId
             description: 'Test payment',
         );
 
@@ -48,84 +49,117 @@ class PawapayGatewayTest extends TestCase
 
         $this->assertTrue($response->success);
         $this->assertEquals(PaymentStatus::PENDING, $response->status);
-        $this->assertEquals('REF-001', $response->transactionReference);
-        $this->assertEquals('DEP-001', $response->externalReference);
+
+        // depositId must be a UUIDv4 (V2 requirement)
+        $this->assertMatchesRegularExpression(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i',
+            $response->transactionReference
+        );
+
+        // Assert the request body was built per V2 (MMO payer + accountDetails)
+        Http::assertSent(function ($request) {
+            $body = json_decode($request->body(), true);
+
+            return is_array($body)
+                && isset($body['depositId'])
+                && $body['payer']['type'] === 'MMO'
+                && isset($body['payer']['accountDetails']['provider'])
+                && isset($body['payer']['accountDetails']['phoneNumber'])
+                && $body['amount'] === '50'
+                && $body['currency'] === 'ZMW';
+        });
     }
 
-    public function test_initiate_payment_failure(): void
+    public function test_initiate_payment_rejected(): void
     {
         Http::fake([
-            '*api.sandbox.pawapay.io/deposits' => Http::response([
-                'message' => 'Invalid amount',
-            ], 400),
+            '*api.sandbox.pawapay.io/v2/deposits' => Http::response([
+                'depositId' => '523a7165-d0b6-4986-bd19-1a9a4ec84afc',
+                'status' => 'REJECTED',
+                'failureReason' => [
+                    'failureCode' => 'INVALID_CURRENCY',
+                    'failureMessage' => 'The currency USD is not supported',
+                ],
+            ], 200),
         ]);
 
         $request = new PaymentRequest(
-            amount: '-1',
-            currency: 'ZMW',
+            amount: '50',
+            currency: 'USD',
             phoneNumber: '260977123456',
-            reference: 'REF-002',
-            description: 'Failed payment',
+            reference: '42',
+            description: 'Rejected',
         );
 
         $response = $this->gateway->initiatePayment($request);
 
         $this->assertFalse($response->success);
         $this->assertEquals(PaymentStatus::FAILED, $response->status);
+        $this->assertStringContainsString('INVALID_CURRENCY', $response->message);
     }
 
-    public function test_verify_payment_completed(): void
+    public function test_verify_payment_completed_reads_found_envelope(): void
     {
         Http::fake([
-            'api.sandbox.pawapay.io/deposits/REF-001' => Http::response([
-                'depositId' => 'DEP-001',
-                'status' => 'COMPLETED',
+            '*api.sandbox.pawapay.io/v2/deposits/523a7165-d0b6-4986-bd19-1a9a4ec84afc' => Http::response([
+                'status' => 'FOUND',
+                'data' => [
+                    'depositId' => '523a7165-d0b6-4986-bd19-1a9a4ec84afc',
+                    'status' => 'COMPLETED',
+                    'amount' => '50.00',
+                    'currency' => 'ZMW',
+                ],
             ], 200),
         ]);
 
-        $response = $this->gateway->verifyPayment('REF-001');
+        $response = $this->gateway->verifyPayment('523a7165-d0b6-4986-bd19-1a9a4ec84afc');
 
         $this->assertTrue($response->success);
         $this->assertEquals(PaymentStatus::COMPLETED, $response->status);
     }
 
-    public function test_verify_payment_failed(): void
+    public function test_verify_payment_failed_reads_found_envelope(): void
     {
         Http::fake([
-            'api.sandbox.pawapay.io/deposits/REF-001' => Http::response([
-                'depositId' => 'DEP-001',
-                'status' => 'FAILED',
+            '*api.sandbox.pawapay.io/v2/deposits/523a7165-d0b6-4986-bd19-1a9a4ec84afc' => Http::response([
+                'status' => 'FOUND',
+                'data' => [
+                    'depositId' => '523a7165-d0b6-4986-bd19-1a9a4ec84afc',
+                    'status' => 'FAILED',
+                    'failureReason' => ['failureCode' => 'PAYMENT_NOT_APPROVED'],
+                ],
             ], 200),
         ]);
 
-        $response = $this->gateway->verifyPayment('REF-001');
+        $response = $this->gateway->verifyPayment('523a7165-d0b6-4986-bd19-1a9a4ec84afc');
 
         $this->assertFalse($response->success);
         $this->assertEquals(PaymentStatus::FAILED, $response->status);
     }
 
-    public function test_verify_payment_not_found(): void
+    public function test_verify_payment_not_found_is_pending(): void
     {
         Http::fake([
-            'api.sandbox.pawapay.io/deposits/REF-999' => Http::response(null, 404),
+            '*api.sandbox.pawapay.io/v2/deposits/523a7165-d0b6-4986-bd19-1a9a4ec84afc' => Http::response(null, 404),
         ]);
 
-        $response = $this->gateway->verifyPayment('REF-999');
+        $response = $this->gateway->verifyPayment('523a7165-d0b6-4986-bd19-1a9a4ec84afc');
 
         $this->assertFalse($response->success);
-        $this->assertEquals(PaymentStatus::FAILED, $response->status);
+        $this->assertEquals(PaymentStatus::PENDING, $response->status);
     }
 
     public function test_refund_success(): void
     {
         Http::fake([
-            '*api.sandbox.pawapay.io/refunds' => Http::response([
-                'refundId' => 'RFND-001',
+            '*api.sandbox.pawapay.io/v2/refunds' => Http::response([
+                'refundId' => '723a7165-d0b6-4986-bd19-1a9a4ec84afc',
+                'status' => 'ACCEPTED',
             ], 200),
         ]);
 
         $request = new RefundRequest(
-            transactionReference: 'DEP-001',
+            transactionReference: '523a7165-d0b6-4986-bd19-1a9a4ec84afc',
             amount: '50.00',
             reason: 'Customer request',
         );
@@ -133,19 +167,24 @@ class PawapayGatewayTest extends TestCase
         $response = $this->gateway->refundPayment($request);
 
         $this->assertTrue($response->success);
-        $this->assertEquals('RFND-001', $response->refundReference);
+        $this->assertMatchesRegularExpression(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i',
+            $response->refundReference
+        );
     }
 
     public function test_refund_failure(): void
     {
         Http::fake([
-            '*api.sandbox.pawapay.io/refunds' => Http::response([
-                'message' => 'Deposit not found',
-            ], 404),
+            '*api.sandbox.pawapay.io/v2/refunds' => Http::response([
+                'refundId' => '723a7165-d0b6-4986-bd19-1a9a4ec84afc',
+                'status' => 'REJECTED',
+                'failureReason' => ['failureCode' => 'INVALID_PARAMETER'],
+            ], 200),
         ]);
 
         $request = new RefundRequest(
-            transactionReference: 'DEP-999',
+            transactionReference: '523a7165-d0b6-4986-bd19-1a9a4ec84afc',
             amount: '50.00',
             reason: 'Refund',
         );
@@ -153,7 +192,7 @@ class PawapayGatewayTest extends TestCase
         $response = $this->gateway->refundPayment($request);
 
         $this->assertFalse($response->success);
-        $this->assertEquals('', $response->refundReference);
+        $this->assertStringContainsString('INVALID_PARAMETER', $response->message);
     }
 
     public function test_validate_configuration_valid(): void
@@ -186,60 +225,44 @@ class PawapayGatewayTest extends TestCase
         $this->assertTrue($this->gateway->supportsTestMode());
     }
 
-    public function test_verify_webhook_signature_valid_hex(): void
+    public function test_verify_webhook_signature_accepted_when_no_signature_headers(): void
     {
-        $gateway = new PawapayGateway(
-            ['api_token' => 'test-token', 'webhook_secret' => 'whsec_test'],
-            true,
-        );
-
-        $payload = '{"depositId":"DEP-001","status":"COMPLETED"}';
-        $signature = hash_hmac('sha256', $payload, 'whsec_test');
-
-        $this->assertTrue($gateway->verifyWebhookSignature($payload, $signature));
+        // Signed callbacks disabled on the account -> no Signature headers -> accept.
+        $this->assertTrue($this->gateway->verifyWebhookSignature('{}'));
     }
 
-    public function test_verify_webhook_signature_valid_base64(): void
+    public function test_verify_webhook_signature_rejected_when_partial_headers(): void
     {
-        $gateway = new PawapayGateway(
-            ['api_token' => 'test-token', 'webhook_secret' => 'whsec_test'],
-            true,
-        );
-
-        $payload = '{"depositId":"DEP-001","status":"COMPLETED"}';
-        $signature = base64_encode(hash_hmac('sha256', $payload, 'whsec_test', true));
-
-        $this->assertTrue($gateway->verifyWebhookSignature($payload, $signature));
+        // Signature present but no Signature-Input -> cannot verify -> reject.
+        $this->assertFalse($this->gateway->verifyWebhookSignature(
+            '{}',
+            signatureHeader: 'sig-pp=:AAAA:',
+            signatureInputHeader: '',
+        ));
     }
 
-    public function test_verify_webhook_signature_invalid(): void
-    {
-        $gateway = new PawapayGateway(
-            ['api_token' => 'test-token', 'webhook_secret' => 'whsec_test'],
-            true,
-        );
-
-        $payload = '{"depositId":"DEP-001","status":"COMPLETED"}';
-
-        $this->assertFalse($gateway->verifyWebhookSignature($payload, 'wrong-signature'));
-        $this->assertFalse($gateway->verifyWebhookSignature($payload, ''));
-    }
-
-    public function test_verify_webhook_signature_skipped_without_secret(): void
-    {
-        $gateway = new PawapayGateway(['api_token' => 'test-token'], true);
-
-        $this->assertTrue($gateway->verifyWebhookSignature('{}', ''));
-    }
-
-    public function test_map_status_mappings(): void
+    public function test_map_status_v2_deposit_statuses(): void
     {
         $this->assertEquals(PaymentStatus::COMPLETED, $this->gateway->mapStatus('COMPLETED'));
-        $this->assertEquals(PaymentStatus::COMPLETED, $this->gateway->mapStatus('accepted'));
-        $this->assertEquals(PaymentStatus::FAILED, $this->gateway->mapStatus('REJECTED'));
+        $this->assertEquals(PaymentStatus::PROCESSING, $this->gateway->mapStatus('ACCEPTED'));
+        $this->assertEquals(PaymentStatus::PROCESSING, $this->gateway->mapStatus('PROCESSING'));
+        $this->assertEquals(PaymentStatus::PROCESSING, $this->gateway->mapStatus('IN_RECONCILIATION'));
+        $this->assertEquals(PaymentStatus::FAILED, $this->gateway->mapStatus('FAILED'));
         $this->assertEquals(PaymentStatus::CANCELLED, $this->gateway->mapStatus('CANCELLED'));
         $this->assertEquals(PaymentStatus::EXPIRED, $this->gateway->mapStatus('EXPIRED'));
-        $this->assertEquals(PaymentStatus::PENDING, $this->gateway->mapStatus('SUBMITTED'));
         $this->assertEquals(PaymentStatus::PROCESSING, $this->gateway->mapStatus('UNKNOWN'));
+    }
+
+    public function test_amount_formatting(): void
+    {
+        $reflection = new \ReflectionClass($this->gateway);
+        $method = $reflection->getMethod('formatAmount');
+        $method->setAccessible(true);
+
+        $this->assertEquals('15', $method->invoke($this->gateway, '15'));
+        $this->assertEquals('15', $method->invoke($this->gateway, '15.00'));
+        $this->assertEquals('10.5', $method->invoke($this->gateway, '10.50'));
+        $this->assertEquals('0.5', $method->invoke($this->gateway, '0.50'));
+        $this->assertEquals('123', $method->invoke($this->gateway, '0123'));
     }
 }
