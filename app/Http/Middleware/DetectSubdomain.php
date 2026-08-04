@@ -138,7 +138,10 @@ class DetectSubdomain
                         if ($name) {
                             $isGrowStreamSubdomain = str_starts_with($name, 'growstream.')
                                 && !str_starts_with($name, 'growstream.main.');
-                            if (!$isGrowStreamSubdomain) {
+                            // Shared platform routes (payments, session) accessed from any subdomain
+                            $isSharedRoute = str_starts_with($name, 'payments.shared.')
+                                || str_starts_with($name, 'identity.session.');
+                            if (!$isGrowStreamSubdomain && !$isSharedRoute) {
                                 abort(404);
                             }
                         }
