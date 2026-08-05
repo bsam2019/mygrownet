@@ -124,6 +124,76 @@ class VideoManagementController extends Controller
         }
     }
 
+    /**
+     * Initialize a direct-to-Cloudflare tus upload (no PHP file handling).
+     */
+    public function tusInit(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'file_size' => 'required|integer|min:1',
+            'content_type' => 'required|in:' . implode(',', array_keys(config('growstream.content_types', []))),
+        ]);
+
+        $video = $this->videoRepo->save([
+            'title' => $request->title ?: ('Untitled — ' . now()->format('Y-m-d H:i')),
+            'slug' => Str::slug($request->title ?: ('video-' . uniqid())),
+            'description' => $request->description ?? '',
+            'content_type' => $validated['content_type'],
+            'access_level' => $request->access_level ?: 'free',
+            'creator_id' => $request->user()->id,
+            'video_provider' => config('growstream.default_provider'),
+            'upload_status' => 'uploading',
+            'file_size' => $validated['file_size'],
+        ]);
+
+        $provider = VideoProviderFactory::make();
+        $tus = $provider->createUploadUrl([
+            'file_size' => $validated['file_size'],
+            'video_id' => $video->id,
+        ]);
+
+        $this->videoRepo->update($video, [
+            'provider_video_id' => $tus['uid'] ?? null,
+        ]);
+
+        return response()->json([
+            'video_id' => $video->id,
+            'provider_video_id' => $tus['uid'] ?? null,
+            'upload_url' => $tus['upload_url'] ?? null,
+        ]);
+    }
+
+    /**
+     * Mark a tus upload complete so the processing pipeline picks it up.
+     */
+    public function tusComplete(Request $request, int $id): JsonResponse
+    {
+        $video = $this->videoRepo->findById($id);
+        if (! $video || $video->upload_status !== 'uploading') {
+            return response()->json(['error' => 'Video not in uploading state'], 422);
+        }
+
+        $provider = VideoProviderFactory::make();
+        $updates = [
+            'upload_status' => 'processing',
+            'processing_started_at' => now(),
+        ];
+
+        try {
+            if ($video->provider_video_id) {
+                $details = $provider->getVideo($video->provider_video_id);
+                $updates['playback_url'] = $details->playbackUrl ?? null;
+                $updates['thumbnail_url'] = $details->thumbnailUrl ?? null;
+            }
+        } catch (\Throwable) {
+            // Cloudflare may still be transcoding; ProcessVideoJob will backfill
+        }
+
+        $this->videoRepo->update($video, $updates);
+
+        return response()->json(['success' => true]);
+    }
+
     public function show(int $id): JsonResponse
     {
         $video = $this->videoRepo->findById($id);
