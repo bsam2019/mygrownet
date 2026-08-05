@@ -58,7 +58,7 @@
                             type="text"
                             required
                             placeholder="Enter video title"
-                            style="color: #f4f4f5; background: #101014; border-color: #2d2d35;"
+                                                                                    style="color: #f4f4f5 !important; background: #101014 !important; border-color: #2d2d35; -webkit-text-fill-color: #f4f4f5 !important; box-shadow: inset 0 0 0 100px #101014 !important;"
                             class="w-full rounded-xl border px-4 py-3 text-sm placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
                         />
                     </div>
@@ -72,7 +72,7 @@
                             rows="3"
                             required
                             placeholder="Brief description of the video"
-                            style="color: #f4f4f5; background: #101014; border-color: #2d2d35;"
+                                                                                    style="color: #f4f4f5 !important; background: #101014 !important; border-color: #2d2d35; -webkit-text-fill-color: #f4f4f5 !important; box-shadow: inset 0 0 0 100px #101014 !important;"
                             class="w-full rounded-xl border px-4 py-3 text-sm placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors resize-none"
                         ></textarea>
                     </div>
@@ -81,13 +81,13 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="mb-1.5 block text-sm font-medium text-zinc-300">Content Type *</label>
-                            <select v-model="form.content_type" required style="color: #f4f4f5; background: #101014; border-color: #2d2d35;" class="w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors">
+                            <select v-model="form.content_type" required                                                         style="color: #f4f4f5 !important; background: #101014 !important; border-color: #2d2d35; -webkit-text-fill-color: #f4f4f5 !important; box-shadow: inset 0 0 0 100px #101014 !important;" class="w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors">
                                 <option v-for="(label, value) in props.contentTypes" :key="value" :value="value">{{ label }}</option>
                             </select>
                         </div>
                         <div>
                             <label class="mb-1.5 block text-sm font-medium text-zinc-300">Access *</label>
-                            <select v-model="form.access_level" required style="color: #f4f4f5; background: #101014; border-color: #2d2d35;" class="w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors">
+                            <select v-model="form.access_level" required                                                         style="color: #f4f4f5 !important; background: #101014 !important; border-color: #2d2d35; -webkit-text-fill-color: #f4f4f5 !important; box-shadow: inset 0 0 0 100px #101014 !important;" class="w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors">
                                 <option v-for="(label, value) in props.accessLevels" :key="value" :value="value">{{ label }}</option>
                             </select>
                         </div>
@@ -125,7 +125,6 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import axios from 'axios';
-import { tusUpload } from '@/composables/useTusUpload';
 
 interface Props {
     show: boolean;
@@ -190,7 +189,19 @@ const handleSubmit = async () => {
         const { video_id, upload_url } = initResp.data;
         if (!upload_url) throw new Error('Failed to initialize upload');
 
-        await tusUpload(form.video, upload_url, (p) => { uploadProgress.value = p.percent; });
+        // Upload directly to Cloudflare via fetch (no axios, no CSRF header)
+        await new Promise<void>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', upload_url);
+            xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) uploadProgress.value = Math.round((e.loaded / e.total) * 100);
+            };
+            xhr.onload = () => { if (xhr.status >= 200 && xhr.status < 300) resolve(); else reject(new Error(`Upload failed (HTTP ${xhr.status})`)); };
+            xhr.onerror = () => reject(new Error('Network error during upload'));
+            xhr.send(form.video);
+        });
+
         await axios.post(`/admin/videos/${video_id}/tus-complete`);
 
         emit('uploaded');
