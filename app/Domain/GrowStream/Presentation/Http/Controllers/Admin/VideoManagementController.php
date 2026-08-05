@@ -66,8 +66,8 @@ class VideoManagementController extends Controller
             'video' => 'required|file|mimes:mp4,mov,avi,mkv,webm|max:' . (config('growstream.upload.max_file_size') / 1024),
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'content_type' => 'required|in:movie,series,episode,lesson,short,workshop,webinar',
-            'access_level' => 'required|in:free,basic,premium,institutional',
+            'content_type' => 'required|in:' . implode(',', array_keys(config('growstream.content_types', []))),
+            'access_level' => 'required|in:' . implode(',', array_keys(config('growstream.access_levels', []))),
         ]);
 
         try {
@@ -149,8 +149,8 @@ class VideoManagementController extends Controller
         $request->validate([
             'title' => 'sometimes|string|max:255',
             'description' => 'sometimes|string',
-            'content_type' => 'sometimes|in:movie,series,episode,lesson,short,workshop,webinar',
-            'access_level' => 'sometimes|in:free,basic,premium,institutional',
+            'content_type' => 'sometimes|in:' . implode(',', array_keys(config('growstream.content_types', []))),
+            'access_level' => 'sometimes|in:' . implode(',', array_keys(config('growstream.access_levels', []))),
         ]);
 
         try {

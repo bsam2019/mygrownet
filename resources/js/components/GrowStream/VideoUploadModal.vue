@@ -106,11 +106,9 @@
                                 required
                                 class="gs-input mt-1"
                             >
-                                <option value="lesson">Lesson</option>
-                                <option value="workshop">Workshop</option>
-                                <option value="webinar">Webinar</option>
-                                <option value="movie">Movie</option>
-                                <option value="short">Short</option>
+                                <option v-for="(label, value) in props.contentTypes" :key="value" :value="value">
+                                    {{ label }}
+                                </option>
                             </select>
                         </div>
                         <div>
@@ -120,10 +118,9 @@
                                 required
                                 class="gs-input mt-1"
                             >
-                                <option value="free">Free</option>
-                                <option value="basic">Basic</option>
-                                <option value="premium">Premium</option>
-                                <option value="institutional">Institutional</option>
+                                <option v-for="(label, value) in props.accessLevels" :key="value" :value="value">
+                                    {{ label }}
+                                </option>
                             </select>
                         </div>
                     </div>
@@ -177,9 +174,32 @@ import { useGrowStreamAdmin } from '@/composables/useGrowStreamAdmin';
 
 interface Props {
     show: boolean;
+    contentTypes?: Record<string, string>;
+    accessLevels?: Record<string, string>;
 }
 
-defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    contentTypes: () => ({
+        movie: 'Movie',
+        series: 'Series',
+        episode: 'Episode',
+        short: 'Short Video',
+        comedy: 'Comedy',
+        skit: 'Skits',
+        soap: 'Soap Opera',
+        drama: 'Drama',
+        documentary: 'Documentary',
+        reality: 'Reality & Talk Shows',
+        music: 'Music & Performance',
+        kids: 'Kids & Family',
+        lifestyle: 'Lifestyle',
+        faith: 'Faith-Based',
+    }),
+    accessLevels: () => ({
+        free: 'Free (Everyone)',
+        premium: 'Premium (Subscribers)',
+    }),
+});
 
 const emit = defineEmits<{
     (e: 'close'): void;
@@ -198,7 +218,7 @@ const form = reactive({
     video: null as File | null,
     title: '',
     description: '',
-    content_type: 'lesson',
+    content_type: 'movie',
     access_level: 'free',
 });
 
@@ -254,7 +274,7 @@ const handleSubmit = async () => {
         form.video = null;
         form.title = '';
         form.description = '';
-        form.content_type = 'lesson';
+        form.content_type = 'movie';
         form.access_level = 'free';
     } catch (error: any) {
         errorMessage.value = error.response?.data?.error || 'Upload failed. Please try again.';

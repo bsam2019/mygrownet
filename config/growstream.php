@@ -138,6 +138,10 @@ return [
     |--------------------------------------------------------------------------
     | Content Types
     |--------------------------------------------------------------------------
+    |
+    | Entertainment-first categories aligned with the creator platform
+    | (per the market research: drama, movies, comedy, skits, documentaries,
+    | music, etc.).
     */
     'content_types' => [
         'movie' => 'Movie',
@@ -148,20 +152,24 @@ return [
         'skit' => 'Skits',
         'soap' => 'Soap Opera',
         'drama' => 'Drama',
-        'lesson' => 'Lesson',
-        'workshop' => 'Workshop',
-        'webinar' => 'Webinar',
+        'documentary' => 'Documentary',
+        'reality' => 'Reality & Talk Shows',
+        'music' => 'Music & Performance',
+        'kids' => 'Kids & Family',
+        'lifestyle' => 'Lifestyle',
+        'faith' => 'Faith-Based',
     ],
 
     /*
     |--------------------------------------------------------------------------
     | Access Levels
     |--------------------------------------------------------------------------
+    |
+    | Only 'free' (everyone) and 'premium' (subscribers) are used by the
+    | AccessControlService enforcement. 'basic'/'institutional' had no mapping.
     */
     'access_levels' => [
-        'free' => 'Free',
-        'basic' => 'Basic Subscription',
-        'premium' => 'Premium Subscription',
-        'institutional' => 'Institutional',
+        'free' => 'Free (Everyone)',
+        'premium' => 'Premium (Subscribers)',
     ],
 ];
