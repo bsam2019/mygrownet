@@ -1,6 +1,6 @@
 // Service Worker with proper cache versioning and update strategy
 // Increment this version when deploying new code to force cache invalidation
-const CACHE_VERSION = 'v1.0.9';
+const CACHE_VERSION = 'v1.0.10';
 const CACHE_NAME = `mygrownet-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `mygrownet-runtime-${CACHE_VERSION}`;
 const API_CACHE = `mygrownet-api-${CACHE_VERSION}`;
