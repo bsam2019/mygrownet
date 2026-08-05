@@ -181,7 +181,7 @@
                                         </svg>
                                     </button>
                                     <button
-                                        @click="deleteVideoHandler(video.id)"
+                                        @click="confirmDelete(video)"
                                         class="text-red-400 hover:text-red-300"
                                         aria-label="Delete" title="Delete"
                                     >
@@ -229,6 +229,21 @@
 
         <!-- Upload Modal -->
         <VideoUploadModal :show="showUploadModal" @close="showUploadModal = false" @uploaded="handleVideoUploaded" />
+
+        <!-- Delete Confirmation Modal -->
+        <Teleport to="body">
+            <div v-if="deleteTarget" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.6)">
+                <div class="w-full max-w-sm rounded-2xl bg-[#1a1a1e] p-6 shadow-2xl">
+                    <h3 class="text-lg font-semibold text-white mb-2">Delete Video</h3>
+                    <p class="text-sm text-zinc-400 mb-2">Are you sure you want to delete <strong class="text-white">"{{ deleteTarget.title }}"</strong>?</p>
+                    <p class="text-xs text-zinc-500 mb-5">This action cannot be undone.</p>
+                    <div class="flex justify-end gap-3">
+                        <button @click="cancelDelete" :disabled="deleting" class="rounded-xl px-4 py-2 text-sm font-medium text-zinc-400 hover:bg-zinc-800 transition-colors">Cancel</button>
+                        <button @click="doDelete" :disabled="deleting" class="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors">{{ deleting ? 'Deleting…' : 'Delete' }}</button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </AdminLayout>
 </template>
 
@@ -239,6 +254,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import VideoUploadModal from '@/Components/GrowStream/VideoUploadModal.vue';
 import { useGrowStreamAdmin } from '@/composables/useGrowStreamAdmin';
 import type { Video, PaginatedResponse } from '@/types/growstream';
+import axios from 'axios';
 
 interface Props {
     videos: PaginatedResponse<Video>;
@@ -310,30 +326,27 @@ const publishVideo = async (videoId: number) => {
 };
 
 const editVideo = (video: Video) => {
-    // Navigate to edit page
     router.visit(route('growstream.admin.videos.edit', video.id));
 };
 
-const deleteVideoHandler = async (videoId: number) => {
-    if (!confirm('Are you sure you want to delete this video?')) return;
+// Delete confirmation
+const deleteTarget = ref<{ id: number; title: string } | null>(null);
+const deleting = ref(false);
 
+const confirmDelete = (video: Video) => { deleteTarget.value = { id: video.id, title: video.title }; };
+const cancelDelete = () => { deleteTarget.value = null; };
+
+const doDelete = async () => {
+    if (!deleteTarget.value) return;
+    deleting.value = true;
     try {
-        await deleteVideo(videoId);
+        await axios.delete(`/admin/videos/${deleteTarget.value.id}`);
+        deleteTarget.value = null;
         router.reload({ only: ['videos'] });
     } catch (error) {
-        console.error('Failed to delete video:', error);
-    }
-};
-
-const handleBulkAction = async (action: string) => {
-    if (!confirm(`Are you sure you want to ${action} ${selectedVideos.value.length} videos?`)) return;
-
-    try {
-        await bulkAction(action, selectedVideos.value);
-        selectedVideos.value = [];
-        router.reload({ only: ['videos'] });
-    } catch (error) {
-        console.error('Bulk action failed:', error);
+        console.error('Delete failed:', error);
+    } finally {
+        deleting.value = false;
     }
 };
 
@@ -355,4 +368,9 @@ const handleVideoUploaded = () => {
     router.reload({ only: ['videos'] });
 };
 </script>
+
+<style scoped>
+.confirm-overlay { background: rgba(0,0,0,0.6); }
+.confirm-panel { background: #1a1a1e; }
+</style>
 

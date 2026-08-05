@@ -36,6 +36,8 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
         Route::post('/admin/videos/upload', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoManagementController::class, 'upload'])->name('admin.videos.upload');
         Route::post('/admin/videos/tus-init', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoManagementController::class, 'tusInit'])->name('admin.videos.tus-init');
         Route::post('/admin/videos/{id}/tus-complete', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoManagementController::class, 'tusComplete'])->name('admin.videos.tus-complete');
+        Route::delete('/admin/videos/{id}', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoManagementController::class, 'destroy'])->name('admin.videos.delete');
+        Route::post('/admin/videos/bulk-delete', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoManagementController::class, 'bulkDelete'])->name('admin.videos.bulk-delete');
         Route::get('/my-videos', [GrowStreamWebController::class, 'myVideos'])->name('my-videos');
 
         // Notifications
