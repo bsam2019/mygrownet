@@ -16,14 +16,16 @@ use App\Models\User;
  * Tier mapping (from config/modules/growstream.php):
  *   - 'free'      → can watch only free (access_level = free) content
  *   - 'starter'   → paid tier, unlocks basic + premium content
- *   - 'business'  → paid tier, unlocks everything (admins are treated as business)
+ *   - 'premium'   → paid tier, higher allowance
+ *   - 'business'  → paid tier, unlimited (admins are treated as business)
  *
  * Viewer monetization model:
  *   Creators upload for free; viewers pay for premium access. Each paid tier
- *   includes a monthly premium-view allowance (views_per_month from the tier
- *   config). Playback of premium content is blocked once the allowance for the
- *   current calendar month is exhausted. Free content never counts against the
- *   allowance.
+ *   includes a monthly watch-minute allowance (watch_minutes_per_month from the
+ *   tier config). Playback of premium content is blocked once the allowance for
+ *   the current calendar month is exhausted. Free content never counts against
+ *   the allowance. Consumption is measured by summing video durations for
+ *   premium plays this month (not by counting views).
  */
 class AccessControlService
 {
@@ -47,16 +49,14 @@ class AccessControlService
             return false;
         }
 
-        $remaining = $this->remainingPremiumViews($user);
-
-        return $remaining === -1 || $remaining > 0;
+        return $this->remainingWatchMinutes($user) !== 0;
     }
 
     public function hasPaidSubscription(User $user): bool
     {
         $tier = $this->currentTier($user);
 
-        return in_array($tier, ['starter', 'business'], true);
+        return in_array($tier, ['starter', 'premium', 'business'], true);
     }
 
     public function currentTier(?User $user): string
@@ -69,9 +69,9 @@ class AccessControlService
     }
 
     /**
-     * Monthly premium-view allowance for the user's tier. -1 = unlimited.
+     * Monthly watch-minute allowance from the user's tier. −1 = unlimited.
      */
-    public function premiumViewsAllowance(?User $user): int
+    public function watchMinutesAllowance(?User $user): int
     {
         if ($user === null || $this->tierConfig === null) {
             return 0;
@@ -80,32 +80,33 @@ class AccessControlService
         $tier = $this->currentTier($user);
         $limits = $this->tierConfig->getTierLimits('growstream', $tier);
 
-        return (int) ($limits['views_per_month'] ?? 0);
+        return (int) ($limits['watch_minutes_per_month'] ?? 0);
     }
 
     /**
-     * Number of premium views the user has already consumed this calendar month.
+     * Seconds of premium video the user has already consumed this calendar
+     * month (sum of video durations for premium ViewVideo rows).
      */
-    public function premiumViewsUsed(?User $user): int
+    public function watchSecondsConsumed(?User $user): int
     {
         if ($user === null || $this->viewRepo === null) {
             return 0;
         }
 
-        return $this->viewRepo->countPremiumViewsByUser($user->id, now()->startOfMonth());
+        return $this->viewRepo->sumPremiumWatchSecondsByUser($user->id, now()->startOfMonth());
     }
 
     /**
-     * How many premium views remain this month. -1 = unlimited.
+     * Watch-minutes remaining this month. −1 = unlimited, 0 = exhausted.
      */
-    public function remainingPremiumViews(?User $user): int
+    public function remainingWatchMinutes(?User $user): int
     {
-        $allowance = $this->premiumViewsAllowance($user);
+        $allowance = $this->watchMinutesAllowance($user);
 
         if ($allowance === -1) {
             return -1;
         }
 
-        return max(0, $allowance - $this->premiumViewsUsed($user));
+        return max(0, $allowance - (int) floor($this->watchSecondsConsumed($user) / 60));
     }
 }

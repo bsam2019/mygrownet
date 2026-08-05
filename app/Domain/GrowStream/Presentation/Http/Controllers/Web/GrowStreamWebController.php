@@ -256,7 +256,7 @@ class GrowStreamWebController
         }
 
         return $this->accessControl->hasPaidSubscription($user)
-            && $this->accessControl->remainingPremiumViews($user) !== 0;
+            && $this->accessControl->remainingWatchMinutes($user) !== 0;
     }
 
     public function seriesDetail(string $slug): Response

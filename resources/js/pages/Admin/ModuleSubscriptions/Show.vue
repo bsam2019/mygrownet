@@ -89,7 +89,7 @@ const tierForm = useForm({
     pages_limit: null as number | null,
     products_limit: null as number | null,
     sites_limit: null as number | null,
-    views_per_month: null as number | null,
+    watch_minutes_per_month: null as number | null,
 });
 
 const featuresForm = useForm({
@@ -118,7 +118,7 @@ const openTierModal = (tier?: Tier) => {
         tierForm.pages_limit = features.find(f => f.feature_key === 'pages')?.value_limit ?? null;
         tierForm.products_limit = features.find(f => f.feature_key === 'products')?.value_limit ?? null;
         tierForm.sites_limit = features.find(f => f.feature_key === 'sites')?.value_limit ?? null;
-        tierForm.views_per_month = features.find(f => f.feature_key === 'views_per_month')?.value_limit ?? null;
+        tierForm.watch_minutes_per_month = features.find(f => f.feature_key === 'watch_minutes_per_month')?.value_limit ?? null;
     } else {
         editingTier.value = null;
         tierForm.reset();
@@ -399,7 +399,7 @@ const tc = (i: number) => tierColors[i % tierColors.length];
                                             <span v-if="getFeatureLimit(tier, 'sites') !== null" class="chip"><span class="chip__key">Sites</span>{{ formatLimit(getFeatureLimit(tier, 'sites')) }}</span>
                                         </template>
                                         <template v-if="moduleId === 'growstream'">
-                                            <span v-if="getFeatureLimit(tier, 'views_per_month') !== null" class="chip"><span class="chip__key">Views/Mo</span>{{ formatLimit(getFeatureLimit(tier, 'views_per_month')) }}</span>
+                                            <span v-if="getFeatureLimit(tier, 'watch_minutes_per_month') !== null" class="chip"><span class="chip__key">Min/Mo</span>{{ formatLimit(getFeatureLimit(tier, 'watch_minutes_per_month')) }}</span>
                                         </template>
                                         <span v-if="!tier.user_limit && (!tier.features || Object.keys(tier.features).length === 0)" class="text-xs text-slate-300 italic">—</span>
                                     </div>
@@ -570,9 +570,9 @@ const tc = (i: number) => tierColors[i % tierColors.length];
                                             <input v-model.number="tierForm.user_limit" type="number" min="1" class="field-input" placeholder="Unlimited" />
                                         </div>
                                         <div v-if="moduleId === 'growstream'" class="field">
-                                            <label class="field-label">Premium Views / Month</label>
-                                            <input v-model.number="tierForm.views_per_month" type="number" min="-1" class="field-input" placeholder="-1 = unlimited" />
-                                            <p class="field-hint">Viewer allowance before playback is blocked. -1 = unlimited.</p>
+                                            <label class="field-label">Watch Minutes / Month</label>
+                                            <input v-model.number="tierForm.watch_minutes_per_month" type="number" min="-1" class="field-input" placeholder="-1 = unlimited" />
+                                            <p class="field-hint">Monthly watch-minute allowance. -1 = unlimited.</p>
                                         </div>
                                     </div>
                                 </section>

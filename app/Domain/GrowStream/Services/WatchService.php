@@ -193,7 +193,7 @@ class WatchService
 
         return $user
             && $this->accessControl->hasPaidSubscription($user)
-            && $this->accessControl->remainingPremiumViews($user) !== 0
+            && $this->accessControl->remainingWatchMinutes($user) !== 0
             ? AccessLevel::Premium->value
             : AccessLevel::Free->value;
     }

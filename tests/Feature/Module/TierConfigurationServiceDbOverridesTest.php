@@ -41,7 +41,7 @@ class TierConfigurationServiceDbOverridesTest extends TestCase
 
         ModuleTierFeature::create([
             'module_tier_id' => $tier->id,
-            'feature_key' => 'views_per_month',
+            'feature_key' => 'watch_minutes_per_month',
             'feature_name' => 'Premium Views / Month',
             'feature_type' => 'limit',
             'value_limit' => 500,
@@ -56,7 +56,7 @@ class TierConfigurationServiceDbOverridesTest extends TestCase
         $this->assertSame('Starter (Admin Edited)', $tiers['starter']['name']);
         $this->assertSame(199, (int) $tiers['starter']['price_monthly']);
         $this->assertTrue($tiers['starter']['popular']);
-        $this->assertSame(500, $tiers['starter']['limits']['views_per_month']);
+        $this->assertSame(500, $tiers['starter']['limits']['watch_minutes_per_month']);
     }
 
     #[Test]
@@ -68,8 +68,8 @@ class TierConfigurationServiceDbOverridesTest extends TestCase
 
         $this->assertArrayHasKey('starter', $tiers);
         $this->assertSame('Starter', $tiers['starter']['name']);
-        $this->assertSame(129, (int) $tiers['starter']['price_monthly']);
-        $this->assertSame(300, $tiers['starter']['limits']['views_per_month']);
+        $this->assertSame(35, (int) $tiers['starter']['price_monthly']);
+        $this->assertSame(500, $tiers['starter']['limits']['watch_minutes_per_month']);
     }
 
     #[Test]
@@ -90,7 +90,7 @@ class TierConfigurationServiceDbOverridesTest extends TestCase
 
         ModuleTierFeature::create([
             'module_tier_id' => $tier->id,
-            'feature_key' => 'views_per_month',
+            'feature_key' => 'watch_minutes_per_month',
             'feature_name' => 'Premium Views / Month',
             'feature_type' => 'limit',
             'value_limit' => -1,
@@ -99,6 +99,6 @@ class TierConfigurationServiceDbOverridesTest extends TestCase
 
         $service->clearCache('growstream');
 
-        $this->assertSame(-1, $service->getTiers('growstream')['business']['limits']['views_per_month']);
+        $this->assertSame(-1, $service->getTiers('growstream')['business']['limits']['watch_minutes_per_month']);
     }
 }

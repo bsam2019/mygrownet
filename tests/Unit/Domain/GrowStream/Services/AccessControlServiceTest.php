@@ -14,15 +14,21 @@ use PHPUnit\Framework\TestCase;
 
 final class AccessControlServiceTest extends TestCase
 {
-    private function makeService(string $tier, ?int $viewsUsed = 0, array $tierLimits = ['views_per_month' => 300]): AccessControlService
-    {
+    /**
+     * @param int $secondsConsumed seconds of premium video consumed this month
+     */
+    private function makeService(
+        string $tier,
+        int $secondsConsumed = 0,
+        array $tierLimits = ['watch_minutes_per_month' => 500],
+    ): AccessControlService {
         $subscriptionService = $this->createMock(SubscriptionService::class);
         $subscriptionService->method('getUserTier')
             ->willReturn($tier);
 
         $viewRepo = $this->createMock(VideoViewRepositoryInterface::class);
-        $viewRepo->method('countPremiumViewsByUser')
-            ->willReturn($viewsUsed ?? 0);
+        $viewRepo->method('sumPremiumWatchSecondsByUser')
+            ->willReturn($secondsConsumed);
 
         $tierConfig = $this->createMock(TierConfigurationService::class);
         $tierConfig->method('getTierLimits')
@@ -64,6 +70,7 @@ final class AccessControlServiceTest extends TestCase
         $this->assertFalse($this->makeService('none')->userCanAccess($user, 'premium'));
         $this->assertTrue($this->makeService('starter')->userCanAccess($user, 'premium'));
         $this->assertTrue($this->makeService('business')->userCanAccess($user, 'premium'));
+        $this->assertTrue($this->makeService('premium')->userCanAccess($user, 'premium'));
         $this->assertTrue($this->makeService('starter')->userCanAccess($user, 'basic'));
         $this->assertTrue($this->makeService('business')->userCanAccess($user, 'institutional'));
     }
@@ -75,6 +82,7 @@ final class AccessControlServiceTest extends TestCase
 
         $this->assertFalse($this->makeService('free')->hasPaidSubscription($user));
         $this->assertTrue($this->makeService('starter')->hasPaidSubscription($user));
+        $this->assertTrue($this->makeService('premium')->hasPaidSubscription($user));
         $this->assertTrue($this->makeService('business')->hasPaidSubscription($user));
     }
 
@@ -89,7 +97,8 @@ final class AccessControlServiceTest extends TestCase
     {
         $user = $this->user();
 
-        $this->assertFalse($this->makeService('starter', viewsUsed: 300)->userCanAccess($user, 'premium'));
+        // 500 min allowance, 30,000 seconds consumed = 500 min → 0 remaining
+        $this->assertFalse($this->makeService('starter', secondsConsumed: 30000)->userCanAccess($user, 'premium'));
     }
 
     #[Test]
@@ -97,7 +106,8 @@ final class AccessControlServiceTest extends TestCase
     {
         $user = $this->user();
 
-        $this->assertTrue($this->makeService('starter', viewsUsed: 299)->userCanAccess($user, 'premium'));
+        // 500 min allowance, 29,940 seconds = 499 min → 1 remaining
+        $this->assertTrue($this->makeService('starter', secondsConsumed: 29940)->userCanAccess($user, 'premium'));
     }
 
     #[Test]
@@ -105,26 +115,32 @@ final class AccessControlServiceTest extends TestCase
     {
         $user = $this->user();
 
-        $this->assertTrue($this->makeService('free', viewsUsed: 0)->userCanAccess($user, 'free'));
+        $this->assertTrue($this->makeService('free', secondsConsumed: 0)->userCanAccess($user, 'free'));
     }
 
     #[Test]
-    public function unlimited_tier_never_blocked_by_views(): void
+    public function unlimited_tier_never_blocked(): void
     {
         $user = $this->user();
 
-        $service = $this->makeService('business', viewsUsed: 9999, tierLimits: ['views_per_month' => -1]);
+        $service = $this->makeService('business', secondsConsumed: 99999, tierLimits: ['watch_minutes_per_month' => -1]);
 
-        $this->assertSame(-1, $service->remainingPremiumViews($user));
+        $this->assertSame(-1, $service->remainingWatchMinutes($user));
         $this->assertTrue($service->userCanAccess($user, 'premium'));
     }
 
     #[Test]
-    public function remaining_views_is_allowance_minus_used(): void
+    public function remaining_minutes_converts_seconds_to_minutes(): void
     {
         $user = $this->user();
 
-        $this->assertSame(100, $this->makeService('starter', viewsUsed: 200)->remainingPremiumViews($user));
-        $this->assertSame(0, $this->makeService('starter', viewsUsed: 500)->remainingPremiumViews($user));
+        // 500 min allowance, 12,000 seconds = 200 min consumed → 300 remaining
+        $this->assertSame(300, $this->makeService('starter', secondsConsumed: 12000)->remainingWatchMinutes($user));
+
+        // 30,000 seconds = 500 min → 0 remaining (floor)
+        $this->assertSame(0, $this->makeService('starter', secondsConsumed: 30000)->remainingWatchMinutes($user));
+
+        // 30,059 seconds = 500.98 min → 0 remaining (floor)
+        $this->assertSame(0, $this->makeService('starter', secondsConsumed: 30059)->remainingWatchMinutes($user));
     }
 }

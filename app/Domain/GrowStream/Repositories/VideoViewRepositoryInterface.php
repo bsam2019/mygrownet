@@ -34,10 +34,10 @@ interface VideoViewRepositoryInterface
     public function getViewsAnalytics(int $videoId, string $period = 'daily'): array;
 
     /**
-     * Count how many times a user has started playback of videos whose
-     * access_level is not 'free' since the given date (viewer allowance).
+     * Sum the duration (seconds) of premium videos a user started playing
+     * since the given date, for the watch-minute allowance gate.
      */
-    public function countPremiumViewsByUser(int $userId, ?\DateTimeInterface $from = null): int;
+    public function sumPremiumWatchSecondsByUser(int $userId, ?\DateTimeInterface $from = null): int;
 
     public function deleteByVideo(int $videoId): void;
 

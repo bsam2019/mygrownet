@@ -109,7 +109,7 @@ class ModuleSubscriptionAdminController extends Controller
             'pages_limit' => 'nullable|integer',
             'products_limit' => 'nullable|integer',
             'sites_limit' => 'nullable|integer|min:1',
-            'views_per_month' => 'nullable|integer|min:-1',
+            'watch_minutes_per_month' => 'nullable|integer|min:-1',
         ]);
 
         $validated['module_id'] = $moduleId;
@@ -149,7 +149,7 @@ class ModuleSubscriptionAdminController extends Controller
             'pages_limit' => 'nullable|integer',
             'products_limit' => 'nullable|integer',
             'sites_limit' => 'nullable|integer|min:1',
-            'views_per_month' => 'nullable|integer|min:-1',
+            'watch_minutes_per_month' => 'nullable|integer|min:-1',
         ]);
 
         // If setting as default, unset other defaults
@@ -689,8 +689,8 @@ class ModuleSubscriptionAdminController extends Controller
         }
 
         if ($moduleId === 'growstream') {
-            if (isset($validated['views_per_month'])) {
-                $moduleFeatures['views_per_month'] = $validated['views_per_month'];
+            if (isset($validated['watch_minutes_per_month'])) {
+                $moduleFeatures['watch_minutes_per_month'] = $validated['watch_minutes_per_month'];
             }
         }
 
@@ -724,7 +724,7 @@ class ModuleSubscriptionAdminController extends Controller
 
         if ($moduleId === 'growstream') {
             $moduleFeatures = [
-                'views_per_month' => $validated['views_per_month'] ?? null,
+                'watch_minutes_per_month' => $validated['watch_minutes_per_month'] ?? null,
             ];
         }
 
@@ -756,7 +756,7 @@ class ModuleSubscriptionAdminController extends Controller
             'products' => 'Products',
             'storage_mb' => 'Storage',
             'sites' => 'Sites',
-            'views_per_month' => 'Premium Views / Month',
+            'watch_minutes_per_month' => 'Watch Minutes / Month',
             default => ucfirst($key),
         };
     }

@@ -25,7 +25,7 @@ return [
     ],
 
     'limit_labels' => [
-        'views_per_month' => 'Premium Views / Month',
+        'watch_minutes_per_month' => 'Watch Minutes / Month',
     ],
 
     'tiers' => [
@@ -37,7 +37,7 @@ return [
             'popular' => false,
             'sort_order' => 0,
             'limits' => [
-                'views_per_month' => 0,
+                'watch_minutes_per_month' => 0,
             ],
             'features' => [
                 'free_catalog',
@@ -47,13 +47,13 @@ return [
 
         'starter' => [
             'name' => 'Starter',
-            'description' => 'For viewers who want more premium content',
-            'price_monthly' => 129,
-            'price_annual' => 1238,
+            'description' => '~8 hours of premium content',
+            'price_monthly' => 35,
+            'price_annual' => 350,
             'popular' => true,
             'sort_order' => 1,
             'limits' => [
-                'views_per_month' => 300,
+                'watch_minutes_per_month' => 500,
             ],
             'features' => [
                 'hd_streaming',
@@ -62,15 +62,33 @@ return [
             ],
         ],
 
-        'business' => [
-            'name' => 'Business',
-            'description' => 'Unlimited premium streaming for families & organisations',
-            'price_monthly' => 549,
-            'price_annual' => 5270,
+        'premium' => [
+            'name' => 'Premium',
+            'description' => '~18 hours of premium content',
+            'price_monthly' => 75,
+            'price_annual' => 750,
             'popular' => false,
             'sort_order' => 2,
             'limits' => [
-                'views_per_month' => -1,
+                'watch_minutes_per_month' => 1100,
+            ],
+            'features' => [
+                'hd_streaming',
+                'ad_free',
+                'offline_downloads',
+                'multi_device',
+            ],
+        ],
+
+        'business' => [
+            'name' => 'Unlimited',
+            'description' => 'Unlimited premium streaming',
+            'price_monthly' => 145,
+            'price_annual' => 1450,
+            'popular' => false,
+            'sort_order' => 3,
+            'limits' => [
+                'watch_minutes_per_month' => -1,
             ],
             'features' => [
                 '4k_streaming',
@@ -83,8 +101,8 @@ return [
     ],
 
     'usage_metrics' => [
-        'views_per_month' => [
-            'label' => 'Premium Views',
+        'watch_minutes_per_month' => [
+            'label' => 'Watch Minutes',
             'period' => 'monthly',
         ],
     ],
