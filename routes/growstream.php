@@ -32,6 +32,8 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
             ->name('checkout');
         Route::post('/videos/{video}/rent', [\App\Http\Controllers\GrowStream\VideoRentalController::class, 'store'])->name('rent');
         Route::get('/videos/rental-status/{reference}', [\App\Http\Controllers\GrowStream\VideoRentalController::class, 'status'])->name('rental-status');
+        // Admin video upload via web session (avoids sanctum role:admin mismatch)
+        Route::post('/admin/videos/upload', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoManagementController::class, 'upload'])->name('admin.videos.upload');
         Route::get('/my-videos', [GrowStreamWebController::class, 'myVideos'])->name('my-videos');
 
         // Notifications

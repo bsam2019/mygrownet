@@ -47,7 +47,7 @@ export function useGrowStreamAdmin() {
     };
 
     const uploadVideo = (formData: FormData) => {
-        return axios.post(`${baseUrl}/videos/upload`, formData, {
+        return axios.post('/admin/videos/upload', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
     };

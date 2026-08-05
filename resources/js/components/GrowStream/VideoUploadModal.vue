@@ -82,7 +82,7 @@
                             type="text"
                             required
                             class="gs-input mt-1 block py-3"
-                            style="color: #f4f4f5; background-color: #101014; border-color: #2d2d35;"
+                            style="color: #f4f4f5; background: var(--gs-bg-elevated); border-color: #2d2d35;"
                         />
                         <p v-if="errors.title" class="mt-1 text-sm text-red-600">{{ errors.title }}</p>
                     </div>
@@ -96,7 +96,7 @@
                             rows="3"
                             required
                             class="gs-input mt-1 block py-3"
-                            style="color: #f4f4f5; background-color: #101014; border-color: #2d2d35;"
+                            style="color: #f4f4f5; background: var(--gs-bg-elevated); border-color: #2d2d35;"
                         ></textarea>
                         <p v-if="errors.description" class="mt-1 text-sm text-red-600">{{ errors.description }}</p>
                     </div>
@@ -109,7 +109,7 @@
                                 v-model="form.content_type"
                                 required
                                 class="gs-input mt-1"
-                                style="color: #f4f4f5; background-color: #101014; border-color: #2d2d35;"
+                                style="color: #f4f4f5; background: var(--gs-bg-elevated); border-color: #2d2d35;"
                             >
                                 <option v-for="(label, value) in props.contentTypes" :key="value" :value="value">
                                     {{ label }}
@@ -122,7 +122,7 @@
                                 v-model="form.access_level"
                                 required
                                 class="gs-input mt-1"
-                                style="color: #f4f4f5; background-color: #101014; border-color: #2d2d35;"
+                                style="color: #f4f4f5; background: var(--gs-bg-elevated); border-color: #2d2d35;"
                             >
                                 <option v-for="(label, value) in props.accessLevels" :key="value" :value="value">
                                     {{ label }}
@@ -283,7 +283,12 @@ const handleSubmit = async () => {
         form.content_type = 'movie';
         form.access_level = 'free';
     } catch (error: any) {
-        errorMessage.value = error.response?.data?.error || 'Upload failed. Please try again.';
+        const errData = error.response?.data;
+        const msg = errData?.message
+            || (errData?.errors ? Object.values(errData.errors).flat().join(', ') : null)
+            || errData?.error
+            || 'Upload failed. Please try again.';
+        errorMessage.value = msg;
     } finally {
         uploading.value = false;
         uploadProgress.value = 0;
