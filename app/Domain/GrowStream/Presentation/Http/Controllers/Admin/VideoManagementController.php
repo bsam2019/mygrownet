@@ -147,10 +147,14 @@ class VideoManagementController extends Controller
         ]);
 
         $provider = VideoProviderFactory::make();
-        $tus = $provider->getDirectUploadUrl([
-            'file_size' => $validated['file_size'],
-            'video_id' => $video->id,
-        ]);
+        try {
+            $tus = $provider->getDirectUploadUrl([
+                'file_size' => $validated['file_size'],
+                'video_id' => $video->id,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Upload provider error: ' . $e->getMessage()], 500);
+        }
 
         $this->videoRepo->update($video, [
             'provider_video_id' => $tus['provider_video_id'] ?? null,

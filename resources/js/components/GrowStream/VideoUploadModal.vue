@@ -58,7 +58,8 @@
                             type="text"
                             required
                             placeholder="Enter video title"
-                            class="w-full rounded-xl border border-[#2d2d35] bg-[#101014] px-4 py-3 text-sm text-white placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
+                            style="color: #f4f4f5; background: #101014; border-color: #2d2d35;"
+                            class="w-full rounded-xl border px-4 py-3 text-sm placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
                         />
                     </div>
 
@@ -71,7 +72,8 @@
                             rows="3"
                             required
                             placeholder="Brief description of the video"
-                            class="w-full rounded-xl border border-[#2d2d35] bg-[#101014] px-4 py-3 text-sm text-white placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors resize-none"
+                            style="color: #f4f4f5; background: #101014; border-color: #2d2d35;"
+                            class="w-full rounded-xl border px-4 py-3 text-sm placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors resize-none"
                         ></textarea>
                     </div>
 
@@ -79,13 +81,13 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="mb-1.5 block text-sm font-medium text-zinc-300">Content Type *</label>
-                            <select v-model="form.content_type" required class="w-full rounded-xl border border-[#2d2d35] bg-[#101014] px-4 py-3 text-sm text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors">
+                            <select v-model="form.content_type" required style="color: #f4f4f5; background: #101014; border-color: #2d2d35;" class="w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors">
                                 <option v-for="(label, value) in props.contentTypes" :key="value" :value="value">{{ label }}</option>
                             </select>
                         </div>
                         <div>
                             <label class="mb-1.5 block text-sm font-medium text-zinc-300">Access *</label>
-                            <select v-model="form.access_level" required class="w-full rounded-xl border border-[#2d2d35] bg-[#101014] px-4 py-3 text-sm text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors">
+                            <select v-model="form.access_level" required style="color: #f4f4f5; background: #101014; border-color: #2d2d35;" class="w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-colors">
                                 <option v-for="(label, value) in props.accessLevels" :key="value" :value="value">{{ label }}</option>
                             </select>
                         </div>
@@ -196,7 +198,10 @@ const handleSubmit = async () => {
         form.video = null; form.title = ''; form.description = ''; form.content_type = 'movie'; form.access_level = 'free';
     } catch (error: any) {
         const d = error.response?.data;
-        errorMessage.value = d?.message || (d?.errors ? Object.values(d.errors).flat().join(', ') : null) || d?.error || 'Upload failed. Please try again.';
+        errorMessage.value = d?.message
+            || (d?.errors ? Object.values(d.errors).flat().join(', ') : null)
+            || d?.error
+            || `Upload failed (${error.response?.status || 'network error'}). Try again.`;
     } finally {
         uploading.value = false;
     }
