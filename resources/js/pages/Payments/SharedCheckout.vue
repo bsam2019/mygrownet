@@ -42,8 +42,20 @@ const step = ref<'form' | 'pending' | 'completed' | 'failed'>('form');
 const activeReference = ref<string | null>(null);
 const pollTimer = ref<number | null>(null);
 
+// Discount / promo code
+const promoCode = ref('');
+const applyingDiscount = ref(false);
+const appliedDiscount = ref<{ id: number; code: string; type: string; value: number; name: string; } | null>(null);
+const displayAmount = ref(props.amount);
+const discountError = ref('');
+
+const displayFormattedAmount = computed(() => `${moneySymbol.value}${displayAmount.value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+})}`);
+
 const isValidPhone = computed(() => /^(09[567]\d{7}|07[567]\d{7}|\+?2609[567]\d{7})$/.test(phoneNumber.value.trim()));
-const canSubmit = computed(() => props.amount > 0 && isValidPhone.value && !processing.value);
+const canSubmit = computed(() => displayAmount.value > 0 && isValidPhone.value && !processing.value);
 
 const moneySymbol = computed(() => {
     const symbols: Record<string, string> = {
@@ -56,6 +68,46 @@ const formattedAmount = computed(() => `${moneySymbol.value}${props.amount.toLoc
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
 })}`);
+
+const validatePromoCode = async () => {
+    if (!promoCode.value.trim()) return;
+
+    applyingDiscount.value = true;
+    discountError.value = '';
+
+    try {
+        const response = await axios.post('/api/payments/shared/validate-discount', {
+            code: promoCode.value.trim(),
+            module_id: props.subscription?.module_id ?? '',
+            tier: props.subscription?.tier ?? '',
+            amount: props.amount,
+            billing_cycle: props.subscription?.billing_cycle ?? 'monthly',
+        });
+
+        if (response.data.valid) {
+            appliedDiscount.value = response.data.discount;
+            displayAmount.value = response.data.discounted_amount;
+            promoCode.value = response.data.discount.code;
+        } else {
+            appliedDiscount.value = null;
+            displayAmount.value = props.amount;
+            discountError.value = response.data.message ?? 'Invalid code';
+        }
+    } catch (e: any) {
+        appliedDiscount.value = null;
+        displayAmount.value = props.amount;
+        discountError.value = e.response?.data?.message ?? 'Failed to validate code';
+    } finally {
+        applyingDiscount.value = false;
+    }
+};
+
+const removeDiscount = () => {
+    appliedDiscount.value = null;
+    displayAmount.value = props.amount;
+    promoCode.value = '';
+    discountError.value = '';
+};
 
 const fetchGateways = async () => {
     try {
@@ -79,12 +131,17 @@ const initiate = async () => {
     try {
         const response = await axios.post('/api/payments/shared/initiate', {
             phone_number: phoneNumber.value.trim(),
-            amount: props.amount,
+            amount: displayAmount.value,
             currency: props.currency.toUpperCase(),
             gateway: selectedGateway.value,
             description: props.description,
             reference: props.reference,
             metadata: {
+                discount:
+                    appliedDiscount.value
+                        ? { id: appliedDiscount.value.id, code: appliedDiscount.value.code }
+                        : null,
+                original_amount: props.amount,
                 return_url: props.returnUrl,
                 organization_id: props.organizationId,
                 subscription: props.subscription ?? null,
@@ -187,7 +244,7 @@ onBeforeUnmount(stopPolling);
                 <div v-if="step === 'completed'" class="text-center py-8">
                     <CheckCircleIcon class="h-16 w-16 text-emerald-500 mx-auto mb-4" aria-hidden="true" />
                     <h2 class="text-xl font-bold text-gray-900">Payment Successful</h2>
-                    <p class="mt-2 text-sm text-gray-500">Your payment of {{ formattedAmount }} was received.</p>
+                    <p class="mt-2 text-sm text-gray-500">Your payment of {{ displayFormattedAmount }} was received.</p>
                 </div>
 
                 <!-- Failed -->
@@ -225,10 +282,52 @@ onBeforeUnmount(stopPolling);
                             <span class="text-sm text-gray-600">Item</span>
                             <span class="font-semibold text-gray-900">{{ description }}</span>
                         </div>
+                        <div v-if="appliedDiscount" class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-emerald-600">Discount ({{ appliedDiscount.code }})</span>
+                            <span class="text-sm font-semibold text-emerald-600">
+                                -{{ moneySymbol.value }}{{ (props.amount - displayAmount).toLocaleString(undefined, { minimumFractionDigits: 2 }) }}
+                            </span>
+                        </div>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Total</span>
-                            <span class="text-2xl font-bold text-emerald-600">{{ formattedAmount }}</span>
+                            <span class="text-2xl font-bold text-emerald-600">{{ displayFormattedAmount }}</span>
                         </div>
+                        <p v-if="appliedDiscount" class="mt-2 text-xs text-emerald-600">Promo code "{{ appliedDiscount.code }}" applied — {{ appliedDiscount.type === 'percentage' ? appliedDiscount.value + '% off' : 'K' + appliedDiscount.value + ' off' }}</p>
+                    </div>
+
+                    <!-- Promo Code -->
+                    <div class="mb-5">
+                        <div class="flex gap-2">
+                            <div class="flex-1">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Promo Code</label>
+                                <input
+                                    v-model="promoCode"
+                                    type="text"
+                                    placeholder="Enter code"
+                                    :disabled="!!appliedDiscount || processing"
+                                    @keyup.enter="validatePromoCode()"
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm disabled:opacity-60 disabled:bg-gray-100"
+                                />
+                            </div>
+                            <button
+                                v-if="!appliedDiscount"
+                                type="button"
+                                @click="validatePromoCode()"
+                                :disabled="!promoCode.trim() || applyingDiscount"
+                                class="self-end px-4 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition"
+                            >
+                                {{ applyingDiscount ? '...' : 'Apply' }}
+                            </button>
+                            <button
+                                v-else
+                                type="button"
+                                @click="removeDiscount()"
+                                class="self-end px-4 py-2.5 bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-300 transition"
+                            >
+                                Remove
+                            </button>
+                        </div>
+                        <p v-if="discountError" class="mt-1 text-xs text-red-500">{{ discountError }}</p>
                     </div>
 
                     <!-- Phone Number -->

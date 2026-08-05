@@ -30,6 +30,8 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
         Route::get('/subscriptions/growstream/checkout', [\App\Http\Controllers\SubscriptionCheckoutController::class, 'show'])
             ->defaults('moduleId', 'growstream')
             ->name('checkout');
+        Route::post('/videos/{video}/rent', [\App\Http\Controllers\GrowStream\VideoRentalController::class, 'store'])->name('rent');
+        Route::get('/videos/rental-status/{reference}', [\App\Http\Controllers\GrowStream\VideoRentalController::class, 'status'])->name('rental-status');
         Route::get('/my-videos', [GrowStreamWebController::class, 'myVideos'])->name('my-videos');
 
         // Notifications

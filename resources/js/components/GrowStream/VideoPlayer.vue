@@ -16,6 +16,12 @@
                 Your browser does not support the video tag.
             </video>
 
+            <!-- Throttle indicator -->
+            <div v-if="throttled" class="absolute top-3 left-3 z-10 flex items-center gap-2 rounded-full bg-amber-500/90 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Standard Quality
+            </div>
+
             <!-- Custom Controls Overlay -->
             <div
                 v-show="showControls || !isPlaying"
@@ -206,11 +212,13 @@ interface Props {
     video: Video;
     autoplay?: boolean;
     startPosition?: number;
+    throttled?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     autoplay: false,
     startPosition: 0,
+    throttled: false,
 });
 
 const emit = defineEmits<{
@@ -243,6 +251,9 @@ let controlsTimeout: ReturnType<typeof setTimeout>;
 let progressUpdateInterval: ReturnType<typeof setInterval>;
 
 onMounted(async () => {
+    if (props.throttled) {
+        usingLowerQuality.value = true;
+    }
     await loadVideo();
     if (props.startPosition > 0 && videoElement.value) {
         videoElement.value.currentTime = props.startPosition;

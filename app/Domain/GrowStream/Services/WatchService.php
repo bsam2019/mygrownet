@@ -73,6 +73,7 @@ class WatchService
             'access_token' => bin2hex(random_bytes(32)),
             'playback_url' => $video->videoUrl(),
             'video' => $video->toArray(),
+            'throttled' => $this->accessControl?->isThrottled(User::find($userId)) ?? false,
             'watch_progress' => [
                 'watched_seconds' => 0,
                 'progress_percentage' => 0.0,

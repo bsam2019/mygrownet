@@ -8,6 +8,7 @@
                         :video="video"
                         :start-position="watchHistory?.current_position || 0"
                         :autoplay="false"
+                        :throttled="throttled"
                         @progress="handleProgress"
                         @ended="handleEnded"
                         @close="router.visit(route('growstream.browse'))"
@@ -37,12 +38,65 @@
                             >
                                 Subscribe Now
                             </Link>
+                            <button
+                                v-if="video.access_level !== 'free'"
+                                @click="startRental()"
+                                class="gs-btn gs-btn-outline px-6 py-3 text-lg"
+                            >
+                                Rent K{{ rentalPrice }}
+                            </button>
                             <Link
                                 :href="route('growstream.browse')"
                                 class="gs-btn gs-btn-outline px-6 py-3 text-lg"
                             >
                                 Browse Free Content
                             </Link>
+                        </div>
+
+                        <!-- Rental Form -->
+                        <div v-if="rentalStep === 'form'" class="relative mt-6 w-full max-w-sm mx-auto bg-[var(--gs-bg)] rounded-2xl p-6 border border-[var(--gs-border)]">
+                            <button @click="cancelRental()" class="absolute top-3 right-3 text-[var(--gs-muted)] hover:text-[var(--gs-text)]">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                            <p class="text-sm font-semibold text-[var(--gs-text)] mb-3">Rent this video for 48 hours</p>
+                            <p class="text-lg font-bold text-[var(--gs-accent)] mb-4">K{{ rentalPrice }}</p>
+                            <input
+                                v-model="rentalPhone"
+                                type="tel" inputmode="tel" placeholder="0970000000"
+                                class="w-full mb-3 px-4 py-2.5 rounded-xl border border-[var(--gs-border)] bg-[var(--gs-bg)] text-sm text-[var(--gs-text)]"
+                            />
+                            <button
+                                @click="rentVideo()"
+                                class="gs-btn gs-btn-accent w-full py-2.5 text-sm font-semibold"
+                            >
+                                Pay K{{ rentalPrice }}
+                            </button>
+                            <p v-if="rentalError" class="mt-2 text-xs text-red-500">{{ rentalError }}</p>
+                        </div>
+
+                        <!-- Rental Pending -->
+                        <div v-if="rentalStep === 'pending'" class="relative mt-6 w-full max-w-sm mx-auto">
+                            <p class="text-sm text-[var(--gs-muted)] text-center">Waiting for payment confirmation...</p>
+                            <p class="text-xs text-[var(--gs-muted)] text-center mt-1">Approve the prompt on your phone</p>
+                            <button @click="cancelRental()" class="mt-3 text-xs text-[var(--gs-muted)] underline block mx-auto">Cancel</button>
+                        </div>
+
+                        <!-- Rental Failed -->
+                        <div v-if="rentalStep === 'failed'" class="relative mt-6 w-full max-w-sm mx-auto">
+                            <p class="text-sm text-red-500 text-center">Payment not completed</p>
+                            <button @click="startRental()" class="gs-btn gs-btn-outline mt-3 mx-auto block px-4 py-2 text-sm">Retry</button>
+                        </div>
+
+                        <!-- Rental Active -->
+                        <div v-if="rentalStep === 'active'" class="relative mt-6 w-full max-w-sm mx-auto bg-emerald-50 rounded-2xl p-4 text-center border border-emerald-200">
+                            <p class="text-sm font-semibold text-emerald-700">Access Granted!</p>
+                            <p class="text-xs text-emerald-600 mt-1">Refresh the page to start watching.</p>
+                            <button
+                                @click="router.reload()"
+                                class="gs-btn gs-btn-accent mt-3 px-4 py-2 text-sm"
+                            >
+                                Watch Now
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -225,6 +279,7 @@ import VideoPlayer from '@/Components/GrowStream/VideoPlayer.vue';
 import { useGrowStream } from '@/composables/useGrowStream';
 import { useGrowStreamMetrics } from '@/composables/useGrowStreamMetrics';
 import type { Video, WatchHistory, Watchlist } from '@/types/growstream';
+import axios from 'axios';
 
 interface Props {
     video: Video;
@@ -232,11 +287,13 @@ interface Props {
     watchHistory?: WatchHistory;
     watchlistItem?: Watchlist;
     userCanAccess?: boolean;
+    throttled?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     relatedVideos: () => [],
     userCanAccess: true,
+    throttled: false,
 });
 
 const { formatDuration, getAccessLevelBadge, addToWatchlist, removeFromWatchlist } = useGrowStream();
@@ -280,6 +337,69 @@ const toggleWatchlist = async () => {
         watchlistLoading.value = false;
     }
 };
+
+// PPV / Rental
+const rentalStep = ref<'idle' | 'form' | 'pending' | 'active' | 'failed'>('idle');
+const rentalPhone = ref('');
+const rentalError = ref('');
+const rentalRef = ref<string | null>(null);
+let rentalPoll: number | null = null;
+
+const rentalPrice = 15; // matches config('growstream.ppv.price')
+
+const startRental = () => { rentalStep.value = 'form'; };
+const cancelRental = () => { rentalStep.value = 'idle'; rentalError.value = ''; };
+
+const isValidRentalPhone = computed(() =>
+    /^(09[567]\d{7}|07[567]\d{7}|\+?2609[567]\d{7})$/.test(rentalPhone.value.trim())
+);
+
+const rentVideo = async () => {
+    if (!isValidRentalPhone.value) { rentalError.value = 'Enter a valid Zambian mobile money number'; return; }
+    rentalError.value = '';
+    rentalStep.value = 'pending';
+
+    try {
+        const resp = await axios.post(route('growstream.rent', { video: props.video.id }), {
+            phone_number: rentalPhone.value.trim(),
+        });
+
+        if (resp.data.already_rented) {
+            rentalStep.value = 'active';
+            return;
+        }
+
+        rentalRef.value = resp.data.transaction?.reference ?? null;
+        startRentalPoll();
+    } catch (e: any) {
+        rentalStep.value = 'failed';
+        rentalError.value = e.response?.data?.error || 'Rental initiation failed. Try again.';
+    }
+};
+
+const startRentalPoll = () => {
+    stopRentalPoll();
+    rentalPoll = window.setInterval(async () => {
+        if (!rentalRef.value) return;
+        try {
+            const resp = await axios.get(route('growstream.rental-status', { reference: rentalRef.value }));
+            if (resp.data.status === 'active') {
+                rentalStep.value = 'active';
+                stopRentalPoll();
+            } else if (resp.data.status === 'failed') {
+                rentalStep.value = 'failed';
+                rentalError.value = 'Payment was not completed.';
+                stopRentalPoll();
+            }
+        } catch { /* keep polling */ }
+    }, 4000);
+};
+
+const stopRentalPoll = () => {
+    if (rentalPoll) { window.clearInterval(rentalPoll); rentalPoll = null; }
+};
+
+onBeforeUnmount(stopRentalPoll);
 
 const formatViews = (views: number): string => {
     if (views >= 1000000) {

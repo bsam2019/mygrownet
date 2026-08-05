@@ -7,9 +7,11 @@ use App\Domain\Core\ValueObjects\ModuleManifest;
 use App\Domain\GrowStream\Infrastructure\Events\VideoProcessingCompleted;
 use App\Domain\GrowStream\Infrastructure\Events\VideoProcessingFailed;
 use App\Domain\GrowStream\Infrastructure\Events\VideoUploaded;
+use App\Domain\GrowStream\Infrastructure\Listeners\ActivateVideoRentalOnPaymentCompleted;
 use App\Domain\GrowStream\Infrastructure\Listeners\HandleVideoUpload;
 use App\Domain\GrowStream\Infrastructure\Listeners\NotifyVideoProcessingCompleted;
 use App\Domain\GrowStream\Infrastructure\Listeners\NotifyVideoProcessingFailed;
+use App\Domain\PlatformPayments\Events\PaymentCompleted;
 use App\Domain\GrowStream\Infrastructure\Providers\CloudflareStreamProvider;
 use App\Domain\GrowStream\Infrastructure\Providers\DigitalOceanSpacesProvider;
 use App\Domain\GrowStream\Infrastructure\Providers\VideoProviderFactory;
@@ -189,5 +191,6 @@ class GrowStreamServiceProvider extends ServiceProvider
         Event::listen(VideoUploaded::class, HandleVideoUpload::class);
         Event::listen(VideoProcessingCompleted::class, NotifyVideoProcessingCompleted::class);
         Event::listen(VideoProcessingFailed::class, NotifyVideoProcessingFailed::class);
+        Event::listen(PaymentCompleted::class, ActivateVideoRentalOnPaymentCompleted::class);
     }
 }

@@ -29,6 +29,12 @@ use App\Models\User;
  */
 class AccessControlService
 {
+    /**
+     * How many premium watch-minutes the Unlimited tier must consume in a
+     * calendar month before playback quality is throttled (not blocked).
+     */
+    private const UNLIMITED_THROTTLE_MINUTES = 2000;
+
     public function __construct(
         private SubscriptionService $subscriptionService,
         private ?VideoViewRepositoryInterface $viewRepo = null,
@@ -108,5 +114,24 @@ class AccessControlService
         }
 
         return max(0, $allowance - (int) floor($this->watchSecondsConsumed($user) / 60));
+    }
+
+    /**
+     * Is this business-tier user past the fair-use throttle point?
+     * They can still watch, but quality should be dropped.
+     */
+    public function isThrottled(?User $user): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        $tier = $this->currentTier($user);
+
+        if ($tier !== 'business') {
+            return false;
+        }
+
+        return (int) floor($this->watchSecondsConsumed($user) / 60) >= self::UNLIMITED_THROTTLE_MINUTES;
     }
 }

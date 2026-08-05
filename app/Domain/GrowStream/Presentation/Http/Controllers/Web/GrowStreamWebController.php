@@ -228,6 +228,7 @@ class GrowStreamWebController
             'relatedVideos' => $related,
             'watchProgress' => $watchProgress,
             'userCanAccess' => $userCanAccess,
+            'throttled' => auth()->check() && $this->accessControl?->isThrottled(auth()->user()),
         ]);
     }
 

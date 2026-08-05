@@ -51,6 +51,7 @@ Route::middleware(['web', 'auth'])->prefix('payments/shared')->name('payments.sh
     Route::get('/gateways', [SharedPaymentController::class, 'gateways'])->name('gateways');
     Route::get('/fields/{gateway}', [SharedPaymentController::class, 'fields'])->name('fields');
     Route::post('/initiate', [SharedPaymentController::class, 'initiate'])->name('initiate');
+    Route::post('/validate-discount', [SharedPaymentController::class, 'validateDiscount'])->name('validate-discount');
     Route::get('/status/{reference}', [SharedPaymentController::class, 'status'])->name('status');
     Route::post('/refund', [SharedPaymentController::class, 'refund'])->name('refund');
 });

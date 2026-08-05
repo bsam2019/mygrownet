@@ -79,6 +79,7 @@ class WatchController extends Controller
                 'expires_at' => now()->addSeconds(config('growstream.access.signed_url_expiration', 86400)),
                 'current_position' => $watchHistory->current_position,
                 'duration' => $video->duration,
+                'throttled' => $this->accessControl->isThrottled($user),
             ],
         ]);
     }
