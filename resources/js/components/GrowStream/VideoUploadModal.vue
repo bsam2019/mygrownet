@@ -1,11 +1,11 @@
 <template>
     <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto">
-        <div class="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <!-- Background overlay -->
-            <div class="fixed inset-0 bg-black/70 transition-opacity" @click="$emit('close')"></div>
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-black/70" @click="$emit('close')"></div>
 
+        <div class="relative z-10 flex min-h-screen items-center justify-center px-4 py-8">
             <!-- Modal panel -->
-            <div class="inline-block transform overflow-hidden rounded-[var(--gs-radius)] bg-[var(--gs-card)] text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl sm:align-middle">
+            <div class="relative w-full max-w-3xl overflow-hidden rounded-[var(--gs-radius)] bg-[var(--gs-card)] text-left shadow-xl sm:my-8">
                 <!-- Header -->
                 <div class="border-b border-[var(--gs-border)] px-6 py-4">
                     <div class="flex items-center justify-between">
@@ -75,24 +75,26 @@
 
                     <!-- Title -->
                     <div class="mb-4">
-                        <label class="gs-label">Title *</label>
+                        <label for="upload-title" class="gs-label cursor-pointer">Title *</label>
                         <input
+                            id="upload-title"
                             v-model="form.title"
                             type="text"
                             required
-                            class="gs-input mt-1"
+                            class="gs-input mt-1 block py-3"
                         />
                         <p v-if="errors.title" class="mt-1 text-sm text-red-600">{{ errors.title }}</p>
                     </div>
 
                     <!-- Description -->
                     <div class="mb-4">
-                        <label class="gs-label">Description *</label>
+                        <label for="upload-description" class="gs-label cursor-pointer">Description *</label>
                         <textarea
+                            id="upload-description"
                             v-model="form.description"
                             rows="3"
                             required
-                            class="gs-input mt-1"
+                            class="gs-input mt-1 block py-3"
                         ></textarea>
                         <p v-if="errors.description" class="mt-1 text-sm text-red-600">{{ errors.description }}</p>
                     </div>
