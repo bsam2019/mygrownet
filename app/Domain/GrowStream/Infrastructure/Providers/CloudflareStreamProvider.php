@@ -176,6 +176,11 @@ class CloudflareStreamProvider implements VideoProviderInterface
     protected function getThumbnailUrl(string $providerVideoId): string
     {
         $host = $this->normalizedCustomerSubdomain();
+        
+        // If no custom subdomain, use default Cloudflare hostname
+        if ($host === null) {
+            $host = "customer-{$this->accountId}.cloudflarestream.com";
+        }
 
         return "https://{$host}/{$providerVideoId}/thumbnails/thumbnail.jpg";
     }
@@ -259,7 +264,9 @@ class CloudflareStreamProvider implements VideoProviderInterface
         }
 
         // uid is the last path segment of the tus endpoint (e.g. .../upload/{uid})
-        $segments = explode('/', rtrim($uploadUrl, '/'));
+        // Remove any query parameters from the URL first
+        $urlWithoutQuery = parse_url($uploadUrl, PHP_URL_PATH) ?: $uploadUrl;
+        $segments = explode('/', rtrim($urlWithoutQuery, '/'));
         $uid = (string) end($segments);
 
         return [
