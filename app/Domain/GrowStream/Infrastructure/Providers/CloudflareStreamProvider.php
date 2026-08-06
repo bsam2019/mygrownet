@@ -233,8 +233,13 @@ class CloudflareStreamProvider implements VideoProviderInterface
         $expiry = now()->addDay()->toIso8601String();
         $maxDuration = (string) ($metadata['max_duration_seconds'] ?? 3600);
 
+        // Build upload metadata with name if provided
         $uploadMetadata = 'maxDurationSeconds '.base64_encode($maxDuration)
             .',expiry '.base64_encode($expiry);
+        
+        if (!empty($metadata['name'])) {
+            $uploadMetadata .= ',name '.base64_encode($metadata['name']);
+        }
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer '.$this->apiToken,

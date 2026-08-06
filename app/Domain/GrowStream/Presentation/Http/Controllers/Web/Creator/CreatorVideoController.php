@@ -159,7 +159,10 @@ class CreatorVideoController extends Controller
 
         $tus = $provider->createTusUpload(
             (int) $request->file_size,
-            ['max_duration_seconds' => (int) config('growstream.upload.max_duration_seconds', 10800)],
+            [
+                'max_duration_seconds' => (int) config('growstream.upload.max_duration_seconds', 10800),
+                'name' => $request->title,
+            ],
         );
 
         DB::beginTransaction();

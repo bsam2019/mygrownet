@@ -159,18 +159,20 @@ class VideoManagementController extends Controller
             ]);
 
             $provider = VideoProviderFactory::make();
-            $tus = $provider->getDirectUploadUrl([
-                'file_size' => $validated['file_size'],
+            
+            // Call createTusUpload directly with file size and metadata including title
+            $tus = $provider->createTusUpload($validated['file_size'], [
+                'name' => $validated['title'],
                 'video_id' => $video->id,
             ]);
 
             $this->videoRepo->update($video, [
-                'provider_video_id' => $tus['provider_video_id'] ?? null,
+                'provider_video_id' => $tus['uid'],
             ]);
 
             return response()->json([
                 'video_id' => $video->id,
-                'upload_url' => $tus['upload_url'] ?? null,
+                'upload_url' => $tus['upload_url'],
             ]);
         } catch (\Throwable $e) {
             return response()->json([
