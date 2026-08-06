@@ -189,41 +189,24 @@ const handleSubmit = async () => {
         const { video_id, upload_url } = initResp.data;
         if (!upload_url) throw new Error('Failed to initialize upload');
 
-        // Upload directly to Cloudflare using TUS protocol (PATCH, no CSRF).
-        // Cloudflare CORS only allows PATCH, not PUT, for direct upload URLs.
-        const file = form.video!;
-        const total = file.size;
-
-        // Check if already uploaded (resume)
-        let offset = 0;
-        try {
-            const headRes = await fetch(upload_url, {
-                method: 'HEAD',
-                headers: { 'Tus-Resumable': '1.0.0' },
-            });
-            const uploadOffset = headRes.headers.get('Upload-Offset');
-            if (uploadOffset) offset = parseInt(uploadOffset, 10);
-        } catch { /* start from 0 */ }
-
-        if (offset < total) {
-            // Upload in a single PATCH (TUS protocol — Cloudflare CORS allows this)
-            const patchRes = await fetch(upload_url, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/offset+octet-stream',
-                    'Upload-Offset': String(offset),
-                    'Tus-Resumable': '1.0.0',
-                },
-                body: file.slice(offset),
-            });
-
-            if (patchRes.status < 200 || patchRes.status >= 300) {
-                throw new Error(`Upload failed (HTTP ${patchRes.status})`);
-            }
-
-            // Report 100% for single-chunk upload
-            uploadProgress.value = 100;
-        }
+        // Upload directly to Cloudflare via XMLHttpRequest PATCH.
+        // Cloudflare CORS allows PATCH (not PUT) for direct upload URLs.
+        // Using XMLHttpRequest avoids axios CSRF header injection.
+        await new Promise<void>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('PATCH', upload_url);
+            // Only set Content-Type — no custom headers to avoid CORS preflight issues
+            xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) uploadProgress.value = Math.round((e.loaded / e.total) * 100);
+            };
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) resolve();
+                else reject(new Error(`Upload failed (HTTP ${xhr.status})`));
+            };
+            xhr.onerror = () => reject(new Error('Network error during upload'));
+            xhr.send(form.video);
+        });
 
         await axios.post(`/admin/videos/${video_id}/tus-complete`);
 
