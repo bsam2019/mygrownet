@@ -151,7 +151,7 @@ export interface ApiResponse<T> {
 }
 
 export interface PlaybackAuthorization {
-    signed_url: string;
+    playback_url: string;
     expires_at: string;
     video: Video;
 }

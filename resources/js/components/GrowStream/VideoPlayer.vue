@@ -96,11 +96,8 @@ const streamPlayerUrl = computed(() => {
         params.set('defaultTextTrack', 'off');
     }
 
-    // Use the account's customer subdomain or default Cloudflare domain
-    const accountId = '1d1529172d2e0cd6300114cc1a7ab167'; // From config
-    const domain = `customer-${accountId}.cloudflarestream.com`;
-
-    return `https://${domain}/${videoId}/iframe?${params.toString()}`;
+    // Use Cloudflare Stream public embed URL
+    return `https://watch.cloudflarestream.com/${videoId}?${params.toString()}`;
 });
 
 const onPlayerLoad = () => {
