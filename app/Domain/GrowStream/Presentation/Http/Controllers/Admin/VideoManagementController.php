@@ -138,9 +138,17 @@ class VideoManagementController extends Controller
         ]);
 
         try {
+            $slug = Str::slug($validated['title']);
+            // Ensure slug uniqueness (multiple videos can have the same title)
+            $baseSlug = $slug;
+            $counter = 1;
+            while ($this->videoRepo->query()->where('slug', $slug)->exists()) {
+                $slug = $baseSlug . '-' . $counter++;
+            }
+
             $video = $this->videoRepo->save([
                 'title' => $validated['title'],
-                'slug' => Str::slug($validated['title']),
+                'slug' => $slug,
                 'description' => $validated['description'],
                 'content_type' => $validated['content_type'],
                 'access_level' => $validated['access_level'],
