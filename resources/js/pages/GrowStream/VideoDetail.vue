@@ -136,8 +136,7 @@
 
                         <!-- Actions -->
                         <div class="flex flex-wrap gap-3">
-                            <!-- Watchlist feature temporarily disabled - backend not implemented yet -->
-                            <!-- <button
+                            <button
                                 @click="toggleWatchlist"
                                 :disabled="watchlistLoading"
                                 class="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[var(--gs-text)] hover:bg-[var(--gs-bg-elevated)] disabled:opacity-50"
@@ -156,7 +155,7 @@
                                     />
                                 </svg>
                                 {{ isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist' }}
-                            </button> -->
+                            </button>
 
                             <button
                                 @click="shareVideo"

@@ -127,8 +127,8 @@ export function useGrowStream() {
 
     const addToWatchlist = (watchableType: string, watchableId: number) => {
         return apiCall<ApiResponse<Watchlist>>('post', '/watchlist', {
-            watchable_type: watchableType,
-            watchable_id: watchableId,
+            watchlistable_type: watchableType,
+            watchlistable_id: watchableId,
         });
     };
 
