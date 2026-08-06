@@ -131,39 +131,44 @@ class VideoManagementController extends Controller
     {
         $validated = $request->validate([
             'file_size' => 'required|integer|min:1',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
             'content_type' => 'required|in:' . implode(',', array_keys(config('growstream.content_types', []))),
+            'access_level' => 'required|string|in:free,premium',
         ]);
 
-        $video = $this->videoRepo->save([
-            'title' => $request->title ?: ('Untitled — ' . now()->format('Y-m-d H:i')),
-            'slug' => Str::slug($request->title ?: ('video-' . uniqid())),
-            'description' => $request->description ?? '',
-            'content_type' => $validated['content_type'],
-            'access_level' => $request->access_level ?: 'free',
-            'creator_id' => $request->user()->id,
-            'video_provider' => config('growstream.default_provider'),
-            'upload_status' => 'uploading',
-            'file_size' => $validated['file_size'],
-        ]);
-
-        $provider = VideoProviderFactory::make();
         try {
+            $video = $this->videoRepo->save([
+                'title' => $validated['title'],
+                'slug' => Str::slug($validated['title']),
+                'description' => $validated['description'],
+                'content_type' => $validated['content_type'],
+                'access_level' => $validated['access_level'],
+                'creator_id' => $request->user()->id,
+                'video_provider' => config('growstream.default_provider'),
+                'upload_status' => 'uploading',
+                'file_size' => $validated['file_size'],
+            ]);
+
+            $provider = VideoProviderFactory::make();
             $tus = $provider->getDirectUploadUrl([
                 'file_size' => $validated['file_size'],
                 'video_id' => $video->id,
             ]);
+
+            $this->videoRepo->update($video, [
+                'provider_video_id' => $tus['provider_video_id'] ?? null,
+            ]);
+
+            return response()->json([
+                'video_id' => $video->id,
+                'upload_url' => $tus['upload_url'] ?? null,
+            ]);
         } catch (\Throwable $e) {
-            return response()->json(['error' => 'Upload provider error: ' . $e->getMessage()], 500);
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        $this->videoRepo->update($video, [
-            'provider_video_id' => $tus['provider_video_id'] ?? null,
-        ]);
-
-        return response()->json([
-            'video_id' => $video->id,
-            'upload_url' => $tus['upload_url'] ?? null,
-        ]);
     }
 
     /**
