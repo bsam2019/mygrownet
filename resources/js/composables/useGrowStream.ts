@@ -175,6 +175,38 @@ export function useGrowStream() {
         return labels[contentType] || contentType;
     };
 
+    /**
+     * Get responsive thumbnail URL for a video
+     * @param video - The video object
+     * @param size - Size variant: 'thumb' (320x180), 'medium' (640x360), or 'large' (1280x720)
+     * @param preferWebp - Whether to prefer WebP format over JPEG (default: true)
+     * @returns The thumbnail URL or fallback
+     */
+    const getThumbnailUrl = (
+        video: Video,
+        size: 'thumb' | 'medium' | 'large' = 'medium',
+        preferWebp = true
+    ): string => {
+        // Priority 1: Custom Wasabi thumbnails
+        if (video.thumbnail_storage_disk === 'wasabi' && video.thumbnail_sizes) {
+            const sizeVariant = video.thumbnail_sizes[size];
+            if (sizeVariant) {
+                // Prefer WebP if available and requested
+                if (preferWebp && sizeVariant.webp) {
+                    return sizeVariant.webp;
+                }
+                // Fallback to JPEG
+                if (sizeVariant.jpeg) {
+                    return sizeVariant.jpeg;
+                }
+            }
+        }
+
+        // Priority 2: Use the accessor value (handles Cloudflare auto-gen + placeholder)
+        // The backend getThumbnailUrlAttribute() already implements the full waterfall
+        return video.thumbnail_url || '/images/video-placeholder.jpg';
+    };
+
     return {
         // State
         loading: computed(() => loading.value),
@@ -209,5 +241,6 @@ export function useGrowStream() {
         formatDuration,
         getAccessLevelBadge,
         getContentTypeLabel,
+        getThumbnailUrl,
     };
 }

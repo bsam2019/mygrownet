@@ -41,6 +41,12 @@ return [
         ],
     ],
 
+    // Shorthand for Cloudflare config (used by Video model)
+    'cloudflare' => [
+        'account_id' => env('CLOUDFLARE_ACCOUNT_ID'),
+        'customer_subdomain' => env('CLOUDFLARE_CUSTOMER_SUBDOMAIN'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Upload Configuration
@@ -70,6 +76,32 @@ return [
         'banners' => 'growstream/banners',
         'subtitles' => 'growstream/subtitles',
         'resources' => 'growstream/resources',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Thumbnail Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Settings for custom thumbnail uploads and processing.
+    |
+    | Note: Wasabi has a 90-day minimum storage retention policy. Frequent
+    | thumbnail replacements will incur minor retention fees for deleted files.
+    |
+    */
+    'thumbnails' => [
+        'disk' => env('GROWSTREAM_THUMBNAIL_DISK', 'wasabi'), // Storage disk for custom thumbnails
+        'max_size' => 2048, // Maximum file size in KB (2MB)
+        'quality' => 80, // JPEG/WebP quality (0-100)
+        'generate_webp' => true, // Generate WebP versions alongside JPEG
+        
+        // Multiple sizes for responsive images
+        // [width, height] in pixels - all maintain 16:9 aspect ratio
+        'sizes' => [
+            'thumb' => [320, 180],   // Grid thumbnails, mobile
+            'medium' => [640, 360],  // Detail pages, tablets
+            'large' => [1280, 720],  // Full-screen, OG tags
+        ],
     ],
 
     /*

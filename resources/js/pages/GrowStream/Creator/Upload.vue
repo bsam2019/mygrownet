@@ -199,6 +199,57 @@
                             placeholder="comma, separated, tags"
                         />
                     </div>
+
+                    <!-- Thumbnail Upload -->
+                    <div>
+                        <label for="thumbnail" class="gs-label">
+                            Custom Thumbnail (Optional)
+                            <span class="ml-1 text-xs font-normal text-[var(--gs-muted)]">16:9 aspect ratio recommended</span>
+                        </label>
+                        <div
+                            v-if="!thumbnailPreview"
+                            class="flex cursor-pointer flex-col items-center justify-center rounded-[var(--gs-radius)] border-2 border-dashed border-[var(--gs-border)] bg-[var(--gs-bg-elevated)] p-6 text-center transition-colors hover:border-[var(--gs-primary)]"
+                            @click="thumbnailInput?.click()"
+                            @dragover.prevent
+                            @drop.prevent="onThumbnailDrop"
+                        >
+                            <svg class="mb-2 h-10 w-10 text-[var(--gs-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <p class="text-sm font-medium text-[var(--gs-text)]">
+                                {{ form.thumbnail ? form.thumbnail.name : 'Drop your thumbnail here or browse' }}
+                            </p>
+                            <p class="mt-1 text-xs text-[var(--gs-muted)]">
+                                Max 2MB · JPG, PNG, or WebP · Min 640×360
+                            </p>
+                        </div>
+                        <div v-else class="relative">
+                            <img
+                                :src="thumbnailPreview"
+                                alt="Thumbnail preview"
+                                class="w-full rounded-[var(--gs-radius)] border border-[var(--gs-border)]"
+                            />
+                            <button
+                                type="button"
+                                @click="removeThumbnail"
+                                class="absolute right-2 top-2 rounded-full bg-red-500 p-2 text-white shadow-lg hover:bg-red-600"
+                            >
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <input
+                            ref="thumbnailInput"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            class="hidden"
+                            @change="onThumbnailSelect"
+                        />
+                        <p class="mt-1 text-xs text-[var(--gs-muted)]">
+                            If not provided, a thumbnail will be auto-generated from your video
+                        </p>
+                    </div>
                 </section>
 
                 <!-- Step 3: Review & Submit -->
@@ -333,6 +384,8 @@ const props = defineProps<Props>();
 const steps = ['Upload', 'Details', 'Submit'];
 const currentStep = ref(props.video ? 2 : 0);
 const fileInput = ref<HTMLInputElement>();
+const thumbnailInput = ref<HTMLInputElement>();
+const thumbnailPreview = ref<string | null>(null);
 
 const form = useForm({
     title: props.video?.title ?? '',
@@ -344,6 +397,7 @@ const form = useForm({
     video_file: null as File | null,
     video_url: '',
     rights_declaration: false,
+    thumbnail: null as File | null,
 });
 
 const tagsInput = ref(form.tags.join(', '));
@@ -367,6 +421,38 @@ const onDrop = (event: DragEvent) => {
     const file = event.dataTransfer?.files?.[0];
     if (file) {
         form.video_file = file;
+    }
+};
+
+const onThumbnailSelect = (event: Event) => {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) {
+        form.thumbnail = file;
+        createThumbnailPreview(file);
+    }
+};
+
+const onThumbnailDrop = (event: DragEvent) => {
+    const file = event.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+        form.thumbnail = file;
+        createThumbnailPreview(file);
+    }
+};
+
+const createThumbnailPreview = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        thumbnailPreview.value = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+};
+
+const removeThumbnail = () => {
+    form.thumbnail = null;
+    thumbnailPreview.value = null;
+    if (thumbnailInput.value) {
+        thumbnailInput.value.value = '';
     }
 };
 

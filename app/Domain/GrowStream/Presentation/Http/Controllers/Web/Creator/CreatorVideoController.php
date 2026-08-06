@@ -8,6 +8,7 @@ use App\Domain\GrowStream\Infrastructure\Jobs\ProcessVideoJob;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\CreatorProfile;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoCategory;
 use App\Domain\GrowStream\Infrastructure\Providers\VideoProviderFactory;
+use App\Domain\GrowStream\Jobs\ProcessThumbnailJob;
 use App\Domain\GrowStream\Repositories\CreatorProfileRepositoryInterface;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
 use App\Domain\GrowStream\Services\VideoManagementService;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -87,6 +89,13 @@ class CreatorVideoController extends Controller
             'tags.*' => 'string|max:50',
             'video_url' => 'required|url',
             'rights_declaration' => 'required|accepted',
+            'thumbnail' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:'.config('growstream.thumbnails.max_size', 2048),
+                'dimensions:min_width=640,min_height=360',
+            ],
         ]);
 
         DB::beginTransaction();
@@ -114,6 +123,11 @@ class CreatorVideoController extends Controller
 
             if ($request->tags) {
                 $this->videoManagementService->syncTags($video->id, $request->tags);
+            }
+
+            // Handle custom thumbnail upload (non-blocking)
+            if ($request->hasFile('thumbnail')) {
+                $this->queueThumbnailProcessing($video->id, $request->file('thumbnail'));
             }
 
             DB::commit();
@@ -153,6 +167,13 @@ class CreatorVideoController extends Controller
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:50',
             'rights_declaration' => 'required|accepted',
+            'thumbnail' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:'.config('growstream.thumbnails.max_size', 2048),
+                'dimensions:min_width=640,min_height=360',
+            ],
         ]);
 
         $provider = VideoProviderFactory::make();
@@ -187,6 +208,11 @@ class CreatorVideoController extends Controller
 
             if ($request->tags) {
                 $this->videoManagementService->syncTags($video->id, $request->tags);
+            }
+
+            // Handle custom thumbnail upload (non-blocking)
+            if ($request->hasFile('thumbnail')) {
+                $this->queueThumbnailProcessing($video->id, $request->file('thumbnail'));
             }
 
             DB::commit();
@@ -275,6 +301,13 @@ class CreatorVideoController extends Controller
             'categories.*' => 'exists:growstream_video_categories,id',
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:50',
+            'thumbnail' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:'.config('growstream.thumbnails.max_size', 2048),
+                'dimensions:min_width=640,min_height=360',
+            ],
         ]);
 
         DB::beginTransaction();
@@ -289,6 +322,11 @@ class CreatorVideoController extends Controller
 
             $video->categories()->sync($request->categories ?? []);
             $this->videoManagementService->syncTags($video->id, $request->tags ?? []);
+
+            // Handle custom thumbnail upload (non-blocking)
+            if ($request->hasFile('thumbnail')) {
+                $this->queueThumbnailProcessing($video->id, $request->file('thumbnail'));
+            }
 
             DB::commit();
 
@@ -337,5 +375,23 @@ class CreatorVideoController extends Controller
             ],
             'topVideos' => $topVideos,
         ]);
+    }
+
+    /**
+     * Queue thumbnail processing job for uploaded thumbnail file.
+     * Stores file temporarily and dispatches background job.
+     */
+    private function queueThumbnailProcessing(int $videoId, \Illuminate\Http\UploadedFile $thumbnail): void
+    {
+        // Store thumbnail temporarily in local storage
+        $tempPath = 'thumbnails/temp/'.Str::random(40).'.'.$thumbnail->extension();
+        Storage::disk('local')->putFileAs(
+            dirname($tempPath),
+            $thumbnail,
+            basename($tempPath)
+        );
+
+        // Dispatch job to process in background (non-blocking)
+        ProcessThumbnailJob::dispatch($videoId, $tempPath);
     }
 }

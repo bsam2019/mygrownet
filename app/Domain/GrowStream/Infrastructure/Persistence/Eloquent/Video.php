@@ -40,6 +40,8 @@ class Video extends Model
         'resolution',
         'aspect_ratio',
         'thumbnail_url',
+        'thumbnail_storage_disk',
+        'thumbnail_sizes',
         'poster_url',
         'banner_url',
         'trailer_video_id',
@@ -84,6 +86,7 @@ class Video extends Model
     protected $casts = [
         'subtitles_available' => 'array',
         'keywords' => 'array',
+        'thumbnail_sizes' => 'array',
         'is_published' => 'boolean',
         'is_featured' => 'boolean',
         'is_downloadable' => 'boolean',
@@ -288,5 +291,61 @@ class Video extends Model
     public function getTotalPointsReward(): int
     {
         return $this->watch_points + $this->completion_points + $this->share_points + $this->starter_kit_points_reward;
+    }
+
+    /**
+     * Get thumbnail URL with priority waterfall:
+     * 1. Custom Wasabi thumbnail (if uploaded)
+     * 2. Cloudflare auto-generated (if using Cloudflare provider)
+     * 3. Placeholder image
+     *
+     * @param string $size thumb|medium|large (default: medium)
+     * @param bool $preferWebp Prefer WebP format if available (default: true)
+     * @return string
+     */
+    public function getThumbnail(string $size = 'medium', bool $preferWebp = true): string
+    {
+        // Priority 1: Custom Wasabi thumbnail
+        if ($this->thumbnail_storage_disk === 'wasabi' && $this->thumbnail_sizes) {
+            // Try WebP first if preferred and available
+            if ($preferWebp && isset($this->thumbnail_sizes["{$size}_webp"])) {
+                return $this->thumbnail_sizes["{$size}_webp"];
+            }
+            
+            // Fall back to JPEG
+            if (isset($this->thumbnail_sizes[$size])) {
+                return $this->thumbnail_sizes[$size];
+            }
+        }
+
+        // Priority 2: Cloudflare auto-generated
+        if ($this->video_provider === 'cloudflare' && $this->provider_video_id) {
+            $accountId = config('growstream.cloudflare.account_id');
+            $customerSubdomain = config('growstream.cloudflare.customer_subdomain');
+            
+            $host = $customerSubdomain 
+                ? (str_contains($customerSubdomain, '.') ? $customerSubdomain : "{$customerSubdomain}.cloudflarestream.com")
+                : "customer-{$accountId}.cloudflarestream.com";
+            
+            return "https://{$host}/{$this->provider_video_id}/thumbnails/thumbnail.jpg";
+        }
+
+        // Priority 3: Fallback to existing thumbnail_url or placeholder
+        return $this->thumbnail_url ?? asset('images/video-placeholder.jpg');
+    }
+
+    /**
+     * Accessor for thumbnail_url that implements the priority waterfall.
+     * This ensures backwards compatibility with code that accesses $video->thumbnail_url.
+     */
+    public function getThumbnailUrlAttribute($value): string
+    {
+        // If explicitly checking the raw attribute value
+        if ($value && $this->thumbnail_storage_disk === 'wasabi') {
+            return $value;
+        }
+        
+        // Otherwise use the priority waterfall
+        return $this->getThumbnail('medium', false);
     }
 }

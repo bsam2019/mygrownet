@@ -13,6 +13,12 @@ export interface Video {
     duration: number;
     poster_url?: string;
     thumbnail_url?: string;
+    thumbnail_storage_disk?: 'cloudflare' | 'wasabi';
+    thumbnail_sizes?: {
+        thumb?: { webp?: string; jpeg?: string };
+        medium?: { webp?: string; jpeg?: string };
+        large?: { webp?: string; jpeg?: string };
+    };
     banner_url?: string;
     trailer_url?: string;
     playback_url?: string;

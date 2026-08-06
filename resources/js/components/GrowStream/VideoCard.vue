@@ -2,12 +2,19 @@
     <div class="group relative overflow-hidden rounded-[var(--gs-radius)] bg-[var(--gs-card)] transition-all hover:shadow-xl">
         <!-- Thumbnail -->
         <div class="relative aspect-video overflow-hidden bg-[var(--gs-bg-elevated)]">
-            <img
-                v-if="video.thumbnail_url"
-                :src="video.thumbnail_url"
-                :alt="video.title"
-                class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
+            <picture v-if="video.thumbnail_url">
+                <source
+                    v-if="video.thumbnail_storage_disk === 'wasabi' && video.thumbnail_sizes?.thumb?.webp"
+                    :srcset="getThumbnailUrl(video, 'thumb', true)"
+                    type="image/webp"
+                />
+                <img
+                    :src="getThumbnailUrl(video, 'thumb', false)"
+                    :alt="video.title"
+                    class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                />
+            </picture>
             <div v-else class="flex h-full w-full items-center justify-center bg-[var(--gs-bg-elevated)]">
                 <svg class="h-16 w-16 text-[var(--gs-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -132,7 +139,7 @@ const props = withDefaults(defineProps<Props>(), {
     showDescription: false,
 });
 
-const { formatDuration, getAccessLevelBadge, getContentTypeLabel } = useGrowStream();
+const { formatDuration, getAccessLevelBadge, getContentTypeLabel, getThumbnailUrl } = useGrowStream();
 
 const accessBadge = computed(() => getAccessLevelBadge(props.video.access_level));
 const contentTypeLabel = computed(() => getContentTypeLabel(props.video.content_type));
