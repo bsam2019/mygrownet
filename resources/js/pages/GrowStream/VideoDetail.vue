@@ -157,7 +157,10 @@
                                 {{ isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist' }}
                             </button>
 
-                            <button class="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[var(--gs-text)] hover:bg-[var(--gs-bg-elevated)]">
+                            <button
+                                @click="shareVideo"
+                                class="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[var(--gs-text)] hover:bg-[var(--gs-bg-elevated)]"
+                            >
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path
                                         stroke-linecap="round"
@@ -328,13 +331,23 @@ const toggleWatchlist = async () => {
             await removeFromWatchlist(props.watchlistItem.id);
             isInWatchlist.value = false;
         } else {
-            await addToWatchlist('App\\Domain\\GrowStream\\Infrastructure\\Persistence\\Eloquent\\Video', props.video.id);
+            await addToWatchlist('video', props.video.id);
             isInWatchlist.value = true;
         }
     } catch (error) {
         console.error('Failed to update watchlist:', error);
     } finally {
         watchlistLoading.value = false;
+    }
+};
+
+const shareVideo = async () => {
+    const url = window.location.href;
+    const title = props.video.title;
+    try {
+        await navigator.share({ title, url });
+    } catch {
+        try { await navigator.clipboard.writeText(url); } catch { /* noop */ }
     }
 };
 
