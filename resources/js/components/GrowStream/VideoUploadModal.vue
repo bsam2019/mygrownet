@@ -225,9 +225,14 @@ const handleSubmit = async () => {
 
         uploadProgress.value = 100;
 
-        // Notify server — on failure the file is still on Cloudflare
-        // and will be processed. Don't block the user.
-        try { await axios.post(`/admin/videos/${video_id}/tus-complete`); } catch { /* non-critical */ }
+        // Notify server that upload is complete. Use fetch (not axios)
+        // with explicit CSRF to avoid any stale-token or interceptor issues.
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrf = csrfMeta ? csrfMeta.getAttribute('content') : '';
+        await fetch(`/admin/videos/${video_id}/tus-complete`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+        });
 
         emit('uploaded');
         emit('close');
