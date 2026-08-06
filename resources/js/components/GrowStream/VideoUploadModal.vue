@@ -224,7 +224,10 @@ const handleSubmit = async () => {
         });
 
         uploadProgress.value = 100;
-        await axios.post(`/admin/videos/${video_id}/tus-complete`);
+
+        // Notify server — on failure the file is still on Cloudflare
+        // and will be processed. Don't block the user.
+        try { await axios.post(`/admin/videos/${video_id}/tus-complete`); } catch { /* non-critical */ }
 
         emit('uploaded');
         emit('close');
