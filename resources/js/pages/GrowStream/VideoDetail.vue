@@ -272,7 +272,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onBeforeUnmount } from 'vue';
 import { router, Link } from '@inertiajs/vue3';
 import GrowStreamLayout from '@/Layouts/GrowStreamLayout.vue';
 import VideoPlayer from '@/Components/GrowStream/VideoPlayer.vue';
