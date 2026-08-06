@@ -29,8 +29,9 @@ Route::prefix('api/v1/growstream')->name('api.growstream.')->group(function () {
     // Attribution (public resolve; convert is authed)
     Route::post('/attribution/resolve', [AttributionController::class, 'resolve'])->name('attribution.resolve');
 
-    // Authenticated routes
-    Route::middleware('auth:sanctum')->group(function () {
+    // Authenticated routes — web session auth (the GrowStream SPA uses the
+    // shared mygrownet session, not Sanctum tokens)
+    Route::middleware(['web', 'auth'])->group(function () {
         Route::post('/attribution/convert', [AttributionController::class, 'convert'])->name('attribution.convert');
 
         Route::post('/watch/authorize', [WatchController::class, 'authorize'])->name('watch.authorize');
@@ -46,7 +47,7 @@ Route::prefix('api/v1/growstream')->name('api.growstream.')->group(function () {
     });
 
     // Admin routes
-    Route::prefix('admin')->name('admin.')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::prefix('admin')->name('admin.')->middleware(['web', 'auth'])->group(function () {
         Route::get('/videos', [VideoManagementController::class, 'index'])->name('videos.index');
         Route::post('/videos/upload', [VideoManagementController::class, 'upload'])->name('videos.upload');
         Route::get('/videos/form-data', [VideoManagementController::class, 'formData'])->name('videos.form-data');
