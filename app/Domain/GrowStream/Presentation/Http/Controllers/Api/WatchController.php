@@ -158,6 +158,21 @@ class WatchController extends Controller
         ]);
     }
 
+    public function destroyHistory(Request $request, int $history): JsonResponse
+    {
+        $user = Auth::user();
+
+        $row = $this->watchHistoryRepo->findById($history);
+
+        if (! $row || $row->user_id !== $user->id) {
+            return response()->json(['success' => false, 'error' => 'History entry not found'], 404);
+        }
+
+        $this->watchHistoryRepo->delete($row);
+
+        return response()->json(['success' => true]);
+    }
+
     public function watchlist(): JsonResponse
     {
         $user = Auth::user();

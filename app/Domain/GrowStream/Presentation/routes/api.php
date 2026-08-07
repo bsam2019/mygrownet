@@ -37,6 +37,7 @@ Route::prefix('api/v1/growstream')->name('api.growstream.')->group(function () {
         Route::post('/watch/authorize', [WatchController::class, 'authorize'])->name('watch.authorize');
         Route::post('/watch/progress', [WatchController::class, 'updateProgress'])->name('watch.progress');
         Route::get('/watch/history', [WatchController::class, 'history'])->name('watch.history');
+        Route::delete('/watch/history/{history}', [WatchController::class, 'destroyHistory'])->name('watch.history.destroy');
         Route::get('/continue-watching', [WatchController::class, 'continueWatching'])->name('continue-watching');
 
         Route::post('/metrics', [MetricsController::class, 'record'])->name('metrics.record');
