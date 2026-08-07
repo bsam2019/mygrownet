@@ -53,9 +53,9 @@ const isAdmin = computed(() => {
 
 const navItems = [
     { label: 'Home', href: () => route('growstream.home'), icon: 'M3 12l9-9 9 9M5 10v10h14V10' },
-    { label: 'Discover', href: () => route('growstream.browse'), icon: 'M4 6h16M4 12h16M4 18h10' },
-    { label: 'Search', href: () => route('growstream.search'), icon: 'M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z' },
-    { label: 'Library', href: () => route('growstream.my-videos'), icon: 'M4 5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V5z' },
+    { label: 'Discovery', href: () => route('growstream.browse'), icon: 'M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z' },
+    { label: 'Studio', href: () => route('growstream.creator.dashboard'), icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z' },
+    { label: 'Alerts', href: () => route('growstream.notifications'), icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' },
     { label: 'Profile', href: () => route('growstream.my-videos'), icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
 ];
 
@@ -79,6 +79,12 @@ const registerHref = computed(() => {
 
 const logout = () => {
     router.post(route('growstream.logout'));
+};
+
+// Determine if a route href matches the current location
+const isActiveRoute = (href: string): boolean => {
+    if (typeof window === 'undefined') return false;
+    return window.location.pathname === new URL(href, window.location.origin).pathname;
 };
 
 // Avatar dropdown (works on desktop + mobile)
@@ -132,7 +138,8 @@ onUnmounted(() => {
                         v-for="item in navItems"
                         :key="item.label"
                         :href="item.href()"
-                        class="rounded-full px-4 py-2 text-sm font-medium text-[var(--gs-muted)] transition-colors hover:text-[var(--gs-text)]"
+                        class="rounded-full px-4 py-2 text-sm font-medium transition-colors"
+                        :class="isActiveRoute(item.href()) ? 'bg-[var(--gs-primary-soft)] text-[var(--gs-primary)]' : 'text-[var(--gs-muted)] hover:text-[var(--gs-text)]'"
                     >
                         {{ item.label }}
                     </Link>
@@ -140,6 +147,7 @@ onUnmounted(() => {
                         v-if="isAdmin"
                         :href="route('growstream.admin.videos')"
                         class="rounded-full px-4 py-2 text-sm font-medium text-[var(--gs-muted)] transition-colors hover:text-[var(--gs-text)]"
+                        :class="isActiveRoute(route('growstream.admin.videos')) ? 'bg-[var(--gs-primary-soft)] text-[var(--gs-primary)]' : ''"
                     >
                         Admin
                     </Link>
@@ -184,7 +192,7 @@ onUnmounted(() => {
                         </svg>
                         <span
                             v-if="unreadCount > 0"
-                            class="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--gs-primary)] px-1 text-[10px] font-bold text-[#0a0a0c]"
+                            class="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--gs-primary)] px-1 text-[10px] font-bold text-white"
                         >
                             {{ unreadCount > 99 ? '99+' : unreadCount }}
                         </span>
@@ -252,20 +260,26 @@ onUnmounted(() => {
             <slot />
         </main>
 
-        <!-- Mobile Bottom Nav (5 items) -->
-        <nav aria-label="Bottom" class="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--gs-border)] bg-[var(--gs-bg)]/95 backdrop-blur md:hidden">
-            <div class="grid grid-cols-5">
+        <!-- Mobile Bottom Nav (5 items, Stitch style) -->
+        <nav aria-label="Bottom" class="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--gs-border)] bg-white/95 backdrop-blur md:hidden">
+            <div class="flex justify-around px-2 py-3">
                 <Link
                     v-for="item in navItems"
                     :key="item.label"
                     :href="item.href()"
                     :aria-label="item.label"
-                    class="flex min-h-[56px] flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium text-[var(--gs-muted)] active:text-[var(--gs-primary)]"
+                    class="flex flex-col items-center px-3 transition-all active:scale-90"
+                    :class="isActiveRoute(item.href()) ? 'text-[var(--gs-primary)]' : 'text-[var(--gs-muted)]'"
                 >
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <div v-if="isActiveRoute(item.href())" class="mb-1 rounded-full bg-[var(--gs-primary-soft)] px-5 py-1.5">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
+                        </svg>
+                    </div>
+                    <svg v-else class="mb-1 h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
                     </svg>
-                    {{ item.label }}
+                    <span class="text-[9px] font-bold uppercase tracking-widest">{{ item.label }}</span>
                 </Link>
             </div>
         </nav>

@@ -4,19 +4,20 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="theme-color" content="#2563eb">
+        <meta name="theme-color" content="#a73400">
         <title inertia>GrowStream</title>
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=inter:300,400,500,600,700,800" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700,800" rel="stylesheet" />
         <style>
-            html { background-color: #0a0a0c; }
+            html { background-color: #f8f9fa; }
+            body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
             #app-loading {
                 position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-                background: #0a0a0c; z-index: 9999; transition: opacity 0.3s;
+                background: #f8f9fa; z-index: 9999; transition: opacity 0.3s;
             }
             #app-loading .spinner {
-                width: 32px; height: 32px; border: 3px solid #2d2d35;
-                border-top-color: #10b981; border-radius: 50%; animation: spin 0.7s linear infinite;
+                width: 32px; height: 32px; border: 3px solid #d8c2bc;
+                border-top-color: #a73400; border-radius: 50%; animation: spin 0.7s linear infinite;
             }
             @keyframes spin { to { transform: rotate(360deg); } }
         </style>
