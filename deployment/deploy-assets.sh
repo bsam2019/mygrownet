@@ -169,12 +169,16 @@ cleanup_module_assets() {
     fi
 }
 
-# Clean up main build assets
-cleanup_module_assets ""
+# Only clean up modules that were deployed this run (passed from local)
+DEPLOYED_MODULES="${MODULES_TO_DEPLOY[@]}"
+echo "  Cleaning only deployed modules: \$DEPLOYED_MODULES"
 
-# Clean up module-specific assets
-for module_dir in admin bizboost bizdocs bms employee growbuilder growfinance growmart grownet growstream lifephus marketplace primeedge stockflow venture zamstay; do
-    cleanup_module_assets "\$module_dir"
+for module_name in \$DEPLOYED_MODULES; do
+    if [ "\$module_name" = "main" ]; then
+        cleanup_module_assets ""
+    else
+        cleanup_module_assets "\$module_name"
+    fi
 done
 
 echo "✅ Cleanup complete"
