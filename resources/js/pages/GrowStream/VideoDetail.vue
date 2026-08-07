@@ -2,7 +2,7 @@
     <GrowStreamLayout :title="`${video.title} - GrowStream`">
         <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             <!-- Video Player / Paywall Gate -->
-            <div class="mb-8">
+            <div class="mb-6 -mx-4 sm:mx-0">
                 <template v-if="userCanAccess">
                     <VideoPlayer
                         :video="video"
@@ -135,15 +135,15 @@
                         </div>
 
                         <!-- Actions -->
-                        <div class="flex flex-wrap gap-3">
+                        <div class="flex flex-wrap gap-2">
                             <button
                                 @click="toggleWatchlist"
                                 :disabled="watchlistLoading"
-                                class="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[var(--gs-text)] hover:bg-[var(--gs-bg-elevated)] disabled:opacity-50"
+                                class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-[var(--gs-text)] hover:bg-[var(--gs-bg-elevated)] disabled:opacity-50 transition-colors"
                             >
                                 <svg
                                     :class="[isInWatchlist ? 'fill-current' : 'fill-none']"
-                                    class="h-5 w-5"
+                                    class="h-4 w-4"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
                                 >
@@ -154,14 +154,14 @@
                                         d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
                                     />
                                 </svg>
-                                {{ isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist' }}
+                                {{ isInWatchlist ? 'Saved' : 'Watchlist' }}
                             </button>
 
                             <button
                                 @click="shareVideo"
-                                class="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[var(--gs-text)] hover:bg-[var(--gs-bg-elevated)]"
+                                class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-[var(--gs-text)] hover:bg-[var(--gs-bg-elevated)] transition-colors"
                             >
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"

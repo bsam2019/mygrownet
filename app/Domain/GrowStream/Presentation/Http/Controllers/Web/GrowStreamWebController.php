@@ -215,9 +215,14 @@ class GrowStreamWebController
             ->get();
 
         $watchProgress = null;
+        $watchlistItem = null;
         if (auth()->check()) {
             $watchProgress = WatchHistory::where('user_id', auth()->id())
                 ->where('video_id', $video->id)
+                ->first();
+            $watchlistItem = Watchlist::where('user_id', auth()->id())
+                ->where('watchlistable_type', Video::class)
+                ->where('watchlistable_id', $video->id)
                 ->first();
         }
 
@@ -227,6 +232,7 @@ class GrowStreamWebController
             'video' => $video,
             'relatedVideos' => $related,
             'watchProgress' => $watchProgress,
+            'watchlistItem' => $watchlistItem,
             'userCanAccess' => $userCanAccess,
             'throttled' => auth()->check() && $this->accessControl?->isThrottled(auth()->user()),
         ]);
