@@ -3,6 +3,7 @@
 namespace App\Domain\GrowStream\Presentation\Http\Controllers\Web;
 
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoCategory;
+use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoSeries;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\WatchHistory;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\Watchlist;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\Video;
@@ -308,6 +309,7 @@ class GrowStreamWebController
                 'videos' => [],
                 'creators' => [],
                 'categories' => [],
+                'series' => [],
                 'trending' => $trending,
             ]);
         }
@@ -342,10 +344,21 @@ class GrowStreamWebController
             ->take(8)
             ->get();
 
+        $series = VideoSeries::where('is_published', true)
+            ->where(function ($q) use ($term) {
+                $q->where('title', 'like', "%{$term}%")
+                  ->orWhere('description', 'like', "%{$term}%");
+            })
+            ->with('creator')
+            ->orderBy('title')
+            ->take(12)
+            ->get();
+
         return Inertia::render('GrowStream/Search', [
             'query' => $term,
             'videos' => $videos,
             'creators' => $creators,
+            'series' => $series,
             'categories' => $categories,
             'trending' => $trending,
         ]);
