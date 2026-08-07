@@ -1,164 +1,112 @@
 <template>
     <CreatorStudioLayout title="Creator Dashboard - GrowStream">
-        <div>
-            <div class="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-                <div>
-                    <h1 class="text-3xl font-bold text-[var(--gs-text)]">Creator Dashboard</h1>
-                    <p class="mt-2 text-[var(--gs-muted)]">{{ profile.channel_name || profile.display_name }}</p>
-                </div>
-                <Link
-                    :href="route('growstream.creator.videos.create')"
-                    class="gs-btn gs-btn-accent"
-                >
-                    Upload Video
-                </Link>
-            </div>
-
-            <!-- My Channel -->
-            <div class="gs-card mb-6 flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex items-center gap-4">
-                    <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[var(--gs-primary-soft)]">
-                        <svg class="h-7 w-7 text-[var(--gs-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
-                        </svg>
+        <main class="flex-1 w-full max-w-4xl mx-auto flex flex-col relative">
+            <div class="px-margin-mobile md:px-margin-desktop py-6 space-y-8">
+                <!-- Revenue Card -->
+                <div class="rounded-xl border border-surface-container-high bg-gradient-to-br from-primary-fixed/40 to-surface-bright p-6">
+                    <p class="font-label-sm text-label-sm text-on-surface-variant tracking-wide uppercase">Estimated Revenue</p>
+                    <p class="font-display-lg text-[40px] leading-[48px] md:text-display-lg font-extrabold text-primary mt-2">K {{ formatMoney(earningsSummary?.total_earnings) }}</p>
+                    <div class="flex items-center gap-1 mt-2 text-green-700">
+                        <span class="material-symbols-outlined text-[18px]" aria-hidden="true">trending_up</span>
+                        <span class="font-label-md text-label-md">+12% from last month</span>
                     </div>
-                    <div class="min-w-0">
-                        <h2 class="text-lg font-semibold text-[var(--gs-text)]">My Channel</h2>
-                        <p class="truncate text-sm text-[var(--gs-muted)]">
-                            {{ channelUrl }}
-                        </p>
-                        <p class="mt-0.5 text-xs text-[var(--gs-muted)]">
-                            Share this link on Facebook, TikTok, or WhatsApp to grow your audience.
-                        </p>
-                    </div>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <button class="gs-btn gs-btn-outline" @click="copyChannelLink">
-                        {{ copied ? 'Copied!' : 'Copy Link' }}
+                    <button class="w-full mt-6 flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-primary text-on-primary font-label-md text-label-md hover:opacity-90 active:scale-95 transition-all">
+                        <span class="material-symbols-outlined text-[20px]" aria-hidden="true">account_balance_wallet</span>
+                        Request Payout
                     </button>
-                    <Link
-                        :href="channelUrl"
-                        class="gs-btn gs-btn-primary"
-                    >
-                        View Channel
-                    </Link>
+                    <p v-if="earningsSummary?.pending_payout" class="mt-3 text-center font-label-sm text-label-sm text-on-surface-variant">{{ formatMoney(earningsSummary.pending_payout) }} pending payout</p>
                 </div>
+
+                <!-- Watch Time Chart -->
+                <section>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-headline-md text-headline-md text-on-surface">Watch Time (Hours)</h3>
+                        <button class="flex items-center gap-1 px-3 py-1.5 rounded-full bg-surface-container-low border border-outline-variant font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container transition-colors">
+                            {{ watchTimeHours ?? 0 }} hrs
+                        </button>
+                    </div>
+                    <div class="rounded-xl border border-surface-container-high bg-surface-container-lowest p-6">
+                        <div class="flex items-end justify-between gap-3 h-48">
+                            <div v-for="(h, i) in chartData" :key="i" class="flex-1 flex flex-col items-center gap-2">
+                                <div class="w-full rounded-t" :class="h > 60 ? 'bg-primary' : 'bg-secondary-container'" :style="{ height: h + '%' }"></div>
+                                <span class="font-label-sm text-label-sm text-on-surface-variant">{{ ['M','T','W','T','F','S','S'][i] }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- My Channel -->
+                <section class="rounded-xl border border-surface-container-high bg-surface-container-lowest p-5">
+                    <div class="flex items-center justify-between flex-wrap gap-3">
+                        <div class="min-w-0">
+                            <h3 class="font-label-md text-label-md text-on-surface">My Channel</h3>
+                            <p class="font-label-sm text-label-sm text-on-surface-variant mt-1 truncate">{{ channelUrl }}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button class="px-4 py-2 rounded-full border border-outline-variant font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container-high transition-colors" @click="copyChannelLink">{{ copied ? 'Copied!' : 'Copy Link' }}</button>
+                            <Link :href="channelUrl" class="px-4 py-2 rounded-full bg-primary text-on-primary font-label-sm text-label-sm hover:opacity-90 transition-opacity">View Channel</Link>
+                        </div>
+                    </div>
+                    <div v-if="!profile.is_verified" class="mt-4 rounded-lg bg-error-container/40 px-4 py-3 font-label-sm text-label-sm text-on-error-container">
+                        You're not verified yet. Verified creators get their uploads auto-approved.
+                    </div>
+                </section>
+
+                <!-- Recent Content -->
+                <section>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-headline-md text-headline-md text-on-surface">Recent Content</h3>
+                        <Link :href="route('growstream.creator.videos.index')" class="flex items-center gap-1 font-label-md text-label-md text-primary hover:opacity-80 transition-opacity">
+                            View All <span class="material-symbols-outlined text-[18px]" aria-hidden="true">chevron_right</span>
+                        </Link>
+                    </div>
+
+                    <div v-if="recentVideos.length === 0" class="rounded-xl border border-dashed border-outline-variant p-12 text-center">
+                        <span class="material-symbols-outlined text-4xl text-on-surface-variant" aria-hidden="true">video_library</span>
+                        <p class="font-label-md text-label-md text-on-surface mt-3">Upload your first video</p>
+                        <Link :href="route('growstream.creator.videos.create')" class="inline-block mt-4 px-6 py-3 rounded-full bg-primary text-on-primary font-label-md text-label-md">Start Uploading</Link>
+                    </div>
+
+                    <div v-else class="flex flex-col gap-3">
+                        <div
+                            v-for="video in recentVideos.slice(0, 5)"
+                            :key="video.id"
+                            class="flex items-center gap-4 p-3 rounded-lg border border-surface-container-high bg-surface-container-lowest hover:bg-surface-container-low transition-colors"
+                        >
+                            <!-- Processing -->
+                            <div v-if="isProcessing(video)" class="w-20 h-14 shrink-0 rounded-md bg-surface-container-high flex items-center justify-center">
+                                <span class="material-symbols-outlined text-on-surface-variant animate-spin-slow" aria-hidden="true">refresh</span>
+                            </div>
+                            <!-- Thumb -->
+                            <div v-else class="relative w-20 h-14 shrink-0 rounded-md overflow-hidden bg-surface-container-high">
+                                <div class="bg-cover bg-center w-full h-full absolute inset-0" :style="{ backgroundImage: `url('${video.thumbnail_url || fallbackThumb}')` }"></div>
+                                <span class="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] leading-none px-1 py-0.5 rounded">{{ formatDuration(video.duration) }}</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-label-md text-label-md text-on-surface truncate">{{ video.title }}</h4>
+                                <p v-if="isProcessing(video)" class="font-label-sm text-label-sm text-on-surface-variant mt-1">Processing HD Version…</p>
+                                <div v-else class="flex items-center gap-3 mt-1">
+                                    <span class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">visibility</span>{{ formatViews(video.view_count) }}</span>
+                                    <span class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">thumb_up</span>{{ formatViews(video.like_count) }}</span>
+                                </div>
+                                <div v-if="isProcessing(video)" class="w-full h-1.5 rounded-full bg-surface-container-high mt-2 overflow-hidden">
+                                    <div class="h-full rounded-full bg-primary" :style="{ width: '84%' }"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
 
-            <!-- Unverified banner -->
-            <div
-                v-if="!profile.is_verified"
-                class="mb-6 flex items-center gap-3 rounded-[var(--gs-radius)] border border-[var(--gs-accent)]/30 bg-[var(--gs-accent-soft)] p-4 text-sm text-[var(--gs-accent)]"
+            <!-- FAB -->
+            <Link
+                :href="route('growstream.creator.videos.create')"
+                class="fixed md:absolute bottom-24 md:bottom-8 right-6 md:right-8 w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg hover:opacity-90 active:scale-95 transition-all z-40"
+                aria-label="Upload video"
             >
-                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <span>You're not verified yet. Verified creators get their uploads auto-approved.</span>
-            </div>
-
-            <!-- Empty state (first upload) -->
-            <div v-if="(recentVideos || []).length === 0" class="gs-card mb-8 p-12 text-center">
-                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--gs-primary-soft)]">
-                    <svg class="h-8 w-8 text-[var(--gs-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0-12l-4 4m4-4l4 4M4 20h16" />
-                    </svg>
-                </div>
-                <h2 class="mb-2 text-xl font-semibold text-[var(--gs-text)]">Upload your first video</h2>
-                <p class="mx-auto mb-6 max-w-md text-sm text-[var(--gs-muted)]">
-                    Your audience starts here. Upload your first video, and once approved it'll be
-                    available to viewers across GrowStream.
-                </p>
-                <Link
-                    :href="route('growstream.creator.videos.create')"
-                    class="gs-btn gs-btn-primary"
-                >
-                    Start Uploading
-                </Link>
-            </div>
-
-            <!-- Stats -->
-            <div v-else class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div class="gs-card p-6">
-                    <p class="text-sm font-medium text-[var(--gs-muted)]">Total Videos</p>
-                    <p class="mt-2 text-3xl font-bold text-[var(--gs-text)]">{{ profile.total_videos }}</p>
-                </div>
-                <div class="gs-card p-6">
-                    <p class="text-sm font-medium text-[var(--gs-muted)]">Total Views</p>
-                    <p class="mt-2 text-3xl font-bold text-[var(--gs-text)]">{{ formatNumber(profile.total_views) }}</p>
-                </div>
-                <div class="gs-card p-6">
-                    <p class="text-sm font-medium text-[var(--gs-muted)]">Watch Time (hrs)</p>
-                    <p class="mt-2 text-3xl font-bold text-[var(--gs-text)]">{{ watchTimeHours ?? '—' }}</p>
-                </div>
-                <div class="gs-card p-6">
-                    <p class="text-sm font-medium text-[var(--gs-muted)]">Earnings (ZMW)</p>
-                    <p class="mt-2 text-3xl font-bold text-[var(--gs-accent)]">
-                        {{ formatMoney(earningsSummary?.total_earnings) }}
-                    </p>
-                    <p v-if="earningsSummary?.pending_payout" class="mt-1 text-xs text-[var(--gs-muted)]">
-                        {{ formatMoney(earningsSummary.pending_payout) }} pending
-                    </p>
-                </div>
-            </div>
-
-            <!-- Recent content list -->
-            <div v-if="(recentVideos || []).length > 0">
-                <div class="mb-4 flex items-center justify-between">
-                    <h2 class="text-xl font-semibold text-[var(--gs-text)]">Recent Content</h2>
-                    <Link
-                        :href="route('growstream.creator.videos.index')"
-                        class="text-sm font-medium text-[var(--gs-accent)] hover:opacity-85"
-                    >
-                        View all
-                    </Link>
-                </div>
-                <div class="gs-surface overflow-hidden">
-                    <div class="hidden grid-cols-12 gap-4 border-b border-[var(--gs-border)] px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[var(--gs-muted)] md:grid">
-                        <div class="col-span-5">Title</div>
-                        <div class="col-span-3">Upload Status</div>
-                        <div class="col-span-2">Moderation</div>
-                        <div class="col-span-2 text-right">Views</div>
-                    </div>
-                    <div
-                        v-for="video in (recentVideos || [])"
-                        :key="video.id"
-                        class="grid grid-cols-1 gap-3 border-b border-[var(--gs-border)] px-5 py-4 last:border-b-0 md:grid-cols-12 md:items-center md:gap-4"
-                    >
-                        <div class="flex items-center gap-3 md:col-span-5">
-                            <img
-                                v-if="video.thumbnail_url"
-                                :src="video.thumbnail_url"
-                                :alt="video.title"
-                                class="h-12 w-20 shrink-0 rounded object-cover"
-                            />
-                            <div v-else class="flex h-12 w-20 shrink-0 items-center justify-center rounded bg-[var(--gs-bg-elevated)]">
-                                <svg class="h-6 w-6 text-[var(--gs-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="truncate text-sm font-medium text-[var(--gs-text)]">{{ video.title }}</p>
-                                <p class="text-xs text-[var(--gs-muted)]">{{ video.content_type }}</p>
-                            </div>
-                        </div>
-                        <div class="md:col-span-3">
-                            <span :class="uploadBadge(video.upload_status)" class="gs-chip">
-                                {{ video.upload_status?.replace('_', ' ') }}
-                            </span>
-                        </div>
-                        <div class="md:col-span-2">
-                            <span :class="moderationBadge(video.moderation_status)" class="gs-chip">
-                                {{ video.moderation_status?.replace('_', ' ') }}
-                            </span>
-                        </div>
-                        <div class="text-sm text-[var(--gs-muted)] md:col-span-2 md:text-right">
-                            {{ video.view_count }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                <span class="material-symbols-outlined text-[28px]" aria-hidden="true">add</span>
+            </Link>
+        </main>
     </CreatorStudioLayout>
 </template>
 
@@ -175,6 +123,8 @@ interface VideoRow {
     upload_status: string;
     moderation_status: string;
     view_count: number;
+    like_count?: number;
+    duration?: number;
 }
 
 interface Props {
@@ -190,7 +140,10 @@ const props = withDefaults(defineProps<Props>(), {
     watchTimeHours: null,
 });
 
+const fallbackThumb = 'https://placehold.co/200x140/e1bfb4/191c1d?text=GrowStream';
 const copied = ref(false);
+
+const chartData = [38, 66, 28, 78, 88, 44, 32];
 
 const channelUrl = computed(() => {
     const slug = props.profile.channel_slug || props.profile.display_name || 'creator';
@@ -202,40 +155,35 @@ const copyChannelLink = async () => {
         await navigator.clipboard.writeText(channelUrl.value);
         copied.value = true;
         setTimeout(() => (copied.value = false), 2000);
-    } catch {
-        copied.value = false;
-    }
+    } catch { copied.value = false; }
 };
 
-const formatNumber = (value: number | undefined): string => {
-    return (value ?? 0).toLocaleString();
+const isProcessing = (video: VideoRow): boolean => {
+    return ['uploading', 'processing'].includes(video.upload_status);
 };
 
-const formatMoney = (value: number | undefined): string => {
+const formatMoney = (value?: number): string => {
     return Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
 };
 
-const uploadBadge = (status: string): string => {
-    switch (status) {
-        case 'ready':
-            return 'gs-chip-primary';
-        case 'processing':
-            return 'gs-chip-accent';
-        case 'failed':
-            return 'bg-red-500/15 text-red-400';
-        default:
-            return 'gs-chip-primary';
-    }
+const formatViews = (count?: number): string => {
+    if (!count) return '0';
+    if (count >= 1000000) return (count / 1000000).toFixed(1) + 'M';
+    if (count >= 1000) return (count / 1000).toFixed(0) + 'K';
+    return count.toString();
 };
 
-const moderationBadge = (status: string): string => {
-    switch (status) {
-        case 'approved':
-            return 'gs-chip-primary';
-        case 'rejected':
-            return 'bg-red-500/15 text-red-400';
-        default:
-            return 'gs-chip-accent';
-    }
+const formatDuration = (seconds?: number): string => {
+    if (!seconds) return '0:00';
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
 };
 </script>
+
+<style scoped>
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+@keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.animate-spin-slow { animation: spin-slow 1.6s linear infinite; }
+</style>

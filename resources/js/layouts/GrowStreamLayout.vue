@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, usePage, router } from '@inertiajs/vue3';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { useDataSaver } from '@/composables/useDataSaver';
 
 interface Props {
@@ -105,6 +105,29 @@ const handleAvatarClickOutside = (event: MouseEvent) => {
     }
 };
 
+// Inline search
+const searchOpen = ref(false);
+const searchQuery = ref('');
+const searchInputRef = ref<HTMLInputElement>();
+
+const openSearch = () => {
+    searchOpen.value = true;
+    nextTick(() => searchInputRef.value?.focus());
+};
+const closeSearch = () => {
+    searchOpen.value = false;
+    searchQuery.value = '';
+};
+const submitSearch = () => {
+    const q = searchQuery.value.trim();
+    closeSearch();
+    if (q) {
+        router.visit(route('growstream.search', { q }));
+    } else {
+        router.visit(route('growstream.search'));
+    }
+};
+
 onMounted(() => {
     document.addEventListener('click', handleAvatarClickOutside);
 });
@@ -119,7 +142,7 @@ onUnmounted(() => {
 
     <div class="gs-app bg-background text-on-background min-h-screen pb-24 font-body-md antialiased">
         <!-- Top App Bar (auth actions in the right cluster) -->
-        <header class="bg-surface-container-lowest border-b border-surface-container-highest sticky top-0 z-40 flex items-center justify-between px-margin-mobile h-16 w-full">
+        <header class="relative bg-surface-container-lowest border-b border-surface-container-highest sticky top-0 z-40 flex items-center justify-between px-margin-mobile h-16 w-full">
             <button class="text-on-surface-variant p-2 rounded-full flex items-center justify-center" aria-label="Menu">
                 <span class="material-symbols-outlined" aria-hidden="true">menu</span>
             </button>
@@ -150,10 +173,29 @@ onUnmounted(() => {
                         {{ unreadCount > 99 ? '99+' : unreadCount }}
                     </span>
                 </Link>
-                <!-- Search -->
-                <Link :href="route('growstream.search')" class="text-on-surface-variant p-2 rounded-full flex items-center justify-center" aria-label="Search">
+                <!-- Search (expandable inline) -->
+                <button
+                    v-if="!searchOpen"
+                    class="text-on-surface-variant p-2 rounded-full flex items-center justify-center"
+                    aria-label="Search"
+                    @click="openSearch"
+                >
                     <span class="material-symbols-outlined text-lg" aria-hidden="true">search</span>
-                </Link>
+                </button>
+                <div v-else class="flex items-center gap-1 absolute right-14 left-14 top-0 h-16 px-2 bg-surface-container-lowest">
+                    <span class="material-symbols-outlined text-on-surface-variant" aria-hidden="true">search</span>
+                    <input
+                        v-model="searchQuery"
+                        type="text"
+                        ref="searchInputRef"
+                        class="flex-1 bg-transparent outline-none text-body-md text-on-surface placeholder-on-surface-variant"
+                        placeholder="Search creators, series, videos..."
+                        @keyup.enter="submitSearch"
+                    />
+                    <button class="text-on-surface-variant p-1 rounded-full" aria-label="Close search" @click="closeSearch">
+                        <span class="material-symbols-outlined text-lg" aria-hidden="true">close</span>
+                    </button>
+                </div>
                 <!-- Auth / Avatar -->
                 <template v-if="isAuthenticated">
                     <div ref="avatarMenuRef" class="relative">

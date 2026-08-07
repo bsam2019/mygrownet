@@ -365,6 +365,11 @@ class CreatorVideoController extends Controller
 
         $topVideos = $videos->sortByDesc('view_count')->take(5)->values();
 
+        $attribution = [];
+        if (auth()->user()->id === $creator->user_id || auth()->user()->hasRole(['admin', 'superadmin', 'Administrator'])) {
+            $attribution = $this->attributionSummary($creator->id);
+        }
+
         return Inertia::render('GrowStream/Creator/Analytics', [
             'stats' => [
                 'total_videos' => $videos->count(),
@@ -374,6 +379,60 @@ class CreatorVideoController extends Controller
                 'avg_watch_time_seconds' => $avgWatchTime,
             ],
             'topVideos' => $topVideos,
+            'attribution' => $attribution,
+        ]);
+    }
+
+    /**
+     * Aggregate attribution (silent tracking) for the creator's share links.
+     */
+    private function attributionSummary(int $creatorId): array
+    {
+        $events = \App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\AttributionLink::where('creator_id', $creatorId)
+            ->selectRaw('source, COUNT(*) as clicks, SUM(CASE WHEN converted_user_id IS NOT NULL THEN 1 ELSE 0 END) as conversions')
+            ->groupBy('source')
+            ->get();
+
+        $totalClicks = $events->sum('clicks');
+        $totalConversions = $events->sum('conversions');
+        $rate = $totalClicks > 0 ? round(($totalConversions / $totalClicks) * 100, 1) : 0;
+
+        return [
+            'total_clicks' => $totalClicks,
+            'total_conversions' => $totalConversions,
+            'conversion_rate' => $rate,
+            'sources' => $events->map(fn ($e) => [
+                'source' => $e->source ?: 'direct',
+                'clicks' => (int) $e->clicks,
+                'conversions' => (int) $e->conversions,
+            ])->values(),
+        ];
+    }
+
+    public function payouts(): Response|RedirectResponse
+    {
+        $creator = $this->requireCreator();
+
+        $earningsRepo = app(\App\Domain\GrowStream\Repositories\CreatorEarningRepositoryInterface::class);
+        $payoutRepo = app(\App\Domain\GrowStream\Repositories\CreatorPayoutRepositoryInterface::class);
+
+        $totalEarnings = (float) ($creator->total_earnings ?? 0);
+        $pending = $earningsRepo->totalPendingForCreator($creator->id);
+        $totalPaid = $payoutRepo->totalPaidForCreator($creator->id);
+
+        $payouts = $payoutRepo->forCreator($creator->id)->take(10);
+        $lastPayout = $payouts->first();
+
+        return Inertia::render('GrowStream/Creator/Payouts', [
+            'summary' => [
+                'total_balance' => round($totalEarnings, 2),
+                'total_paid' => round($totalPaid, 2),
+                'last_payout_amount' => round((float) ($lastPayout->amount ?? 0), 2),
+                'last_payout_date' => $lastPayout->paid_at ?? $lastPayout->created_at ?? null,
+                'threshold' => (float) config('growstream.creator.minimum_payout', 100),
+                'pending' => round($pending, 2),
+            ],
+            'payouts' => $payouts,
         ]);
     }
 

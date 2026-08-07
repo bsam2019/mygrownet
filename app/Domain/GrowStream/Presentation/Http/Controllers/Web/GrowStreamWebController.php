@@ -478,6 +478,21 @@ class GrowStreamWebController
         ]);
     }
 
+    public function downloads(): Response
+    {
+        $downloadable = $this->videoRepo->query()
+            ->published()
+            ->where('is_downloadable', true)
+            ->with(['creator.user', 'categories'])
+            ->latest('published_at')
+            ->take(20)
+            ->get();
+
+        return Inertia::render('GrowStream/Downloads', [
+            'downloadable' => $downloadable,
+        ]);
+    }
+
     public function adminVideos(Request $request): Response
     {
         $query = $this->videoRepo->query()->with(['creator.user', 'categories']);

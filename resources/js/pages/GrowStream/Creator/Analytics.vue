@@ -1,91 +1,144 @@
 <template>
     <CreatorStudioLayout title="Creator Analytics - GrowStream">
-        <div>
-            <div class="mb-8">
-                <h1 class="text-3xl font-bold text-[var(--gs-text)]">Creator Analytics</h1>
-                <p class="mt-2 text-[var(--gs-muted)]">Performance across your content</p>
+        <main class="flex-1 px-margin-mobile pt-6 pb-40 flex flex-col gap-8 max-w-[600px] mx-auto w-full">
+            <!-- Page Header -->
+            <div class="flex justify-between items-end">
+                <div>
+                    <h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Attribution</h2>
+                    <p class="font-body-md text-body-md text-on-surface-variant mt-1">Track your link performance</p>
+                </div>
+                <button class="flex items-center gap-1 bg-surface-container px-3 py-1.5 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">
+                    <span class="font-label-sm text-label-sm">Last 30 Days</span>
+                    <span class="material-symbols-outlined text-[16px]" aria-hidden="true">expand_more</span>
+                </button>
             </div>
 
-            <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div class="gs-card p-6">
-                    <p class="text-sm font-medium text-[var(--gs-muted)]">Total Videos</p>
-                    <p class="mt-2 text-3xl font-bold text-[var(--gs-text)]">{{ stats.total_videos }}</p>
+            <!-- Summary Card (Bento) -->
+            <section class="bg-surface border border-outline-variant rounded-xl p-4 flex flex-col gap-4 shadow-sm">
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Total Clicks -->
+                    <div class="col-span-2 bg-surface-container-low rounded-lg p-4">
+                        <div class="flex justify-between items-start">
+                            <div class="font-label-md text-label-md text-on-surface-variant flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">ads_click</span>
+                                Total Clicks
+                            </div>
+                        </div>
+                        <div class="font-display-lg text-[40px] leading-tight font-extrabold text-on-surface mt-2">{{ formatNumber(attribution.total_clicks) }}</div>
+                    </div>
+                    <!-- Conversions -->
+                    <div class="bg-surface-container-low rounded-lg p-4 flex flex-col justify-between">
+                        <div class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">check_circle</span>
+                            Conversions
+                        </div>
+                        <div class="font-headline-md text-headline-md text-on-surface mt-2">{{ formatNumber(attribution.total_conversions) }}</div>
+                    </div>
+                    <!-- Conv. Rate -->
+                    <div class="bg-surface-container-low rounded-lg p-4 flex flex-col justify-between">
+                        <div class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">percent</span>
+                            Conv. Rate
+                        </div>
+                        <div class="font-headline-md text-headline-md text-on-surface mt-2">{{ attribution.conversion_rate }}%</div>
+                    </div>
                 </div>
-                <div class="gs-card p-6">
-                    <p class="text-sm font-medium text-[var(--gs-muted)]">Published</p>
-                    <p class="mt-2 text-3xl font-bold text-[var(--gs-primary)]">{{ stats.published_videos }}</p>
-                </div>
-                <div class="gs-card p-6">
-                    <p class="text-sm font-medium text-[var(--gs-muted)]">Total Views</p>
-                    <p class="mt-2 text-3xl font-bold text-[var(--gs-text)]">{{ stats.total_views.toLocaleString() }}</p>
-                </div>
-                <div class="gs-card p-6">
-                    <p class="text-sm font-medium text-[var(--gs-muted)]">Watch Time (hrs)</p>
-                    <p class="mt-2 text-3xl font-bold text-[var(--gs-text)]">{{ stats.total_watch_time_hours }}</p>
-                </div>
-            </div>
+            </section>
 
-            <div class="gs-surface overflow-hidden">
-                <div class="border-b border-[var(--gs-border)] px-6 py-4">
-                    <h2 class="text-lg font-semibold text-[var(--gs-text)]">Top Videos</h2>
-                </div>
-                <div v-if="topVideos.length === 0" class="px-6 py-12 text-center">
-                    <p class="text-sm text-[var(--gs-muted)]">No videos yet. Publish content to see analytics.</p>
-                </div>
-                <ul v-else class="divide-y divide-[var(--gs-border)]">
-                    <li v-for="video in topVideos" :key="video.id" class="flex items-center px-6 py-4">
-                        <img
-                            v-if="video.thumbnail_url"
-                            :src="video.thumbnail_url"
-                            :alt="video.title"
-                            class="h-14 w-24 rounded object-cover"
-                        />
-                        <div v-else class="flex h-14 w-24 items-center justify-center rounded bg-[var(--gs-bg-elevated)]">
-                            <svg class="h-6 w-6 text-[var(--gs-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+            <!-- Traffic Sources -->
+            <section class="flex flex-col gap-4">
+                <h3 class="font-headline-md text-headline-md text-on-surface">Traffic Sources</h3>
+                <div class="flex flex-col gap-3">
+                    <div
+                        v-for="s in attribution.sources"
+                        :key="s.source"
+                        class="flex items-center justify-between p-4 bg-surface border border-outline-variant rounded-xl hover:scale-[1.02] hover:border-outline transition-all"
+                    >
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold font-label-md">{{ sourceBadge(s.source) }}</div>
+                            <div>
+                                <div class="font-label-md text-label-md text-on-surface capitalize">{{ sourceLabel(s.source) }}</div>
+                                <div class="font-label-sm text-label-sm text-on-surface-variant">{{ sourceSub(s.source) }}</div>
+                            </div>
                         </div>
-                        <div class="ml-4 flex-1">
-                            <p class="text-sm font-medium text-[var(--gs-text)]">{{ video.title }}</p>
-                            <p class="text-xs text-[var(--gs-muted)]">
-                                {{ video.view_count }} views · {{ Math.round(video.average_watch_duration || 0) }}s avg watch
-                            </p>
+                        <div class="text-right flex flex-col gap-1">
+                            <div class="font-label-md text-label-md text-on-surface">{{ formatNumber(s.clicks) }} <span class="text-on-surface-variant text-[11px] font-normal">clicks</span></div>
+                            <div class="font-label-sm text-label-sm text-tertiary">{{ s.conversions }} <span class="opacity-70">conv.</span></div>
                         </div>
-                        <span
-                            :class="video.is_published ? 'gs-chip gs-chip-primary' : 'gs-chip bg-[var(--gs-bg-elevated)] text-[var(--gs-muted)]'"
-                        >
-                            {{ video.is_published ? 'Published' : 'Unpublished' }}
-                        </span>
-                    </li>
-                </ul>
-            </div>
-        </div>
+                    </div>
+
+                    <div v-if="attribution.sources.length === 0" class="bg-surface border border-outline-variant rounded-xl p-8 text-center">
+                        <span class="material-symbols-outlined text-4xl text-on-surface-variant" aria-hidden="true">link</span>
+                        <p class="font-label-md text-label-md text-on-surface mt-3">No attribution data yet</p>
+                        <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Share your creator links to start tracking clicks.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Top Videos -->
+            <section v-if="topVideos.length > 0" class="flex flex-col gap-4">
+                <h3 class="font-headline-md text-headline-md text-on-surface">Top Videos</h3>
+                <div class="flex flex-col gap-3">
+                    <div
+                        v-for="v in topVideos"
+                        :key="v.id"
+                        class="flex items-center gap-4 p-4 bg-surface border border-outline-variant rounded-xl"
+                    >
+                        <div class="relative w-24 h-16 shrink-0 rounded-md overflow-hidden bg-surface-container-high">
+                            <div class="bg-cover bg-center w-full h-full absolute inset-0" :style="{ backgroundImage: `url('${v.thumbnail_url || fallbackThumb}')` }"></div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-label-md text-label-md text-on-surface truncate">{{ v.title }}</h4>
+                            <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">{{ formatNumber(v.view_count) }} views &bull; {{ formatViews(v.view_count) }}</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
     </CreatorStudioLayout>
 </template>
 
 <script setup lang="ts">
 import CreatorStudioLayout from '@/Layouts/CreatorStudioLayout.vue';
+import type { Video } from '@/types/growstream';
 
-interface TopVideo {
-    id: number;
-    title: string;
-    thumbnail_url: string | null;
-    view_count: number;
-    average_watch_duration: number;
-    is_published: boolean;
-}
+interface SourceRow { source: string; clicks: number; conversions: number; }
+interface AttributionData { total_clicks: number; total_conversions: number; conversion_rate: number; sources: SourceRow[]; }
 
 interface Props {
-    stats: {
-        total_videos: number;
-        published_videos: number;
-        total_views: number;
-        total_watch_time_hours: number;
-        avg_watch_time_seconds: number;
-    };
-    topVideos: TopVideo[];
+    stats?: { total_videos: number; published_videos: number; total_views: number; total_watch_time_hours: number; avg_watch_time_seconds: number };
+    topVideos?: Video[];
+    attribution?: AttributionData;
 }
 
-defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    stats: () => ({ total_videos: 0, published_videos: 0, total_views: 0, total_watch_time_hours: 0, avg_watch_time_seconds: 0 }),
+    topVideos: () => [],
+    attribution: () => ({ total_clicks: 0, total_conversions: 0, conversion_rate: 0, sources: [] }),
+});
+
+const fallbackThumb = 'https://placehold.co/240x160/e1bfb4/191c1d?text=GrowStream';
+
+const sourceLabel = (source: string): string => {
+    const map: Record<string, string> = { facebook: 'Facebook', instagram: 'Instagram', whatsapp: 'WhatsApp', tiktok: 'TikTok', direct: 'Direct' };
+    return map[source] ?? source.charAt(0).toUpperCase() + source.slice(1);
+};
+
+const sourceSub = (source: string): string => {
+    const map: Record<string, string> = { facebook: 'Group Posts', instagram: 'Link in Bio', whatsapp: 'Direct Shares', tiktok: 'Video Links', direct: 'Direct Visit' };
+    return map[source] ?? 'Share Link';
+};
+
+const sourceBadge = (source: string): string => {
+    const initials = sourceLabel(source).slice(0, 2).toUpperCase();
+    return initials === 'DI' ? 'DR' : initials;
+};
+
+const formatNumber = (n: number): string => n.toLocaleString();
+const formatViews = (count?: number): string => {
+    if (!count) return '0';
+    if (count >= 1000000) return (count / 1000000).toFixed(1) + 'M';
+    if (count >= 1000) return (count / 1000).toFixed(0) + 'K';
+    return count.toString();
+};
 </script>

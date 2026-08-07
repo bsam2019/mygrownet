@@ -39,6 +39,7 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
         Route::delete('/admin/videos/{id}', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoManagementController::class, 'destroy'])->name('admin.videos.delete');
         Route::post('/admin/videos/bulk-delete', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoManagementController::class, 'bulkDelete'])->name('admin.videos.bulk-delete');
         Route::get('/my-videos', [GrowStreamWebController::class, 'myVideos'])->name('my-videos');
+        Route::get('/downloads', [GrowStreamWebController::class, 'downloads'])->name('downloads');
 
         // Notifications
         Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
@@ -65,6 +66,7 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
         Route::put('/creator/videos/{id}', [CreatorVideoController::class, 'update'])->name('creator.videos.update');
         Route::delete('/creator/videos/{id}', [CreatorVideoController::class, 'destroy'])->name('creator.videos.destroy');
         Route::get('/creator/analytics', [CreatorVideoController::class, 'analytics'])->name('creator.analytics');
+        Route::get('/creator/payouts', [CreatorVideoController::class, 'payouts'])->name('creator.payouts');
 
         // Creator sponsorship fund
         Route::get('/creator/sponsorship', [CreatorSponsorshipController::class, 'index'])->name('creator.sponsorship.index');

@@ -1,226 +1,172 @@
 <template>
-    <GrowStreamLayout :title="`${creator?.display_name || 'Creator'} - GrowStream`">
-        <div v-if="creator" class="mx-auto max-w-6xl">
+    <GrowStreamLayout :title="`${creator.display_name} - GrowStream`">
+        <main class="flex-1 w-full max-w-7xl mx-auto flex flex-col">
             <!-- Banner -->
-            <div class="relative mb-6 overflow-hidden rounded-[var(--gs-radius)] border border-[var(--gs-border)]">
-                <div
-                    v-if="creator.banner_url"
-                    class="h-48 w-full bg-cover bg-center sm:h-64"
-                    :style="{ backgroundImage: `url(${creator.banner_url})` }"
-                ></div>
-                <div v-else class="h-48 w-full bg-gradient-to-br from-[var(--gs-primary)]/40 via-[#065f46] to-[#022c22] sm:h-64"></div>
+            <div class="relative w-full aspect-[16/9] sm:aspect-[3/1] md:aspect-[4/1] overflow-hidden bg-surface-container-high">
+                <div class="bg-cover bg-center w-full h-full absolute inset-0" :style="{ backgroundImage: `url('${creator.banner_url || fallbackBanner}')` }"></div>
+            </div>
 
-                <!-- Profile Card Overlap -->
-                <div class="relative -mt-16 px-6 pb-6 sm:-mt-20">
-                    <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                        <div class="flex items-end gap-4">
-                            <div class="h-28 w-28 shrink-0 overflow-hidden rounded-2xl border-4 border-[var(--gs-bg)] bg-[var(--gs-bg-elevated)] sm:h-32 sm:w-32">
-                                <img
-                                    v-if="creator.avatar_url"
-                                    :src="creator.avatar_url"
-                                    :alt="creator.display_name"
-                                    class="h-full w-full object-cover"
-                                />
-                                <div v-else class="flex h-full w-full items-center justify-center text-4xl font-bold text-[var(--gs-primary)]">
-                                    {{ (creator.display_name || 'C').charAt(0).toUpperCase() }}
-                                </div>
-                            </div>
-                            <div class="pb-1">
-                                <div class="flex items-center gap-2">
-                                    <h1 class="text-2xl font-bold text-[var(--gs-text)] sm:text-3xl">{{ creator.display_name }}</h1>
-                                    <svg
-                                        v-if="creator.is_verified"
-                                        class="h-5 w-5 text-[var(--gs-primary)]"
-                                        fill="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            fill-rule="evenodd"
-                                            d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 013.498 1.307 4.491 4.491 0 011.307 3.497A4.49 4.49 0 0121.75 12a4.49 4.49 0 01-1.549 3.397 4.491 4.491 0 01-1.307 3.497 4.491 4.491 0 01-3.497 1.307A4.49 4.49 0 0112 21.75a4.49 4.49 0 01-3.397-1.549 4.49 4.49 0 01-3.498-1.306 4.491 4.491 0 01-1.307-3.498A4.49 4.49 0 012.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 011.307-3.497 4.49 4.49 0 013.497-1.307zm7.007 6.387a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"
-                                            clip-rule="evenodd"
-                                        />
-                                    </svg>
-                                </div>
-                                <p class="mt-1 text-sm text-[var(--gs-muted)]">
-                                    {{ creator.subscriber_count ?? 0 }} subscribers · {{ creator.total_videos ?? 0 }} videos · {{ formatViews(creator.total_views ?? 0) }} views
-                                </p>
-                            </div>
-                        </div>
+            <!-- Profile header -->
+            <div class="px-margin-mobile md:px-margin-desktop">
+                <div class="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-background overflow-hidden -mt-12 md:-mt-14 relative z-10 bg-surface-container-highest shadow-md">
+                    <img v-if="creator.avatar_url" class="w-full h-full object-cover" :src="creator.avatar_url" :alt="creator.display_name" />
+                    <div v-else class="w-full h-full flex items-center justify-center font-display-lg text-display-lg text-primary">{{ (creator.display_name || 'C').charAt(0).toUpperCase() }}</div>
+                </div>
 
-                        <div class="flex items-center gap-2 pb-1">
-                            <span v-if="creator.creator_tier" class="gs-chip gs-chip-accent">
-                                {{ tierLabel(creator.creator_tier) }}
-                            </span>
-                            <button
-                                class="gs-btn gs-btn-outline"
-                                :aria-label="'Copy share link for ' + (creator.display_name || 'this creator')"
-                                @click="copyShareLink"
-                            >
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 010 5.656l-4 4a4 4 0 01-5.656-5.656l1.5-1.5m5.313-2.344a4 4 0 00-5.656 0l-4 4a4 4 0 005.656 5.656l1.5-1.5M16 12l4-4a4 4 0 00-5.656-5.656l-1.5 1.5" />
-                                </svg>
-                                {{ copied ? 'Copied!' : 'Copy Link' }}
-                            </button>
-                            <Link
-                                v-if="creator.website_url"
-                                :href="creator.website_url"
-                                target="_blank"
-                                rel="noopener"
-                                class="gs-btn gs-btn-outline"
-                            >
-                                Website
-                            </Link>
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between mt-4 gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="font-display-lg text-headline-lg-mobile md:text-headline-lg font-bold text-on-surface">{{ creator.display_name }}</h1>
+                            <span v-if="creator.is_verified" class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">verified</span>
                         </div>
+                        <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">{{ formatFollowers(creator.subscriber_count) }} Followers &bull; {{ creator.user?.name || '' }}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button class="px-6 py-3 rounded-full bg-primary text-on-primary font-label-md text-label-md hover:opacity-90 active:scale-95 transition-all" @click="onFollow">
+                            Subscribe
+                        </button>
+                        <button class="w-11 h-11 flex items-center justify-center rounded-full border border-outline-variant text-on-surface-variant hover:bg-surface-container-high transition-colors" aria-label="Share" @click="shareProfile">
+                            <span class="material-symbols-outlined" aria-hidden="true">share</span>
+                        </button>
                     </div>
                 </div>
+
+                <p v-if="creator.bio" class="font-body-md text-body-md text-on-surface-variant mt-4 max-w-2xl">{{ creator.bio }}</p>
             </div>
 
-            <!-- About -->
-            <div v-if="creator.bio" class="mb-10 max-w-3xl">
-                <h2 class="mb-2 text-lg font-semibold text-[var(--gs-text)]">About</h2>
-                <p class="whitespace-pre-line text-[var(--gs-muted)]">{{ creator.bio }}</p>
-            </div>
-
-            <!-- Series -->
-            <div v-if="(series || []).length > 0" class="mb-10">
-                <h2 class="mb-4 text-xl font-semibold text-[var(--gs-text)]">Series</h2>
-                <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                    <Link
-                        v-for="s in (series || [])"
-                        :key="s.id"
-                        :href="route('growstream.series.detail', { slug: s.slug })"
-                        class="gs-card gs-card-hover overflow-hidden"
-                    >
-                        <div class="relative aspect-video bg-[var(--gs-bg-elevated)]">
-                            <img
-                                v-if="s.poster_url"
-                                :src="s.poster_url"
-                                :alt="s.title"
-                                class="h-full w-full object-cover"
-                            />
-                            <div v-else class="flex h-full w-full items-center justify-center">
-                                <svg class="h-10 w-10 text-[var(--gs-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h18M3 16h18" />
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="p-3">
-                            <h3 class="line-clamp-1 font-semibold text-[var(--gs-text)]">{{ s.title }}</h3>
-                            <p class="text-sm text-[var(--gs-muted)]">{{ s.total_episodes }} episodes</p>
-                        </div>
-                    </Link>
+            <!-- Tabs -->
+            <div class="px-margin-mobile md:px-margin-desktop mt-6 border-b border-surface-container-high">
+                <div class="flex gap-6 overflow-x-auto scrollbar-hide">
+                    <button class="whitespace-nowrap pb-3 border-b-2 border-primary text-primary font-label-md text-label-md">Series</button>
+                    <button class="whitespace-nowrap pb-3 border-b-2 border-transparent text-on-surface-variant font-label-md text-label-md hover:text-on-surface transition-colors" @click="goBrowse('movie')">Movies</button>
+                    <button class="whitespace-nowrap pb-3 border-b-2 border-transparent text-on-surface-variant font-label-md text-label-md hover:text-on-surface transition-colors" @click="goBrowse('comedy')">Comedy</button>
+                    <button class="whitespace-nowrap pb-3 border-b-2 border-transparent text-on-surface-variant font-label-md text-label-md hover:text-on-surface transition-colors" @click="goBrowse('music')">Music</button>
                 </div>
             </div>
 
-            <!-- Videos -->
-            <div v-if="(videos || []).length > 0">
-                <h2 class="mb-4 text-xl font-semibold text-[var(--gs-text)]">Videos</h2>
-                <VideoGrid :videos="videos || []" />
-            </div>
+            <!-- Content list -->
+            <div class="px-margin-mobile md:px-margin-desktop py-6 flex flex-col gap-6">
+                <!-- Series section -->
+                <section v-if="series.length > 0" class="mb-2">
+                    <h3 class="font-headline-md text-headline-md text-on-surface mb-4">Series</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <Link
+                            v-for="s in series.slice(0, 6)"
+                            :key="s.id"
+                            :href="route('growstream.series.detail', s.slug)"
+                            class="group relative rounded-xl overflow-hidden cursor-pointer bg-surface border border-surface-container-high hover:border-outline-variant transition-all hover:scale-[1.02]"
+                        >
+                            <div class="aspect-video relative overflow-hidden">
+                                <div class="bg-cover bg-center w-full h-full absolute inset-0" :style="{ backgroundImage: `url('${s.poster_url || s.banner_url || fallbackThumb}')` }"></div>
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                                <div class="absolute bottom-3 left-3 text-white">
+                                    <span class="bg-primary/90 px-2 py-1 rounded text-xs font-bold uppercase tracking-wide">{{ s.total_episodes || 0 }} eps</span>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <h4 class="font-label-md text-label-md text-on-surface mb-1 group-hover:text-primary transition-colors">{{ s.title }}</h4>
+                            </div>
+                        </Link>
+                    </div>
+                </section>
 
-            <!-- Empty catalogue -->
-            <div v-if="!((videos || []).length > 0 || (series || []).length > 0)" class="gs-card p-12 text-center">
-                <h3 class="mb-2 text-lg font-semibold text-[var(--gs-text)]">No content yet</h3>
-                <p class="text-sm text-[var(--gs-muted)]">This creator hasn't published any content yet.</p>
+                <!-- Videos list -->
+                <section>
+                    <h3 class="font-headline-md text-headline-md text-on-surface mb-4">{{ series.length > 0 ? 'Videos' : 'Content' }}</h3>
+                    <div class="flex flex-col gap-6">
+                        <Link
+                            v-for="v in videos"
+                            :key="v.id"
+                            :href="route('growstream.video.detail', { slug: v.slug })"
+                            class="group block"
+                        >
+                            <div class="relative w-full aspect-video rounded-lg overflow-hidden bg-surface-container-high">
+                                <div class="bg-cover bg-center w-full h-full absolute inset-0 group-hover:scale-105 transition-transform duration-300" :style="{ backgroundImage: `url('${v.thumbnail_url || fallbackThumb}')` }"></div>
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                                <span class="absolute bottom-2 right-2 bg-black/80 text-white font-label-sm text-label-sm px-1.5 py-0.5 rounded">{{ formatDuration(v.duration) }}</span>
+                            </div>
+                            <h4 class="font-label-md text-label-md text-on-surface mt-2 group-hover:text-primary transition-colors">{{ v.title }}</h4>
+                            <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">{{ formatViews(v.view_count) }} views &bull; {{ formatDate(v.created_at) }}</p>
+                        </Link>
+                    </div>
+                </section>
+
+                <!-- Empty state -->
+                <div v-if="!videos.length && !series.length" class="flex flex-col items-center gap-4 py-16 text-center">
+                    <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+                        <span class="material-symbols-outlined text-4xl text-primary" aria-hidden="true">videocam_off</span>
+                    </div>
+                    <h3 class="font-headline-md text-headline-md text-on-surface">No content yet</h3>
+                    <p class="font-label-sm text-label-sm text-on-surface-variant">This creator hasn't published anything yet.</p>
+                </div>
             </div>
-        </div>
+        </main>
     </GrowStreamLayout>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import GrowStreamLayout from '@/Layouts/GrowStreamLayout.vue';
-import VideoGrid from '@/Components/GrowStream/VideoGrid.vue';
+import { useGrowStream } from '@/composables/useGrowStream';
+import { useGrowStreamMetrics } from '@/composables/useGrowStreamMetrics';
 import type { Video, VideoSeries, CreatorProfile } from '@/types/growstream';
 
 interface Props {
-    creator?: CreatorProfile;
+    creator: CreatorProfile;
     videos?: Video[];
     series?: VideoSeries[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    creator: undefined,
     videos: () => [],
     series: () => [],
 });
 
-const copied = ref(false);
+const { formatDuration } = useGrowStream();
+const metrics = useGrowStreamMetrics();
 
-// Silent attribution: capture ?src= on landing (tracking-only in Phase 1).
-onMounted(() => {
-    const creator = props.creator;
-    if (!creator?.id) return;
+const fallbackBanner = 'https://placehold.co/1600x500/e1bfb4/191c1d?text=GrowStream';
+const fallbackThumb = 'https://placehold.co/800x450/e1bfb4/191c1d?text=GrowStream';
 
-    const url = new URL(window.location.href);
-    const source = url.searchParams.get('src');
-    if (!source) return;
+const onFollow = () => metrics.trackCreatorSubscribe(props.creator.id);
 
-    let session = '';
-    try {
-        session = localStorage.getItem('gs_attribution_session') ?? '';
-    } catch {
-        session = '';
-    }
-
-    fetch('/api/v1/growstream/attribution/resolve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-            creator_id: creator.id,
-            source,
-            visitor_session_id: session || undefined,
-        }),
-    })
-        .then((r) => r.json())
-        .then((data) => {
-            if (data?.visitor_session_id && !session) {
-                try {
-                    localStorage.setItem('gs_attribution_session', data.visitor_session_id);
-                } catch {
-                    // ignore
-                }
-            }
-        })
-        .catch(() => {
-            // silent — attribution must never break the page
-        });
-});
-
-const copyShareLink = async () => {
-    const creator = props.creator;
-    if (!creator) return;
-
-    const slug = creator.channel_slug || creator.id;
-    const shareUrl = `${window.location.origin}/c/${slug}`;
-
-    try {
-        await navigator.clipboard.writeText(shareUrl);
-        copied.value = true;
-        setTimeout(() => (copied.value = false), 2000);
-    } catch {
-        copied.value = false;
-    }
+const shareProfile = async () => {
+    const url = window.location.href;
+    try { await navigator.share({ title: props.creator.display_name, url }); }
+    catch { try { await navigator.clipboard.writeText(url); } catch { /* noop */ } }
 };
 
-const formatViews = (views: number): string => {
-    if (views >= 1000000) {
-        return `${(views / 1000000).toFixed(1)}M`;
-    }
-    if (views >= 1000) {
-        return `${(views / 1000).toFixed(1)}K`;
-    }
-    return views.toString();
+const goBrowse = (contentType?: string) => {
+    router.get(route('growstream.browse', { content_type: contentType, creator: props.creator.id }), {}, { preserveState: true });
 };
 
-const tierLabel = (tier: string): string => {
-    const map: Record<string, string> = {
-        bronze: 'Bronze Creator',
-        silver: 'Silver Creator',
-        gold: 'Gold Creator',
-        platinum: 'Platinum Creator',
-    };
-    return map[tier.toLowerCase()] ?? 'Creator';
+const formatFollowers = (count?: number): string => {
+    if (!count) return '0';
+    if (count >= 1000) return (count / 1000).toFixed(1) + 'K';
+    return count.toString();
+};
+
+const formatViews = (count?: number): string => {
+    if (!count) return '0';
+    if (count >= 1000000) return (count / 1000000).toFixed(1) + 'M';
+    if (count >= 1000) return (count / 1000).toFixed(0) + 'K';
+    return count.toString();
+};
+
+const formatDate = (dateString?: string): string => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const diffDays = Math.ceil(Math.abs(Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+    return `${Math.floor(diffDays / 365)} years ago`;
 };
 </script>
+
+<style scoped>
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
