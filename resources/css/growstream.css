@@ -1,6 +1,23 @@
 /* ==========================================================================
-   GrowStream Design System — Sunset Terracotta (Stitch / Document 7)
-   Light theme, Plus Jakarta Sans, 8px radius, Heroicons
+   GrowStream Design System — Stitch (Sunset Terracotta)
+   Scoped Tailwind config: tailwind.growstream.config.js
+   Utilities are generated from the Stitch design-token palette.
+   ========================================================================== */
+
+@config "../../tailwind.growstream.config.js";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   Material Symbols (Stitch icon set)
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
+
+/* ==========================================================================
+   Legacy CSS-variable layer — kept for older components that reference
+   var(--gs-*). New pages use the Tailwind token classes directly.
    ========================================================================== */
 
 .gs-app {
@@ -11,7 +28,6 @@
     --gs-surface-high: #e7e8e9;
     --gs-card: #ffffff;
     --gs-card-hover: #f3f4f5;
-    /* Backward-compat alias (older components reference this name) */
     --gs-bg-elevated: var(--gs-surface-elevated);
 
     /* ── Text ── */
@@ -43,203 +59,35 @@
     --gs-error: #ba1a1a;
     --gs-error-soft: rgba(186, 26, 26, 0.10);
 
-    /* ── App root ── */
     background-color: var(--gs-bg);
     color: var(--gs-text);
     min-height: 100vh;
 }
 
-/* ==========================================================================
-   Components — Cards, Surfaces
-   ========================================================================== */
-
+/* Keep legacy component helpers working for pages not yet redesigned */
 .gs-surface {
     background-color: var(--gs-surface);
     border: 1px solid var(--gs-border);
     border-radius: var(--gs-radius);
 }
-
 .gs-card {
     background-color: var(--gs-card);
     border: 1px solid var(--gs-border);
     border-radius: var(--gs-radius);
-    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
-
-.gs-card-hover:hover {
-    background-color: var(--gs-card-hover);
-    border-color: var(--gs-border-strong);
-    transform: scale(1.02);
-}
-
-/* ==========================================================================
-   Buttons — pill-shaped, terracotta primary
-   ========================================================================== */
-
 .gs-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    border-radius: 9999px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    padding: 0.625rem 1.25rem;
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    border-radius: 9999px; font-size: 0.875rem; font-weight: 600; padding: 0.625rem 1.25rem;
     transition: background-color 0.15s ease, opacity 0.15s ease;
 }
-
-.gs-btn-primary {
-    background-color: var(--gs-primary);
-    color: #ffffff;
-}
-
-.gs-btn-primary:hover { background-color: var(--gs-primary-hover); }
-
-.gs-btn-secondary {
-    background-color: var(--gs-secondary);
-    color: #ffffff;
-}
-
-.gs-btn-secondary:hover { opacity: 0.9; }
-
-.gs-btn-accent {
-    background-color: var(--gs-accent);
-    color: #ffffff;
-}
-
-.gs-btn-accent:hover { opacity: 0.9; }
-
-.gs-btn-outline {
-    border: 1px solid var(--gs-border);
-    color: var(--gs-text);
-    background-color: transparent;
-}
-
-.gs-btn-outline:hover { background-color: var(--gs-card-hover); }
-
-.gs-btn-ghost {
-    color: var(--gs-muted);
-    background-color: transparent;
-}
-
-.gs-btn-ghost:hover {
-    color: var(--gs-text);
-    background-color: var(--gs-card-hover);
-}
-
-/* ==========================================================================
-   Chips & Tags — pill-shaped categories
-   ========================================================================== */
-
-.gs-chip {
-    display: inline-flex;
-    align-items: center;
-    border-radius: 9999px;
-    padding: 0.25rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-
-.gs-chip-primary {
-    background-color: var(--gs-primary);
-    color: #ffffff;
-}
-
-.gs-chip-secondary {
-    background-color: var(--gs-secondary);
-    color: #ffffff;
-}
-
-.gs-chip-outline {
-    background-color: var(--gs-card-hover);
-    color: var(--gs-text-secondary);
-    border: 1px solid var(--gs-border);
-}
-
-/* ==========================================================================
-   Form Inputs
-   ========================================================================== */
-
-.gs-input {
-    width: 100%;
-    border-radius: var(--gs-radius);
-    border: 1px solid var(--gs-border);
-    background-color: var(--gs-surface);
-    color: var(--gs-text);
-    padding: 0.625rem 0.875rem;
-    font-size: 0.875rem;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.gs-input::placeholder { color: #8d7168; }
-
-.gs-input:focus {
-    outline: none;
-    border-color: var(--gs-primary);
-    box-shadow: 0 0 0 3px var(--gs-primary-soft);
-}
-
-.gs-label {
-    display: block;
-    margin-bottom: 0.375rem;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--gs-text-secondary);
-}
-
-/* ==========================================================================
-   Layout helpers
-   ========================================================================== */
-
-.gs-row {
-    display: flex;
-    gap: 1rem;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 0.5rem;
-}
-
+.gs-btn-primary { background-color: var(--gs-primary); color: #ffffff; }
+.gs-btn-secondary { background-color: var(--gs-secondary); color: #ffffff; }
+.gs-btn-accent { background-color: var(--gs-accent); color: #ffffff; }
+.gs-btn-outline { border: 1px solid var(--gs-border); color: var(--gs-text); background: transparent; }
+.gs-btn-ghost { color: var(--gs-muted); background: transparent; }
+.gs-chip { display: inline-flex; align-items: center; border-radius: 9999px; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 500; }
+.gs-input { width: 100%; border-radius: var(--gs-radius); border: 1px solid var(--gs-border); background-color: var(--gs-surface); color: var(--gs-text); padding: 0.625rem 0.875rem; font-size: 0.875rem; }
+.gs-input:focus { outline: none; border-color: var(--gs-primary); box-shadow: 0 0 0 3px var(--gs-primary-soft); }
+.gs-label { display: block; margin-bottom: 0.375rem; font-size: 0.8125rem; font-weight: 600; color: var(--gs-text-secondary); }
+.gs-row { display: flex; gap: 1rem; overflow-x: auto; scrollbar-width: none; padding-bottom: 0.5rem; }
 .gs-row::-webkit-scrollbar { display: none; }
-
-.gs-link { color: var(--gs-primary); }
-.gs-link:hover { color: var(--gs-primary-hover); }
-
-.gs-link-accent { color: var(--gs-accent); }
-.gs-link-accent:hover { opacity: 0.85; }
-
-/* ==========================================================================
-   Progress bar
-   ========================================================================== */
-
-.gs-progress-track {
-    background-color: var(--gs-border);
-    border-radius: 9999px;
-    overflow: hidden;
-}
-
-.gs-progress-fill {
-    background-color: var(--gs-primary);
-    height: 100%;
-    transition: width 0.3s ease;
-}
-
-/* ==========================================================================
-   Form overrides (light theme — no dark-background forcing)
-   ========================================================================== */
-
-.gs-app input,
-.gs-app select,
-.gs-app textarea {
-    color: var(--gs-text) !important;
-    background-color: var(--gs-surface) !important;
-}
-
-.gs-app select option {
-    color: var(--gs-text);
-    background-color: var(--gs-surface);
-}
-
-.gs-app input:-webkit-autofill:focus {
-    -webkit-box-shadow: 0 0 0 1000px var(--gs-surface) inset;
-    -webkit-text-fill-color: var(--gs-text);
-}
