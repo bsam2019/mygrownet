@@ -1,8 +1,8 @@
 <template>
     <GrowStreamLayout :title="`${video.title} - GrowStream`">
-        <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <!-- Video Player / Paywall Gate -->
-            <div class="mb-6 -mx-4 sm:mx-0">
+        <main class="pb-24">
+            <!-- Video Player -->
+            <div class="relative w-full aspect-video bg-black overflow-hidden">
                 <template v-if="userCanAccess">
                     <VideoPlayer
                         :video="video"
@@ -14,263 +14,128 @@
                         @close="router.visit(route('growstream.browse'))"
                     />
                 </template>
+                <template v-else>
+                    <div class="bg-cover bg-center w-full h-full absolute inset-0 opacity-80" :style="{ backgroundImage: `url('${video.thumbnail_url || video.poster_url || fallbackThumb}')` }"></div>
+                    <!-- Center transport controls -->
+                    <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
+                        <div class="absolute inset-0 bg-black/40"></div>
+                        <div class="relative flex flex-col items-center px-6 text-center">
+                            <span class="material-symbols-outlined text-4xl mb-2" aria-hidden="true">lock</span>
+                            <h2 class="font-headline-lg-mobile text-headline-lg-mobile mb-1">{{ video.access_level === 'premium' ? 'Premium Content' : 'Subscriber Content' }}</h2>
+                            <p class="font-body-md text-body-md opacity-90 mb-6 max-w-sm">Subscribe to unlock it and stream the whole catalogue on demand.</p>
+                            <div class="flex flex-wrap items-center justify-center gap-3">
+                                <Link :href="route('growstream.subscription')" class="bg-primary text-on-primary px-6 py-3 rounded-full font-label-md text-label-md uppercase tracking-widest">
+                                    Subscribe Now
+                                </Link>
+                                <button
+                                    v-if="video.access_level !== 'free'"
+                                    @click="startRental()"
+                                    class="bg-white/20 backdrop-blur border border-white/40 px-6 py-3 rounded-full font-label-md text-label-md"
+                                >
+                                    Rent K{{ rentalPrice }}
+                                </button>
+                            </div>
 
-                <!-- Subscribe prompt for gated content -->
-                <div v-else class="gs-card relative flex flex-col items-center justify-center overflow-hidden p-10 text-center sm:p-16">
-                    <div class="absolute inset-0 bg-gradient-to-br from-[var(--gs-primary)]/20 via-[#065f46]/30 to-[#022c22]/40"></div>
-                    <div class="relative flex flex-col items-center">
-                        <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--gs-accent)]">
-                            <svg class="h-8 w-8 text-[#1a1608]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                        </div>
-                        <h2 class="mb-2 text-2xl font-bold text-[var(--gs-text)] sm:text-3xl">
-                            {{ video.access_level === 'premium' ? 'Premium Content' : 'Subscriber Content' }}
-                        </h2>
-                        <p class="mb-6 max-w-md text-[var(--gs-muted)]">
-                            {{ video.access_level === 'premium' ? 'This video is part of the premium catalogue.' : 'This video is available to subscribers.' }}
-                            Subscribe to unlock it and stream the whole catalogue on demand.
-                        </p>
-                        <div class="flex flex-wrap items-center justify-center gap-3">
-                            <Link
-                                :href="route('growstream.subscription')"
-                                class="gs-btn gs-btn-accent px-8 py-3 text-lg"
-                            >
-                                Subscribe Now
-                            </Link>
-                            <button
-                                v-if="video.access_level !== 'free'"
-                                @click="startRental()"
-                                class="gs-btn gs-btn-outline px-6 py-3 text-lg"
-                            >
-                                Rent K{{ rentalPrice }}
-                            </button>
-                            <Link
-                                :href="route('growstream.browse')"
-                                class="gs-btn gs-btn-outline px-6 py-3 text-lg"
-                            >
-                                Browse Free Content
-                            </Link>
-                        </div>
-
-                        <!-- Rental Form -->
-                        <div v-if="rentalStep === 'form'" class="relative mt-6 w-full max-w-sm mx-auto bg-[var(--gs-bg)] rounded-2xl p-6 border border-[var(--gs-border)]">
-                            <button @click="cancelRental()" class="absolute top-3 right-3 text-[var(--gs-muted)] hover:text-[var(--gs-text)]">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
-                            <p class="text-sm font-semibold text-[var(--gs-text)] mb-3">Rent this video for 48 hours</p>
-                            <p class="text-lg font-bold text-[var(--gs-accent)] mb-4">K{{ rentalPrice }}</p>
-                            <input
-                                v-model="rentalPhone"
-                                type="tel" inputmode="tel" placeholder="0970000000"
-                                class="w-full mb-3 px-4 py-2.5 rounded-xl border border-[var(--gs-border)] bg-[var(--gs-bg)] text-sm text-[var(--gs-text)]"
-                            />
-                            <button
-                                @click="rentVideo()"
-                                class="gs-btn gs-btn-accent w-full py-2.5 text-sm font-semibold"
-                            >
-                                Pay K{{ rentalPrice }}
-                            </button>
-                            <p v-if="rentalError" class="mt-2 text-xs text-red-500">{{ rentalError }}</p>
-                        </div>
-
-                        <!-- Rental Pending -->
-                        <div v-if="rentalStep === 'pending'" class="relative mt-6 w-full max-w-sm mx-auto">
-                            <p class="text-sm text-[var(--gs-muted)] text-center">Waiting for payment confirmation...</p>
-                            <p class="text-xs text-[var(--gs-muted)] text-center mt-1">Approve the prompt on your phone</p>
-                            <button @click="cancelRental()" class="mt-3 text-xs text-[var(--gs-muted)] underline block mx-auto">Cancel</button>
-                        </div>
-
-                        <!-- Rental Failed -->
-                        <div v-if="rentalStep === 'failed'" class="relative mt-6 w-full max-w-sm mx-auto">
-                            <p class="text-sm text-red-500 text-center">Payment not completed</p>
-                            <button @click="startRental()" class="gs-btn gs-btn-outline mt-3 mx-auto block px-4 py-2 text-sm">Retry</button>
-                        </div>
-
-                        <!-- Rental Active -->
-                        <div v-if="rentalStep === 'active'" class="relative mt-6 w-full max-w-sm mx-auto bg-emerald-50 rounded-2xl p-4 text-center border border-emerald-200">
-                            <p class="text-sm font-semibold text-emerald-700">Access Granted!</p>
-                            <p class="text-xs text-emerald-600 mt-1">Refresh the page to start watching.</p>
-                            <button
-                                @click="router.reload()"
-                                class="gs-btn gs-btn-accent mt-3 px-4 py-2 text-sm"
-                            >
-                                Watch Now
-                            </button>
+                            <!-- Rental Form / states -->
+                            <div v-if="rentalStep === 'form'" class="mt-6 w-full max-w-sm bg-surface-container-lowest rounded-lg p-6 text-on-surface">
+                                <button @click="cancelRental()" class="float-right text-on-surface-variant"><span class="material-symbols-outlined">close</span></button>
+                                <p class="font-label-md text-label-md mb-3">Rent this video for 48 hours</p>
+                                <p class="font-headline-lg-mobile text-headline-lg-mobile text-primary mb-4">K{{ rentalPrice }}</p>
+                                <input
+                                    v-model="rentalPhone"
+                                    type="tel" inputmode="tel" placeholder="0970000000"
+                                    class="w-full mb-3 px-4 py-3 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface text-body-md"
+                                />
+                                <button @click="rentVideo()" class="w-full bg-primary text-on-primary py-3 rounded-full font-label-md text-label-md">Pay K{{ rentalPrice }}</button>
+                                <p v-if="rentalError" class="mt-2 text-sm text-error">{{ rentalError }}</p>
+                            </div>
+                            <div v-if="rentalStep === 'pending'" class="mt-6 w-full max-w-sm">
+                                <p class="text-center text-white">Waiting for payment confirmation...</p>
+                                <button @click="cancelRental()" class="mt-3 text-sm underline block mx-auto">Cancel</button>
+                            </div>
+                            <div v-if="rentalStep === 'failed'" class="mt-6 w-full max-w-sm">
+                                <p class="text-center text-error">Payment not completed</p>
+                                <button @click="startRental()" class="mt-3 mx-auto block px-4 py-2 rounded-full bg-white/20 border border-white/40 font-label-md text-label-md">Retry</button>
+                            </div>
+                            <div v-if="rentalStep === 'active'" class="mt-6 w-full max-w-sm bg-primary rounded-lg p-4 text-center text-on-primary">
+                                <p class="font-label-md text-label-md">Access Granted!</p>
+                                <button @click="router.reload()" class="mt-2 bg-surface-container-lowest text-primary px-4 py-2 rounded-full font-label-md text-label-md">Watch Now</button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </template>
             </div>
 
-            <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
-                <!-- Main Content -->
-                <div class="lg:col-span-2">
-                    <!-- Video Info -->
-                    <div class="mb-6">
-                        <h1 class="mb-2 text-3xl font-bold text-[var(--gs-text)]">{{ video.title }}</h1>
-                        
-                        <!-- Metadata -->
-                        <div class="mb-4 flex flex-wrap items-center gap-4 text-sm text-[var(--gs-muted)]">
-                            <span class="flex items-center gap-1">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                    />
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                    />
-                                </svg>
-                                {{ formatViews(video.view_count) }} views
-                            </span>
-                            <span>{{ formatDate(video.created_at) }}</span>
-                            <span :class="[accessBadge.color, 'rounded px-2 py-1 text-xs font-medium text-white']">
-                                {{ accessBadge.text }}
-                            </span>
-                        </div>
+            <!-- Details panel -->
+            <div class="px-margin-mobile pt-6">
+                <h1 class="font-headline-lg-mobile text-headline-lg-mobile mb-2">{{ video.title }}</h1>
+                <div class="flex flex-wrap items-center gap-2 font-label-sm text-label-sm text-on-surface-variant mb-6">
+                    <span>{{ formatViews(video.view_count) }} views</span><span>•</span><span>{{ formatDate(video.created_at) }}</span>
+                    <span v-if="video.content_type" class="bg-surface-container-low text-on-surface-variant px-3 py-1 rounded-full ml-1">{{ contentTypeLabel(video.content_type) }}</span>
+                    <span :class="[accessBadge.color, 'bg-surface-container-low text-on-surface-variant px-3 py-1 rounded-full']">{{ accessBadge.text }}</span>
+                </div>
 
-                        <!-- Actions -->
-                        <div class="flex flex-wrap gap-2">
-                            <button
-                                @click="toggleWatchlist"
-                                :disabled="watchlistLoading"
-                                class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-[var(--gs-text)] hover:bg-[var(--gs-bg-elevated)] disabled:opacity-50 transition-colors"
-                            >
-                                <svg
-                                    :class="[isInWatchlist ? 'fill-current' : 'fill-none']"
-                                    class="h-4 w-4"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                                    />
-                                </svg>
-                                {{ isInWatchlist ? 'Saved' : 'Watchlist' }}
-                            </button>
-
-                            <button
-                                @click="shareVideo"
-                                class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-[var(--gs-text)] hover:bg-[var(--gs-bg-elevated)] transition-colors"
-                            >
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                                    />
-                                </svg>
-                                Share
-                            </button>
+                <!-- Creator row -->
+                <div v-if="video.creator" class="flex items-center justify-between mb-6">
+                    <Link :href="route('growstream.creator.profile', { slug: String(video.creator.id) })" class="flex items-center gap-3 min-w-0">
+                        <img v-if="video.creator.avatar_url" class="w-12 h-12 rounded-full object-cover border border-outline-variant" :src="video.creator.avatar_url" :alt="video.creator.display_name" />
+                        <div v-else class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center font-headline-md text-headline-md border border-outline-variant">
+                            {{ (video.creator.display_name || 'C').charAt(0).toUpperCase() }}
                         </div>
+                        <div class="min-w-0">
+                            <h3 class="font-label-md text-label-md truncate">{{ video.creator.display_name }}</h3>
+                            <p class="font-label-sm text-label-sm text-on-surface-variant">{{ video.creator.subscriber_count ?? 0 }} Subscribers</p>
+                        </div>
+                    </Link>
+                    <div class="flex items-center gap-2">
+                        <button @click="toggleWatchlist" class="bg-primary/10 text-primary px-4 py-2 rounded-full font-label-sm text-label-sm flex items-center gap-1" :disabled="watchlistLoading">
+                            <span class="material-symbols-outlined text-base" aria-hidden="true">{{ isInWatchlist ? 'bookmark' : 'bookmark_add' }}</span>
+                        </button>
+                        <button @click="shareVideo" class="bg-surface-container-low text-on-surface-variant px-4 py-2 rounded-full font-label-sm text-label-sm flex items-center gap-1">
+                            <span class="material-symbols-outlined text-base" aria-hidden="true">share</span> Share
+                        </button>
                     </div>
+                </div>
 
-                    <!-- Description -->
-                    <div class="mb-6 gs-surface p-6">
-                        <h2 class="mb-3 text-lg font-semibold text-[var(--gs-text)]">About</h2>
-                        <p class="whitespace-pre-line text-[var(--gs-text)]">
-                            {{ video.long_description || video.description }}
-                        </p>
-
-                        <!-- Tags -->
-                        <div v-if="video.tags && video.tags.length > 0" class="mt-4 flex flex-wrap gap-2">
-                            <span
-                                v-for="tag in video.tags"
-                                :key="tag.id"
-                                class="gs-chip gs-chip-primary"
-                            >
-                                #{{ tag.name }}
-                            </span>
-                        </div>
+                <!-- Description -->
+                <div class="bg-surface-container-low rounded-lg p-4 mb-8">
+                    <p class="font-body-md text-body-md text-on-surface-variant whitespace-pre-line line-clamp-4">
+                        {{ video.long_description || video.description }}
+                    </p>
+                    <button v-if="(video.long_description || video.description || '').length > 200" @click="expanded = !expanded" class="font-label-md text-label-md text-primary mt-2">
+                        {{ expanded ? 'Show Less' : 'Show More' }}
+                    </button>
+                    <div v-if="video.tags && video.tags.length > 0" class="mt-3 flex flex-wrap gap-2">
+                        <span v-for="tag in video.tags" :key="tag.id" class="bg-surface-container-lowest text-on-surface-variant px-3 py-1 rounded-full font-label-sm text-label-sm border border-outline-variant">#{{ tag.name }}</span>
                     </div>
+                </div>
 
-                    <!-- Creator Info -->
-                    <div v-if="video.creator" class="mb-6 gs-surface p-4">
-                        <Link
-                            :href="route('growstream.creator.profile', { slug: String(video.creator.id) })"
-                            class="flex items-center gap-4"
-                        >
-                            <div class="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-[var(--gs-bg-elevated)]">
-                                <img
-                                    v-if="video.creator.avatar_url"
-                                    :src="video.creator.avatar_url"
-                                    :alt="video.creator.display_name"
-                                    class="h-full w-full object-cover"
-                                />
-                                <div v-else class="flex h-full w-full items-center justify-center text-2xl font-medium text-[var(--gs-muted)]">
-                                    {{ (video.creator.display_name || 'C').charAt(0).toUpperCase() }}
-                                </div>
+                <!-- Up Next -->
+                <div v-if="relatedVideos.length > 0">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="font-headline-md text-headline-md">Up Next</h2>
+                        <div class="flex items-center gap-2">
+                            <span class="font-label-sm text-label-sm text-on-surface-variant">Autoplay</span>
+                            <div class="w-10 h-6 bg-primary rounded-full relative" @click="autoplay = !autoplay">
+                                <div class="absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all" :class="autoplay ? 'right-0.5' : 'left-0.5'"></div>
                             </div>
-                            <div class="flex-1">
-                                <h3 class="font-semibold text-[var(--gs-text)] hover:text-[var(--gs-accent)]">{{ video.creator.display_name }}</h3>
-                                <p class="text-sm text-[var(--gs-muted)]">
-                                    {{ video.creator.subscriber_count ?? 0 }} subscribers · {{ video.creator.total_videos ?? 0 }} videos
-                                </p>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-4">
+                        <Link v-for="relatedVideo in relatedVideos.slice(0, 6)" :key="relatedVideo.id" :href="route('growstream.video.detail', relatedVideo.slug)" class="flex gap-4">
+                            <div class="relative w-36 aspect-video rounded-lg overflow-hidden bg-surface-container-highest flex-shrink-0">
+                                <div class="bg-cover bg-center w-full h-full absolute inset-0" :style="{ backgroundImage: `url('${relatedVideo.thumbnail_url || fallbackThumb}')` }"></div>
+                                <span class="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] px-1 rounded">{{ formatDuration(relatedVideo.duration) }}</span>
+                            </div>
+                            <div class="flex-1 min-w-0 flex flex-col justify-center">
+                                <p class="font-label-md text-label-md line-clamp-2">{{ relatedVideo.title }}</p>
+                                <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">{{ relatedVideo.creator?.name }} • {{ formatViews(relatedVideo.view_count) }} views</p>
                             </div>
                         </Link>
-                        <div class="mt-4 flex gap-2">
-                            <Link
-                                :href="route('growstream.creator.profile', { slug: String(video.creator.id) })"
-                                class="gs-btn gs-btn-outline flex-1"
-                            >
-                                View Profile
-                            </Link>
-                            <button class="gs-btn gs-btn-primary flex-1" @click="onFollow">
-                                Follow
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sidebar -->
-                <div class="lg:col-span-1">
-                    <!-- Related Videos -->
-                    <div v-if="relatedVideos.length > 0">
-                        <h2 class="mb-4 text-lg font-semibold text-[var(--gs-text)]">Related Videos</h2>
-                        <div class="space-y-4">
-                            <Link
-                                v-for="relatedVideo in relatedVideos"
-                                :key="relatedVideo.id"
-                                :href="route('growstream.video.detail', relatedVideo.slug)"
-                                class="flex gap-3 rounded-lg transition-colors hover:bg-[var(--gs-bg-elevated)]"
-                            >
-                                <div class="relative h-24 w-40 flex-shrink-0 overflow-hidden rounded-lg bg-[var(--gs-bg-elevated)]">
-                                    <img
-                                        v-if="relatedVideo.thumbnail_url"
-                                        :src="relatedVideo.thumbnail_url"
-                                        :alt="relatedVideo.title"
-                                        class="h-full w-full object-cover"
-                                    />
-                                    <div class="absolute bottom-1 right-1 rounded bg-black/80 px-1 text-xs text-white">
-                                        {{ formatDuration(relatedVideo.duration) }}
-                                    </div>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <h3 class="mb-1 line-clamp-2 text-sm font-medium text-[var(--gs-text)]">
-                                        {{ relatedVideo.title }}
-                                    </h3>
-                                    <p class="text-xs text-[var(--gs-muted)]">
-                                        {{ relatedVideo.creator?.name }}
-                                    </p>
-                                    <p class="text-xs text-[var(--gs-muted)]">
-                                        {{ formatViews(relatedVideo.view_count) }} views
-                                    </p>
-                                </div>
-                            </Link>
-                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     </GrowStreamLayout>
 </template>
 
@@ -300,29 +165,28 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const { formatDuration, getAccessLevelBadge, addToWatchlist, removeFromWatchlist } = useGrowStream();
-
 const metrics = useGrowStreamMetrics();
 
-const onFollow = () => {
-    if (props.video.creator) {
-        metrics.trackCreatorSubscribe(props.video.creator.id);
-    }
-};
+const fallbackThumb = 'https://placehold.co/440x248/e1bfb4/191c1d?text=GrowStream';
+const expanded = ref(false);
+const autoplay = ref(true);
 
 const watchlistLoading = ref(false);
 const isInWatchlist = ref(!!props.watchlistItem);
-
 const accessBadge = computed(() => getAccessLevelBadge(props.video.access_level));
 
-const handleProgress = (position: number, duration: number) => {
-    // Progress is automatically saved by the player component
-    console.log(`Progress: ${position}/${duration}`);
+const contentTypeLabel = (key: string): string => {
+    const map: Record<string, string> = {
+        movie: 'Movie', series: 'Series', episode: 'Episode', short: 'Short',
+        comedy: 'Comedy', skit: 'Skits', soap: 'Soap Opera', drama: 'Drama',
+        documentary: 'Documentary', reality: 'Reality & Talk', music: 'Music',
+        kids: 'Kids & Family', lifestyle: 'Lifestyle', faith: 'Faith-Based',
+    };
+    return map[key] ?? key;
 };
 
-const handleEnded = () => {
-    console.log('Video ended');
-    // Could show related videos or next episode
-};
+const handleProgress = (position: number, duration: number) => { /* player saves */ };
+const handleEnded = () => { /* could auto-advance */ };
 
 const toggleWatchlist = async () => {
     watchlistLoading.value = true;
@@ -357,8 +221,7 @@ const rentalPhone = ref('');
 const rentalError = ref('');
 const rentalRef = ref<string | null>(null);
 let rentalPoll: number | null = null;
-
-const rentalPrice = 15; // matches config('growstream.ppv.price')
+const rentalPrice = 15;
 
 const startRental = () => { rentalStep.value = 'form'; };
 const cancelRental = () => { rentalStep.value = 'idle'; rentalError.value = ''; };
@@ -371,17 +234,9 @@ const rentVideo = async () => {
     if (!isValidRentalPhone.value) { rentalError.value = 'Enter a valid Zambian mobile money number'; return; }
     rentalError.value = '';
     rentalStep.value = 'pending';
-
     try {
-        const resp = await axios.post(route('growstream.rent', { video: props.video.id }), {
-            phone_number: rentalPhone.value.trim(),
-        });
-
-        if (resp.data.already_rented) {
-            rentalStep.value = 'active';
-            return;
-        }
-
+        const resp = await axios.post(route('growstream.rent', { video: props.video.id }), { phone_number: rentalPhone.value.trim() });
+        if (resp.data.already_rented) { rentalStep.value = 'active'; return; }
         rentalRef.value = resp.data.transaction?.reference ?? null;
         startRentalPoll();
     } catch (e: any) {
@@ -396,40 +251,25 @@ const startRentalPoll = () => {
         if (!rentalRef.value) return;
         try {
             const resp = await axios.get(route('growstream.rental-status', { reference: rentalRef.value }));
-            if (resp.data.status === 'active') {
-                rentalStep.value = 'active';
-                stopRentalPoll();
-            } else if (resp.data.status === 'failed') {
-                rentalStep.value = 'failed';
-                rentalError.value = 'Payment was not completed.';
-                stopRentalPoll();
-            }
+            if (resp.data.status === 'active') { rentalStep.value = 'active'; stopRentalPoll(); }
+            else if (resp.data.status === 'failed') { rentalStep.value = 'failed'; rentalError.value = 'Payment was not completed.'; stopRentalPoll(); }
         } catch { /* keep polling */ }
     }, 4000);
 };
 
-const stopRentalPoll = () => {
-    if (rentalPoll) { window.clearInterval(rentalPoll); rentalPoll = null; }
-};
-
+const stopRentalPoll = () => { if (rentalPoll) { window.clearInterval(rentalPoll); rentalPoll = null; } };
 onBeforeUnmount(stopRentalPoll);
 
 const formatViews = (views: number): string => {
-    if (views >= 1000000) {
-        return `${(views / 1000000).toFixed(1)}M`;
-    }
-    if (views >= 1000) {
-        return `${(views / 1000).toFixed(1)}K`;
-    }
+    if (views >= 1000000) return `${(views / 1000000).toFixed(1)}M`;
+    if (views >= 1000) return `${(views / 1000).toFixed(1)}K`;
     return views.toString();
 };
 
 const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
+    const diffDays = Math.ceil(Math.abs(now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
@@ -438,4 +278,3 @@ const formatDate = (dateString: string): string => {
     return `${Math.floor(diffDays / 365)} years ago`;
 };
 </script>
-
