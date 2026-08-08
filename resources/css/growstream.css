@@ -11,6 +11,114 @@
 @tailwind utilities;
 
 /* ==========================================================================
+   Design tokens — light (:root) and dark (.dark) scales.
+   Tailwind classes (bg-surface, text-on-primary, ...) map to these via
+   tailwind.growstream.config.js as rgb(var(--gs-*)). Toggling `.dark` on
+   <html> flips the whole theme.
+   ========================================================================== */
+:root,
+.light {
+    --gs-on-background: 25 28 29;
+    --gs-surface-container-highest: 225 227 228;
+    --gs-surface-container: 237 238 239;
+    --gs-on-error-container: 147 0 10;
+    --gs-on-primary-fixed-variant: 130 39 0;
+    --gs-secondary-container: 204 222 254;
+    --gs-primary-container: 204 73 17;
+    --gs-surface-container-lowest: 255 255 255;
+    --gs-secondary-fixed-dim: 182 199 231;
+    --gs-on-surface-variant: 89 65 57;
+    --gs-error: 186 26 26;
+    --gs-background: 248 249 250;
+    --gs-outline: 141 113 104;
+    --gs-surface-container-high: 231 232 233;
+    --gs-on-error: 255 255 255;
+    --gs-inverse-primary: 255 181 156;
+    --gs-surface-bright: 248 249 250;
+    --gs-on-secondary-fixed: 9 28 52;
+    --gs-error-container: 255 218 214;
+    --gs-on-primary-container: 255 251 255;
+    --gs-on-tertiary: 255 255 255;
+    --gs-primary: 167 52 0;
+    --gs-inverse-on-surface: 240 241 242;
+    --gs-on-primary: 255 255 255;
+    --gs-secondary-fixed: 213 227 255;
+    --gs-primary-fixed-dim: 255 181 156;
+    --gs-tertiary-container: 152 109 0;
+    --gs-surface-variant: 225 227 228;
+    --gs-on-surface: 25 28 29;
+    --gs-secondary: 79 95 123;
+    --gs-primary-fixed: 255 219 207;
+    --gs-on-tertiary-container: 255 251 255;
+    --gs-on-primary-fixed: 57 12 0;
+    --gs-outline-variant: 225 191 180;
+    --gs-surface: 248 249 250;
+    --gs-inverse-surface: 46 49 50;
+    --gs-surface-dim: 217 218 219;
+    --gs-surface-tint: 171 54 0;
+    --gs-tertiary: 121 86 0;
+    --gs-on-tertiary-fixed-variant: 94 66 0;
+    --gs-on-secondary-fixed-variant: 55 71 98;
+    --gs-on-secondary-container: 81 97 125;
+    --gs-surface-container-low: 243 244 245;
+    --gs-tertiary-fixed: 255 222 168;
+    --gs-tertiary-fixed-dim: 255 186 32;
+    --gs-on-tertiary-fixed: 39 25 0;
+    --gs-on-secondary: 255 255 255;
+}
+
+/* Dark — neutral charcoal surfaces, terracotta accents */
+.dark {
+    --gs-on-background: 230 230 230;
+    --gs-surface-container-highest: 51 51 55;
+    --gs-surface-container: 38 38 41;
+    --gs-on-error-container: 255 180 171;
+    --gs-on-primary-fixed-variant: 255 219 207;
+    --gs-secondary-container: 74 93 122;
+    --gs-primary-container: 204 73 17;
+    --gs-surface-container-lowest: 18 18 18;
+    --gs-secondary-fixed-dim: 182 199 231;
+    --gs-on-surface-variant: 166 166 169;
+    --gs-error: 255 180 171;
+    --gs-background: 18 18 18;
+    --gs-outline: 142 123 115;
+    --gs-surface-container-high: 44 44 47;
+    --gs-on-error: 105 0 5;
+    --gs-inverse-primary: 255 181 156;
+    --gs-surface-bright: 40 40 42;
+    --gs-on-secondary-fixed: 9 28 52;
+    --gs-error-container: 147 0 10;
+    --gs-on-primary-container: 255 255 255;
+    --gs-on-tertiary: 255 255 255;
+    --gs-primary: 167 52 0;
+    --gs-inverse-on-surface: 240 241 242;
+    --gs-on-primary: 255 255 255;
+    --gs-secondary-fixed: 213 227 255;
+    --gs-primary-fixed-dim: 255 181 156;
+    --gs-tertiary-container: 152 109 0;
+    --gs-surface-variant: 51 51 55;
+    --gs-on-surface: 230 230 230;
+    --gs-secondary: 79 95 123;
+    --gs-primary-fixed: 255 219 207;
+    --gs-on-tertiary-container: 255 251 255;
+    --gs-on-primary-fixed: 57 12 0;
+    --gs-outline-variant: 44 44 47;
+    --gs-surface: 26 26 28;
+    --gs-inverse-surface: 46 49 50;
+    --gs-surface-dim: 18 18 18;
+    --gs-surface-tint: 255 138 92;
+    --gs-tertiary: 121 86 0;
+    --gs-on-tertiary-fixed-variant: 94 66 0;
+    --gs-on-secondary-fixed-variant: 55 71 98;
+    --gs-on-secondary-container: 199 216 240;
+    --gs-surface-container-low: 32 32 34;
+    --gs-tertiary-fixed: 255 222 168;
+    --gs-tertiary-fixed-dim: 255 186 32;
+    --gs-on-tertiary-fixed: 39 25 0;
+    --gs-on-secondary: 255 255 255;
+}
+
+/* ==========================================================================
    Material Symbols (Stitch icon set)
    ========================================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
@@ -20,7 +128,8 @@
    var(--gs-*). New pages use the Tailwind token classes directly.
    ========================================================================== */
 
-.gs-app {
+.gs-app,
+:root {
     /* ── Surface hierarchy (light) ── */
     --gs-bg: #f8f9fa;
     --gs-surface: #ffffff;
@@ -62,6 +171,33 @@
     background-color: var(--gs-bg);
     color: var(--gs-text);
     min-height: 100vh;
+}
+
+/* Legacy vars — dark override */
+.dark .gs-app {
+    --gs-bg: #121212;
+    --gs-surface: #1a1a1c;
+    --gs-surface-elevated: #202022;
+    --gs-surface-high: #2c2c2f;
+    --gs-card: #1a1a1c;
+    --gs-card-hover: #202022;
+    --gs-bg-elevated: var(--gs-surface-elevated);
+    --gs-text: #e6e6e6;
+    --gs-text-secondary: #a6a6a9;
+    --gs-muted: #a6a6a9;
+    --gs-primary: #a73400;
+    --gs-primary-hover: #ff8a5c;
+    --gs-primary-soft: rgba(255, 138, 92, 0.15);
+    --gs-secondary: #4f5f7b;
+    --gs-secondary-soft: rgba(79, 95, 123, 0.20);
+    --gs-accent: #ffba20;
+    --gs-accent-soft: rgba(255, 186, 32, 0.15);
+    --gs-border: #2c2c2f;
+    --gs-border-strong: #333337;
+    --gs-error: #ffb4ab;
+    --gs-error-soft: rgba(255, 180, 171, 0.15);
+    background-color: var(--gs-bg);
+    color: var(--gs-text);
 }
 
 /* Keep legacy component helpers working for pages not yet redesigned */

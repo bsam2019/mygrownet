@@ -1,23 +1,23 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="theme-color" content="#a73400">
+        <meta name="theme-color" content="#121212">
         <title inertia>GrowStream</title>
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
         <style>
-            html { background-color: #f8f9fa; }
-            body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+            html { background-color: #121212; }
+            body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background-color: #121212; color: #e6e6e6; }
             #app-loading {
                 position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-                background: #f8f9fa; z-index: 9999; transition: opacity 0.3s;
+                background: #121212; z-index: 9999; transition: opacity 0.3s;
             }
             #app-loading .spinner {
-                width: 32px; height: 32px; border: 3px solid #d8c2bc;
+                width: 32px; height: 32px; border: 3px solid #2c2c2f;
                 border-top-color: #a73400; border-radius: 50%; animation: spin 0.7s linear infinite;
             }
             @keyframes spin { to { transform: rotate(360deg); } }

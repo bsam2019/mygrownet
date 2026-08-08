@@ -83,8 +83,8 @@ const checkoutUrl = (tier: Tier) => route(props.checkoutRoute ?? 'subscriptions.
             <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br shadow-lg mb-4" :class="gradient">
                 <span class="text-2xl font-bold text-white">{{ module.name.charAt(0) }}</span>
             </div>
-            <h1 class="text-3xl font-bold text-gray-900">Choose your {{ module.name }} plan</h1>
-            <p class="mt-2 text-gray-500">Pay securely via mobile money — activate instantly.</p>
+            <h1 class="text-3xl font-bold text-on-surface">Choose your {{ module.name }} plan</h1>
+            <p class="mt-2 text-on-surface-variant">Pay securely via mobile money — activate instantly.</p>
         </div>
 
         <!-- Plan Cards -->
@@ -92,35 +92,35 @@ const checkoutUrl = (tier: Tier) => route(props.checkoutRoute ?? 'subscriptions.
             <div
                 v-for="plan in plansArray"
                 :key="plan.key"
-                class="relative bg-white rounded-3xl border shadow-sm p-6 flex flex-col transition"
+                class="relative bg-surface-container-lowest rounded-3xl border shadow-sm p-6 flex flex-col transition"
                 :class="plan.popular ? 'border-emerald-400 ring-2 ring-emerald-200' : 'border-gray-200'"
             >
                 <span v-if="plan.popular" class="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-bold bg-emerald-600 text-white px-3 py-1 rounded-full">
                     RECOMMENDED
                 </span>
 
-                <h3 class="text-lg font-bold text-gray-900">{{ plan.name }}</h3>
-                <p class="mt-1 text-sm text-gray-500 min-h-[40px]">{{ plan.description }}</p>
+                <h3 class="text-lg font-bold text-on-surface">{{ plan.name }}</h3>
+                <p class="mt-1 text-sm text-on-surface-variant min-h-[40px]">{{ plan.description }}</p>
 
                 <div class="mt-4 flex items-baseline gap-1">
-                    <p class="text-3xl font-extrabold text-gray-900">
+                    <p class="text-3xl font-extrabold text-on-surface">
                         {{ plan.price_monthly === 0 ? 'Free' : formatCurrency(plan.price_monthly) }}
                     </p>
-                    <span v-if="plan.price_monthly > 0" class="text-sm text-gray-500">/month</span>
+                    <span v-if="plan.price_monthly > 0" class="text-sm text-on-surface-variant">/month</span>
                 </div>
                 <p v-if="plan.price_annual > 0" class="mt-1 text-xs text-emerald-600">
                     or {{ formatCurrency(plan.price_annual) }}/year
                 </p>
 
                 <ul class="mt-5 space-y-2 flex-1">
-                    <li v-for="(limit, key) in (plan.labeled_limits ?? {})" :key="key" class="flex items-center gap-2 text-sm text-gray-600">
+                    <li v-for="(limit, key) in (plan.labeled_limits ?? {})" :key="key" class="flex items-center gap-2 text-sm text-on-surface-variant">
                         <svg class="h-4 w-4 text-emerald-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
                         </svg>
                         {{ limit.label ?? key }}:
                         <span class="font-medium">{{ limit.value === -1 ? 'Unlimited' : limit.value }}</span>
                     </li>
-                    <li v-for="feature in (plan.labeled_features ?? []).slice(0, 5)" :key="feature.key" class="flex items-center gap-2 text-sm text-gray-600">
+                    <li v-for="feature in (plan.labeled_features ?? []).slice(0, 5)" :key="feature.key" class="flex items-center gap-2 text-sm text-on-surface-variant">
                         <svg class="h-4 w-4 text-emerald-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
                         </svg>
@@ -134,7 +134,7 @@ const checkoutUrl = (tier: Tier) => route(props.checkoutRoute ?? 'subscriptions.
                     </a>
                 </div>
                 <div v-else class="mt-6">
-                    <span class="block w-full text-center py-2.5 rounded-xl font-semibold bg-gray-100 text-gray-400 cursor-not-allowed">
+                    <span class="block w-full text-center py-2.5 rounded-xl font-semibold bg-surface-container-high text-on-surface-variant cursor-not-allowed">
                         Current Plan
                     </span>
                 </div>
@@ -143,9 +143,10 @@ const checkoutUrl = (tier: Tier) => route(props.checkoutRoute ?? 'subscriptions.
 
         <!-- Contact -->
         <div class="mt-10 text-center">
-            <Link :href="back?.url ?? route('workspace')" class="text-sm text-gray-500 hover:text-gray-700">
+            <Link :href="back?.url ?? route('workspace')" class="text-sm text-on-surface-variant hover:text-on-surface-variant">
                 &larr; {{ back?.label ?? 'Back to workspace' }}
             </Link>
         </div>
     </div>
 </template>
+
