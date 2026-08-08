@@ -14,7 +14,13 @@ import AOS from 'aos';
 
 (window as any).Pusher = Pusher;
 
-const echoInstance = (window as any).__sfSubdomain ? null : new Echo({
+// Reverb host baked into the client bundle. "localhost"/127.0.0.1 are dev-only
+// values that resolve to the *user's* machine in a browser — Echo can never
+// reach a server-side Reverb that way, so skip initializing the client.
+const reverbHost = (import.meta.env.VITE_REVERB_HOST || '').trim();
+const isLocalReverbHost = reverbHost === '' || reverbHost === 'localhost' || reverbHost === '127.0.0.1' || reverbHost.endsWith('.local');
+
+const echoInstance = (window as any).__sfSubdomain || isLocalReverbHost ? null : new Echo({
     broadcaster: 'reverb',
     key: import.meta.env.VITE_REVERB_APP_KEY,
     wsHost: import.meta.env.VITE_REVERB_HOST,

@@ -8,6 +8,7 @@ registerModuleSW('/sw.js', 'Admin');
 const adminPageGlobs = {
     ...import.meta.glob<DefineComponent>('./pages/Admin/**/*.vue'),
     ...import.meta.glob<DefineComponent>('./pages/Workspace/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Apps/**/*.vue'), // App catalog
 };
 
 bootInertia('Admin', (name: string) => {

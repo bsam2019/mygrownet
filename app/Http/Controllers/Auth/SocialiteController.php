@@ -16,6 +16,7 @@ class SocialiteController extends Controller
     {
         $domain = $request->getHost();
         $callbackUrl = match ($domain) {
+            'auth.mygrownet.com' => route('auth.google.callback', [], true),
             'bizboost.mygrownet.com' => route('bizboost.sub.auth.google.callback', [], true),
             'cms.mygrownet.com' => route('bms.subdomain.auth.google.callback', [], true),
             'growmart.mygrownet.com' => route('growmart.auth.google.callback', [], true),
@@ -24,6 +25,12 @@ class SocialiteController extends Controller
         };
 
         session(['socialite_redirect' => $request->input('redirect', url()->previous())]);
+
+        // Preserve the identity gateway's signed return URL so the callback
+        // returns the user to their originating app after Google sign-in.
+        if (session()->has('identity_return_url')) {
+            session(['socialite_identity_return_url' => session('identity_return_url')]);
+        }
 
         // Preserve referral code through the OAuth flow
         if ($request->has('ref')) {
@@ -108,6 +115,16 @@ class SocialiteController extends Controller
         Auth::login($user);
 
         $redirect = session()->pull('socialite_redirect', '/dashboard');
+
+        // If this OAuth flow started from the identity gateway with a signed
+        // return URL (auth.mygrownet.com/login?return_url=...), honor it.
+        if (session()->has('socialite_identity_return_url')) {
+            $returnUrl = session()->pull('socialite_identity_return_url');
+            session()->forget('identity_return_url');
+            if ($returnUrl) {
+                return redirect()->away($returnUrl);
+            }
+        }
 
         return redirect($redirect);
     }

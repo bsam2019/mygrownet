@@ -9,6 +9,7 @@ bootInertia('BMS', (name: string) => {
     const pageGlobs: Record<string, () => Promise<DefineComponent>> = {
         ...import.meta.glob<DefineComponent>('./pages/BMS/**/*.vue'),
         ...import.meta.glob<DefineComponent>('./pages/Workspace/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Apps/**/*.vue'), // App catalog
     };
     return resolvePageComponent(`./pages/${name}.vue`, pageGlobs);
 });

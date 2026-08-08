@@ -11,12 +11,15 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
-
 class RegisterController extends Controller
 {
-    public function showRegister(): View
+    public function showRegister(Request $request): View
     {
-        return view('identity.register');
+        $returnUrl = $request->query('return_url');
+
+        return view('identity.register', [
+            'returnUrl' => $returnUrl,
+        ]);
     }
 
     public function register(Request $request): RedirectResponse

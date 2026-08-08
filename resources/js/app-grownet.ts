@@ -29,6 +29,7 @@ bootInertia('GrowNet', (name: string) => {
             './pages/Points/**/*.vue',
             './pages/Wallet/**/*.vue',
             './pages/Workspace/**/*.vue',
+            './pages/Apps/**/*.vue', // App catalog
         ])
     );
 });
