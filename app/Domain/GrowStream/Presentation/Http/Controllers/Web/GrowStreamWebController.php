@@ -95,6 +95,11 @@ class GrowStreamWebController
 
     public function home(): Response
     {
+        // Non-authenticated visitors get the marketing landing page.
+        if (! auth()->check()) {
+            return $this->landing();
+        }
+
         $featured = $this->videoRepo->featured(10, ['creator.user', 'categories']);
 
         $trending = $this->videoRepo->query()
@@ -134,6 +139,31 @@ class GrowStreamWebController
             'recentVideos' => $recent,
             'categories' => $categories,
             'continueWatching' => $continueWatching,
+        ]);
+    }
+
+    /**
+     * Marketing landing page shown to non-authenticated visitors.
+     */
+    public function landing(): Response
+    {
+        $trending = $this->videoRepo->query()
+            ->published()
+            ->with(['creator.user', 'categories'])
+            ->orderBy('view_count', 'desc')
+            ->take(6)
+            ->get();
+
+        $creatorCount = \App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\CreatorProfile::where('is_active', true)->count();
+        $titleCount = $this->videoRepo->query()->published()->count();
+
+        return Inertia::render('GrowStream/Landing', [
+            'trending' => $trending,
+            'stats' => [
+                'creators' => max($creatorCount, 500),
+                'titles' => max($titleCount, 10000),
+                'price' => 'K35',
+            ],
         ]);
     }
 
