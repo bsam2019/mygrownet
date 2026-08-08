@@ -51,6 +51,14 @@ $modules = [
         'start_url' => '/dashboard',
         'icons_prefix' => '/images',
     ],
+    'growstream' => [
+        'name' => 'GrowStream',
+        'short_name' => 'GrowStream',
+        'description' => 'Zambian streaming platform for local creators — watch, laugh, binge',
+        'theme_color' => '#e2571f',
+        'start_url' => '/',
+        'icons_prefix' => '/images',
+    ],
     'growstorage' => [
         'name' => 'GrowStorage',
         'short_name' => 'GrowStorage',

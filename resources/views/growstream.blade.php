@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="theme-color" content="#121212">
-        <link rel="manifest" href="/manifest.json">
+        <link rel="manifest" href="/manifest.php">
         <link rel="icon" type="image/png" href="/logo.png">
         <title inertia>GrowStream</title>
         <link rel="preconnect" href="https://fonts.bunny.net">
