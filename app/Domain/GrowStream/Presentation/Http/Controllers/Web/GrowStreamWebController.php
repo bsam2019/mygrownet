@@ -123,6 +123,7 @@ class GrowStreamWebController
             ->get();
 
         $continueWatching = [];
+        $watchlist = [];
         if (auth()->check()) {
             $continueWatching = WatchHistory::where('user_id', auth()->id())
                 ->where('is_completed', false)
@@ -131,6 +132,69 @@ class GrowStreamWebController
                 ->take(6)
                 ->get()
                 ->toArray();
+
+            $watchlist = Watchlist::where('user_id', auth()->id())
+                ->with(['watchlistable'])
+                ->latest('added_at')
+                ->take(8)
+                ->get()
+                ->map(fn (Watchlist $item) => [
+                    'id' => $item->id,
+                    'user_id' => $item->user_id,
+                    'watchable_type' => $item->watchlistable_type,
+                    'watchable_id' => $item->watchlistable_id,
+                    'watchable' => $item->watchlistable,
+                    'created_at' => $item->added_at,
+                ]);
+        }
+
+        // Top creators by subscriber/views for the avatar rail.
+        $topCreators = CreatorProfile::query()
+            ->active()
+            ->with('user')
+            ->orderByDesc('total_views')
+            ->orderByDesc('subscriber_count')
+            ->take(8)
+            ->get()
+            ->map(fn (CreatorProfile $creator) => [
+                'id' => $creator->id,
+                'channel_slug' => $creator->channel_slug,
+                'display_name' => $creator->display_name ?: $creator->channel_name,
+                'avatar_url' => $creator->avatar_url,
+                'is_verified' => (bool) $creator->is_verified,
+                'subscriber_count' => (int) $creator->subscriber_count,
+            ]);
+
+        // Series rail (poster cards).
+        $series = $this->seriesRepo->query()
+            ->with('creator.user')
+            ->where('is_published', true)
+            ->orderByDesc('view_count')
+            ->take(8)
+            ->get();
+
+        // "For You" — prioritise videos from the categories the user watches most.
+        $forYou = [];
+        if (auth()->check()) {
+            $recentCategoryIds = WatchHistory::where('user_id', auth()->id())
+                ->with('video.categories')
+                ->latest('last_watched_at')
+                ->take(12)
+                ->get()
+                ->flatMap(fn ($h) => collect($h->video?->categories ?? [])->pluck('id'))
+                ->unique()
+                ->take(5);
+
+            $forYouQuery = $this->videoRepo->query()
+                ->published()
+                ->with(['creator.user', 'categories'])
+                ->orderByDesc('view_count');
+
+            if ($recentCategoryIds->isNotEmpty()) {
+                $forYouQuery->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $recentCategoryIds));
+            }
+
+            $forYou = $forYouQuery->take(10)->get();
         }
 
         return Inertia::render('GrowStream/Home', [
@@ -139,6 +203,10 @@ class GrowStreamWebController
             'recentVideos' => $recent,
             'categories' => $categories,
             'continueWatching' => $continueWatching,
+            'watchlist' => $watchlist,
+            'topCreators' => $topCreators,
+            'series' => $series,
+            'forYou' => $forYou,
         ]);
     }
 
