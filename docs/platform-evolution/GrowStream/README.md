@@ -14,7 +14,7 @@
 - ✅ Database structure (10 tables)
 - ✅ API endpoints (43 total: 15 public + 28 admin)
 - ✅ Event-driven architecture (4 jobs, 3 events)
-- ✅ Video provider abstraction (DigitalOcean Spaces)
+- ✅ Video provider abstraction (Cloudflare Stream; file/thumbnail assets on Wasabi/S3)
 - ✅ Watch progress tracking
 - ✅ Analytics system
 - ✅ Console commands (4 commands)

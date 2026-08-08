@@ -120,7 +120,7 @@ Testing wasabi...
 - Region: `us-east-1`
 - Endpoint: `https://s3.wasabisys.com`
 
-**Migration Mode:** `do_spaces_only` (not migrating yet - safe)
+**Migration Mode:** `wasabi_only` (complete — Wasabi is the sole storage provider; DigitalOcean discontinued)
 
 ---
 

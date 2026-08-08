@@ -7,10 +7,10 @@ return [
     |--------------------------------------------------------------------------
     |
     | This option controls the default video provider used for uploads.
-    | Supported: "digitalocean", "cloudflare", "local"
+    | Supported: "cloudflare", "local"
     |
     */
-    'default_provider' => env('GROWSTREAM_VIDEO_PROVIDER', 'digitalocean'),
+    'default_provider' => env('GROWSTREAM_VIDEO_PROVIDER', 'cloudflare'),
 
     /*
     |--------------------------------------------------------------------------
@@ -18,15 +18,6 @@ return [
     |--------------------------------------------------------------------------
     */
     'providers' => [
-        'digitalocean' => [
-            'key' => env('DO_SPACES_KEY'),
-            'secret' => env('DO_SPACES_SECRET'),
-            'region' => env('DO_SPACES_REGION', 'nyc3'),
-            'bucket' => env('DO_SPACES_BUCKET'),
-            'endpoint' => env('DO_SPACES_ENDPOINT'),
-            'cdn_endpoint' => env('DO_SPACES_CDN_ENDPOINT'),
-        ],
-
         'cloudflare' => [
             'account_id' => env('CLOUDFLARE_ACCOUNT_ID'),
             'api_token' => env('CLOUDFLARE_API_TOKEN'),

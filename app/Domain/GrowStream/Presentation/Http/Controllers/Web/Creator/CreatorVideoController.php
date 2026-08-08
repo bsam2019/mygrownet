@@ -198,7 +198,7 @@ class CreatorVideoController extends Controller
                 'is_published' => false,
                 'upload_status' => 'uploading',
                 'moderation_status' => $creator->is_verified ? 'approved' : 'pending_review',
-                'video_provider' => (string) config('growstream.default_provider', 'digitalocean'),
+                'video_provider' => (string) config('growstream.default_provider', 'cloudflare'),
                 'provider_video_id' => $tus['uid'],
             ]);
 

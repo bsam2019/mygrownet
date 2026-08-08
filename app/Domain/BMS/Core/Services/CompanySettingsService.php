@@ -305,7 +305,7 @@ class CompanySettingsService
         $uuid = \Illuminate\Support\Str::uuid();
         $s3Key = "cms/companies/{$companyId}/logo/{$uuid}_{$sanitizedFilename}";
         
-        // Store new logo to S3 (DigitalOcean Spaces)
+        // Store new logo to S3 (Wasabi)
         \Storage::disk('s3')->put(
             $s3Key,
             file_get_contents($file->getRealPath()),

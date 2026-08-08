@@ -167,7 +167,7 @@ class StationeryGeneratorService
                 return $fullPath;
             }
             
-            // Remote storage (DigitalOcean Spaces) - get public URL
+            // Remote storage (S3/Wasabi) - get public URL
             $url = $this->fileStorageService->getUrl($logoPath);
             \Log::info('Using remote logo URL', ['url' => $url]);
             return $url;
@@ -196,7 +196,7 @@ class StationeryGeneratorService
                 return public_path('storage/' . $signaturePath);
             }
             
-            // Remote storage (DigitalOcean Spaces) - get public URL
+            // Remote storage (S3/Wasabi) - get public URL
             return $this->fileStorageService->getUrl($signaturePath);
         } catch (\Exception $e) {
             \Log::warning('Failed to load signature for stationery', [

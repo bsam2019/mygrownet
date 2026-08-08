@@ -4,14 +4,16 @@
 **Status:** MVP Complete - Production Ready  
 **Completion:** 100%
 
+> **SUPERSEDED — August 2026.** This document describes the original MVP scaffold. It is kept for history only. For the current state of the implementation, see **[IMPLEMENTATION_OVERVIEW_2026_08.md](IMPLEMENTATION_OVERVIEW_2026_08.md)**. Note: the video provider is now **Cloudflare Stream** and file/thumbnail assets are on **Wasabi/S3** — DigitalOcean Spaces has been discontinued and removed from the codebase. `DigitalOceanSpacesProvider` no longer exists; `GROWSTREAM_VIDEO_PROVIDER` defaults to `cloudflare`.
+
 ---
 
 ## ✅ Completed Components
 
 ### 1. Configuration & Setup
 - ✅ `config/growstream.php` - Complete module configuration
-- ✅ `config/filesystems.php` - DigitalOcean Spaces disk added
-- ✅ `.env` variables documented (DO_SPACES_*)
+- ✅ `config/filesystems.php` - Wasabi/S3 disk configured (DO Spaces removed)
+- ✅ `.env` variables documented (CLOUDFLARE_* + WASABI_*)
 - ✅ Service provider registered in `bootstrap/providers.php`
 
 ### 2. Database Structure (10 Tables)
@@ -47,11 +49,11 @@
 ### 4. Video Provider Abstraction
 - ✅ `VideoProviderInterface.php` - Provider contract
 - ✅ `ProviderVideoResponse.php` - Standardized response DTO
-- ✅ `DigitalOceanSpacesProvider.php` - Full implementation for DO Spaces
-- ✅ `VideoProviderFactory.php` - Factory pattern for provider selection
+- ✅ `CloudflareStreamProvider.php` - Full implementation (DigitalOcean Spaces provider removed)
+- ✅ `VideoProviderFactory.php` - Factory pattern for provider selection (Cloudflare Stream)
 
 **Provider Features:**
-- Upload videos to DigitalOcean Spaces
+- Upload videos to Cloudflare Stream
 - Generate signed playback URLs
 - Get video details
 - Delete videos
@@ -356,16 +358,19 @@ app/Domain/GrowStream/
 ## 📝 Environment Variables Required
 
 ```bash
-# DigitalOcean Spaces
-DO_SPACES_KEY=your_spaces_key
-DO_SPACES_SECRET=your_spaces_secret
-DO_SPACES_REGION=nyc3
-DO_SPACES_BUCKET=your_bucket_name
-DO_SPACES_ENDPOINT=https://nyc3.digitaloceanspaces.com
-DO_SPACES_CDN_ENDPOINT=https://your-bucket.nyc3.cdn.digitaloceanspaces.com
+# Cloudflare Stream (video provider)
+CLOUDFLARE_ACCOUNT_ID=your_account_id
+CLOUDFLARE_API_TOKEN=your_api_token
+
+# Wasabi (file & thumbnail assets)
+WASABI_ACCESS_KEY_ID=your_access_key
+WASABI_SECRET_ACCESS_KEY=your_secret_key
+WASABI_DEFAULT_REGION=us-east-1
+WASABI_BUCKET=your_bucket_name
+WASABI_ENDPOINT=https://s3.us-east-1.wasabisys.com
 
 # GrowStream Settings
-GROWSTREAM_VIDEO_PROVIDER=digitalocean
+GROWSTREAM_VIDEO_PROVIDER=cloudflare
 ```
 
 ---
@@ -537,7 +542,7 @@ GROWSTREAM_VIDEO_PROVIDER=digitalocean
 ### March 11, 2026 - Phase 2 Complete
 - ✅ Created 4 admin controllers (Video, Series, Analytics, Creator)
 - ✅ Added 28 admin API endpoints
-- ✅ Implemented video upload with DigitalOcean Spaces integration
+- ✅ Implemented video upload with Cloudflare Stream integration
 - ✅ Built comprehensive analytics system
 - ✅ Added creator management with verification and limits
 - ✅ Implemented series management with episode reordering
@@ -548,11 +553,11 @@ GROWSTREAM_VIDEO_PROVIDER=digitalocean
 - Created complete database structure (10 tables)
 - Implemented 8 Eloquent models with relationships
 - Built video provider abstraction layer
-- Implemented DigitalOcean Spaces provider
+- Implemented Cloudflare Stream provider
 - Created 4 API controllers with 15 endpoints
 - Added database seeder with categories and tags
 - Registered service provider
-- Configured DigitalOcean Spaces disk
+- Configured Wasabi/S3 disk
 - All routes tested and working
 
 ---
@@ -588,7 +593,7 @@ The GrowStream backend is fully implemented and production-ready with:
 
 ### What's Working
 
-1. **Video Upload** - Admin can upload videos to DigitalOcean Spaces
+1. **Video Upload** - Admin can upload videos to Cloudflare Stream
 2. **Async Processing** - Videos process in background with job chains
 3. **Browse & Discovery** - Public can browse videos, series, categories
 4. **Watch Tracking** - Users can watch with progress tracking

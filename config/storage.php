@@ -4,32 +4,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Storage Migration Configuration
+    | Storage Configuration
     |--------------------------------------------------------------------------
     |
-    | These options control the storage migration between providers.
-    |
-    | Supported modes:
-    | - do_spaces_only: Use only DigitalOcean Spaces (default)
-    | - dual_write: Write to both DO Spaces and Wasabi, read from primary
-    | - wasabi_only: Use only Wasabi (with DO Spaces fallback for old files)
+    | GrowStream and the platform store file objects on Wasabi (S3-compatible).
+    | DigitalOcean Spaces has been discontinued and removed.
     |
     */
 
-    'migration_mode' => env('STORAGE_MIGRATION_MODE', 'do_spaces_only'),
+    'migration_mode' => env('STORAGE_MIGRATION_MODE', 'wasabi_only'),
 
     /*
     |--------------------------------------------------------------------------
     | Storage Disks
     |--------------------------------------------------------------------------
     |
-    | Define the primary and secondary disks for migration.
+    | Define the primary storage disk.
     |
     */
 
     'disks' => [
-        'primary' => env('STORAGE_PRIMARY_DISK', 'do_spaces'),
-        'secondary' => env('STORAGE_SECONDARY_DISK', 'wasabi'),
+        'primary' => env('STORAGE_PRIMARY_DISK', 'wasabi'),
+        'secondary' => null,
     ],
 
 ];

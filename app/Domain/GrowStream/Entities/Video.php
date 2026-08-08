@@ -56,7 +56,7 @@ final class Video
         ?string $description = null,
         ?ContentRating $contentRating = null,
         ?SkillLevel $skillLevel = null,
-        VideoProvider $provider = VideoProvider::DigitalOcean,
+        VideoProvider $provider = VideoProvider::Cloudflare,
         PlaybackPolicy $playbackPolicy = PlaybackPolicy::Public,
         ?SeriesType $seriesType = null,
         ?int $seriesId = null,

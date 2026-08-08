@@ -362,7 +362,7 @@ class PdfGenerationService
             return public_path('storage/' . $storagePath);
         }
 
-        // Remote storage (DigitalOcean Spaces) - get public URL
+        // Remote storage (S3/Wasabi) - get public URL
         // DomPDF can handle remote URLs if they're publicly accessible
         return $this->fileStorageService->getUrl($storagePath);
     }

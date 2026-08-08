@@ -6,14 +6,12 @@ namespace App\Domain\GrowStream\ValueObjects;
 
 enum VideoProvider: string
 {
-    case DigitalOcean = 'digitalocean';
     case Cloudflare = 'cloudflare';
     case Local = 'local';
 
     public function label(): string
     {
         return match ($this) {
-            self::DigitalOcean => 'DigitalOcean Spaces',
             self::Cloudflare => 'Cloudflare Stream',
             self::Local => 'Local Storage',
         };
@@ -22,7 +20,6 @@ enum VideoProvider: string
     public function color(): ?string
     {
         return match ($this) {
-            self::DigitalOcean => '#0080ff',
             self::Cloudflare => '#f38020',
             self::Local => '#6b7280',
         };

@@ -13,7 +13,6 @@ use App\Domain\GrowStream\Infrastructure\Listeners\NotifyVideoProcessingComplete
 use App\Domain\GrowStream\Infrastructure\Listeners\NotifyVideoProcessingFailed;
 use App\Domain\PlatformPayments\Events\PaymentCompleted;
 use App\Domain\GrowStream\Infrastructure\Providers\CloudflareStreamProvider;
-use App\Domain\GrowStream\Infrastructure\Providers\DigitalOceanSpacesProvider;
 use App\Domain\GrowStream\Infrastructure\Providers\VideoProviderFactory;
 use App\Domain\GrowStream\Infrastructure\Providers\VideoProviderInterface;
 use App\Domain\GrowStream\Presentation\Console\Commands\AggregateAnalyticsCommand;
@@ -82,11 +81,6 @@ class GrowStreamServiceProvider extends ServiceProvider
         // Register video provider
         $this->app->bind(VideoProviderInterface::class, function ($app) {
             return VideoProviderFactory::make();
-        });
-
-        // Register specific providers
-        $this->app->singleton(DigitalOceanSpacesProvider::class, function ($app) {
-            return new DigitalOceanSpacesProvider;
         });
 
         $this->app->singleton(CloudflareStreamProvider::class, function ($app) {

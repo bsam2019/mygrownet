@@ -22,7 +22,6 @@ class TestStorageConnection extends Command
             // Test all configured disks
             $this->info("Testing all storage connections...\n");
             
-            $this->testDisk('do_spaces');
             $this->testDisk('wasabi');
             
             // Test migration service

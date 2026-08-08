@@ -14,10 +14,10 @@ class StorageMigrationService
 
     public function __construct()
     {
-        $this->mode = config('storage.migration_mode', 'do_spaces_only');
-        $this->primaryDisk = $this->mode === 'wasabi_only' ? 'wasabi' : 'do_spaces';
-        $this->secondaryDisk = $this->mode === 'dual_write' ? 
-            ($this->primaryDisk === 'do_spaces' ? 'wasabi' : 'do_spaces') : null;
+        // Wasabi is the sole storage provider (DigitalOcean Spaces discontinued).
+        $this->mode = config('storage.migration_mode', 'wasabi_only');
+        $this->primaryDisk = 'wasabi';
+        $this->secondaryDisk = null;
     }
 
     /**
@@ -99,12 +99,7 @@ class StorageMigrationService
         }
 
         // Fallback to old disk if migrating to wasabi
-        if ($this->mode === 'wasabi_only' && Storage::disk('do_spaces')->exists($path)) {
-            return Storage::disk('do_spaces')->url($path);
-        }
-
-        // Fallback to new disk if migrating from wasabi
-        if ($this->mode === 'do_spaces_only' && Storage::disk('wasabi')->exists($path)) {
+        if ($this->mode === 'wasabi_only' && Storage::disk('wasabi')->exists($path)) {
             return Storage::disk('wasabi')->url($path);
         }
 
@@ -129,49 +124,27 @@ class StorageMigrationService
         }
 
         // Fallback to old disk if migrating
-        if ($this->mode === 'wasabi_only' && Storage::disk('do_spaces')->exists($path)) {
-            return Storage::disk('do_spaces')->get($path);
+        if ($this->mode === 'wasabi_only' && Storage::disk('wasabi')->exists($path)) {
+            return Storage::disk('wasabi')->get($path);
         }
 
         return null;
     }
 
     /**
-     * Check if file exists on any disk
+     * Check if file exists on the primary disk
      */
     public function exists(string $path): bool
     {
-        return Storage::disk($this->primaryDisk)->exists($path) ||
-               ($this->secondaryDisk && Storage::disk($this->secondaryDisk)->exists($path)) ||
-               ($this->mode === 'wasabi_only' && Storage::disk('do_spaces')->exists($path)) ||
-               ($this->mode === 'do_spaces_only' && Storage::disk('wasabi')->exists($path));
+        return Storage::disk($this->primaryDisk)->exists($path);
     }
 
     /**
-     * Delete file from all disks
+     * Delete file from the primary disk
      */
     public function delete(string $path): bool
     {
-        $deleted = Storage::disk($this->primaryDisk)->delete($path);
-
-        if ($this->secondaryDisk) {
-            try {
-                Storage::disk($this->secondaryDisk)->delete($path);
-            } catch (\Exception $e) {
-                Log::warning("Secondary disk delete failed: {$e->getMessage()}");
-            }
-        }
-
-        // Clean up from old disk too
-        if ($this->mode === 'wasabi_only') {
-            try {
-                Storage::disk('do_spaces')->delete($path);
-            } catch (\Exception $e) {
-                Log::warning("Old disk cleanup failed: {$e->getMessage()}");
-            }
-        }
-
-        return $deleted;
+        return Storage::disk($this->primaryDisk)->delete($path);
     }
 
     /**

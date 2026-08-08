@@ -60,19 +60,6 @@ return [
             'report' => true,
         ],
 
-        'do_spaces' => [
-            'driver' => 's3',
-            'key' => env('DO_SPACES_KEY'),
-            'secret' => env('DO_SPACES_SECRET'),
-            'region' => env('DO_SPACES_REGION', 'nyc3'),
-            'bucket' => env('DO_SPACES_BUCKET'),
-            'url' => env('DO_SPACES_CDN_ENDPOINT'),
-            'endpoint' => env('DO_SPACES_ENDPOINT'),
-            'use_path_style_endpoint' => false,
-            'throw' => true,
-            'report' => true,
-        ],
-
         'wasabi' => [
             'driver' => 's3',
             'key' => env('WASABI_ACCESS_KEY_ID'),

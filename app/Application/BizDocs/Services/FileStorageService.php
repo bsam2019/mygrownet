@@ -12,8 +12,8 @@ class FileStorageService
 
     public function __construct()
     {
-        // Use the same S3 disk as GrowStorage (configured for DigitalOcean Spaces)
-        // Fall back to public disk if S3 is not configured
+        // Use the same S3-compatible disk (Wasabi) as the rest of the platform.
+        // Fall back to public disk if S3 is not configured.
         $this->disk = $this->getConfiguredDisk();
     }
 
@@ -22,7 +22,7 @@ class FileStorageService
      */
     private function getConfiguredDisk(): string
     {
-        // Check if S3 (DigitalOcean Spaces) is configured
+        // Check if S3 (Wasabi) is configured
         $s3Key = config('filesystems.disks.s3.key');
         $s3Bucket = config('filesystems.disks.s3.bucket');
         

@@ -245,7 +245,7 @@ All pages are fully responsive and work on:
 1. Check video upload status (should be "ready")
 2. Verify video is published
 3. Check your access level matches video requirements
-4. Ensure DigitalOcean Spaces is configured
+4. Ensure Cloudflare Stream (video) and Wasabi (assets) are configured
 
 ### Admin Panel Not Accessible
 1. Verify you have admin role

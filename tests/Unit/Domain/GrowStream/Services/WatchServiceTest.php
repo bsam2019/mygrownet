@@ -46,7 +46,7 @@ final class WatchServiceTest extends TestCase
             'upload_status' => 'ready',
             'video_url' => 'https://example.com/video.mp4',
             'thumbnail_url' => null,
-            'provider' => 'digitalocean',
+            'provider' => 'cloudflare',
             'playback_policy' => 'public',
             'series_type' => null,
             'series_id' => null,

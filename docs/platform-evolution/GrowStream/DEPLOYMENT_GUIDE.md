@@ -12,7 +12,7 @@
 - Laravel 12.0
 - MySQL/PostgreSQL
 - Redis (for queues)
-- DigitalOcean Spaces account (or Cloudflare Stream)
+- Cloudflare Stream account (video provider) + Wasabi/S3 bucket (file & thumbnail assets)
 - Composer
 - Node.js & npm
 
@@ -20,21 +20,24 @@
 
 ## Environment Configuration
 
-### 1. DigitalOcean Spaces Setup
+### 1. Storage & Video Provider Setup
 
 Add to `.env`:
 
 ```bash
-# DigitalOcean Spaces
-DO_SPACES_KEY=your_spaces_key
-DO_SPACES_SECRET=your_spaces_secret
-DO_SPACES_REGION=nyc3
-DO_SPACES_BUCKET=your_bucket_name
-DO_SPACES_ENDPOINT=https://nyc3.digitaloceanspaces.com
-DO_SPACES_CDN_ENDPOINT=https://your-bucket.nyc3.cdn.digitaloceanspaces.com
+# Cloudflare Stream (video provider)
+CLOUDFLARE_ACCOUNT_ID=your_account_id
+CLOUDFLARE_API_TOKEN=your_api_token
+
+# Wasabi (file & thumbnail assets)
+WASABI_ACCESS_KEY_ID=your_access_key
+WASABI_SECRET_ACCESS_KEY=your_secret_key
+WASABI_DEFAULT_REGION=us-east-1
+WASABI_BUCKET=your_bucket_name
+WASABI_ENDPOINT=https://s3.us-east-1.wasabisys.com
 
 # GrowStream Settings
-GROWSTREAM_VIDEO_PROVIDER=digitalocean
+GROWSTREAM_VIDEO_PROVIDER=cloudflare
 ```
 
 ### 2. Queue Configuration
@@ -94,17 +97,16 @@ php artisan vendor:publish --tag=growstream-config
 
 ### 5. Configure Filesystem
 
-The DigitalOcean Spaces disk is automatically configured. Verify in `config/filesystems.php`:
+The Wasabi disk is automatically configured. Verify in `config/filesystems.php`:
 
 ```php
-'digitalocean' => [
+'wasabi' => [
     'driver' => 's3',
-    'key' => env('DO_SPACES_KEY'),
-    'secret' => env('DO_SPACES_SECRET'),
-    'region' => env('DO_SPACES_REGION', 'nyc3'),
-    'bucket' => env('DO_SPACES_BUCKET'),
-    'endpoint' => env('DO_SPACES_ENDPOINT'),
-    'url' => env('DO_SPACES_CDN_ENDPOINT'),
+    'key' => env('WASABI_ACCESS_KEY_ID'),
+    'secret' => env('WASABI_SECRET_ACCESS_KEY'),
+    'region' => env('WASABI_DEFAULT_REGION', 'us-east-1'),
+    'bucket' => env('WASABI_BUCKET'),
+    'endpoint' => env('WASABI_ENDPOINT', 'https://s3.us-east-1.wasabisys.com'),
     'use_path_style_endpoint' => false,
 ],
 ```
@@ -378,11 +380,7 @@ Ensure all migrations have run - indexes are already defined.
 
 ### 5. CDN Configuration
 
-Use DigitalOcean Spaces CDN endpoint for video delivery:
-
-```bash
-DO_SPACES_CDN_ENDPOINT=https://your-bucket.nyc3.cdn.digitaloceanspaces.com
-```
+Video playback is delivered by Cloudflare Stream (signed URLs); file & thumbnail assets are served from Wasabi/S3.
 
 ---
 
@@ -440,7 +438,7 @@ sudo supervisorctl restart growstream-high:*
 
 Check:
 1. PHP upload limits
-2. DigitalOcean Spaces credentials
+2. Cloudflare Stream credentials (video) / Wasabi credentials (assets)
 3. Disk space
 4. Logs: `storage/logs/laravel.log`
 
@@ -469,9 +467,9 @@ php artisan schedule:list
 mysqldump -u user -p database > backup-$(date +%Y%m%d).sql
 ```
 
-### 2. DigitalOcean Spaces
+### 2. Wasabi / S3
 
-Enable versioning in Spaces settings for automatic backups.
+Enable versioning in Wasabi bucket settings for automatic backups.
 
 ### 3. Configuration
 
@@ -495,8 +493,9 @@ Backup `.env` and `config/` directory.
 
 ### CDN
 
-- Use DigitalOcean Spaces CDN
-- Consider Cloudflare for additional caching
+- Video delivery via Cloudflare Stream edge (signed URLs)
+- File & thumbnail assets via Wasabi/S3
+- Cloudflare for additional HTTP caching where appropriate
 
 ---
 

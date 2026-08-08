@@ -18,8 +18,8 @@ return new class extends Migration
             $table->text('description');
             $table->longText('long_description')->nullable();
             
-            // Video Provider (Abstraction)
-            $table->enum('video_provider', ['digitalocean', 'cloudflare', 'local'])->default('digitalocean');
+            // Video Provider (Abstraction) — Cloudflare Stream; DigitalOcean discontinued/removed
+            $table->enum('video_provider', ['cloudflare', 'local'])->default('cloudflare');
             $table->string('provider_video_id')->nullable();
             $table->text('playback_url')->nullable();
             $table->enum('playback_policy', ['public', 'signed'])->default('signed');

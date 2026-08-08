@@ -427,7 +427,7 @@ Sprint 9+:
 
 ## Architecture Decisions
 
-1. **Cloudflare Stream first.** DO Spaces is a stopgap. Cloudflare provides encoding, adaptive streaming, signed URLs, and analytics out of the box. The provider abstraction already supports this swap.
+1. **Cloudflare Stream first.** Cloudflare provides encoding, adaptive streaming, signed URLs, and analytics out of the box. DigitalOcean Spaces has been discontinued and removed; the provider abstraction supports Cloudflare (video) + Wasabi (file/thumbnail assets).
 
 2. **Platform Payments reuse.** GrowStream does NOT build its own payments. It uses the existing `PlatformPayments` domain (`PaymentService`, `PaymentGateway` adapters for MTN/Airtel, `PaymentTransaction`), `SubscriptionCheckoutController`, and `FinancialServicesCore` for multi-currency.
 

@@ -11,7 +11,6 @@ class VideoProviderFactory
         $provider = $provider ?? config('growstream.default_provider');
 
         return match ($provider) {
-            'digitalocean' => app(DigitalOceanSpacesProvider::class),
             'cloudflare' => app(CloudflareStreamProvider::class),
             'local' => throw new \Exception('Local provider not yet implemented'),
             default => throw new InvalidArgumentException("Provider {$provider} not supported")

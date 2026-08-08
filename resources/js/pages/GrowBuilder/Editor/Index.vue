@@ -876,7 +876,7 @@ const handleCroppedImage = async (dataUrl: string, originalMedia: any) => {
                 }
                 
                 // If there was an old cropped image (starts with our S3 URL), delete it
-                if (oldImageUrl && typeof oldImageUrl === 'string' && oldImageUrl.includes('digitaloceanspaces.com')) {
+                if (oldImageUrl && typeof oldImageUrl === 'string' && /(digitaloceanspaces|wasabisys)\.com/.test(oldImageUrl)) {
                     console.log('Checking for old cropped image to delete:', oldImageUrl);
                     
                     // Find the media record for the old image

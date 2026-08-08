@@ -193,7 +193,7 @@ class MediaController extends Controller
         $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
         $path = "{$directory}/{$filename}";
 
-        // Upload to S3 (DigitalOcean Spaces)
+        // Upload to S3 (Wasabi)
         Storage::disk('s3')->put($path, file_get_contents($file), 'public');
 
         $width = null;

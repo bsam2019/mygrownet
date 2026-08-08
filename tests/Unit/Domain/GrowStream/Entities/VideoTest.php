@@ -95,7 +95,7 @@ class VideoTest extends TestCase
             'upload_status' => 'ready',
             'video_url' => 'https://example.com/video.mp4',
             'thumbnail_url' => 'https://example.com/thumb.jpg',
-            'provider' => 'digitalocean',
+            'provider' => 'cloudflare',
             'playback_policy' => 'public',
             'series_type' => 'show',
             'series_id' => 10,
@@ -124,7 +124,7 @@ class VideoTest extends TestCase
         $this->assertSame(UploadStatus::Ready, $video->uploadStatus());
         $this->assertSame('https://example.com/video.mp4', $video->videoUrl());
         $this->assertSame('https://example.com/thumb.jpg', $video->thumbnailUrl());
-        $this->assertSame(VideoProvider::DigitalOcean, $video->provider());
+        $this->assertSame(VideoProvider::Cloudflare, $video->provider());
         $this->assertSame(PlaybackPolicy::Public, $video->playbackPolicy());
         $this->assertSame(SeriesType::Show, $video->seriesType());
         $this->assertSame(10, $video->seriesId());
@@ -478,7 +478,7 @@ class VideoTest extends TestCase
         $this->assertSame('Desc', $video->description());
         $this->assertSame(ContentType::Short, $video->contentType());
         $this->assertSame(AccessLevel::Free, $video->accessLevel());
-        $this->assertSame(VideoProvider::DigitalOcean, $video->provider());
+        $this->assertSame(VideoProvider::Cloudflare, $video->provider());
         $this->assertSame(PlaybackPolicy::Public, $video->playbackPolicy());
         $this->assertNull($video->seriesType());
         $this->assertNull($video->contentRating());
