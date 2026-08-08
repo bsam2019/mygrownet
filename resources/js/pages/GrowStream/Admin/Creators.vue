@@ -96,6 +96,9 @@
                     @change="applyFilters"
                 >
                     <option value="">All Status</option>
+                    <option value="pending">Pending Approval</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
                     <option value="active">Active</option>
                     <option value="suspended">Suspended</option>
                 </select>
@@ -165,13 +168,7 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4">
-                                <span
-                                    :class="[
-                                        creator.status === 'active'
-                                            ? 'gs-chip gs-chip-primary'
-                                            : 'gs-chip bg-red-500/15 text-red-400',
-                                    ]"
-                                >
+                                <span :class="statusChipClass(creator.status)">
                                     {{ creator.status }}
                                 </span>
                             </td>
@@ -186,6 +183,27 @@
                             </td>
                             <td class="px-6 py-4 text-right text-sm font-medium">
                                 <div class="flex justify-end gap-2">
+                                    <!-- Pending application: approve / reject -->
+                                    <template v-if="creator.status === 'pending' || creator.status === 'rejected'">
+                                        <button
+                                            @click="approveCreator(creator.id)"
+                                            class="text-[var(--gs-primary)] hover:text-[var(--gs-primary-hover)]"
+                                            aria-label="Approve" title="Approve application"
+                                        >
+                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            @click="rejectCreator(creator)"
+                                            class="text-red-400 hover:text-red-300"
+                                            aria-label="Reject" title="Reject application"
+                                        >
+                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </template>
                                     <button
                                         v-if="!creator.is_verified"
                                         @click="verifyCreator(creator.id)"
@@ -336,6 +354,26 @@
                 </div>
             </div>
         </div>
+
+        <!-- Reject Modal -->
+        <div v-if="showRejectModal" class="fixed inset-0 z-50 overflow-y-auto">
+            <div class="flex min-h-screen items-center justify-center px-4">
+                <div class="fixed inset-0 bg-black/70" @click="showRejectModal = false"></div>
+                <div class="gs-card relative w-full max-w-md p-6">
+                    <h3 class="mb-4 text-lg font-semibold text-[var(--gs-text)]">Reject Creator Application</h3>
+                    <form @submit.prevent="confirmReject">
+                        <div class="mb-4">
+                            <label class="gs-label">Reason (shown to the applicant)</label>
+                            <textarea v-model="rejectReason" rows="4" required class="gs-input" placeholder="Tell the creator why their application was not approved..."></textarea>
+                        </div>
+                        <div class="flex justify-end gap-3">
+                            <button type="button" @click="showRejectModal = false" class="gs-btn gs-btn-outline">Cancel</button>
+                            <button type="submit" class="gs-btn bg-red-500 text-white">Reject Application</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </AdminLayout>
 </template>
 
@@ -408,6 +446,47 @@ const verifyCreator = async (creatorId: number) => {
         router.reload({ only: ['creators'] });
     } catch (error) {
         console.error('Failed to verify creator:', error);
+    }
+};
+
+// Approve a pending creator application (web-session route, Inertia redirect).
+const approveCreator = (creatorId: number) => {
+    router.post(route('growstream.admin.creators.approve', { id: creatorId }), {}, { preserveScroll: true });
+};
+
+const showRejectModal = ref(false);
+const rejectReason = ref('');
+const rejectTarget = ref<number | null>(null);
+
+const rejectCreator = (creator: CreatorProfile) => {
+    rejectTarget.value = creator.id;
+    rejectReason.value = '';
+    showRejectModal.value = true;
+};
+
+const confirmReject = () => {
+    if (!rejectTarget.value || !rejectReason.value.trim()) return;
+    router.post(
+        route('growstream.admin.creators.reject', { id: rejectTarget.value }),
+        { reason: rejectReason.value.trim() },
+        { preserveScroll: true }
+    );
+    showRejectModal.value = false;
+};
+
+const statusChipClass = (status: string): string => {
+    switch (status) {
+        case 'approved':
+        case 'active':
+            return 'gs-chip gs-chip-primary';
+        case 'pending':
+            return 'gs-chip bg-yellow-500/15 text-yellow-400';
+        case 'rejected':
+            return 'gs-chip bg-red-500/15 text-red-400';
+        case 'suspended':
+            return 'gs-chip bg-orange-500/15 text-orange-400';
+        default:
+            return 'gs-chip bg-gray-500/15 text-gray-400';
     }
 };
 

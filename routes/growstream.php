@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\GrowStream\Presentation\Http\Controllers\Admin\CategoryAdminController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Admin\CreatorAdminController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Admin\ModerationController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Admin\SponsorshipController;
@@ -77,6 +78,12 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
         Route::get('/creators', [GrowStreamWebController::class, 'adminCreators'])->name('creators');
         Route::post('/creators/{id}/approve', [CreatorAdminController::class, 'approve'])->name('creators.approve');
         Route::post('/creators/{id}/reject', [CreatorAdminController::class, 'reject'])->name('creators.reject');
+
+        // Category management
+        Route::get('/categories', [CategoryAdminController::class, 'index'])->name('categories');
+        Route::post('/categories', [CategoryAdminController::class, 'store'])->name('categories.store');
+        Route::put('/categories/{id}', [CategoryAdminController::class, 'update'])->name('categories.update');
+        Route::delete('/categories/{id}', [CategoryAdminController::class, 'destroy'])->name('categories.destroy');
 
         // Content moderation queue
         Route::get('/moderation', [ModerationController::class, 'queue'])->name('moderation');
