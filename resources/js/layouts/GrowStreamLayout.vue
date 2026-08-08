@@ -96,6 +96,11 @@ const logout = () => {
     router.post(route('growstream.logout'));
 };
 
+// Drawer (mobile + desktop overlay, closed by default)
+const drawerOpen = ref(false);
+const toggleDrawer = () => { drawerOpen.value = !drawerOpen.value; };
+const closeDrawer = () => { drawerOpen.value = false; };
+
 // Determine if a route href matches the current location
 const isActiveRoute = (href: string): boolean => {
     if (typeof window === 'undefined') return false;
@@ -156,27 +161,31 @@ onUnmounted(() => {
     <Head :title="props.title" />
 
     <div class="gs-app bg-background text-on-background min-h-screen pb-24 md:pb-0 font-body-md antialiased">
-        <!-- Desktop Navigation Drawer -->
-        <aside class="hidden md:flex flex-col fixed top-0 left-0 h-screen w-80 bg-surface-bright border-r border-outline-variant shadow-sm z-40">
-            <div class="px-6 py-6 flex items-center gap-4 border-b border-outline-variant">
-                <Link :href="route('growstream.home')" class="font-display-lg text-headline-md font-extrabold text-primary">GrowStream</Link>
+        <!-- Backdrop (when drawer open) -->
+        <div v-if="drawerOpen" class="fixed inset-0 z-40 bg-black/50" @click="closeDrawer"></div>
+
+        <!-- Navigation Drawer (overlay, slides in; mobile + desktop) -->
+        <aside
+            class="fixed top-0 left-0 h-screen w-80 bg-surface-bright border-r border-outline-variant shadow-2xl z-50 flex flex-col transform transition-transform duration-300"
+            :class="drawerOpen ? 'translate-x-0' : '-translate-x-full'"
+        >
+            <!-- Drawer header (aligned to top bar height) -->
+            <div class="h-16 flex items-center justify-between px-6 border-b border-outline-variant">
+                <Link :href="route('growstream.home')" class="font-display-lg text-headline-md font-extrabold text-primary" @click="closeDrawer">GrowStream</Link>
+                <button class="text-on-surface-variant p-2 rounded-full hover:bg-surface-container-high transition-colors" aria-label="Close menu" @click="closeDrawer">
+                    <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                </button>
             </div>
+
             <!-- User card -->
-            <div v-if="isAuthenticated" class="px-6 py-4 flex items-center gap-4">
+            <div class="px-6 py-4 flex items-center gap-4 border-b border-outline-variant">
                 <div class="w-12 h-12 rounded-full bg-surface-container-highest overflow-hidden flex items-center justify-center text-primary font-bold text-lg">
                     <img v-if="(user as any)?.avatar" class="w-full h-full object-cover" :src="(user as any).avatar" :alt="user?.name || 'User'" />
                     <span v-else>{{ (user?.name || 'U').charAt(0).toUpperCase() }}</span>
                 </div>
                 <div class="min-w-0">
-                    <h2 class="font-label-md text-label-md text-on-surface truncate">{{ user?.name }}</h2>
-                    <p class="font-label-sm text-label-sm text-on-surface-variant">Premium Member</p>
-                </div>
-            </div>
-            <div v-else class="px-6 py-4 flex items-center gap-4">
-                <div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-primary font-bold text-lg">G</div>
-                <div>
-                    <h2 class="font-label-md text-label-md text-on-surface">Guest</h2>
-                    <p class="font-label-sm text-label-sm text-on-surface-variant">Sign in for full access</p>
+                    <h2 class="font-label-md text-label-md text-on-surface truncate">{{ isAuthenticated ? user?.name : 'Guest' }}</h2>
+                    <p class="font-label-sm text-label-sm text-on-surface-variant">{{ isAuthenticated ? 'Premium Member' : 'Sign in for full access' }}</p>
                 </div>
             </div>
 
@@ -188,6 +197,7 @@ onUnmounted(() => {
                     :href="item.href()"
                     class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-container rounded-r-full mr-2 transition-all"
                     :class="isActiveRoute(item.href()) ? 'bg-surface-container-high text-primary' : ''"
+                    @click="closeDrawer"
                 >
                     <span class="material-symbols-outlined" aria-hidden="true">{{ item.icon }}</span>
                     <span class="font-label-md text-label-md">{{ item.label }}</span>
@@ -201,6 +211,7 @@ onUnmounted(() => {
                     :href="item.href()"
                     class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-container rounded-r-full mr-2 transition-all"
                     :class="isActiveRoute(item.href()) ? 'bg-surface-container-high text-primary' : ''"
+                    @click="closeDrawer"
                 >
                     <span class="material-symbols-outlined" aria-hidden="true">{{ item.icon }}</span>
                     <span class="font-label-md text-label-md">{{ item.label }}</span>
@@ -208,15 +219,15 @@ onUnmounted(() => {
             </div>
         </aside>
 
-        <!-- Content wrapper (offset for desktop drawer) -->
-        <div class="md:pl-80">
+        <!-- Content wrapper (no permanent offset; drawer is overlay) -->
+        <div class="w-full">
             <!-- Top App Bar -->
-            <header class="relative bg-surface-container-lowest border-b border-surface-container-highest sticky top-0 z-40 flex items-center justify-between px-margin-mobile h-16 w-full">
-                <!-- Hamburger (mobile only) -->
-                <button class="text-on-surface-variant p-2 rounded-full flex items-center justify-center md:hidden" aria-label="Menu">
+            <header class="relative bg-surface-container-lowest border-b border-surface-container-highest sticky top-0 z-30 flex items-center justify-between px-margin-mobile h-16 w-full">
+                <!-- Hamburger (all viewports) -->
+                <button class="text-on-surface-variant p-2 rounded-full flex items-center justify-center" aria-label="Menu" @click="toggleDrawer">
                     <span class="material-symbols-outlined" aria-hidden="true">menu</span>
                 </button>
-                <div class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary md:block">GrowStream</div>
+                <div class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">GrowStream</div>
                 <div class="flex items-center gap-1">
                     <!-- Data Saver -->
                     <button
