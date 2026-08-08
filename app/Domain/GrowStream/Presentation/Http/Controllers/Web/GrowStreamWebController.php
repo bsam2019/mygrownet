@@ -167,6 +167,34 @@ class GrowStreamWebController
         ]);
     }
 
+    /**
+     * Static public marketing / informational pages (guests + authenticated).
+     */
+    public function about(): Response
+    {
+        return Inertia::render('GrowStream/Pages/About');
+    }
+
+    public function help(): Response
+    {
+        return Inertia::render('GrowStream/Pages/Help');
+    }
+
+    public function terms(): Response
+    {
+        return Inertia::render('GrowStream/Pages/Terms');
+    }
+
+    public function privacy(): Response
+    {
+        return Inertia::render('GrowStream/Pages/Privacy');
+    }
+
+    public function contact(): Response
+    {
+        return Inertia::render('GrowStream/Pages/Contact');
+    }
+
     public function browse(Request $request): Response
     {
         $query = $this->videoRepo->query()->published()->with(['creator.user', 'categories']);

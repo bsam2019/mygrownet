@@ -24,9 +24,6 @@ use Illuminate\Support\Facades\Route;
 $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
     Route::middleware(['web', 'identity.redirect:growstream', 'auth'])->prefix($prefix)->name($namePrefix)->group(function () {
         Route::post('/logout', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'destroy'])->name('logout');
-        Route::get('/subscription', [\App\Http\Controllers\SubscriptionCheckoutController::class, 'pricing'])
-            ->defaults('moduleId', 'growstream')
-            ->name('subscription');
         Route::get('/subscriptions/growstream/checkout', [\App\Http\Controllers\SubscriptionCheckoutController::class, 'show'])
             ->defaults('moduleId', 'growstream')
             ->name('checkout');
@@ -107,6 +104,13 @@ $registerGrowStreamPublicRoutes = function (string $prefix, string $namePrefix) 
         Route::get('/series/{slug}', [GrowStreamWebController::class, 'seriesDetail'])->name('series.detail');
         Route::get('/login', [GrowStreamWebController::class, 'redirectToLogin'])->name('login');
         Route::get('/register', [GrowStreamWebController::class, 'redirectToRegister'])->name('register');
+
+        // Public informational pages (guest + authenticated)
+        Route::get('/about', [GrowStreamWebController::class, 'about'])->name('pages.about');
+        Route::get('/help', [GrowStreamWebController::class, 'help'])->name('pages.help');
+        Route::get('/terms', [GrowStreamWebController::class, 'terms'])->name('pages.terms');
+        Route::get('/privacy', [GrowStreamWebController::class, 'privacy'])->name('pages.privacy');
+        Route::get('/contact', [GrowStreamWebController::class, 'contact'])->name('pages.contact');
     });
 };
 
