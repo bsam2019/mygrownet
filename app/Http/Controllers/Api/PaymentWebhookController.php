@@ -89,6 +89,13 @@ class PaymentWebhookController extends Controller
             'status' => $status,
         ]);
 
+        // Record webhook heartbeat for ops monitoring (growstream:check-ops).
+        \Illuminate\Support\Facades\Cache::put(
+            'ops.pawapay.last_webhook_at',
+            now()->toIso8601String(),
+            now()->addDays(1)
+        );
+
         $this->processPawaPayWebhook($transactionId, $status, $data);
 
         return response()->json(['received' => true]);

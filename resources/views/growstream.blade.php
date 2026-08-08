@@ -5,6 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="theme-color" content="#121212">
+        <link rel="manifest" href="/manifest.json">
+        <link rel="icon" type="image/png" href="/logo.png">
         <title inertia>GrowStream</title>
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
@@ -30,5 +32,16 @@
         <div id="app-loading"><div class="spinner"></div></div>
         @inertia
         <script>document.addEventListener('DOMContentLoaded',function(){var l=document.getElementById('app-loading');if(l){l.style.opacity='0';setTimeout(function(){l.remove()},300);}});</script>
+        @if(config('growstream.pwa.enabled', true))
+            <script>
+                if ('serviceWorker' in navigator) {
+                    window.addEventListener('load', function () {
+                        navigator.serviceWorker.register('/growstream-sw.js', { updateViaCache: 'none' })
+                            .then(function (reg) { console.log('[GrowStream PWA] Service Worker registered:', reg.scope); })
+                            .catch(function (err) { console.warn('[GrowStream PWA] Registration failed:', err); });
+                    });
+                }
+            </script>
+        @endif
     </body>
 </html>

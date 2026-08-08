@@ -249,6 +249,15 @@ Schedule::command('stockflow:send-backup')
     ->dailyAt('06:00')
     ->description('Send daily StockFlow inventory backups to enabled companies');
 
+// ========================================
+// GrowStream Scheduled Tasks
+// ========================================
+
+// Operational health monitoring (Cloudflare quota, PawaPay webhook, failed jobs)
+Schedule::command('growstream:check-ops --cloudflare-ping')
+    ->hourly()
+    ->description('Check GrowStream ops health and fire alerts');
+
 // DISABLED - RewardAnalyticsController causing circular dependency memory exhaustion
 // Artisan::command('test:reward-analytics', function () {
 //     $this->info('Testing RewardAnalyticsController...');

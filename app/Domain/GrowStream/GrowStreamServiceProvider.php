@@ -18,6 +18,7 @@ use App\Domain\GrowStream\Infrastructure\Providers\VideoProviderInterface;
 use App\Domain\GrowStream\Presentation\Console\Commands\AggregateAnalyticsCommand;
 use App\Domain\GrowStream\Presentation\Console\Commands\CalculateRevenueCommand;
 use App\Domain\GrowStream\Presentation\Console\Commands\CleanupOldAnalyticsCommand;
+use App\Domain\GrowStream\Presentation\Console\Commands\CheckGrowStreamOpsCommand;
 use App\Domain\GrowStream\Presentation\Console\Commands\GrowStreamStatsCommand;
 use App\Domain\GrowStream\Presentation\Console\Commands\ProcessPayoutsCommand;
 use App\Domain\GrowStream\Presentation\Console\Commands\ProcessPendingVideosCommand;
@@ -44,6 +45,7 @@ use App\Domain\GrowStream\Services\NotificationService;
 use App\Domain\GrowStream\Services\PayoutService;
 use App\Domain\GrowStream\Services\RentalService;
 use App\Domain\GrowStream\Services\RevenuePoolService;
+use App\Domain\GrowStream\Services\OpsHealthService;
 use App\Domain\GrowStream\Services\SponsorshipService;
 use App\Domain\GrowStream\Services\TipService;
 use App\Domain\GrowStream\Services\WatchService;
@@ -114,6 +116,7 @@ class GrowStreamServiceProvider extends ServiceProvider
         $this->app->singleton(RevenuePoolService::class);
         $this->app->singleton(PayoutService::class);
         $this->app->singleton(SponsorshipService::class);
+        $this->app->singleton(OpsHealthService::class);
 
         // WatchService has optional constructor dependencies (AccessControlService,
         // RentalService). Without explicit bindings the container substitutes their
@@ -161,6 +164,7 @@ class GrowStreamServiceProvider extends ServiceProvider
                 GrowStreamStatsCommand::class,
                 CalculateRevenueCommand::class,
                 ProcessPayoutsCommand::class,
+                CheckGrowStreamOpsCommand::class,
             ]);
         }
 

@@ -111,7 +111,7 @@ class AlertService
         return null;
     }
 
-    private function fire(array $alert): void
+    public function fire(array $alert): void
     {
         $cacheKey = self::CACHE_PREFIX . $alert['type'];
         $lastFired = Cache::get($cacheKey);

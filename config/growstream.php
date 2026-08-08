@@ -195,4 +195,38 @@ return [
         'free' => 'Free (Everyone)',
         'premium' => 'Premium (Subscribers)',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | PWA / Offline
+    |--------------------------------------------------------------------------
+    |
+    | Service worker registration + offline support for the GrowStream app.
+    | Disable only if Cloudflare Stream playback regressions reappear.
+    */
+    'pwa' => [
+        'enabled' => env('GROWSTREAM_PWA_ENABLED', true),
+        'service_worker' => '/growstream-sw.js',
+        'offline_page' => '/growstream-offline.html',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Operations Monitoring
+    |--------------------------------------------------------------------------
+    |
+    | Thresholds checked by `php artisan growstream:check-ops` (scheduled hourly).
+    |
+    | - cloudflare_stored_minutes_limit: stored video minutes on Cloudflare Stream
+    |   before a warning/critical alert fires. Set to null to disable.
+    | - pawapay_webhook_stale_minutes: alert if no successful PawaPay webhook was
+    |   received within this window (only meaningful once payments are live).
+    | - failed_jobs_warning / failed_jobs_critical: failed_jobs table counts.
+    */
+    'ops_monitoring' => [
+        'cloudflare_stored_minutes_limit' => env('GROWSTREAM_CF_STORED_MINUTES_LIMIT'),
+        'pawapay_webhook_stale_minutes' => env('GROWSTREAM_PAWAPAY_STALE_MINUTES', 120),
+        'failed_jobs_warning' => env('GROWSTREAM_FAILED_JOBS_WARNING', 5),
+        'failed_jobs_critical' => env('GROWSTREAM_FAILED_JOBS_CRITICAL', 20),
+    ],
 ];
