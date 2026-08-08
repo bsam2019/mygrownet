@@ -1,8 +1,12 @@
 import './bootstrap';
-import '../css/growstream.css';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import type { DefineComponent } from 'vue';
 import { bootInertia, registerModuleSW } from './modules/createApp';
+
+// Imported LAST so growstream's Tailwind token classes override the shared
+// app.css utilities (which would otherwise resolve to the light --background
+// hsl var). Source order decides the CSS cascade here.
+import '../css/growstream.css';
 
 // Unregister existing service workers that might be causing issues
 if ('serviceWorker' in navigator) {
