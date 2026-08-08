@@ -105,6 +105,12 @@ $registerGrowStreamPublicRoutes = function (string $prefix, string $namePrefix) 
         Route::get('/login', [GrowStreamWebController::class, 'redirectToLogin'])->name('login');
         Route::get('/register', [GrowStreamWebController::class, 'redirectToRegister'])->name('register');
 
+        // Centralized subscription plans page — reachable pre-login (pricing()
+        // handles guests); checkout stays auth-only in the group below.
+        Route::get('/subscription', [\App\Http\Controllers\SubscriptionCheckoutController::class, 'pricing'])
+            ->defaults('moduleId', 'growstream')
+            ->name('subscription');
+
         // Public informational pages (guest + authenticated)
         Route::get('/about', [GrowStreamWebController::class, 'about'])->name('pages.about');
         Route::get('/help', [GrowStreamWebController::class, 'help'])->name('pages.help');
