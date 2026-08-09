@@ -64,7 +64,6 @@
                     <option value="view_count">Most Viewed</option>
                     <option value="title">Title A-Z</option>
                 </select>
-            </div>
 
             <!-- Featured Videos -->
             <div v-if="featuredVideos.length > 0 && !filters.search" class="mb-12">
