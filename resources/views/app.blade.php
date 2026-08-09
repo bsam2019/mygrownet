@@ -29,10 +29,72 @@
                     }
                 } catch (\Exception $e) {}
             }
+
+            // Check for GrowBuilder site rendering props
+            $pageProps = $page['props'] ?? [];
+            $gbSite = $pageProps['site'] ?? null;
+            $gbSeo = $pageProps['seo'] ?? null;
+            $gbPage = $pageProps['page'] ?? null;
+
+            $isGbSite = !empty($gbSite) && !empty($gbSite['name']);
+
+            if ($isGbSite) {
+                $siteName = $gbSite['name'];
+                $pageTitle = $gbPage['title'] ?? 'Home';
+                $isHomepage = !empty($gbPage['isHomepage']);
+
+                $metaTitle = $gbPage['metaTitle'] ?? null;
+                $siteSeoTitle = $gbSite['seoSettings']['metaTitle'] ?? null;
+
+                if ($isHomepage) {
+                    $docTitle = $metaTitle ?: ($siteSeoTitle ?: $siteName);
+                } else {
+                    $docTitle = ($metaTitle ?: $pageTitle) . ' | ' . $siteName;
+                }
+
+                $docDescription = $gbSeo['description'] 
+                    ?? ($gbPage['metaDescription'] 
+                    ?? ($gbSite['seoSettings']['metaDescription'] 
+                    ?? ($gbSite['description'] 
+                    ?? ('Welcome to ' . $siteName))));
+
+                $docOgImage = $gbSeo['ogImage'] 
+                    ?? ($gbPage['ogImage'] 
+                    ?? ($gbSite['seoSettings']['ogImage'] 
+                    ?? ($gbSite['logo'] 
+                    ?? null)));
+
+                $docFavicon = $gbSeo['favicon'] 
+                    ?? ($gbSite['favicon'] 
+                    ?? ($gbSite['logo'] 
+                    ?? '/logo.png'));
+
+                $docUrl = $gbSeo['canonical'] ?? request()->fullUrl();
+
+                $jsonLd = [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebSite',
+                    'name' => $siteName,
+                    'url' => $docUrl,
+                ];
+                if (!empty($docDescription)) {
+                    $jsonLd['description'] = $docDescription;
+                }
+                $jsonLdString = json_encode($jsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            } else {
+                $siteName = $sfCompany ? ($sfCompany->name ?? 'MyGrowNet') : config('app.name', 'MyGrowNet');
+                $docTitle = $sfCompany ? ($sfCompany->name ?? 'MyGrowNet') : config('app.name', 'MyGrowNet');
+                $docDescription = null;
+                $docOgImage = null;
+                $docFavicon = '/logo.png';
+                $docUrl = request()->fullUrl();
+                $jsonLdString = null;
+            }
+
             $brandColor = $sfCompany ? ($sfCompany->settings['brand_color'] ?? '#2563eb') : '#2563eb';
-            $companyName = $sfCompany?->name ?? 'MyGrowNet';
-            $companyTagline = $sfCompany ? ($sfCompany->settings['tagline'] ?? '') : 'Grow Together, Succeed Together';
-            $companyInitial = $sfCompany ? mb_substr($sfCompany->name, 0, 1) : 'M';
+            $companyName = $isGbSite ? $siteName : ($sfCompany?->name ?? 'MyGrowNet');
+            $companyTagline = $sfCompany ? ($sfCompany->settings['tagline'] ?? '') : ($isGbSite ? '' : 'Grow Together, Succeed Together');
+            $companyInitial = $sfCompany ? mb_substr($sfCompany->name, 0, 1) : ($isGbSite ? mb_substr($siteName, 0, 1) : 'M');
         @endphp
 
         {{-- Inline style to set the HTML background color --}}
@@ -140,8 +202,8 @@
         </style>
         
         <!-- Favicon -->
-        <link rel="icon" type="image/png" href="/logo.png">
-        <link rel="apple-touch-icon" href="/logo.png">
+        <link rel="icon" type="image/png" href="{{ $docFavicon }}">
+        <link rel="apple-touch-icon" href="{{ $docFavicon }}">
         
         <!-- PWA Meta Tags -->
         <meta name="theme-color" content="{{ $brandColor }}">
@@ -153,9 +215,34 @@
         <meta name="format-detection" content="telephone=no">
         <meta name="msapplication-TileColor" content="{{ $brandColor }}">
         <meta name="msapplication-tap-highlight" content="no">
+
+        @if($isGbSite)
+        <!-- GrowBuilder Site SEO Meta Tags -->
+        @if($docDescription)<meta name="description" content="{{ $docDescription }}">@endif
+        <meta property="og:site_name" content="{{ $siteName }}">
+        <meta property="og:title" content="{{ $docTitle }}">
+        @if($docDescription)<meta property="og:description" content="{{ $docDescription }}">@endif
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="{{ $docUrl }}">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="{{ $docTitle }}">
+        @if($docDescription)<meta name="twitter:description" content="{{ $docDescription }}">@endif
+        <link rel="canonical" href="{{ $docUrl }}">
+        @if($docOgImage)
+        <meta property="og:image" content="{{ $docOgImage }}">
+        <meta name="twitter:image" content="{{ $docOgImage }}">
+        @endif
         
-        <!-- PWA Manifest (disabled for StockFlow subdomains) -->
-        @if(!$sfCompany)
+        @if($jsonLdString)
+        <!-- JSON-LD Structured Data -->
+        <script type="application/ld+json">
+        {!! $jsonLdString !!}
+        </script>
+        @endif
+        @endif
+        
+        <!-- PWA Manifest (disabled for StockFlow subdomains and GrowBuilder custom sites) -->
+        @if(!$sfCompany && !$isGbSite)
         <link rel="manifest" href="/manifest.json">
         @endif
         
@@ -164,10 +251,10 @@
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         
         <!-- Standard Favicon Sizes -->
-        <link rel="icon" type="image/png" sizes="32x32" href="/images/icon-192x192.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="/images/icon-192x192.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ $docFavicon }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ $docFavicon }}">
 
-        <title inertia>{{ $sfCompany ? $companyName : config('app.name', 'MyGrowNet') }}</title>
+        <title inertia>{{ $docTitle }}</title>
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />

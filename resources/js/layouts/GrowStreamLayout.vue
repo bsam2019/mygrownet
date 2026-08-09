@@ -30,6 +30,11 @@ const isActiveRoute = (href: string): boolean => {
     if (typeof window === 'undefined') return false;
     return window.location.pathname === new URL(href, window.location.origin).pathname;
 };
+
+import { useMiniPlayer } from '@/composables/useMiniPlayer';
+import VideoPlayer from '@/Components/GrowStream/VideoPlayer.vue';
+
+const { activeVideo, isMinimized, expandVideo, closeMiniPlayer } = useMiniPlayer();
 </script>
 
 <template>
@@ -44,6 +49,30 @@ const isActiveRoute = (href: string): boolean => {
         </main>
 
         <GrowStreamFooter />
+
+        <!-- Floating PiP Mini-Player -->
+        <div
+            v-if="isMinimized && activeVideo"
+            class="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 w-72 md:w-80 shadow-2xl rounded-xl overflow-hidden bg-black border border-primary/40 transition-all duration-300"
+        >
+            <div class="flex items-center justify-between px-3 py-2 bg-surface-container-highest/90 text-on-surface border-b border-outline-variant/40">
+                <span class="font-label-sm text-xs truncate max-w-[180px] font-semibold">{{ activeVideo.title }}</span>
+                <div class="flex items-center gap-1">
+                    <button @click="expandVideo" title="Expand Player" class="p-1 text-on-surface-variant hover:text-primary rounded">
+                        <span class="material-symbols-outlined text-base">open_in_full</span>
+                    </button>
+                    <button @click="closeMiniPlayer" title="Close Player" class="p-1 text-on-surface-variant hover:text-error rounded">
+                        <span class="material-symbols-outlined text-base">close</span>
+                    </button>
+                </div>
+            </div>
+            <div class="aspect-video w-full">
+                <VideoPlayer
+                    :video="activeVideo"
+                    :autoplay="true"
+                />
+            </div>
+        </div>
 
         <!-- Bottom Nav (mobile only, authenticated) -->
         <nav v-if="isAuthenticated" class="md:hidden fixed bottom-0 w-full bg-surface-container-lowest border-t border-surface-container-highest flex justify-around py-2 z-50">

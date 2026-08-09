@@ -5,8 +5,8 @@
         <GrowStreamHeader show-promo />
 
         <!-- Hero -->
-        <section class="relative overflow-hidden">
-            <div class="bg-cover bg-center w-full h-full absolute inset-0 gs-hero-bg" style="background-image:url('https://placehold.co/1600x900/241d19/e2571f?text=GrowStream')"></div>
+        <section class="relative overflow-hidden bg-gradient-to-b from-[#18110e] via-[#1f1713] to-background">
+            <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent"></div>
             <div class="hero-fade absolute inset-0"></div>
             <div ref="heroRef" class="relative max-w-3xl mx-auto text-center px-margin-mobile py-24 md:py-32">
                 <span class="gs-hero-item inline-block bg-primary-container/60 text-on-primary-container border border-primary/40 px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-widest mb-6" style="animation-delay:0.05s">Made in Zambia</span>
@@ -18,6 +18,9 @@
                     <a :href="registerHref" class="cta-glow bg-primary text-on-primary px-9 py-4 rounded-full font-label-md text-label-md w-full sm:w-auto flex items-center justify-center gap-2 hover:bg-[#c94918] hover:scale-[1.03] active:scale-[0.98] transition-all">
                         Start Watching Free <span class="material-symbols-outlined text-lg" aria-hidden="true">arrow_forward</span>
                     </a>
+                    <Link :href="route('growstream.browse')" class="bg-surface-container-high/80 backdrop-blur text-on-surface border border-outline-variant/60 px-8 py-4 rounded-full font-label-md text-label-md w-full sm:w-auto flex items-center justify-center gap-2 hover:bg-surface-container-highest hover:border-primary/40 transition-all">
+                        Browse Catalogue <span class="material-symbols-outlined text-lg" aria-hidden="true">grid_view</span>
+                    </Link>
                 </div>
                 <p class="gs-hero-item font-label-sm text-label-sm text-on-surface-variant" style="animation-delay:0.45s">Free tier available. Plans start at K35/month. Cancel anytime.</p>
             </div>

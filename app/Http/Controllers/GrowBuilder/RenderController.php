@@ -93,15 +93,42 @@ class RenderController extends Controller
             'discountPercentage' => $p->getDiscountPercentage(),
         ], $this->productRepository->getActiveForSite(SiteId::fromInt($site->getId()->value())));
 
+        // Calculate pre-computed SEO metadata
+        $siteSeo = $siteModel->seo_settings ?? [];
+        $siteName = $site->getName();
+
+        $metaTitle = $pageModel->meta_title ?: null;
+        $metaDescription = $pageModel->meta_description ?: null;
+        $ogImage = $pageModel->og_image ?: null;
+
+        $siteMetaTitle = $siteSeo['metaTitle'] ?? null;
+        $siteMetaDescription = $siteSeo['metaDescription'] ?? null;
+        $siteOgImage = $siteSeo['ogImage'] ?? null;
+        $siteDescription = $siteModel->description ?: null;
+
+        if ($pageModel->is_homepage) {
+            $effectiveTitle = $metaTitle ?: ($siteMetaTitle ?: $siteName);
+        } else {
+            $effectiveTitle = ($metaTitle ?: $pageModel->title) . ' | ' . $siteName;
+        }
+
+        $effectiveDescription = $metaDescription ?: ($siteMetaDescription ?: ($siteDescription ?: "Welcome to {$siteName}"));
+        $effectiveOgImage = $ogImage ?: ($siteOgImage ?: ($siteModel->logo ?: null));
+        $effectiveFavicon = $siteModel->favicon ?: ($siteModel->logo ?: '/logo.png');
+        $canonicalUrl = $request->url();
+
         // Use Inertia to render the same Vue component as preview
         return Inertia::render('GrowBuilder/Preview/Site', [
             'site' => [
                 'id' => $site->getId()->value(),
-                'name' => $site->getName(),
+                'name' => $siteName,
                 'subdomain' => $site->getSubdomain()->value(),
+                'custom_domain' => $siteModel->custom_domain,
+                'description' => $siteDescription,
                 'theme' => $site->getTheme()?->toArray() ?? [],
                 'logo' => $site->getLogo(),
                 'favicon' => $site->getFavicon(),
+                'seoSettings' => $siteSeo,
                 'url' => config('app.url'),
             ],
             'page' => [
@@ -110,6 +137,17 @@ class RenderController extends Controller
                 'slug' => $pageModel->slug,
                 'content' => $pageModel->content_json,
                 'isHomepage' => $pageModel->is_homepage,
+                'metaTitle' => $pageModel->meta_title,
+                'metaDescription' => $pageModel->meta_description,
+                'ogImage' => $pageModel->og_image,
+            ],
+            'seo' => [
+                'title' => $effectiveTitle,
+                'description' => $effectiveDescription,
+                'siteName' => $siteName,
+                'ogImage' => $effectiveOgImage,
+                'favicon' => $effectiveFavicon,
+                'canonical' => $canonicalUrl,
             ],
             'pages' => $navPages,
             'settings' => $siteModel->settings,

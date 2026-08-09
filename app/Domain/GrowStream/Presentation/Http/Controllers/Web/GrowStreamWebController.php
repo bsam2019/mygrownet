@@ -14,6 +14,7 @@ use App\Domain\GrowStream\Repositories\VideoSeriesRepositoryInterface;
 use App\Domain\Core\Contracts\MyGrowIdentity;
 use App\Domain\GrowStream\Services\AccessControlService;
 use App\Domain\GrowStream\Services\AttributionService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -100,27 +101,27 @@ class GrowStreamWebController
             return $this->landing();
         }
 
-        $featured = $this->videoRepo->featured(10, ['creator.user', 'categories']);
+        $featured = Cache::remember('growstream:home:featured', 600, fn () => $this->videoRepo->featured(10, ['creator.user', 'categories']));
 
-        $trending = $this->videoRepo->query()
+        $trending = Cache::remember('growstream:home:trending', 600, fn () => $this->videoRepo->query()
             ->published()
             ->with(['creator.user', 'categories'])
             ->orderBy('view_count', 'desc')
             ->take(10)
-            ->get();
+            ->get());
 
-        $recent = $this->videoRepo->query()
+        $recent = Cache::remember('growstream:home:recent', 600, fn () => $this->videoRepo->query()
             ->published()
             ->with(['creator.user', 'categories'])
             ->latest('published_at')
             ->take(10)
-            ->get();
+            ->get());
 
-        $categories = VideoCategory::whereNull('parent_id')
+        $categories = Cache::remember('growstream:home:categories', 600, fn () => VideoCategory::whereNull('parent_id')
             ->withCount('videos')
             ->orderBy('name')
             ->take(8)
-            ->get();
+            ->get());
 
         $continueWatching = [];
         $watchlist = [];
@@ -149,7 +150,7 @@ class GrowStreamWebController
         }
 
         // Top creators by subscriber/views for the avatar rail.
-        $topCreators = CreatorProfile::query()
+        $topCreators = Cache::remember('growstream:home:top_creators', 600, fn () => CreatorProfile::query()
             ->active()
             ->with('user')
             ->orderByDesc('total_views')
@@ -163,15 +164,15 @@ class GrowStreamWebController
                 'avatar_url' => $creator->avatar_url,
                 'is_verified' => (bool) $creator->is_verified,
                 'subscriber_count' => (int) $creator->subscriber_count,
-            ]);
+            ]));
 
         // Series rail (poster cards).
-        $series = $this->seriesRepo->query()
+        $series = Cache::remember('growstream:home:series', 600, fn () => $this->seriesRepo->query()
             ->with('creator.user')
             ->where('is_published', true)
             ->orderByDesc('view_count')
             ->take(8)
-            ->get();
+            ->get());
 
         // "For You" — prioritise videos from the categories the user watches most.
         $forYou = [];

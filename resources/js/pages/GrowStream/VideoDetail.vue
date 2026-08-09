@@ -13,6 +13,16 @@
                         @ended="handleEnded"
                         @close="router.visit(route('growstream.browse'))"
                     />
+
+                    <!-- Next Video Auto-Play Overlay -->
+                    <div v-if="showNextOverlay && nextVideo" class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/85 text-white backdrop-blur-sm p-6 text-center">
+                        <span class="font-label-sm text-label-sm uppercase tracking-widest text-amber-400 mb-2">Up Next in {{ nextCountdown }}s</span>
+                        <h3 class="font-headline-md text-headline-md text-white max-w-lg mb-4 line-clamp-2">{{ nextVideo.title }}</h3>
+                        <div class="flex items-center gap-3">
+                            <button @click="playNextVideo" class="bg-primary text-on-primary px-6 py-3 rounded-full font-label-md text-label-md font-bold">Play Now</button>
+                            <button @click="cancelNextVideo" class="bg-white/20 text-white px-6 py-3 rounded-full font-label-md text-label-md border border-white/30 hover:bg-white/30">Cancel</button>
+                        </div>
+                    </div>
                 </template>
                 <template v-else>
                     <div class="bg-cover bg-center w-full h-full absolute inset-0 opacity-80" :style="{ backgroundImage: `url('${video.thumbnail_url || video.poster_url || fallbackThumb}')` }"></div>
@@ -88,6 +98,9 @@
                         </div>
                     </Link>
                     <div class="flex items-center gap-2">
+                        <button @click="toggleMinimize" class="bg-surface-container-low text-on-surface-variant px-4 py-2 rounded-full font-label-sm text-label-sm flex items-center gap-1" title="Minimize to PiP">
+                            <span class="material-symbols-outlined text-base" aria-hidden="true">picture_in_picture_alt</span> PiP
+                        </button>
                         <button @click="toggleWatchlist" class="bg-primary/10 text-primary px-4 py-2 rounded-full font-label-sm text-label-sm flex items-center gap-1" :disabled="watchlistLoading">
                             <span class="material-symbols-outlined text-base" aria-hidden="true">{{ isInWatchlist ? 'bookmark' : 'bookmark_add' }}</span>
                         </button>
@@ -107,6 +120,24 @@
                     </button>
                     <div v-if="video.tags && video.tags.length > 0" class="mt-3 flex flex-wrap gap-2">
                         <span v-for="tag in video.tags" :key="tag.id" class="bg-surface-container-lowest text-on-surface-variant px-3 py-1 rounded-full font-label-sm text-label-sm border border-outline-variant">#{{ tag.name }}</span>
+                    </div>
+                </div>
+
+                <!-- Chapter Markers -->
+                <div v-if="video.chapters && video.chapters.length > 0" class="mb-8 p-4 bg-surface-container rounded-xl border border-outline-variant/60">
+                    <h3 class="font-headline-sm text-headline-sm mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary" aria-hidden="true">format_list_bulleted</span> Chapters
+                    </h3>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            v-for="chap in video.chapters"
+                            :key="chap.title"
+                            @click="jumpToChapter(chap.timestamp)"
+                            class="bg-surface-container-high hover:bg-primary/20 hover:text-primary text-on-surface px-3 py-1.5 rounded-lg font-label-sm text-label-sm border border-outline-variant/40 flex items-center gap-1.5 transition-colors"
+                        >
+                            <span class="font-mono text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded font-bold">{{ formatSeconds(chap.timestamp) }}</span>
+                            <span>{{ chap.title }}</span>
+                        </button>
                     </div>
                 </div>
 
@@ -175,6 +206,37 @@ const watchlistLoading = ref(false);
 const isInWatchlist = ref(!!props.watchlistItem);
 const accessBadge = computed(() => getAccessLevelBadge(props.video.access_level));
 
+import { useMiniPlayer } from '@/composables/useMiniPlayer';
+
+const { minimizeVideo } = useMiniPlayer();
+
+const currentPos = ref(props.watchHistory?.current_position || 0);
+
+const handleProgress = (position: number, duration: number) => {
+    currentPos.value = position;
+};
+
+const toggleMinimize = () => {
+    minimizeVideo(props.video, currentPos.value);
+};
+
+const jumpToChapter = (seconds: number) => {
+    // Dispatch postMessage event to iframe to seek to chapter timestamp
+    const iframe = document.querySelector('iframe');
+    if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage(JSON.stringify({
+            method: 'setCurrentTime',
+            value: seconds
+        }), '*');
+    }
+};
+
+const formatSeconds = (sec: number): string => {
+    const mins = Math.floor(sec / 60);
+    const remainder = Math.floor(sec % 60);
+    return `${mins}:${remainder < 10 ? '0' : ''}${remainder}`;
+};
+
 const contentTypeLabel = (key: string): string => {
     const map: Record<string, string> = {
         movie: 'Movie', series: 'Series', episode: 'Episode', short: 'Short',
@@ -185,8 +247,45 @@ const contentTypeLabel = (key: string): string => {
     return map[key] ?? key;
 };
 
+const nextVideo = computed(() => props.relatedVideos?.[0] ?? null);
+const showNextOverlay = ref(false);
+const nextCountdown = ref(10);
+let nextTimer: ReturnType<typeof setInterval> | null = null;
+
 const handleProgress = (position: number, duration: number) => { /* player saves */ };
-const handleEnded = () => { /* could auto-advance */ };
+
+const handleEnded = () => {
+    if (nextVideo.value && autoplay.value) {
+        showNextOverlay.value = true;
+        nextCountdown.value = 10;
+        if (nextTimer) clearInterval(nextTimer);
+        nextTimer = setInterval(() => {
+            nextCountdown.value -= 1;
+            if (nextCountdown.value <= 0) {
+                playNextVideo();
+            }
+        }, 1000);
+    }
+};
+
+const cancelNextVideo = () => {
+    showNextOverlay.value = false;
+    if (nextTimer) {
+        clearInterval(nextTimer);
+        nextTimer = null;
+    }
+};
+
+const playNextVideo = () => {
+    cancelNextVideo();
+    if (nextVideo.value) {
+        router.visit(route('growstream.video.detail', { slug: nextVideo.value.slug }));
+    }
+};
+
+onBeforeUnmount(() => {
+    if (nextTimer) clearInterval(nextTimer);
+});
 
 const toggleWatchlist = async () => {
     watchlistLoading.value = true;

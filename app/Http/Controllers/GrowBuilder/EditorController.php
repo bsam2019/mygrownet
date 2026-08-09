@@ -204,8 +204,11 @@ class EditorController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'slug' => 'required|string|max:255',
-            'show_in_nav' => 'boolean',
+            'slug' => 'nullable|string|max:255',
+            'show_in_nav' => 'nullable|boolean',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:1000',
+            'og_image' => 'nullable|string|max:2048',
         ]);
 
         $site = $this->siteRepository->findById(SiteId::fromInt($siteId));
@@ -228,9 +231,10 @@ class EditorController extends Controller
                 sections: $page->getContent()->getSections(),
                 pageId: $pageId,
                 title: $validated['title'],
-                slug: $validated['slug'],
-                metaTitle: $page->getMetaTitle(),
-                metaDescription: $page->getMetaDescription(),
+                slug: !empty($validated['slug']) ? $validated['slug'] : $page->getSlug(),
+                metaTitle: array_key_exists('meta_title', $validated) ? $validated['meta_title'] : $page->getMetaTitle(),
+                metaDescription: array_key_exists('meta_description', $validated) ? $validated['meta_description'] : $page->getMetaDescription(),
+                ogImage: array_key_exists('og_image', $validated) ? $validated['og_image'] : $page->getOgImage(),
                 isHomepage: $page->isHomepage(),
                 showInNav: $validated['show_in_nav'] ?? $page->showInNav(),
             );

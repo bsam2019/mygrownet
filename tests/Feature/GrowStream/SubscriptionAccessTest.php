@@ -9,18 +9,20 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
-    ModuleModel::create([
-        'id' => 'growstream',
-        'name' => 'GrowStream',
-        'slug' => 'growstream',
-        'category' => 'sme',
-        'description' => 'Video streaming platform',
-        'account_types' => ['member', 'business'],
-        'routes' => [],
-        'requires_subscription' => true,
-        'status' => 'active',
-        'version' => '1.0.0',
-    ]);
+    ModuleModel::firstOrCreate(
+        ['slug' => 'growstream'],
+        [
+            'id' => 'growstream',
+            'name' => 'GrowStream',
+            'category' => 'sme',
+            'description' => 'Video streaming platform',
+            'account_types' => ['member', 'business'],
+            'routes' => [],
+            'requires_subscription' => true,
+            'status' => 'active',
+            'version' => '1.0.0',
+        ]
+    );
 
     $this->user = User::factory()->create(['account_types' => ['member']]);
     $this->access = app(AccessControlService::class);

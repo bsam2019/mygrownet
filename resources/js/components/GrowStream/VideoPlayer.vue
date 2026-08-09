@@ -3,6 +3,7 @@
         <!-- Cloudflare Stream Player (iframe) -->
         <div v-if="!error" class="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
             <iframe
+                ref="iframeRef"
                 :src="streamPlayerUrl"
                 style="border: none; position: absolute; top: 0; left: 0; height: 100%; width: 100%;"
                 allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
@@ -100,30 +101,78 @@ const streamPlayerUrl = computed(() => {
     return `https://watch.cloudflarestream.com/${videoId}?${params.toString()}`;
 });
 
+const iframeRef = ref<HTMLIFrameElement | null>(null);
+const isPlaying = ref(false);
+const isMuted = ref(false);
+const currentTime = ref(0);
+const duration = ref(0);
+
+const sendPlayerCommand = (method: string, value?: any) => {
+    if (iframeRef.value?.contentWindow) {
+        iframeRef.value.contentWindow.postMessage(JSON.stringify({
+            method,
+            value
+        }), '*');
+    }
+};
+
+const handleKeydown = (e: KeyboardEvent) => {
+    // Ignore if typing in input fields
+    const target = e.target as HTMLElement;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+    }
+
+    if (e.code === 'Space') {
+        e.preventDefault();
+        sendPlayerCommand(isPlaying.value ? 'pause' : 'play');
+    } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        sendPlayerCommand('setCurrentTime', Math.max(0, currentTime.value - 10));
+    } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        sendPlayerCommand('setCurrentTime', Math.min(duration.value, currentTime.value + 10));
+    } else if (e.code === 'KeyM') {
+        e.preventDefault();
+        isMuted.value = !isMuted.value;
+        sendPlayerCommand('setMuted', isMuted.value);
+    } else if (e.code === 'KeyF') {
+        e.preventDefault();
+        if (iframeRef.value) {
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            } else {
+                iframeRef.value.requestFullscreen().catch(() => {});
+            }
+        }
+    }
+};
+
 const onPlayerLoad = () => {
     loading.value = false;
-    
-    // Listen for messages from the Cloudflare Stream player
     window.addEventListener('message', handlePlayerMessage);
+    window.addEventListener('keydown', handleKeydown);
 };
 
 const handlePlayerMessage = (event: MessageEvent) => {
-    // Cloudflare Stream player sends events via postMessage
     if (event.data && typeof event.data === 'object') {
         const { event: eventType, ...data } = event.data;
 
         switch (eventType) {
             case 'play':
-                // Video started playing
+                isPlaying.value = true;
                 break;
             case 'pause':
-                // Video paused
+                isPlaying.value = false;
                 break;
             case 'ended':
+                isPlaying.value = false;
                 emit('ended');
                 break;
             case 'timeupdate':
-                if (data.currentTime && data.duration) {
+                if (data.currentTime !== undefined && data.duration !== undefined) {
+                    currentTime.value = data.currentTime;
+                    duration.value = data.duration;
                     emit('progress', data.currentTime, data.duration);
                 }
                 break;
@@ -140,5 +189,10 @@ onMounted(() => {
         error.value = 'Video ID is missing';
         loading.value = false;
     }
+});
+
+onUnmounted(() => {
+    window.removeEventListener('message', handlePlayerMessage);
+    window.removeEventListener('keydown', handleKeydown);
 });
 </script>

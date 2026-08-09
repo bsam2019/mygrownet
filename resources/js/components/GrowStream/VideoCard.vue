@@ -1,5 +1,9 @@
 <template>
-    <div class="group relative overflow-hidden rounded-[var(--gs-radius)] bg-[var(--gs-card)] transition-all hover:shadow-xl">
+    <div
+        class="group relative overflow-hidden rounded-[var(--gs-radius)] bg-[var(--gs-card)] transition-all hover:shadow-xl"
+        @mouseenter="isHovered = true"
+        @mouseleave="isHovered = false"
+    >
         <!-- Thumbnail -->
         <div class="relative aspect-video overflow-hidden bg-[var(--gs-bg-elevated)]">
             <picture v-if="video.thumbnail_url">
@@ -32,24 +36,32 @@
                 </svg>
             </div>
 
+            <!-- Animated Hover Preview -->
+            <img
+                v-if="isHovered && animatedPreviewUrl"
+                :src="animatedPreviewUrl"
+                :alt="`${video.title} preview`"
+                class="absolute inset-0 h-full w-full object-cover transition-opacity duration-300 z-10"
+            />
+
             <!-- Duration Badge -->
             <div
                 v-if="video.duration"
-                class="absolute bottom-2 right-2 rounded bg-black/80 px-2 py-1 text-xs font-medium text-white"
+                class="absolute bottom-2 right-2 z-20 rounded bg-black/80 px-2 py-1 text-xs font-medium text-white"
             >
                 {{ formatDuration(video.duration) }}
             </div>
 
             <!-- Access Level Badge -->
             <div
-                :class="[accessBadge.color, 'absolute left-2 top-2 rounded px-2 py-1 text-xs font-medium text-white']"
+                :class="[accessBadge.color, 'absolute left-2 top-2 z-20 rounded px-2 py-1 text-xs font-medium text-white']"
             >
                 {{ accessBadge.text }}
             </div>
 
             <!-- Play Overlay -->
             <div
-                class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
+                class="absolute inset-0 z-20 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
             >
                 <div class="rounded-full bg-[var(--gs-primary)]/90 p-4">
                     <svg class="h-8 w-8 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -123,7 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import type { Video } from '@/types/growstream';
 import { useGrowStream } from '@/composables/useGrowStream';
@@ -139,10 +151,17 @@ const props = withDefaults(defineProps<Props>(), {
     showDescription: false,
 });
 
+const isHovered = ref(false);
 const { formatDuration, getAccessLevelBadge, getContentTypeLabel, getThumbnailUrl } = useGrowStream();
 
 const accessBadge = computed(() => getAccessLevelBadge(props.video.access_level));
 const contentTypeLabel = computed(() => getContentTypeLabel(props.video.content_type));
+
+const animatedPreviewUrl = computed(() => {
+    if (!props.video.provider_video_id) return null;
+    const videoId = props.video.provider_video_id.split('?')[0];
+    return `https://watch.cloudflarestream.com/${videoId}/thumbnails/thumbnail.gif`;
+});
 
 const formatViews = (views: number): string => {
     if (views >= 1000000) {

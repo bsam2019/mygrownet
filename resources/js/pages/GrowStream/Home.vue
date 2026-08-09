@@ -91,6 +91,18 @@
             </div>
         </section>
 
+        <!-- New User Onboarding / Welcome Banner -->
+        <section v-if="(!continueWatching || continueWatching.length === 0) && (!forYou || forYou.length === 0)" class="mb-8 p-6 bg-surface-container rounded-2xl border border-outline-variant/60 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="space-y-1 text-center md:text-left">
+                <span class="text-xs uppercase tracking-widest font-semibold text-primary">Welcome to GrowStream</span>
+                <h2 class="font-headline-md text-headline-md text-on-surface">Explore Top Zambian Movies &amp; Shows</h2>
+                <p class="font-body-md text-body-md text-on-surface-variant max-w-xl">Start watching trending titles below or filter by category to build your personalized watch list.</p>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+                <button @click="goBrowse({})" class="bg-primary text-on-primary px-6 py-3 rounded-full font-label-md text-label-md">Explore Catalogue</button>
+            </div>
+        </section>
+
         <!-- Trending Now -->
         <section v-if="trendingVideos && trendingVideos.length > 0" class="mb-8">
             <div class="flex justify-between items-center mb-4">

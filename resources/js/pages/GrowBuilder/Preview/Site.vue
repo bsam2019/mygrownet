@@ -44,6 +44,9 @@ interface Page {
     slug: string;
     content: { sections: Section[] };
     isHomepage: boolean;
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    ogImage?: string | null;
 }
 
 interface NavPage {
@@ -57,10 +60,22 @@ interface Site {
     id: number;
     name: string;
     subdomain: string;
+    custom_domain?: string | null;
+    description?: string | null;
     theme: Record<string, any> | null;
     logo: string | null;
     favicon: string | null;
+    seoSettings?: Record<string, any> | null;
     url: string;
+}
+
+interface SEOProps {
+    title?: string;
+    description?: string;
+    siteName?: string;
+    ogImage?: string;
+    favicon?: string;
+    canonical?: string;
 }
 
 interface Settings {
@@ -588,7 +603,21 @@ const getElementTransform = (section: Section, elementKey: string): string => {
 </script>
 
 <template>
-    <Head :title="`${page.title} - ${site.name}`" />
+    <Head>
+        <title>{{ seoTitle }}</title>
+        <meta name="description" :content="seoDescription" />
+        <meta property="og:site_name" :content="site.name" />
+        <meta property="og:title" :content="seoTitle" />
+        <meta property="og:description" :content="seoDescription" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" :content="canonicalUrl" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" :content="seoTitle" />
+        <meta name="twitter:description" :content="seoDescription" />
+        <link rel="canonical" :href="canonicalUrl" />
+        <link v-if="seoOgImage" property="og:image" :content="seoOgImage" />
+        <link v-if="seoFavicon" rel="icon" :href="seoFavicon" />
+    </Head>
 
     <!-- Splash Screen -->
     <SplashScreen

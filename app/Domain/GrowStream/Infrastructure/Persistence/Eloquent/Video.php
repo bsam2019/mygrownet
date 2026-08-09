@@ -81,12 +81,14 @@ class Video extends Model
         'starter_kit_tier',
         'starter_kit_unlock_order',
         'starter_kit_points_reward',
+        'chapters',
     ];
 
     protected $casts = [
         'subtitles_available' => 'array',
         'keywords' => 'array',
         'thumbnail_sizes' => 'array',
+        'chapters' => 'array',
         'is_published' => 'boolean',
         'is_featured' => 'boolean',
         'is_downloadable' => 'boolean',

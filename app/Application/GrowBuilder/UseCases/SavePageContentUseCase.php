@@ -48,7 +48,7 @@ class SavePageContentUseCase
 
             $page->setShowInNav($dto->showInNav);
 
-            if ($dto->metaTitle !== null || $dto->metaDescription !== null) {
+            if ($dto->metaTitle !== null || $dto->metaDescription !== null || $dto->ogImage !== null) {
                 $page->updateSeo($dto->metaTitle, $dto->metaDescription, $dto->ogImage);
             }
         } else {
