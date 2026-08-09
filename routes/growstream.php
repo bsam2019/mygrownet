@@ -71,7 +71,7 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
 
         // Creator platform settings & Hub management
         Route::get('/creator/platform', [CreatorPlatformController::class, 'show'])->name('creator.platform.show');
-        Route::post('/creator/platform', [CreatorPlatformController::class, 'update'])->name('creator.platform.update');
+        Route::match(['post', 'put'], '/creator/platform', [CreatorPlatformController::class, 'update'])->name('creator.platform.update');
 
         // Creator social attribution analytics
         Route::get('/creator/attribution', [CreatorAttributionController::class, 'index'])->name('creator.attribution.index');

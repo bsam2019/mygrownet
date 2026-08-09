@@ -148,6 +148,13 @@
 
         <!-- Footer -->
         <footer class="border-t border-outline-variant/40 py-8 bg-[#0e0b09] text-center text-xs text-on-surface-variant">
+            <div class="flex items-center justify-center gap-6 mb-3 font-label-sm">
+                <Link :href="route('growstream.pages.terms')" class="hover:text-primary transition-colors">Terms &amp; Platform Policies</Link>
+                <span>•</span>
+                <Link :href="route('growstream.pages.privacy')" class="hover:text-primary transition-colors">Privacy &amp; Data Protection</Link>
+                <span>•</span>
+                <Link :href="route('growstream.pages.help')" class="hover:text-primary transition-colors">Support &amp; Help Center</Link>
+            </div>
             <p>&copy; {{ new Date().getFullYear() }} GrowStream Hub — Powered by MyGrowNet Platform Core.</p>
         </footer>
     </div>

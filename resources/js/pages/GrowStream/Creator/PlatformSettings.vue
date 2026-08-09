@@ -23,6 +23,16 @@
 
                         <form @submit.prevent="saveSettings" class="space-y-4">
                             <div>
+                                <label class="block font-label-md text-label-md text-on-surface mb-1">Platform Brand Name</label>
+                                <input
+                                    v-model="form.brand_name"
+                                    type="text"
+                                    placeholder="e.g. Acme Online Tuition Academy"
+                                    class="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface"
+                                />
+                            </div>
+
+                            <div>
                                 <label class="block font-label-md text-label-md text-on-surface mb-1">Platform Category</label>
                                 <select
                                     v-model="form.category"
@@ -44,7 +54,7 @@
                                             placeholder="acme"
                                             class="w-full px-4 py-2.5 rounded-l-xl border border-outline-variant bg-surface-container-lowest text-on-surface"
                                         />
-                                        <span class="bg-surface-container-high px-3 py-2.5 rounded-r-xl border border-l-0 border-outline-variant text-xs text-on-surface-variant font-mono">.growstream.app</span>
+                                        <span class="bg-surface-container-high px-3 py-2.5 rounded-r-xl border border-l-0 border-outline-variant text-xs text-on-surface-variant font-mono">.mygrownet.com</span>
                                     </div>
                                 </div>
 

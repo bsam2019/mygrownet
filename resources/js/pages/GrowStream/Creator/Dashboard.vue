@@ -88,7 +88,7 @@
                         <span class="material-symbols-outlined text-base">{{ setupOpen ? 'expand_less' : 'expand_more' }}</span>
                     </button>
                     <div v-show="setupOpen" class="space-y-1 mt-1">
-                        <Link :href="route('growstream.creator.platform')" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high font-label-md text-label-md">
+                        <Link :href="route('growstream.creator.platform.show')" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high font-label-md text-label-md">
                             <span class="material-symbols-outlined text-lg">palette</span>Branding &amp; Domain
                         </Link>
                         <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high font-label-md text-label-md opacity-60">

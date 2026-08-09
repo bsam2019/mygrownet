@@ -5,41 +5,37 @@ const updated = 'August 2026';
 
 const sections = [
     {
-        heading: 'What We Collect',
-        body: 'We collect the information you provide when creating an account (name, email, password) and data about how you use the Service (watch history, device info, payments via our providers).',
+        heading: '1. Information We Collect',
+        body: 'We collect account identification (name, email, phone number), authentication metadata, video watch metrics, subscription transaction logs, and technical telemetry (IP address, browser type). For Creator Hub tenants, we process organization details, custom domain bindings, and payment gateway credentials.',
     },
     {
-        heading: 'How We Use Your Data',
-        body: 'We use your data to provide the Service, personalise recommendations, process payments, show relevant content, and improve the platform. We never sell your personal information.',
+        heading: '2. How We Use Information',
+        body: 'We process personal information to operate public video streaming, authenticate users via MyGrowNet SSO, calculate watch-time analytics, process payments and BYOP payouts, enforce video access controls, and detect fraudulent or copyright-infringing activity.',
     },
     {
-        heading: 'Payments & Mobile Money',
-        body: 'Payments are processed by our payment partners (MTN, Airtel, Zamtel). We only receive confirmation of successful payments — we do not store your mobile money PIN or banking details.',
+        heading: '3. Data Isolation & Tenant Privacy',
+        body: 'Creator Hub operates a multi-tenant isolation model. Customer records, student progress, and subscription analytics for a specific academy (e.g. mrbanda.mygrownet.com) are strictly isolated. No tenant can access another tenant\'s user data.',
     },
     {
-        heading: 'Cookies & Local Storage',
-        body: 'We use cookies and local storage to keep you signed in and remember your preferences, including data saver mode and watch progress.',
+        heading: '4. Statutory Compliance (Zambia DPA 2021 & GDPR)',
+        body: 'We comply with the Zambian Data Protection Act No. 4 of 2021 and GDPR standards. Data subjects have statutory rights to: (a) Access personal data; (b) Request correction of inaccurate information; and (c) Request data erasure, subject to financial accounting retention mandates.',
     },
     {
-        heading: 'Your Rights',
-        body: 'You may access, correct, or delete your personal information, and export or request deletion of your watch data at any time by contacting support@mygrownet.com.',
+        heading: '5. Security & Encryption',
+        body: 'All data in transit is protected using TLS 1.3 encryption. Tenant payment credentials for Bring Your Own Payment (BYOP) integrations are stored strictly encrypted using AES-256 GCM.',
     },
     {
-        heading: 'Data Retention',
-        body: 'We retain account and billing data for as long as required to provide the Service and comply with legal and financial obligations. Watch history is retained while your account is active.',
-    },
-    {
-        heading: 'Contact',
-        body: 'Privacy questions? Email support@mygrownet.com.',
+        heading: '6. Data Protection Officer',
+        body: 'For privacy inquiries, data access requests, or regulatory communications, contact our Data Protection Officer at privacy@mygrownet.com.',
     },
 ];
 </script>
 
 <template>
-    <PublicPage title="Privacy Policy" :subtitle="`Last updated: ${updated}`">
+    <PublicPage title="Privacy Policy & Data Protection" :subtitle="`Last updated: ${updated}`">
         <section class="space-y-5">
             <div v-for="s in sections" :key="s.heading" class="bg-surface-container rounded-xl p-6 border border-outline-variant/60">
-                <h2 class="font-headline-md text-headline-md mb-3">{{ s.heading }}</h2>
+                <h2 class="font-headline-md text-headline-md mb-3 text-primary">{{ s.heading }}</h2>
                 <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{{ s.body }}</p>
             </div>
         </section>

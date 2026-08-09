@@ -385,3 +385,75 @@ The rewrite updates existing tables and introduces canonical DDD entities:
 - **Pilot Group**: 10–20 SMEs spanning Retail, Hardware, Schools, Real Estate, Salons, Restaurants, Automotive, and Training Providers.
 - **Focus**: Validate offline conversion tracking and response-time improvements for non-ecommerce businesses.
 - **Initial Launch Float**: K14,000 Africala SMS Float + K3,000 Compliance/Sender ID + K6,000 Pilot Marketing = **K23,000 Total Launch Budget**.
+
+---
+
+## 22. Strategic Architectural Refinements (2026 Competitive Enhancements)
+
+To transform BizBoost into an enterprise-grade, highly competitive platform in the African SME and global market, the following 7 modern enhancements are incorporated into the architectural specification:
+
+### 1. 🎙️ AI Voice-to-Lead & Conversational Audio Transcription
+- **Use Case**: Sales reps on the road or in physical shops frequently record quick WhatsApp audio notes rather than typing long CRM entries.
+- **Implementation**: Integrates speech-to-text AI models (Whisper / Regional Voice Models) that automatically transcribe audio notes into structured lead records, meeting summaries, and scheduled follow-up tasks.
+
+### 2. 💬 Meta WhatsApp Interactive Cloud API (Buttons & Catalogs)
+- **Use Case**: Move beyond plain text links to native interactive WhatsApp experiences.
+- **Implementation**: Leverages Meta WhatsApp Business Cloud API to send **Interactive Quick-Reply Buttons** (*"Request Quote"*, *"Book Viewing"*, *"Speak to Sales"*) and **Interactive Product Catalogs** directly within WhatsApp chat threads, tracking conversion actions natively.
+
+### 3. 📲 Dynamic QR Code & Physical Touchpoint Attribution Engine
+- **Use Case**: Connecting physical offline marketing (billboards, flyers, shop counter tents, vehicle signage, print ads) to digital conversion tracking.
+- **Implementation**: Generates dynamic trackable QR codes (`bizboost.link/qr/{campaign_hash}`) that log scan location, device type, time, and campaign source before redirecting to smart forms or WhatsApp links.
+
+### 4. ⚡ Pipeline Velocity & Bottleneck Analytics
+- **Use Case**: Business owners need to know *why* sales are stalling and where leads get stuck.
+- **Implementation**: Computes real-time **Sales Pipeline Velocity**:
+  $$\text{Pipeline Velocity} = \frac{\text{Active Qualified Leads} \times \text{Win Rate \%} \times \text{Average Deal Value (K)}}{\text{Average Sales Cycle Duration (Days)}}$$
+  Surfaces stage-by-stage bottleneck alerts (e.g. *"Quotations sit in Negotiation for an average of 8.4 days before closing"*).
+
+### 5. 📬 Unified Omnichannel Customer Inbox
+- **Use Case**: Eliminates tab-switching across WhatsApp, SMS, Web Chat, Facebook Messenger, and Email.
+- **Implementation**: Aggregates all incoming customer messages into a **Single Customer Conversation Timeline** (`bizboost_customer_threads`), allowing sales teams to reply over SMS or WhatsApp from a single unified interface.
+
+### 6. 🌍 Multi-Currency & Cross-Border Attribution (ZMW, USD, ZAR)
+- **Use Case**: Many regional SMEs operate in multi-currency environments (Zambia, DRC, Zimbabwe, South Africa).
+- **Implementation**: Multi-currency conversion tracking (`currency` and `exchange_rate_at_conversion`) allowing revenue attribution to track both Kwacha (ZMW) and USD/ZAR deals accurately.
+
+### 7. 🔌 Open API & Webhook Ecosystem (Zapier / Make.com / OpenAPI 3.0)
+- **Use Case**: Enable external developers and enterprise clients to connect custom CRMs, ERPs, or web forms.
+- **Implementation**: Provides signed outgoing webhooks (`lead.created`, `quote.accepted`, `sale.attributed`), incoming webhook ingestion endpoints, and an interactive OpenAPI 3.0 specification.
+
+---
+
+## 23. Deployment Topology — On-Platform vs. Off-Platform Integration Boundaries
+
+To guarantee complete clarity during engineering execution, the architecture explicitly bifurcates the system into **Internal On-Platform** capabilities and **External Off-Platform** client assets:
+
+```text
+                                       BIZBOOST PLATFORM ENGINE
+                                                  │
+                 ┌────────────────────────────────┴────────────────────────────────┐
+                 ▼                                                                 ▼
+   INTERNAL ON-PLATFORM MODULE                                      EXTERNAL OFF-PLATFORM ASSETS
+ (MyGrowNet Application Ecosystem)                                (Standalone SaaS Extensions)
+                 │                                                                 │
+  ├─ Customer Hub & Lead Management                                ├─ External JS Tracking SDK (tracker.js)
+  ├─ GrowBuilder Native Auto-Tracker                               ├─ WordPress / WooCommerce Plugin (.zip)
+  ├─ BizDocs Quotation Integration                                 ├─ Shopify App & Cart Abandonment Sync
+  ├─ StockFlow POS & Inventory Integration                         ├─ Google Tag Manager (GTM) Container Template
+  ├─ GrowMarket Orders Integration                                 ├─ Dynamic QR Code Generator (bizboost.link/qr)
+  ├─ GrowFinance Payment Ledger                                    ├─ WhatsApp Trackable Redirect Links
+  └─ Africala SMS Carrier Rail                                     └─ Inbound Webhook Ingestion API (Zapier/Make)
+```
+
+### Component Topology Matrix
+
+| Component | Execution Location | Data Flow | User Experience |
+|---|---|---|---|
+| **GrowBuilder Tracking** | Native inside MyGrowNet | Automatic zero-config internal event dispatch | Seamless 1-click activation |
+| **External Site Tracking (`tracker.js`)** | CDN / External Web Server | Cross-domain HTTPS POST to `api.bizboost.mygrownet.com/v1/events` | Single `<script>` embed tag |
+| **WordPress Plugin** | External WP Server | REST API sync to `api.bizboost.mygrownet.com/v1/leads` | Standard WordPress settings panel |
+| **Shopify App** | Shopify Webhook Infrastructure | Event Webhook to `api.bizboost.mygrownet.com/v1/shopify` | Shopify Admin App interface |
+| **WhatsApp Trackable Links** | Edge Redirect Proxy | Redirect logging via `bizboost.link/wa/{hash}` ➔ WhatsApp API | Instant WhatsApp chat launch |
+| **Business System Integration** | MyGrowNet Domain Event Bus | Internal domain event handlers (`QuoteAccepted`, `SaleCompleted`) | Automatic cross-module attribution |
+
+

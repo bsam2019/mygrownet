@@ -408,6 +408,18 @@ To maintain complete architectural integrity with MyGrowNet's platform core, Gro
 
 ---
 
+## 20. Legal, Financial, Copyright & Data Protection Compliance Specification
+
+The platform operates under a comprehensive legal, financial, and copyright compliance framework documented in [`GROWSTREAM_POLICIES_AND_COMPLIANCE.md`](file:///c:/Apache24/htdocs/mygrownet/docs/platform-evolution/GrowStream/GROWSTREAM_POLICIES_AND_COMPLIANCE.md).
+
+### Summary of Policy Coverages:
+1. **Master B2B Terms of Service**: Governs hosted subdomains (`*.mygrownet.com`) vs. custom CNAME domains (`www.tenant.com`), uptime SLAs (99.5%), and Acceptable Use Policies.
+2. **Creator Financial & BYOP Policy**: Governs GrowStream-Managed escrow payouts (weekly, K250 minimum threshold via MTN/Airtel/Zamtel/Bank) vs. BYOP direct merchant settlement (Paystack/Flutterwave/PawaPay), and ZRA tax compliance (16% VAT, 15% WHT).
+3. **Zambian & International Copyright Takedown Policy**: Aligns with Zambian Copyright Act (Cap 406) and DMCA/EU Directives. Implements Cloudflare Stream pre-processing hash fingerprinting, 24-hour takedown procedures, and a 3-strike tenant suspension rule.
+4. **Data Protection & Privacy**: Enforces Zambia Data Protection Act No. 4 of 2021 and GDPR standards, guaranteeing zero cross-tenant data leaks and complete data subject rights (access, correction, erasure).
+
+---
+
 ## Strategic distinction (unchanged, central to the whole document)
 
 **GrowStream Consumer:** a destination where people discover and watch content. **GrowStream Platform:** infrastructure that lets someone else create their own destination using GrowStream. This distinction should remain central to architecture, product positioning, database design, permissions, APIs, and financial architecture — whenever this work actually begins.

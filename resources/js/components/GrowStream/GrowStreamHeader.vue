@@ -22,6 +22,12 @@ const isAdmin = computed(() => {
     return roles.some((r) => ['admin', 'administrator', 'superadmin'].includes(r.toLowerCase()));
 });
 
+const isCreator = computed(() => {
+    if (!user.value) return false;
+    const roles = (user.value?.roles as string[] | undefined) ?? [];
+    return roles.some((r) => ['creator', 'admin', 'administrator', 'superadmin'].includes(r.toLowerCase())) || !!(user.value as any)?.is_creator;
+});
+
 // Mobile menu
 const mobileMenuOpen = ref(false);
 const toggleMobileMenu = () => { mobileMenuOpen.value = !mobileMenuOpen.value; };
@@ -115,17 +121,12 @@ const logout = () => {
     router.post(route('growstream.logout'));
 };
 
-const navLinks = computed(() => {
-    const links = [
-        { label: 'Home', href: () => route('growstream.home') },
-        { label: 'Browse', href: () => route('growstream.browse') },
-        { label: 'Plans', href: () => route('growstream.subscription') },
-    ];
-    if (isAuthenticated.value) {
-        links.push({ label: 'Platform Hub', href: () => route('growstream.creator.platform.show') });
-    }
-    return links;
-});
+const navLinks = computed(() => [
+    { label: 'Home', href: () => route('growstream.home') },
+    { label: 'Browse', href: () => route('growstream.browse') },
+    { label: 'Plans', href: () => route('growstream.subscription') },
+    { label: 'Platform Hub', href: () => route('growstream.hub.landing') },
+]);
 </script>
 
 <template>
@@ -240,9 +241,15 @@ const navLinks = computed(() => {
                                         <p class="truncate text-xs text-on-surface-variant">{{ user?.email }}</p>
                                     </div>
                                     <div class="flex flex-col p-1.5">
-                                        <Link :href="route('growstream.my-videos')" class="rounded-lg px-3 py-2 text-sm text-on-surface hover:bg-surface-container-low" @click="closeAvatarMenu">My Videos</Link>
-                                        <Link :href="route('growstream.subscription')" class="rounded-lg px-3 py-2 text-sm text-primary hover:bg-surface-container-low" @click="closeAvatarMenu">Subscribe</Link>
-                                        <Link :href="route('growstream.creator.dashboard')" class="rounded-lg px-3 py-2 text-sm text-on-surface hover:bg-surface-container-low" @click="closeAvatarMenu">Creator Studio</Link>
+                                        <Link :href="route('growstream.my-videos')" class="rounded-lg px-3 py-2 text-sm text-on-surface hover:bg-surface-container-low" @click="closeAvatarMenu">My Saved Videos</Link>
+                                        <Link :href="route('growstream.subscription')" class="rounded-lg px-3 py-2 text-sm text-primary hover:bg-surface-container-low" @click="closeAvatarMenu">Subscribe / Plans</Link>
+                                        <template v-if="isCreator">
+                                            <Link :href="route('growstream.creator.dashboard')" class="rounded-lg px-3 py-2 text-sm text-on-surface hover:bg-surface-container-low" @click="closeAvatarMenu">Creator Hub Dashboard</Link>
+                                            <Link :href="route('growstream.creator.platform.show')" class="rounded-lg px-3 py-2 text-sm text-on-surface hover:bg-surface-container-low" @click="closeAvatarMenu">Platform Settings</Link>
+                                        </template>
+                                        <template v-else>
+                                            <Link :href="route('growstream.creator.register')" class="rounded-lg px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/10" @click="closeAvatarMenu">🚀 Become a Creator</Link>
+                                        </template>
                                         <Link v-if="isAdmin" :href="route('growstream.admin.videos')" class="rounded-lg px-3 py-2 text-sm text-on-surface hover:bg-surface-container-low" @click="closeAvatarMenu">Admin</Link>
                                         <button class="rounded-lg px-3 py-2 text-left text-sm text-error hover:bg-error-container" @click="logout">Sign Out</button>
                                     </div>

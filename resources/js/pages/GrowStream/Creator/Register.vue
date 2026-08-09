@@ -116,7 +116,7 @@
                     </div>
                     <label for="agree_to_terms" class="ml-3 text-sm text-[var(--gs-accent)]">
                         I confirm that I own the rights to all content I upload, and I accept the
-                        GrowStream Creator Agreement (v{{ agreementVersion }}).
+                        <a :href="route('growstream.pages.terms')" target="_blank" class="underline font-bold hover:text-white">GrowStream Creator &amp; Platform Agreement (v{{ agreementVersion }})</a>.
                     </label>
                 </div>
 
