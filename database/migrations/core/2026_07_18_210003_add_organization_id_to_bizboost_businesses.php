@@ -8,20 +8,28 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('bizboost_businesses', function (Blueprint $table) {
-            $table->foreignId('organization_id')
-                ->nullable()
-                ->after('id')
-                ->constrained('organizations')
-                ->nullOnDelete();
-        });
+        if (Schema::hasTable('bizboost_businesses')) {
+            if (!Schema::hasColumn('bizboost_businesses', 'organization_id')) {
+                Schema::table('bizboost_businesses', function (Blueprint $table) {
+                    $table->foreignId('organization_id')
+                        ->nullable()
+                        ->after('id')
+                        ->constrained('organizations')
+                        ->nullOnDelete();
+                });
+            }
+        }
     }
 
     public function down(): void
     {
-        Schema::table('bizboost_businesses', function (Blueprint $table) {
-            $table->dropForeign(['organization_id']);
-            $table->dropColumn('organization_id');
-        });
+        if (Schema::hasTable('bizboost_businesses')) {
+            if (Schema::hasColumn('bizboost_businesses', 'organization_id')) {
+                Schema::table('bizboost_businesses', function (Blueprint $table) {
+                    $table->dropForeign(['organization_id']);
+                    $table->dropColumn('organization_id');
+                });
+            }
+        }
     }
 };

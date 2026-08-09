@@ -2,7 +2,7 @@
 
 **Status: Architecture reference for future-phase work. Not a current build target.**
 
-> **Naming note (read first).** "GrowStream Platform" is the **external product label** for this B2B capability. Internally — in code, ADRs, tickets, and data models — use the codename **"GrowStream Hubs"** to avoid colliding with MyGrowNet's existing shared infrastructure, which is already called "platform core" and owns the `App\Domain\Platform*` namespace (PlatformBilling, PlatformPayments, etc.). "Hubs" = the customer-owned portal product; "platform" = the shared MyGrowNet core that Hubs is built on. Keep that split everywhere.
+> **Naming note (read first).** "GrowStream Hub" (route `/hub`) is the official **product label and route** for this B2B capability. Internally — in code, ADRs, tickets, and data models — "GrowStream Hub" represents the central platform engine that orchestrates independent creator platforms and portals, avoiding collision with MyGrowNet's shared `App\Domain\Platform*` infrastructure. Keep that distinction everywhere.
 
 GrowStream Consumer (public streaming) is pre-launch and is the priority. This document exists so today's data models, permissions, and content-visibility architecture don't have to be torn up later — not to start parallel development now. Section 0 below makes this explicit; keep it attached whenever this document is shared with opencode or anyone else scoping work.
 
@@ -293,6 +293,33 @@ Webhooks, embedded player, Moodle integration, OAuth/SSO.
 
 ### Phase 6: Enterprise
 SSO, advanced analytics, enterprise controls, advanced security, custom integrations, custom contracts.
+
+---
+
+## 16. Architectural Enhancements & Refinements (2026 Audit)
+
+To ensure GrowStream Hubs seamlessly integrates with MyGrowNet's existing DDD and platform core infrastructure, the following 5 technical refinements are incorporated into the specification:
+
+### 1. Integration with Platform Core Domain Resolution (`ResolveDomainContext`)
+- Reuse MyGrowNet's canonical `domains` table (`2400xx_add_domains_table`).
+- Hosted subdomains (`*.growstream.app`) and connected custom domains (`www.mymathstuition.com`) resolve via `ResolveDomainContext` middleware to `DomainResolution` (`type = 'organization'`, `target_id = organization_id`).
+- Guarantees zero cross-tenant contamination during request lifecycle.
+
+### 2. Immediate Zero-Downtime Schema Prep
+- Add `publishing_destination` (`public`, `portal`, `both`, default `public`) and nullable `organization_id` columns to `growstream_videos` and `growstream_video_series` now.
+- Keeps current consumer codebase working with zero breaking changes while opening the door for Hubs content scoping.
+
+### 3. Usage Metering & Quota Engine (`TenantUsageMeter`)
+- Implement a real-time usage meter (`TenantUsageMeter.php`) tracking stored video minutes ($5/1000 min Cloudflare cost) and streamed bandwidth per organization.
+- Triggers soft warnings at 80% quota and hard streaming playback throttles at 100% quota to protect platform margins.
+
+### 4. Tenant-Scoped BYOP Resolution (`PaymentGatewayFactory`)
+- Extend platform core `App\Domain\PlatformPayments\PaymentGatewayFactory` to accept `(?Organization $tenant = null)`.
+- Resolves tenant-specific encrypted credentials from `organization_payment_gateways` table for BYOP mode checkout without altering the core payment pipeline.
+
+### 5. Automated Cloudflare Video Fingerprinting & Piracy Mitigation
+- Hook Cloudflare Stream's automated hash matching API into `tusComplete` video processing.
+- Instantly flags duplicate copyrighted uploads across private tenant portals before video status is marked as `ready`.
 
 ---
 

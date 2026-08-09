@@ -35,9 +35,13 @@ class HandleInertiaRequests extends Middleware
         }
 
         // Resolve subdomain blade view from domains table
-        $domain = Domain::where('domain', $host)
-            ->where('is_active', true)
-            ->first();
+        try {
+            $domain = Domain::where('domain', $host)
+                ->where('is_active', true)
+                ->first();
+        } catch (\Throwable $e) {
+            $domain = null;
+        }
         if ($domain && $domain->application) {
             $view = $domain->application->slug;
             if (view()->exists($view)) {

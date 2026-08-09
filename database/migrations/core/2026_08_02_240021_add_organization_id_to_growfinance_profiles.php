@@ -8,20 +8,28 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('growfinance_profiles', function (Blueprint $table) {
-            $table->foreignId('organization_id')
-                ->nullable()
-                ->constrained('organizations')
-                ->cascadeOnDelete()
-                ->after('id');
-        });
+        if (Schema::hasTable('growfinance_profiles')) {
+            if (!Schema::hasColumn('growfinance_profiles', 'organization_id')) {
+                Schema::table('growfinance_profiles', function (Blueprint $table) {
+                    $table->foreignId('organization_id')
+                        ->nullable()
+                        ->constrained('organizations')
+                        ->cascadeOnDelete()
+                        ->after('id');
+                });
+            }
+        }
     }
 
     public function down(): void
     {
-        Schema::table('growfinance_profiles', function (Blueprint $table) {
-            $table->dropForeign(['organization_id']);
-            $table->dropColumn('organization_id');
-        });
+        if (Schema::hasTable('growfinance_profiles')) {
+            if (Schema::hasColumn('growfinance_profiles', 'organization_id')) {
+                Schema::table('growfinance_profiles', function (Blueprint $table) {
+                    $table->dropForeign(['organization_id']);
+                    $table->dropColumn('organization_id');
+                });
+            }
+        }
     }
 };

@@ -8,20 +8,28 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('sa_companies', function (Blueprint $table) {
-            $table->foreignId('organization_id')
-                ->nullable()
-                ->after('id')
-                ->constrained('organizations')
-                ->nullOnDelete();
-        });
+        if (Schema::hasTable('sa_companies')) {
+            if (!Schema::hasColumn('sa_companies', 'organization_id')) {
+                Schema::table('sa_companies', function (Blueprint $table) {
+                    $table->foreignId('organization_id')
+                        ->nullable()
+                        ->after('id')
+                        ->constrained('organizations')
+                        ->nullOnDelete();
+                });
+            }
+        }
     }
 
     public function down(): void
     {
-        Schema::table('sa_companies', function (Blueprint $table) {
-            $table->dropForeign(['organization_id']);
-            $table->dropColumn('organization_id');
-        });
+        if (Schema::hasTable('sa_companies')) {
+            if (Schema::hasColumn('sa_companies', 'organization_id')) {
+                Schema::table('sa_companies', function (Blueprint $table) {
+                    $table->dropForeign(['organization_id']);
+                    $table->dropColumn('organization_id');
+                });
+            }
+        }
     }
 };

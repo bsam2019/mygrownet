@@ -4,10 +4,13 @@ use App\Domain\GrowStream\Presentation\Http\Controllers\Admin\CategoryAdminContr
 use App\Domain\GrowStream\Presentation\Http\Controllers\Admin\CreatorAdminController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Admin\ModerationController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Admin\SponsorshipController;
+use App\Domain\GrowStream\Presentation\Http\Controllers\Web\Creator\CreatorAttributionController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Web\Creator\CreatorOnboardingController;
+use App\Domain\GrowStream\Presentation\Http\Controllers\Web\Creator\CreatorPlatformController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Web\Creator\CreatorSponsorshipController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Web\Creator\CreatorVideoController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Web\GrowStreamWebController;
+use App\Domain\GrowStream\Presentation\Http\Controllers\Web\HubLandingController;
 use App\Domain\GrowStream\Presentation\Http\Controllers\Web\NotificationController;
 use Illuminate\Support\Facades\Route;
 
@@ -66,6 +69,13 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
         Route::get('/creator/analytics', [CreatorVideoController::class, 'analytics'])->name('creator.analytics');
         Route::get('/creator/payouts', [CreatorVideoController::class, 'payouts'])->name('creator.payouts');
 
+        // Creator platform settings & Hub management
+        Route::get('/creator/platform', [CreatorPlatformController::class, 'show'])->name('creator.platform.show');
+        Route::post('/creator/platform', [CreatorPlatformController::class, 'update'])->name('creator.platform.update');
+
+        // Creator social attribution analytics
+        Route::get('/creator/attribution', [CreatorAttributionController::class, 'index'])->name('creator.attribution.index');
+
         // Creator sponsorship fund
         Route::get('/creator/sponsorship', [CreatorSponsorshipController::class, 'index'])->name('creator.sponsorship.index');
         Route::post('/creator/sponsorship', [CreatorSponsorshipController::class, 'store'])->name('creator.sponsorship.store');
@@ -111,6 +121,8 @@ $registerGrowStreamPublicRoutes = function (string $prefix, string $namePrefix) 
         Route::get('/series/{slug}', [GrowStreamWebController::class, 'seriesDetail'])->name('series.detail');
         Route::get('/login', [GrowStreamWebController::class, 'redirectToLogin'])->name('login');
         Route::get('/register', [GrowStreamWebController::class, 'redirectToRegister'])->name('register');
+
+        Route::get('/hub', [HubLandingController::class, 'show'])->name('hub.landing');
 
         // Centralized subscription plans page — reachable pre-login (pricing()
         // handles guests); checkout stays auth-only in the group below.

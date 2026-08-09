@@ -115,11 +115,17 @@ const logout = () => {
     router.post(route('growstream.logout'));
 };
 
-const navLinks = [
-    { label: 'Home', href: () => route('growstream.home') },
-    { label: 'Browse', href: () => route('growstream.browse') },
-    { label: 'Plans', href: () => route('growstream.subscription') },
-];
+const navLinks = computed(() => {
+    const links = [
+        { label: 'Home', href: () => route('growstream.home') },
+        { label: 'Browse', href: () => route('growstream.browse') },
+        { label: 'Plans', href: () => route('growstream.subscription') },
+    ];
+    if (isAuthenticated.value) {
+        links.push({ label: 'Platform Hub', href: () => route('growstream.creator.platform.show') });
+    }
+    return links;
+});
 </script>
 
 <template>

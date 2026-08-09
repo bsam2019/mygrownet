@@ -106,6 +106,11 @@ class VideoSeries extends Model
             ->get();
     }
 
+    public function seasons(): HasMany
+    {
+        return $this->hasMany(VideoSeason::class, 'series_id')->orderBy('season_number');
+    }
+
     public function getSeasons()
     {
         return $this->videos()

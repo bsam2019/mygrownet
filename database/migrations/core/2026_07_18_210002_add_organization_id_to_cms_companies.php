@@ -8,20 +8,28 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('cms_companies', function (Blueprint $table) {
-            $table->foreignId('organization_id')
-                ->nullable()
-                ->after('id')
-                ->constrained('organizations')
-                ->nullOnDelete();
-        });
+        if (Schema::hasTable('cms_companies')) {
+            if (!Schema::hasColumn('cms_companies', 'organization_id')) {
+                Schema::table('cms_companies', function (Blueprint $table) {
+                    $table->foreignId('organization_id')
+                        ->nullable()
+                        ->after('id')
+                        ->constrained('organizations')
+                        ->nullOnDelete();
+                });
+            }
+        }
     }
 
     public function down(): void
     {
-        Schema::table('cms_companies', function (Blueprint $table) {
-            $table->dropForeign(['organization_id']);
-            $table->dropColumn('organization_id');
-        });
+        if (Schema::hasTable('cms_companies')) {
+            if (Schema::hasColumn('cms_companies', 'organization_id')) {
+                Schema::table('cms_companies', function (Blueprint $table) {
+                    $table->dropForeign(['organization_id']);
+                    $table->dropColumn('organization_id');
+                });
+            }
+        }
     }
 };

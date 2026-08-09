@@ -154,10 +154,14 @@ class DetectSubdomain
 
                 // Resolve standard application subdomains via domains table
                 $domainHost = "{$subdomain}.mygrownet.com";
-                $domainRecord = Domain::where('domain', $domainHost)
-                    ->where('type', 'application')
-                    ->where('is_active', true)
-                    ->first();
+                try {
+                    $domainRecord = Domain::where('domain', $domainHost)
+                        ->where('type', 'application')
+                        ->where('is_active', true)
+                        ->first();
+                } catch (\Throwable $e) {
+                    $domainRecord = null;
+                }
                 if ($domainRecord) {
                     $branch = $domainRecord->application?->slug ?? $subdomain;
                     $this->configureSubdomainUrl($subdomain);
@@ -575,15 +579,19 @@ class DetectSubdomain
         // Remove www. prefix if present
         $domain = preg_replace('/^www\./i', '', $host);
         
-        // Skip mygrownet.com domains
-        if (str_ends_with($domain, 'mygrownet.com')) {
+        // Skip localhost / IP addresses & mygrownet.com domains
+        if ($domain === '127.0.0.1' || $domain === 'localhost' || str_ends_with($domain, 'mygrownet.com')) {
             return null;
         }
         
-        $siteModel = GrowBuilderSite::where('custom_domain', $domain)
-            ->orWhere('custom_domain', 'www.' . $domain)
-            ->where('status', 'published')
-            ->first();
+        try {
+            $siteModel = GrowBuilderSite::where('custom_domain', $domain)
+                ->orWhere('custom_domain', 'www.' . $domain)
+                ->where('status', 'published')
+                ->first();
+        } catch (\Throwable $e) {
+            return null;
+        }
             
         if (!$siteModel) {
             return null;

@@ -15,7 +15,7 @@ class WorkspaceResolver
             $domain = Domain::where('domain', $host)
                 ->where('is_active', true)
                 ->first();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return null;
         }
 
@@ -53,7 +53,12 @@ class WorkspaceResolver
             return null;
         }
 
-        $app = Application::where('slug', $slug)->where('is_active', true)->first();
+        try {
+            $app = Application::where('slug', $slug)->where('is_active', true)->first();
+        } catch (\Throwable $e) {
+            return null;
+        }
+
         if (!$app) {
             return null;
         }
@@ -74,9 +79,13 @@ class WorkspaceResolver
 
         $subdomain = explode('.', $host)[0];
 
-        $org = Organization::where('slug', $subdomain)
-            ->where('status', 'active')
-            ->first();
+        try {
+            $org = Organization::where('slug', $subdomain)
+                ->where('status', 'active')
+                ->first();
+        } catch (\Throwable $e) {
+            return null;
+        }
 
         if (!$org) {
             return null;
@@ -91,9 +100,13 @@ class WorkspaceResolver
 
     public function resolveFromCustomDomain(string $host): ?ResolvedWorkspace
     {
-        $domain = CustomDomain::where('domain', $host)
-            ->whereIn('status', ['active', 'verified'])
-            ->first();
+        try {
+            $domain = CustomDomain::where('domain', $host)
+                ->whereIn('status', ['active', 'verified'])
+                ->first();
+        } catch (\Throwable $e) {
+            return null;
+        }
 
         if (!$domain) {
             return null;

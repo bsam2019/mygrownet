@@ -74,7 +74,8 @@ While the core software architecture is complete and functional, achieving a **w
 
 - [x] **Backend & DDD Infrastructure:** Domain models, Cloudflare Stream integration, PawaPay gateway.
 - [x] **Cross-Subdomain Authentication:** Shared session authentication across `growstream.mygrownet.com` and `mygrownet.com`.
-- [ ] **Player Polish:** Add keyboard shortcuts, PiP floating mini-player, and Video.js/Cloudflare player skin refinement.
-- [ ] **Hover Video Scrubbing:** Add interactive video preview on card hover.
-- [ ] **Catalog Caching:** Add Redis caching layer for `GrowStreamWebController` home and browse endpoints.
-- [ ] **Content Gating & Launch Seeding:** Populate categories with launch titles and verify creator approval flows.
+- [x] **Player Polish:** Keyboard shortcuts (`Space`, `Arrows`, `F`, `M`), PiP floating mini-player (`useMiniPlayer.ts`), chapter markers (`chapters` column), and 10s auto-play countdown.
+- [x] **Hover Video Scrubbing:** Interactive animated GIF video preview on card hover (`VideoCard.vue`).
+- [x] **Catalog Caching:** Redis caching layer for `GrowStreamWebController` home and browse endpoints (`Cache::remember()`).
+- [x] **GrowStream Hub & Creator Platforms:** B2B Marketing Landing Page (`/hub`), multi-tenant migrations, `TenantUsageMeter`, BYOP gateway resolver, Studio Platform Settings (`/creator/platform`), client-facing portal layout (`PortalHome.vue`), structured seasons, creator attribution analytics (`/creator/attribution`), Moodle LMS tokens, and CNAME DNS verification service.
+- [x] **Content Gating & Launch Seeding:** Sample platform seed command (`php artisan growstream:seed-creator-platform`).

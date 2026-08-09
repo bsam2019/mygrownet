@@ -8,20 +8,28 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('quick_invoice_profiles', function (Blueprint $table) {
-            $table->foreignId('organization_id')
-                ->nullable()
-                ->after('user_id')
-                ->constrained('organizations')
-                ->nullOnDelete();
-        });
+        if (Schema::hasTable('quick_invoice_profiles')) {
+            if (!Schema::hasColumn('quick_invoice_profiles', 'organization_id')) {
+                Schema::table('quick_invoice_profiles', function (Blueprint $table) {
+                    $table->foreignId('organization_id')
+                        ->nullable()
+                        ->after('user_id')
+                        ->constrained('organizations')
+                        ->nullOnDelete();
+                });
+            }
+        }
     }
 
     public function down(): void
     {
-        Schema::table('quick_invoice_profiles', function (Blueprint $table) {
-            $table->dropForeign(['organization_id']);
-            $table->dropColumn('organization_id');
-        });
+        if (Schema::hasTable('quick_invoice_profiles')) {
+            if (Schema::hasColumn('quick_invoice_profiles', 'organization_id')) {
+                Schema::table('quick_invoice_profiles', function (Blueprint $table) {
+                    $table->dropForeign(['organization_id']);
+                    $table->dropColumn('organization_id');
+                });
+            }
+        }
     }
 };
