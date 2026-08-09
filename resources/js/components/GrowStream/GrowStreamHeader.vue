@@ -124,20 +124,23 @@ const navLinks = [
 
 <template>
     <div>
-        <!-- Promo banner -->
-        <div
-            v-if="showPromo"
-            class="bg-gradient-to-r from-primary to-[#a73400] text-white text-center py-2.5 px-4 font-label-sm text-label-sm flex items-center justify-center gap-2"
-        >
-            <span class="material-symbols-outlined text-base" aria-hidden="true">redeem</span>
-            New to GrowStream? First episode of every series is always free.
-        </div>
+        <!-- Promo banner - REMOVED -->
 
         <!-- Header -->
         <header class="border-b border-outline-variant/60 sticky top-0 z-40 bg-background/90 backdrop-blur-md">
             <div class="max-w-6xl mx-auto flex items-center justify-between px-margin-mobile md:px-margin-desktop h-16 gap-4">
-                <!-- Brand -->
-                <Link :href="route('growstream.home')" class="font-headline-lg-mobile text-2xl font-extrabold text-primary tracking-tight shrink-0" @click="closeMobileMenu">GrowStream</Link>
+                <!-- Mobile menu trigger (LEFT side on mobile) -->
+                <button
+                    class="md:hidden text-on-surface-variant p-2 rounded-full flex items-center justify-center"
+                    aria-label="Menu"
+                    :aria-expanded="mobileMenuOpen"
+                    @click="toggleMobileMenu"
+                >
+                    <span class="material-symbols-outlined text-2xl" aria-hidden="true">{{ mobileMenuOpen ? 'close' : 'menu' }}</span>
+                </button>
+
+                <!-- Brand (CENTER on mobile, LEFT on desktop) -->
+                <Link :href="route('growstream.home')" class="font-headline-lg-mobile text-2xl md:text-3xl font-extrabold text-primary tracking-tight shrink-0" @click="closeMobileMenu">GrowStream</Link>
 
                 <!-- Nav links (desktop) -->
                 <nav class="hidden md:flex items-center gap-1 flex-1 px-6">
@@ -186,7 +189,7 @@ const navLinks = [
                         aria-label="Search"
                         @click="openSearch"
                     >
-                        <span class="material-symbols-outlined text-lg" aria-hidden="true">search</span>
+                        <span class="material-symbols-outlined text-xl" aria-hidden="true">search</span>
                     </button>
                     <div v-else class="flex items-center gap-1 absolute right-14 left-14 top-0 h-16 px-2 bg-background">
                         <span class="material-symbols-outlined text-on-surface-variant" aria-hidden="true">search</span>
@@ -202,16 +205,6 @@ const navLinks = [
                             <span class="material-symbols-outlined text-lg" aria-hidden="true">close</span>
                         </button>
                     </div>
-
-                    <!-- Mobile menu trigger -->
-                    <button
-                        class="md:hidden text-on-surface-variant p-2 rounded-full flex items-center justify-center"
-                        aria-label="Menu"
-                        :aria-expanded="mobileMenuOpen"
-                        @click="toggleMobileMenu"
-                    >
-                        <span class="material-symbols-outlined text-lg" aria-hidden="true">{{ mobileMenuOpen ? 'close' : 'menu' }}</span>
-                    </button>
 
                     <!-- Auth / Avatar -->
                     <template v-if="isAuthenticated">
@@ -253,7 +246,7 @@ const navLinks = [
                     </template>
                     <template v-else>
                         <a :href="loginHref" class="hidden sm:block font-label-md text-label-md text-on-surface-variant px-2 sm:px-3 py-2">Sign In</a>
-                        <a :href="registerHref" class="bg-primary text-on-primary px-4 py-2 rounded-full font-label-md text-label-md hover:bg-[#c94918] transition-colors">Sign Up Free</a>
+                        <a :href="registerHref" class="bg-primary text-on-primary px-4 py-2 rounded-full font-label-md text-label-md hover:bg-[#c94918] transition-colors">Sign Up</a>
                     </template>
                 </div>
             </div>
