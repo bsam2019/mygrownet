@@ -252,8 +252,6 @@ const showNextOverlay = ref(false);
 const nextCountdown = ref(10);
 let nextTimer: ReturnType<typeof setInterval> | null = null;
 
-const handleProgress = (position: number, duration: number) => { /* player saves */ };
-
 const handleEnded = () => {
     if (nextVideo.value && autoplay.value) {
         showNextOverlay.value = true;
