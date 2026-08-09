@@ -82,7 +82,13 @@
                             <td class="px-6 py-4 text-sm text-[var(--gs-muted)]">{{ video.view_count }}</td>
                             <td class="px-6 py-4 text-sm text-[var(--gs-muted)]">{{ formatDate(video.created_at) }}</td>
                             <td class="px-6 py-4 text-right">
-                                <div class="flex justify-end gap-3">
+                                <div class="flex justify-end items-center gap-3">
+                                    <button
+                                        @click="openShareModal(video)"
+                                        class="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/30"
+                                    >
+                                        <span class="material-symbols-outlined text-sm">rocket_launch</span> Market
+                                    </button>
                                     <Link
                                         :href="route('growstream.creator.videos.edit', video.id)"
                                         class="text-sm font-medium text-[var(--gs-primary)] hover:text-[var(--gs-primary-hover)]"
@@ -124,12 +130,33 @@
                 </div>
             </div>
         </div>
+
+        <SocialMarketingModal
+            v-if="selectedVideo"
+            :show="showShareModal"
+            :item="selectedVideo"
+            @close="showShareModal = false"
+        />
     </CreatorStudioLayout>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import CreatorStudioLayout from '@/Layouts/CreatorStudioLayout.vue';
+import SocialMarketingModal from '@/Components/GrowStream/SocialMarketingModal.vue';
+
+const showShareModal = ref(false);
+const selectedVideo = ref<any>(null);
+
+const openShareModal = (v: any) => {
+    selectedVideo.value = {
+        title: v.title,
+        slug: v.slug,
+        thumbnail_url: v.thumbnail_url,
+    };
+    showShareModal.value = true;
+};
 
 interface Video {
     id: number;

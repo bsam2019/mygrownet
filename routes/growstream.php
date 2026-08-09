@@ -59,6 +59,7 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
 
         // Creator self-service content
         Route::get('/creator/videos', [CreatorVideoController::class, 'index'])->name('creator.videos.index');
+        Route::get('/creator/videos-list', [CreatorVideoController::class, 'index'])->name('creator.videos');
         Route::get('/creator/videos/create', [CreatorVideoController::class, 'create'])->name('creator.videos.create');
         Route::post('/creator/videos', [CreatorVideoController::class, 'store'])->name('creator.videos.store');
         Route::post('/creator/videos/tus-init', [CreatorVideoController::class, 'tusInit'])->name('creator.videos.tus-init');

@@ -6,6 +6,7 @@ use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\CreatorPlatform;
 use App\Domain\GrowStream\Services\TenantUsageMeter;
 use App\Domain\GrowStream\Services\TenantPaymentResolver;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,21 +24,24 @@ class CreatorPlatformController
 
         $platform = CreatorPlatform::where('organization_id', $orgId)->first();
 
+        // Check if user is platform administrator
+        $isAdmin = false;
+        $roles = is_array($user->roles ?? null) ? $user->roles : (is_string($user->roles ?? null) ? json_decode($user->roles, true) : []);
+        if (is_array($roles)) {
+            $isAdmin = count(array_intersect(array_map('strtolower', $roles), ['admin', 'administrator', 'superadmin', 'super_admin'])) > 0;
+        }
+        $isAdmin = $isAdmin || (bool) ($user->is_admin ?? false);
+
         // If no active subscribed platform exists
         if (!$platform || !$platform->is_active || $platform->subscription_status !== 'active') {
-            $isAdmin = false;
-            if (method_exists($user, 'hasRole')) {
-                $isAdmin = $user->hasRole('super_admin') || $user->hasRole('admin');
-            }
-            $isAdmin = $isAdmin || ($user->is_admin ?? false);
-
             if ($isAdmin) {
-                // Auto-provision platform for platform admins
+                // Auto-provision platform for platform admins safely
+                $cleanSubdomain = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $user->name ?? 'admin')) . $orgId;
                 $platform = CreatorPlatform::updateOrCreate(
                     ['organization_id' => $orgId],
                     [
-                        'brand_name' => $user->name . ' Platform',
-                        'subdomain' => strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $user->name)),
+                        'brand_name' => ($user->name ?? 'Admin') . ' Platform',
+                        'subdomain' => $cleanSubdomain,
                         'brand_color' => '#e2571f',
                         'subscription_plan' => 'business',
                         'subscription_status' => 'active',
@@ -46,7 +50,11 @@ class CreatorPlatformController
                     ]
                 );
             } else {
-                return redirect()->route('growstream.hub.subscribe')
+                $targetRoute = Route::has('growstream.hub.subscribe')
+                    ? 'growstream.hub.subscribe'
+                    : (Route::has('growstream.sub.hub.subscribe') ? 'growstream.sub.hub.subscribe' : 'growstream.subscription');
+
+                return redirect()->route($targetRoute)
                     ->with('info', 'Please choose a Creator Hub subscription plan to launch your platform.');
             }
         }

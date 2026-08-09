@@ -67,7 +67,7 @@ class HubClientController extends Controller
                 'category' => $category,
             ],
             'terminology' => $terminology,
-            'subscriptionActive' => true,
+            'subscriptionActive' => $enrolledVideos->count() > 0,
             'enrolledVideos' => $enrolledVideos,
             'enrolledCount' => $enrolledVideos->count(),
             'completedLessonsCount' => $completedLessonsCount,

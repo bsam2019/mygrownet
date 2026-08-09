@@ -1,8 +1,8 @@
 <template>
     <GrowStreamLayout :title="`${video.title} - GrowStream`">
-        <main class="pb-24">
-            <!-- Video Player -->
-            <div class="relative w-full aspect-video bg-black overflow-hidden">
+        <main class="-mt-6 md:mt-0 pb-24">
+            <!-- Video Player (Edge-to-Edge on Mobile) -->
+            <div class="relative w-full -mx-margin-mobile md:mx-0 aspect-video bg-black overflow-hidden rounded-none md:rounded-2xl shadow-xl">
                 <template v-if="userCanAccess">
                     <VideoPlayer
                         :video="video"
@@ -77,12 +77,12 @@
             </div>
 
             <!-- Details panel -->
-            <div class="px-margin-mobile pt-6">
-                <h1 class="font-headline-lg-mobile text-headline-lg-mobile mb-2">{{ video.title }}</h1>
-                <div class="flex flex-wrap items-center gap-2 font-label-sm text-label-sm text-on-surface-variant mb-6">
+            <div class="pt-3 md:pt-6">
+                <h1 class="font-bold text-lg md:text-2xl text-on-surface mb-1.5 leading-snug">{{ video.title }}</h1>
+                <div class="flex flex-wrap items-center gap-2 font-label-sm text-xs text-on-surface-variant mb-4">
                     <span>{{ formatViews(video.view_count) }} views</span><span>•</span><span>{{ formatDate(video.created_at) }}</span>
-                    <span v-if="video.content_type" class="bg-surface-container-low text-on-surface-variant px-3 py-1 rounded-full ml-1">{{ contentTypeLabel(video.content_type) }}</span>
-                    <span :class="[accessBadge.color, 'bg-surface-container-low text-on-surface-variant px-3 py-1 rounded-full']">{{ accessBadge.text }}</span>
+                    <span v-if="video.content_type" class="bg-surface-container-low text-on-surface-variant px-2.5 py-0.5 rounded-full ml-1 text-[11px]">{{ contentTypeLabel(video.content_type) }}</span>
+                    <span :class="[accessBadge.color, 'bg-surface-container-low text-on-surface-variant px-2.5 py-0.5 rounded-full text-[11px]']">{{ accessBadge.text }}</span>
                 </div>
 
                 <!-- Creator row -->
@@ -104,11 +104,18 @@
                         <button @click="toggleWatchlist" class="bg-primary/10 text-primary px-4 py-2 rounded-full font-label-sm text-label-sm flex items-center gap-1" :disabled="watchlistLoading">
                             <span class="material-symbols-outlined text-base" aria-hidden="true">{{ isInWatchlist ? 'bookmark' : 'bookmark_add' }}</span>
                         </button>
-                        <button @click="shareVideo" class="bg-surface-container-low text-on-surface-variant px-4 py-2 rounded-full font-label-sm text-label-sm flex items-center gap-1">
-                            <span class="material-symbols-outlined text-base" aria-hidden="true">share</span> Share
+                        <button @click="showShareModal = true" class="bg-primary text-on-primary px-4 py-2 rounded-full font-label-sm text-xs font-bold flex items-center gap-1.5 shadow-md hover:bg-[#c94918] transition-colors">
+                            <span class="material-symbols-outlined text-base" aria-hidden="true">rocket_launch</span> Share &amp; Market
                         </button>
                     </div>
                 </div>
+
+                <!-- Social Marketing Modal -->
+                <SocialMarketingModal
+                    :show="showShareModal"
+                    :item="{ title: video.title, slug: video.slug, thumbnail_url: video.thumbnail_url, poster_url: video.poster_url, creator_name: video.creator?.display_name }"
+                    @close="showShareModal = false"
+                />
 
                 <!-- Description -->
                 <div class="bg-surface-container-low rounded-lg p-4 mb-8">
@@ -197,6 +204,9 @@ import { ref, computed, onBeforeUnmount } from 'vue';
 import { router, Link } from '@inertiajs/vue3';
 import GrowStreamLayout from '@/Layouts/GrowStreamLayout.vue';
 import VideoPlayer from '@/Components/GrowStream/VideoPlayer.vue';
+import SocialMarketingModal from '@/Components/GrowStream/SocialMarketingModal.vue';
+
+const showShareModal = ref(false);
 import { useGrowStream } from '@/composables/useGrowStream';
 import { useGrowStreamMetrics } from '@/composables/useGrowStreamMetrics';
 import type { Video, WatchHistory, Watchlist } from '@/types/growstream';

@@ -58,7 +58,7 @@
                 <!-- Content Group -->
                 <div>
                     <p class="px-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2">Content</p>
-                    <Link :href="route('growstream.creator.videos')" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high font-label-md text-label-md">
+                    <Link :href="route('growstream.creator.videos.index')" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high font-label-md text-label-md">
                         <span class="material-symbols-outlined text-lg">{{ terminology.default_content_model === 'course' ? 'school' : 'video_library' }}</span>
                         {{ terminology.content_unit_plural }}
                     </Link>
@@ -302,7 +302,7 @@
                 <div class="bg-surface-container rounded-xl border border-outline-variant/50 overflow-hidden shadow-sm">
                     <div class="p-5 border-b border-outline-variant/50 flex items-center justify-between">
                         <p class="font-label-md text-label-md font-bold">Top {{ terminology.content_unit_plural }}</p>
-                        <Link :href="route('growstream.creator.videos')" class="text-primary font-label-sm text-label-sm hover:underline">View all</Link>
+                        <Link :href="route('growstream.creator.videos.index')" class="text-primary font-label-sm text-label-sm hover:underline">View all</Link>
                     </div>
                     <div class="divide-y divide-outline-variant/40">
                         <div class="flex items-center justify-between p-4 hover:bg-surface-container-high/50 transition-colors">

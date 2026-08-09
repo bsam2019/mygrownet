@@ -38,6 +38,13 @@ const isCreator = computed(() => {
     return roles.some((r) => ['creator', 'admin', 'administrator', 'superadmin'].includes(r.toLowerCase())) || !!(user.value as any)?.is_creator;
 });
 
+const isHubContext = computed(() => {
+    if (typeof window === 'undefined') return false;
+    const path = window.location.pathname;
+    const host = window.location.hostname;
+    return path.startsWith('/hub') || host.includes('hub') || host.endsWith('.growstream.app') || !!(page.props as any).isHubContext;
+});
+
 // Mobile menu
 const mobileMenuOpen = ref(false);
 const toggleMobileMenu = () => { mobileMenuOpen.value = !mobileMenuOpen.value; };
@@ -255,7 +262,7 @@ const navLinks = computed(() => [
                                             <span class="material-symbols-outlined text-sm">apps</span> MyGrowNet Workspace
                                         </a>
                                         <Link :href="route('growstream.my-videos')" class="rounded-lg px-3 py-2 text-xs text-on-surface hover:bg-surface-container-low" @click="closeAvatarMenu">My Saved Videos</Link>
-                                        <Link :href="route('growstream.hub.client.dashboard')" class="rounded-lg px-3 py-2 text-xs font-semibold text-emerald-400 hover:bg-surface-container-low flex items-center gap-2" @click="closeAvatarMenu">
+                                        <Link v-if="isHubContext" :href="route('growstream.hub.client.dashboard')" class="rounded-lg px-3 py-2 text-xs font-semibold text-emerald-400 hover:bg-surface-container-low flex items-center gap-2" @click="closeAvatarMenu">
                                             <span class="material-symbols-outlined text-sm">school</span> Student / Client Portal
                                         </Link>
                                         <Link :href="route('growstream.subscription')" class="rounded-lg px-3 py-2 text-xs text-primary hover:bg-surface-container-low" @click="closeAvatarMenu">Subscribe / Plans</Link>

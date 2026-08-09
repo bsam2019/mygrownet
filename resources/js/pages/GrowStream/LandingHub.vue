@@ -9,16 +9,19 @@
                     <Link :href="route('growstream.home')" class="font-headline-lg text-2xl font-black text-primary tracking-tight">GrowStream <span class="text-on-surface font-light text-xl">Hub</span></Link>
                 </div>
 
-                <nav class="hidden md:flex items-center gap-8 font-label-md text-sm text-on-surface-variant">
-                    <a href="#features" class="hover:text-on-surface transition-colors">Features</a>
-                    <a href="#solutions" class="hover:text-on-surface transition-colors">Solutions</a>
-                    <a href="#pricing" class="hover:text-on-surface transition-colors">Pricing</a>
-                </nav>
+                <!-- Right-aligned nav links + CTA -->
+                <div class="flex items-center gap-8 ml-auto">
+                    <nav class="hidden md:flex items-center gap-8 font-label-md text-sm text-on-surface-variant">
+                        <a href="#features" class="hover:text-on-surface transition-colors">Features</a>
+                        <a href="#solutions" class="hover:text-on-surface transition-colors">Solutions</a>
+                        <a href="#pricing" class="hover:text-on-surface transition-colors">Pricing</a>
+                    </nav>
 
-                <div class="flex items-center gap-4">
-                    <Link :href="route('growstream.hub.subscribe')" class="bg-primary text-on-primary px-5 py-2.5 rounded-full font-label-md text-sm font-semibold hover:bg-[#c94918] transition-all shadow-lg shadow-primary/20">
-                        Launch Your Hub
-                    </Link>
+                    <div class="flex items-center gap-4">
+                        <Link :href="route('growstream.hub.subscribe')" class="bg-primary text-on-primary px-5 py-2.5 rounded-full font-label-md text-sm font-semibold hover:bg-[#c94918] transition-all shadow-lg shadow-primary/20">
+                            Launch Your Hub
+                        </Link>
+                    </div>
                 </div>
             </div>
         </header>
