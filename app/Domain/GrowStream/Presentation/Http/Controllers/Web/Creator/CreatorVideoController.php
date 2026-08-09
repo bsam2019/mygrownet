@@ -106,6 +106,8 @@ class CreatorVideoController extends Controller
                 'description' => $request->description ?? '',
                 'content_type' => $request->content_type,
                 'access_level' => $request->access_level,
+                'publishing_destination' => $request->publishing_destination ?? 'public',
+                'organization_id' => auth()->user()->organization_id ?? null,
                 'creator_id' => $creator->id,
                 'is_published' => false,
                 'video_provider' => 'local',

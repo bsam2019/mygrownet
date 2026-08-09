@@ -23,13 +23,15 @@
 
                         <form @submit.prevent="saveSettings" class="space-y-4">
                             <div>
-                                <label class="block font-label-md text-label-md text-on-surface mb-1">Platform Brand Name</label>
-                                <input
-                                    v-model="form.brand_name"
-                                    type="text"
-                                    placeholder="e.g. Acme Online Tuition Academy"
+                                <label class="block font-label-md text-label-md text-on-surface mb-1">Platform Category</label>
+                                <select
+                                    v-model="form.category"
                                     class="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface"
-                                />
+                                >
+                                    <option v-for="cat in allCategories" :key="cat.category" :value="cat.category">
+                                        {{ cat.category_name }}
+                                    </option>
+                                </select>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -154,15 +156,23 @@ import GrowStreamLayout from '@/Layouts/GrowStreamLayout.vue';
 interface Props {
     platform?: any;
     quotaSummary?: any;
+    allCategories?: any[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
     platform: () => ({
         brand_name: '',
+        category: 'education',
         subdomain: '',
         custom_domain: '',
         brand_color: '#e2571f',
     }),
+    allCategories: () => [
+        { category: 'education', category_name: 'Education & Academies' },
+        { category: 'business', category_name: 'Corporate & Internal Training' },
+        { category: 'media', category_name: 'Media & Entertainment Studios' },
+        { category: 'creator', category_name: 'Independent Content Creator' },
+    ],
     quotaSummary: () => ({
         current_storage_minutes: 120,
         storage_minutes_limit: 1000,
@@ -175,6 +185,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const form = useForm({
     brand_name: props.platform.brand_name || '',
+    category: props.platform.category || 'education',
     subdomain: props.platform.subdomain || '',
     custom_domain: props.platform.custom_domain || '',
     brand_color: props.platform.brand_color || '#e2571f',
@@ -189,6 +200,8 @@ const availableGateways = [
 ];
 
 const saveSettings = () => {
-    // Save platform settings via Inertia
+    form.put(route('growstream.creator.platform.update'), {
+        preserveScroll: true,
+    });
 };
 </script>

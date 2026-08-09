@@ -32,9 +32,13 @@ class CreatorPlatformController
 
         $quotaSummary = $this->usageMeter->getUsageSummary($orgId);
 
+        $terminologyService = app(\App\Domain\GrowStream\Services\TenantTerminologyService::class);
+        $allCategories = $terminologyService->getAllCategories();
+
         return Inertia::render('GrowStream/Creator/PlatformSettings', [
             'platform' => $platform,
             'quotaSummary' => $quotaSummary,
+            'allCategories' => $allCategories,
         ]);
     }
 
@@ -45,6 +49,7 @@ class CreatorPlatformController
 
         $validated = $request->validate([
             'brand_name' => 'nullable|string|max:255',
+            'category' => 'nullable|string|in:education,business,media,creator',
             'subdomain' => 'nullable|string|max:100|unique:growstream_creator_platforms,subdomain,' . $orgId . ',organization_id',
             'custom_domain' => 'nullable|string|max:255|unique:growstream_creator_platforms,custom_domain,' . $orgId . ',organization_id',
             'brand_color' => 'nullable|string|max:30',

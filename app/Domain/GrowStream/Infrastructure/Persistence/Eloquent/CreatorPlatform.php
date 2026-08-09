@@ -16,6 +16,7 @@ class CreatorPlatform extends Model
         'subdomain',
         'custom_domain',
         'brand_name',
+        'category',
         'brand_color',
         'logo_url',
         'banner_url',

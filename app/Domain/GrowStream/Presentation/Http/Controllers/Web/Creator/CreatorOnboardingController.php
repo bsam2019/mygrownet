@@ -106,27 +106,40 @@ class CreatorOnboardingController extends Controller
             return redirect()->route('growstream.creator.register');
         }
 
-        $creatorId = (int) ($profile['id'] ?? 0);
+        $user = auth()->user();
+        $orgId = $user->organization_id ?? $user->id;
 
-        $recentVideos = $this->videoRepo->query()
-            ->where('creator_id', $creatorId)
-            ->with(['categories', 'tags'])
-            ->latest()
-            ->take(8)
-            ->get();
+        $platform = \App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\CreatorPlatform::firstOrCreate(
+            ['organization_id' => $orgId],
+            [
+                'brand_name' => $user->name . ' Academy',
+                'category' => 'education',
+                'subdomain' => strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $user->name)),
+                'brand_color' => '#e2571f',
+            ]
+        );
 
-        $earningsSummary = [
-            'total_earnings' => (float) ($profile['total_earnings'] ?? 0),
-            'pending_payout' => (float) ($profile['pending_payout'] ?? 0),
-        ];
+        $hasUploadedContent = Video::where('organization_id', $orgId)->orWhere('creator_id', $profile['id'] ?? 0)->exists();
+        $initialViewState = $hasUploadedContent ? 'established' : 'new';
 
-        $totalWatchSeconds = (int) $recentVideos->sum('total_watch_time');
+        $terminologyService = app(\App\Domain\GrowStream\Services\TenantTerminologyService::class);
+        $terminology = $terminologyService->getMap($platform->category);
+        $allCategories = $terminologyService->getAllCategories();
 
         return Inertia::render('GrowStream/Creator/Dashboard', [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ],
+            'platform' => $platform,
+            'terminology' => $terminology,
+            'allCategories' => $allCategories,
+            'initialViewState' => $initialViewState,
             'profile' => $profile,
-            'recentVideos' => $recentVideos,
-            'earningsSummary' => $earningsSummary,
-            'watchTimeHours' => round($totalWatchSeconds / 3600, 1),
+            'recentVideos' => $recentVideos ?? [],
+            'earningsSummary' => $earningsSummary ?? ['total_earnings' => 0, 'pending_payout' => 0],
+            'watchTimeHours' => round(($totalWatchSeconds ?? 0) / 3600, 1),
         ]);
     }
 }

@@ -323,6 +323,91 @@ To ensure GrowStream Hubs seamlessly integrates with MyGrowNet's existing DDD an
 
 ---
 
+## 17. Creator Hub Tenant Dashboard Architecture & Dual-State UX Specification
+
+The **Creator Hub Tenant Dashboard** (`/creator/dashboard`) provides the administrative interface for tenant owners (e.g. Mr. Banda managing `mrbanda.mygrownet.com`). It is intentionally distinct from the public GrowStream Studio dashboard, focusing on **operating an academy business** rather than managing a single public channel.
+
+### 1. UX Priorities & Design Principles
+1. **Health-First over Vanity Metrics**:
+   - Leads with business health signals: **Active Students**, **Monthly Revenue**, **Course Completion Rate %**, **Pending Payout**, and immediate **Alert Banners** (e.g., failed subscription payments).
+2. **Grouped Navigation Hierarchy**:
+   - **Content**: Videos & Series, Courses & Modules.
+   - **Business**: Students & Audience, Subscriptions & Orders, Payments & Payouts, Attribution Analytics.
+   - **Setup**: Branding, Custom Domain, Team Members, API & Integrations (collapsible by default to eliminate interface noise for solo educators).
+
+### 2. Dual-State Lifecycle Architecture
+
+```text
+               CREATOR HUB TENANT LOG-IN
+                           │
+             ┌─────────────┴─────────────┐
+             ▼                           ▼
+     NEW TENANT STATE           ESTABLISHED STATE
+ (0 Uploaded Courses/Videos)  (≥1 Published Courses/Videos)
+             │                           │
+ ┌──────────────────────────┐ ┌──────────────────────────┐
+ │ - Setup Progress (2/5)   │ │ - Failed Payment Alerts  │
+ │ - Unblocking Checklist   │ │ - 4 Health Stat Cards    │
+ │ - Next Action Highlight  │ │ - 7-Day Watch Time Chart │
+ └──────────────────────────┘ │ - Most Watched Lessons   │
+                              └──────────────────────────┘
+```
+
+- **New Tenant State**: Focuses on guided onboarding via a 5-step checklist (*Academy Provisioned ➔ Branding Configured ➔ Upload First Course/Video [Active CTA] ➔ Connect Payment Gateway ➔ Publish Domain*).
+- **Established Academy State**: Provides a full operational control center with a 7-day watch-time bar chart and top student engagement tables.
+- **Interactive Preview Switcher**: The frontend Vue component ([`Dashboard.vue`](file:///c:/Apache24/htdocs/mygrownet/resources/js/Pages/GrowStream/Creator/Dashboard.vue)) includes an interactive state toggle allowing creator admins to preview both views.
+
+### 3. Workspace Entry & SSO Integration
+- **Context Resolution**: Integrated with MyGrowNet's `ContextResolverService` and `WorkspaceContext`.
+- **Flexible Entry Points**:
+  1. **Direct Tenant Subdomain Entry**: Logging in at `mrbanda.mygrownet.com` resolves `DomainResolution(type = 'organization')` and directs straight to the academy dashboard.
+  2. **Shared Platform Entry with Workspace Switcher**: Logging in at `auth.mygrownet.com` passes `organization_id` in `WorkspaceContext`, allowing creator owners to switch seamlessly between Personal Workspace and Creator Hub Org Workspaces.
+
+---
+
+## 18. Multi-Category Tenant Support & Dynamic Terminology Mapping Architecture
+
+To support the four primary target customer categories without code duplication or separate dashboard components, Creator Hub incorporates a **Category-Aware Terminology & Behavior Engine** ([`TenantTerminologyService.php`](file:///c:/Apache24/htdocs/mygrownet/app/Domain/GrowStream/Services/TenantTerminologyService.php)).
+
+### 1. Tenant Category Matrix
+
+| Category | Audience Label | Enrollment Action | Content Unit | Completion Metric | Revenue Metrics | Self-Serve Checkout |
+|---|---|---|---|---|---|---|
+| `education` | Students | Enroll | Course / Module / Lesson | Course Completion | Shown (K59,000) | Enabled |
+| `business` | Employees | Assign | Training / Module | Compliance Completion | Hidden (Trained Count) | Disabled (Org-managed) |
+| `media` | Viewers | Subscribe | Series / Episode | Watch Time | Shown (K59,000) | Enabled |
+| `creator` | Subscribers | Follow | Series / Episode | Watch Time | Shown (K59,000) | Enabled |
+
+### 2. Behavioral Differences per Category
+1. **Access Model Defaults**:
+   - `business` tenants: Self-serve checkout and public subscriptions are disabled. Default access is **Org-Managed Assignment** (administrators assign employees manually or via batch CSV import).
+   - `education`, `media`, `creator` tenants: Self-serve mobile money and card subscriptions are enabled.
+2. **Publishing Destination Toggle Visibility**:
+   - Hidden for `business` tenants (internal corporate training is strictly private `portal` content).
+   - Displayed for `education`, `media`, and `creator` tenants (`public` / `portal` / `both`).
+3. **Content Structure Defaults**:
+   - `education` and `business` default to structured Courses ➔ Modules ➔ Lessons.
+   - `media` and `creator` default to standard Series ➔ Episodes.
+
+---
+
+## 19. Revised Creator Journey & Centralized Auth Architecture Audit
+
+To maintain complete architectural integrity with MyGrowNet's platform core, GrowStream and Creator Hub enforce a **Single Identity & Context-Switching Lifecycle**:
+
+### 1. Centralized Identity Principles
+- **No Isolated Registration Forms**: All "Sign Up" and "Log In" CTAs across public GrowStream (`growstream.mygrownet.com`), Creator Hub (`/hub`), and tenant portals (`mrbanda.mygrownet.com`) route directly through MyGrowNet's centralized Identity Gateway (`auth.mygrownet.com` via `RedirectToMyGrowIdentity` middleware).
+- **Role Additions over Account Duplication**:
+  - **"Become a Creator"** (`/creator/register`): Authenticated users apply for channel creator status; no duplicate email/password prompt.
+  - **"Start a Creator Hub"** (`/hub`): Authenticated users activate an organization workspace context (`organization_id`); no duplicate account creation.
+- **Workspace Switcher Integration**: Users navigate between personal streaming profiles and Creator Hub organization workspaces via MyGrowNet's global workspace launcher (`/workspace` and `ContextSwitcher.vue`).
+
+### 2. Audience-Facing Portal UX Architecture (`mrbanda.mygrownet.com`)
+- **Branded Tenant View**: Served by `PortalLayout.vue` and `PortalHome.vue` with custom branding, logo, accent colors, and tenant-scoped hero content.
+- **Tenant-Scoped Entitlements**: Audience authentication is handled via centralized SSO, with course enrollments, subscriptions, and progress tracked via organization-scoped join tables (`user_application_subscriptions`, `growstream_purchases`).
+
+---
+
 ## Strategic distinction (unchanged, central to the whole document)
 
 **GrowStream Consumer:** a destination where people discover and watch content. **GrowStream Platform:** infrastructure that lets someone else create their own destination using GrowStream. This distinction should remain central to architecture, product positioning, database design, permissions, APIs, and financial architecture — whenever this work actually begins.

@@ -123,6 +123,28 @@
                     </div>
                 </div>
 
+                <!-- Seasons Filter Tabs -->
+                <div v-if="seasons && seasons.length > 0" class="mb-8 p-4 bg-surface-container rounded-xl border border-outline-variant/60">
+                    <h3 class="font-headline-sm text-headline-sm mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary" aria-hidden="true">tv</span> Seasons
+                    </h3>
+                    <div class="flex items-center gap-2 overflow-x-auto pb-1">
+                        <button
+                            v-for="season in seasons"
+                            :key="season.id"
+                            @click="activeSeasonId = season.id"
+                            :class="[
+                                'px-4 py-2 rounded-full font-label-md text-label-md transition-all whitespace-nowrap',
+                                activeSeasonId === season.id
+                                    ? 'bg-primary text-on-primary font-bold shadow-sm'
+                                    : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest'
+                            ]"
+                        >
+                            Season {{ season.season_number }} — {{ season.title || ('Season ' + season.season_number) }}
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Chapter Markers -->
                 <div v-if="video.chapters && video.chapters.length > 0" class="mb-8 p-4 bg-surface-container rounded-xl border border-outline-variant/60">
                     <h3 class="font-headline-sm text-headline-sm mb-3 flex items-center gap-2">
@@ -180,9 +202,17 @@ import { useGrowStreamMetrics } from '@/composables/useGrowStreamMetrics';
 import type { Video, WatchHistory, Watchlist } from '@/types/growstream';
 import axios from 'axios';
 
+interface Season {
+    id: number;
+    season_number: number;
+    title: string;
+    description?: string;
+}
+
 interface Props {
     video: Video;
     relatedVideos?: Video[];
+    seasons?: Season[];
     watchHistory?: WatchHistory;
     watchlistItem?: Watchlist;
     userCanAccess?: boolean;
@@ -191,9 +221,12 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     relatedVideos: () => [],
+    seasons: () => [],
     userCanAccess: true,
     throttled: false,
 });
+
+const activeSeasonId = ref<number | null>(props.seasons?.[0]?.id || null);
 
 const { formatDuration, getAccessLevelBadge, addToWatchlist, removeFromWatchlist } = useGrowStream();
 const metrics = useGrowStreamMetrics();
