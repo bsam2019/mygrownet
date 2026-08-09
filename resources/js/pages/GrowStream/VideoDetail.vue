@@ -2,7 +2,7 @@
     <GrowStreamLayout :title="`${video.title} - GrowStream`">
         <main class="-mt-6 md:mt-0 pb-24">
             <!-- Video Player (Edge-to-Edge on Mobile) -->
-            <div class="relative w-full -mx-margin-mobile md:mx-0 aspect-video bg-black overflow-hidden rounded-none md:rounded-2xl shadow-xl">
+            <div class="relative w-full -mx-4 md:mx-0 aspect-video bg-black overflow-hidden rounded-none md:rounded-2xl shadow-xl">
                 <template v-if="userCanAccess">
                     <VideoPlayer
                         :video="video"

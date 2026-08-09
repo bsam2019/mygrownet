@@ -150,9 +150,9 @@ const navLinks = computed(() => [
     <div>
         <!-- Promo banner - REMOVED -->
 
-        <!-- Header -->
-        <header class="border-b border-outline-variant/60 sticky top-0 z-40 bg-[#0e0b09] shadow-lg">
-            <div class="max-w-6xl mx-auto flex items-center justify-between px-margin-mobile md:px-margin-desktop h-16 gap-4">
+        <!-- Main Top Navbar (scrolls off screen on scroll) -->
+        <header class="border-b border-outline-variant/60 bg-[#0e0b09]">
+            <div class="max-w-6xl mx-auto flex items-center justify-between px-4 md:px-6 h-16 gap-4">
                 <!-- Mobile menu trigger (LEFT side on mobile) -->
                 <button
                     class="md:hidden text-on-surface-variant p-2 rounded-full flex items-center justify-center"
@@ -304,9 +304,9 @@ const navLinks = computed(() => [
                 </div>
             </div>
 
-            <!-- Row 2: Category Pill Bar (YouTube-Style Opaque Sticky Header Component) -->
-            <div v-if="categories && categories.length > 0" class="border-t border-outline-variant/40 bg-[#0e0b09] py-2 px-margin-mobile md:px-margin-desktop">
-                <div class="max-w-6xl mx-auto flex items-center gap-2 overflow-x-auto scrollbar-none">
+            <!-- YouTube-Style Smart Sticky Category Pill Bar (Sticks to top-0 when main nav scrolls out of view) -->
+            <div v-if="categories && categories.length > 0" class="sticky top-0 z-40 border-b border-outline-variant/60 bg-[#0e0b09]/95 backdrop-blur-md py-2.5 shadow-xl">
+                <div class="max-w-6xl mx-auto px-4 md:px-6 flex items-center gap-2 overflow-x-auto scrollbar-none">
                     <button
                         :class="[
                             'shrink-0 px-4 py-1.5 rounded-full text-xs transition-all',

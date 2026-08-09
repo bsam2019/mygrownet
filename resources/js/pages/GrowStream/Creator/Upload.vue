@@ -138,6 +138,36 @@
                         ></textarea>
                     </div>
 
+                    <!-- Publishing Destination Picker (GrowStream Public vs Creator Hub Platform) -->
+                    <div class="mb-4">
+                        <label class="gs-label font-bold mb-2 block">Publishing Destination *</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label
+                                class="flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all"
+                                :class="form.publishing_target === 'growstream' ? 'border-primary bg-primary/10 text-primary font-bold' : 'border-[var(--gs-border)] text-[var(--gs-muted)]'"
+                            >
+                                <input type="radio" value="growstream" v-model="form.publishing_target" class="sr-only" />
+                                <span class="material-symbols-outlined text-xl">movie</span>
+                                <div>
+                                    <p class="text-xs font-bold text-[var(--gs-text)]">GrowStream Public Streaming</p>
+                                    <p class="text-[11px] text-[var(--gs-muted)]">Public streaming for general Zambian viewers</p>
+                                </div>
+                            </label>
+
+                            <label
+                                class="flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all"
+                                :class="form.publishing_target === 'hub' ? 'border-amber-500 bg-amber-500/10 text-amber-300 font-bold' : 'border-[var(--gs-border)] text-[var(--gs-muted)]'"
+                            >
+                                <input type="radio" value="hub" v-model="form.publishing_target" class="sr-only" />
+                                <span class="material-symbols-outlined text-xl text-amber-400">school</span>
+                                <div>
+                                    <p class="text-xs font-bold text-[var(--gs-text)]">My Creator Hub Platform</p>
+                                    <p class="text-[11px] text-[var(--gs-muted)]">Private course content for enrolled students</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                         <div>
                             <label for="content_type" class="gs-label">Content Type *</label>
@@ -390,6 +420,7 @@ const thumbnailPreview = ref<string | null>(null);
 const form = useForm({
     title: props.video?.title ?? '',
     description: props.video?.description ?? '',
+    publishing_target: 'growstream',
     content_type: props.video?.content_type ?? Object.keys(props.contentTypes)[0],
     access_level: props.video?.access_level ?? 'free',
     categories: props.video?.categories?.map((c) => c.id) ?? [],

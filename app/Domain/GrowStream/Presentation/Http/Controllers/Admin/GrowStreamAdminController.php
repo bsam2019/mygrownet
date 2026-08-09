@@ -2,6 +2,7 @@
 
 namespace App\Domain\GrowStream\Presentation\Http\Controllers\Admin;
 
+use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\CreatorPlatform;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\VideoView;
 use App\Domain\GrowStream\Infrastructure\Persistence\Eloquent\WatchHistory;
 use App\Domain\GrowStream\Repositories\VideoRepositoryInterface;
@@ -29,12 +30,16 @@ class GrowStreamAdminController extends Controller
         $stats = [
             'total_videos' => $this->videoRepo->query()->count(),
             'published_videos' => $this->videoRepo->query()->published()->count(),
+            'pending_moderation_count' => $this->videoRepo->query()->where('upload_status', 'pending')->count(),
             'total_series' => $this->seriesRepo->query()->count(),
             'total_views' => VideoView::count(),
             'unique_viewers' => VideoView::distinct('user_id')->count('user_id'),
+            'total_subscribers' => User::where('is_admin', false)->count(),
             'completion_rate' => $this->getCompletionRate(),
             'avg_watch_time' => $this->getAverageWatchTime(),
             'points_awarded' => $this->getTotalPointsAwarded(),
+            'active_hubs_count' => CreatorPlatform::where('is_active', true)->count(),
+            'total_hubs_count' => CreatorPlatform::count(),
         ];
 
         $recentVideos = $this->videoRepo->query()
@@ -65,10 +70,24 @@ class GrowStreamAdminController extends Controller
                 'points_awarded' => $this->getVideoPointsAwarded($video->id),
             ]);
 
+        $hubs = CreatorPlatform::latest()
+            ->take(10)
+            ->get()
+            ->map(fn($h) => [
+                'id' => $h->id,
+                'brand_name' => $h->brand_name,
+                'subdomain' => $h->subdomain,
+                'subscription_plan' => $h->subscription_plan,
+                'subscription_status' => $h->subscription_status,
+                'is_active' => (bool) $h->is_active,
+                'created_at' => $h->created_at ? $h->created_at->format('Y-m-d') : '',
+            ]);
+
         return Inertia::render('Admin/GrowStream/Dashboard', [
             'stats' => $stats,
             'recentVideos' => $recentVideos,
             'topVideos' => $topVideos,
+            'hubs' => $hubs,
             'viewTrends' => $this->getViewTrends(),
             'pointsDistribution' => $this->getPointsDistribution(),
         ]);
@@ -109,105 +128,6 @@ class GrowStreamAdminController extends Controller
         }
 
         return back()->with('success', "Points awarded to {$awarded} users successfully.");
-    }
-
-    public function starterKitIntegration(Request $request)
-    {
-        $query = $this->videoRepo->query();
-
-        $availableVideos = (clone $query)->published()
-            ->with(['creator.user', 'categories'])
-            ->where('is_starter_kit_content', false)
-            ->get()
-            ->map(fn($video) => [
-                'id' => $video->id,
-                'title' => $video->title,
-                'creator' => $video->creator->user->name ?? 'Unknown',
-                'duration' => $video->getFormattedDuration(),
-                'view_count' => $video->view_count,
-                'categories' => $video->categories->pluck('name')->join(', '),
-                'current_points' => $video->watch_points + $video->completion_points + $video->share_points,
-            ]);
-
-        $starterKitVideos = (clone $query)->published()
-            ->with(['creator.user'])
-            ->where('is_starter_kit_content', true)
-            ->orderBy('starter_kit_unlock_order')
-            ->get()
-            ->map(fn($video) => [
-                'id' => $video->id,
-                'title' => $video->title,
-                'creator' => $video->creator->user->name ?? 'Unknown',
-                'starter_kit_tier' => $video->getStarterKitTierLabel(),
-                'unlock_order' => $video->starter_kit_unlock_order,
-                'points_reward' => $video->starter_kit_points_reward,
-                'total_points' => $video->getTotalPointsReward(),
-                'view_count' => $video->view_count,
-            ]);
-
-        return Inertia::render('Admin/GrowStream/StarterKitIntegration', [
-            'availableVideos' => $availableVideos,
-            'starterKitVideos' => $starterKitVideos,
-        ]);
-    }
-
-    public function addToStarterKit(Request $request, int $id)
-    {
-        $video = $this->videoRepo->findById($id);
-        if (!$video) {
-            return back()->with('error', 'Video not found.');
-        }
-
-        $request->validate([
-            'tier' => 'required|string|in:basic,premium,elite,all',
-            'unlock_order' => 'required|integer|min:1|max:100',
-            'points_reward' => 'required|integer|min:0|max:500',
-            'description' => 'nullable|string|max:255',
-        ]);
-
-        $this->videoRepo->update($video, [
-            'is_starter_kit_content' => true,
-            'starter_kit_tier' => $request->tier,
-            'starter_kit_unlock_order' => $request->unlock_order,
-            'starter_kit_points_reward' => $request->points_reward,
-        ]);
-
-        \App\Infrastructure\Persistence\Eloquent\StarterKit\ContentItemModel::create([
-            'title' => $video->title,
-            'description' => $request->description ?? $video->description,
-            'category' => 'video',
-            'tier_restriction' => $request->tier === 'all' ? null : $request->tier,
-            'unlock_day' => $request->unlock_order,
-            'file_url' => route('growstream.video.show', $video->slug),
-            'file_type' => 'growstream_video',
-            'is_downloadable' => false,
-            'estimated_value' => $request->points_reward,
-            'sort_order' => $request->unlock_order,
-            'is_active' => true,
-        ]);
-
-        return back()->with('success', 'Video added to starter kit successfully.');
-    }
-
-    public function removeFromStarterKit(int $id)
-    {
-        $video = $this->videoRepo->findById($id);
-        if (!$video) {
-            return back()->with('error', 'Video not found.');
-        }
-
-        $this->videoRepo->update($video, [
-            'is_starter_kit_content' => false,
-            'starter_kit_tier' => null,
-            'starter_kit_unlock_order' => null,
-            'starter_kit_points_reward' => 0,
-        ]);
-
-        \App\Infrastructure\Persistence\Eloquent\StarterKit\ContentItemModel::where('file_type', 'growstream_video')
-            ->where('file_url', route('growstream.video.show', $video->slug))
-            ->delete();
-
-        return back()->with('success', 'Video removed from starter kit successfully.');
     }
 
     private function getCompletionRate(): float
@@ -266,59 +186,5 @@ class GrowStreamAdminController extends Controller
             ->groupBy('source')
             ->get()
             ->toArray();
-    }
-
-    private function getDetailedViewTrends(): array
-    {
-        return VideoView::where('viewed_at', '>=', now()->subDays(90))
-            ->selectRaw('DATE(viewed_at) as date, COUNT(*) as views, COUNT(DISTINCT user_id) as unique_viewers')
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get()
-            ->toArray();
-    }
-
-    private function getUserEngagement(): array
-    {
-        return DB::table('users')
-            ->join('growstream_video_views', 'users.id', '=', 'growstream_video_views.user_id')
-            ->selectRaw('users.id, users.name, COUNT(*) as total_views, AVG(growstream_video_views.watch_duration) as avg_watch_time')
-            ->groupBy('users.id', 'users.name')
-            ->orderByDesc('total_views')
-            ->take(20)
-            ->get()
-            ->toArray();
-    }
-
-    private function getContentPerformance(): array
-    {
-        return $this->videoRepo->query()
-            ->published()
-            ->selectRaw('id, title, view_count, (SELECT COUNT(*) FROM growstream_watch_history WHERE video_id = growstream_videos.id AND is_completed = true) as completions')
-            ->orderByDesc('view_count')
-            ->take(20)
-            ->get()
-            ->toArray();
-    }
-
-    private function getPointsAnalytics(): array
-    {
-        return [
-            'total_awarded' => PointTransaction::where('source', 'like', 'growstream_%')->sum('lp_amount'),
-            'by_activity' => PointTransaction::where('source', 'like', 'growstream_%')
-                ->selectRaw('source, SUM(lp_amount) as total, COUNT(*) as count')
-                ->groupBy('source')
-                ->get()
-                ->toArray(),
-            'top_earners' => DB::table('users')
-                ->join('point_transactions', 'users.id', '=', 'point_transactions.user_id')
-                ->where('point_transactions.source', 'like', 'growstream_%')
-                ->selectRaw('users.id, users.name, SUM(point_transactions.lp_amount) as total_points')
-                ->groupBy('users.id', 'users.name')
-                ->orderByDesc('total_points')
-                ->take(10)
-                ->get()
-                ->toArray(),
-        ];
     }
 }

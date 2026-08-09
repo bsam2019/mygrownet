@@ -78,26 +78,21 @@
                     </a>
                 </div>
 
-                <!-- Setup (Collapsible) -->
-                <div>
-                    <button
-                        @click="setupOpen = !setupOpen"
-                        class="w-full flex items-center justify-between px-3 py-2 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest"
-                    >
-                        <span>Setup</span>
-                        <span class="material-symbols-outlined text-base">{{ setupOpen ? 'expand_less' : 'expand_more' }}</span>
-                    </button>
-                    <div v-show="setupOpen" class="space-y-1 mt-1">
-                        <Link :href="route('growstream.creator.platform.show')" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high font-label-md text-label-md">
-                            <span class="material-symbols-outlined text-lg">palette</span>Branding &amp; Domain
+                <!-- Standalone Hub B2B Section -->
+                <div class="pt-2 border-t border-outline-variant/40 space-y-1">
+                    <p class="px-3 font-label-sm text-[10px] text-amber-400 font-bold uppercase tracking-widest mb-2 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">domain</span> Standalone Hub B2B
+                    </p>
+                    <template v-if="platform && platform.subscription_status === 'active'">
+                        <Link :href="route('growstream.creator.platform.show')" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface hover:bg-surface-container-high font-label-md text-label-md font-semibold">
+                            <span class="material-symbols-outlined text-lg text-emerald-400">check_circle</span> Hub Platform Settings
                         </Link>
-                        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high font-label-md text-label-md opacity-60">
-                            <span class="material-symbols-outlined text-lg">api</span>API &amp; Integrations
-                        </a>
-                        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high font-label-md text-label-md opacity-60">
-                            <span class="material-symbols-outlined text-lg">settings</span>Settings
-                        </a>
-                    </div>
+                    </template>
+                    <template v-else>
+                        <Link :href="route('growstream.hub.subscribe')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 font-label-md text-xs font-bold transition-all">
+                            <span class="material-symbols-outlined text-base text-amber-400">rocket_launch</span> Upgrade to Hub Platform
+                        </Link>
+                    </template>
                 </div>
             </nav>
 

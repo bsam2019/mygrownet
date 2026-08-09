@@ -1,7 +1,7 @@
 <template>
     <div class="relative w-full">
         <!-- Cloudflare Stream Player (iframe) -->
-        <div v-if="!error" class="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
+        <div v-if="!error" class="relative aspect-video w-full overflow-hidden rounded-none md:rounded-lg bg-black">
             <iframe
                 ref="iframeRef"
                 :src="streamPlayerUrl"
@@ -83,11 +83,14 @@ const streamPlayerUrl = computed(() => {
     
     // Cloudflare Stream iframe player URL
     const params = new URLSearchParams({
-        autoplay: props.autoplay ? 'true' : 'false',
-        muted: props.autoplay ? 'true' : 'false', // Autoplay requires muted
-        preload: 'auto',
+        preload: 'metadata',
         poster: props.video.thumbnail_url || '',
     });
+
+    if (props.autoplay) {
+        params.set('autoplay', 'true');
+        params.set('muted', 'true');
+    }
 
     if (props.startPosition > 0) {
         params.set('startTime', Math.floor(props.startPosition).toString());

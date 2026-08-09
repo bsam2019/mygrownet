@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { Head, Link, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { Head, Link, usePage, router } from '@inertiajs/vue3';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import GrowStreamHeader from '@/components/GrowStream/GrowStreamHeader.vue';
 import GrowStreamFooter from '@/components/GrowStream/GrowStreamFooter.vue';
+import { useMiniPlayer } from '@/composables/useMiniPlayer';
+import VideoPlayer from '@/Components/GrowStream/VideoPlayer.vue';
 
 interface Props {
     title?: string;
@@ -41,14 +43,29 @@ const isActiveRoute = (href: string): boolean => {
     return window.location.pathname === new URL(href, window.location.origin).pathname;
 };
 
-import { useMiniPlayer } from '@/composables/useMiniPlayer';
-import VideoPlayer from '@/Components/GrowStream/VideoPlayer.vue';
-
 const { activeVideo, isMinimized, expandVideo, closeMiniPlayer } = useMiniPlayer();
+
+// Page preloader progress state
+const isPageLoading = ref(false);
+let startUnsubscribe: (() => void) | null = null;
+let finishUnsubscribe: (() => void) | null = null;
+
+onMounted(() => {
+    startUnsubscribe = router.on('start', () => { isPageLoading.value = true; });
+    finishUnsubscribe = router.on('finish', () => { isPageLoading.value = false; });
+});
+
+onUnmounted(() => {
+    if (startUnsubscribe) startUnsubscribe();
+    if (finishUnsubscribe) finishUnsubscribe();
+});
 </script>
 
 <template>
     <Head :title="props.title" />
+
+    <!-- Top Animated Page Preloader Indicator -->
+    <div v-if="isPageLoading" class="fixed top-0 left-0 right-0 z-50 h-1 bg-gradient-to-r from-[#e2571f] via-amber-400 to-[#e2571f] animate-pulse shadow-lg shadow-[#e2571f]/50"></div>
 
     <div class="gs-app bg-background text-on-background min-h-screen flex flex-col font-body-md antialiased">
         <GrowStreamHeader
@@ -59,7 +76,7 @@ const { activeVideo, isMinimized, expandVideo, closeMiniPlayer } = useMiniPlayer
         />
 
         <!-- Main Content -->
-        <main class="flex-1 w-full max-w-6xl mx-auto px-margin-mobile md:px-margin-desktop pt-6 pb-24 md:pb-12">
+        <main class="flex-1 w-full max-w-6xl mx-auto px-4 md:px-6 pt-6 pb-24 md:pb-12">
             <slot />
         </main>
 

@@ -19,12 +19,13 @@ const mainDomain = currentHost.endsWith('.mygrownet.com') || currentHost === 'my
     : (typeof window !== 'undefined' ? window.location.origin : '');
 
 const adminNav = [
+    { label: 'Dashboard', href: () => route('growstream.admin.dashboard'), icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
     { label: 'Videos', href: () => route('growstream.admin.videos'), icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z' },
     { label: 'Moderation', href: () => route('growstream.admin.moderation'), icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
-    { label: 'Creator Hubs', href: () => route('growstream.admin.hubs'), icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5' },
-    { label: 'Hub Pricing', href: () => route('growstream.admin.hub_pricing.show'), icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
     { label: 'Creators', href: () => route('growstream.admin.creators'), icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
     { label: 'Categories', href: () => route('growstream.admin.categories'), icon: 'M4 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21L9.09 10.5a7.002 7.002 0 005.744 5.06l.39-2.05a1 1 0 011.22-.78l4.304 1.05a1 1 0 01.763.973V18a2 2 0 01-2 2h-1C9.716 20 4 14.284 4 7.5V5z' },
+    { label: 'Creator Hubs', href: () => route('growstream.admin.hubs'), icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5' },
+    { label: 'Hub Pricing', href: () => route('growstream.admin.hub_pricing.show'), icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
     { label: 'Analytics', href: () => route('growstream.admin.analytics'), icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
     { label: 'Sponsorship', href: () => route('growstream.admin.sponsorship'), icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
     { label: 'Plans & Tiers', href: () => `${mainDomain}/admin/module-subscriptions/growstream`, icon: 'M11 3.055A9 9 0 1020.945 13H11V3.055zM20.488 9H15V3.512A9.025 9.025 0 0120.488 9z' },
@@ -85,7 +86,7 @@ const logout = () => {
                     </button>
 
                     <!-- Brand -->
-                    <Link :href="route('growstream.admin.videos')" class="flex items-center gap-2">
+                    <Link :href="route('growstream.admin.dashboard')" class="flex items-center gap-2">
                         <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-[#e2571f] text-white shadow-md">
                             <span class="material-symbols-outlined text-xl">play_circle</span>
                         </div>
@@ -150,6 +151,10 @@ const logout = () => {
                                 </div>
 
                                 <div class="p-1.5 space-y-0.5">
+                                    <Link :href="route('growstream.admin.dashboard')" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-neutral-200 hover:bg-neutral-800/80 transition-colors" @click="closeUserMenu">
+                                        <span class="material-symbols-outlined text-sm text-[#e2571f]">dashboard</span>
+                                        <span class="font-bold">Platform Admin Dashboard</span>
+                                    </Link>
                                     <a :href="`${mainDomain}/workspace`" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-neutral-200 hover:bg-neutral-800/80 transition-colors">
                                         <span class="material-symbols-outlined text-sm text-[#e2571f]">apps</span>
                                         <span>MyGrowNet Workspace</span>
@@ -165,6 +170,7 @@ const logout = () => {
 
                                     <div class="my-1 border-t border-neutral-800/80"></div>
 
+                                    <p class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-500">Creator Hub B2B Admin</p>
                                     <Link :href="route('growstream.admin.hubs')" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-neutral-200 hover:bg-neutral-800/80 transition-colors" @click="closeUserMenu">
                                         <span class="material-symbols-outlined text-sm text-amber-500">domain</span>
                                         <span>Manage Creator Hubs</span>
@@ -230,7 +236,7 @@ const logout = () => {
                         </button>
                     </div>
 
-                    <!-- All 9 Admin Navigation Links -->
+                    <!-- All 10 Admin Navigation Links -->
                     <div class="space-y-1">
                         <p class="text-[10px] font-bold uppercase tracking-widest text-[#e2571f] mb-3">Admin Operations</p>
                         <Link
