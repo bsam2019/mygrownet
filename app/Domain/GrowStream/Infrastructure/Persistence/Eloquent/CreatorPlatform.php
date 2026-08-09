@@ -20,6 +20,9 @@ class CreatorPlatform extends Model
         'brand_color',
         'logo_url',
         'banner_url',
+        'subscription_plan',
+        'subscription_status',
+        'subscribed_at',
         'is_active',
     ];
 

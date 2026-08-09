@@ -82,6 +82,7 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
     });
 
     Route::middleware(['web', 'auth', 'admin.or.role'])->prefix($prefix.'/admin')->name($namePrefix.'admin.')->group(function () {
+        Route::get('/dashboard', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\GrowStreamAdminController::class, 'dashboard'])->name('dashboard');
         Route::get('/videos', [GrowStreamWebController::class, 'adminVideos'])->name('videos');
         Route::get('/videos/{id}/edit', [GrowStreamWebController::class, 'adminVideoEdit'])->name('videos.edit');
         Route::get('/analytics', [GrowStreamWebController::class, 'adminAnalytics'])->name('analytics');
@@ -107,6 +108,14 @@ $registerGrowStreamRoutes = function (string $prefix, string $namePrefix) {
         Route::post('/sponsorship/{id}/reject', [SponsorshipController::class, 'reject'])->name('sponsorship.reject');
         Route::post('/sponsorship/{id}/disburse', [SponsorshipController::class, 'disburse'])->name('sponsorship.disburse');
         Route::post('/sponsorship/{id}/complete', [SponsorshipController::class, 'complete'])->name('sponsorship.complete');
+
+        // Creator Hub management
+        Route::get('/hubs', [\App\Domain\GrowStream\Presentation\Http\Controllers\Web\HubLandingController::class, 'adminHubsIndex'])->name('hubs');
+        Route::post('/hubs/{id}/toggle-status', [\App\Domain\GrowStream\Presentation\Http\Controllers\Web\HubLandingController::class, 'adminHubToggleStatus'])->name('hubs.toggle_status');
+
+        // Creator Hub pricing management
+        Route::get('/hub-pricing', [\App\Domain\GrowStream\Presentation\Http\Controllers\Web\HubLandingController::class, 'adminPricingShow'])->name('hub_pricing.show');
+        Route::post('/hub-pricing', [\App\Domain\GrowStream\Presentation\Http\Controllers\Web\HubLandingController::class, 'adminPricingUpdate'])->name('hub_pricing.update');
     });
 };
 
@@ -123,6 +132,9 @@ $registerGrowStreamPublicRoutes = function (string $prefix, string $namePrefix) 
         Route::get('/register', [GrowStreamWebController::class, 'redirectToRegister'])->name('register');
 
         Route::get('/hub', [HubLandingController::class, 'show'])->name('hub.landing');
+        Route::middleware('auth')->get('/hub/subscribe', [HubLandingController::class, 'subscribeShow'])->name('hub.subscribe');
+        Route::middleware('auth')->post('/hub/subscribe', [HubLandingController::class, 'subscribeProcess'])->name('hub.subscribe.process');
+        Route::middleware('auth')->get('/hub/client/dashboard', [\App\Domain\GrowStream\Presentation\Http\Controllers\Web\Client\HubClientController::class, 'dashboard'])->name('hub.client.dashboard');
 
         // Centralized subscription plans page — reachable pre-login (pricing()
         // handles guests); checkout stays auth-only in the group below.

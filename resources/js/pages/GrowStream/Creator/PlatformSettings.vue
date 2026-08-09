@@ -140,11 +140,11 @@
                                 </div>
                             </div>
 
-                            <!-- Bandwidth -->
+                            <!-- Bandwidth / Delivery -->
                             <div>
                                 <div class="flex justify-between text-sm mb-1">
                                     <span class="text-on-surface-variant font-label-sm">Streaming Delivery</span>
-                                    <span class="font-mono text-xs text-primary font-bold">{{ quota.current_delivery_gb }} / {{ quota.delivery_gb_limit }} GB</span>
+                                    <span class="font-mono text-xs text-primary font-bold">{{ quota.current_delivery_minutes || quota.current_delivery_gb }} / {{ quota.delivery_minutes_limit || quota.delivery_gb_limit }} watch min</span>
                                 </div>
                                 <div class="h-2 rounded-full bg-surface-container-highest overflow-hidden">
                                     <div class="h-full bg-amber-500 transition-all duration-500" :style="{ width: `${quota.delivery_percentage}%` }"></div>
@@ -187,9 +187,11 @@ const props = withDefaults(defineProps<Props>(), {
         current_storage_minutes: 120,
         storage_minutes_limit: 1000,
         storage_percentage: 12,
+        current_delivery_minutes: 450,
+        delivery_minutes_limit: 5000,
         current_delivery_gb: 15,
         delivery_gb_limit: 100,
-        delivery_percentage: 15,
+        delivery_percentage: 9,
     }),
 });
 

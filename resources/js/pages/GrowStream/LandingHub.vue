@@ -16,7 +16,7 @@
                 </nav>
 
                 <div class="flex items-center gap-4">
-                    <Link :href="route('growstream.creator.platform.show')" class="bg-primary text-on-primary px-5 py-2.5 rounded-full font-label-md text-sm font-semibold hover:bg-[#c94918] transition-all shadow-lg shadow-primary/20">
+                    <Link :href="route('growstream.hub.subscribe')" class="bg-primary text-on-primary px-5 py-2.5 rounded-full font-label-md text-sm font-semibold hover:bg-[#c94918] transition-all shadow-lg shadow-primary/20">
                         Launch Your Hub
                     </Link>
                 </div>
@@ -41,8 +41,8 @@
                 </p>
 
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <Link :href="route('growstream.creator.platform.show')" class="w-full sm:w-auto bg-primary text-on-primary px-8 py-4 rounded-full font-label-md text-base font-bold hover:bg-[#c94918] transition-all shadow-xl shadow-primary/25">
-                        Start Your Free Hub
+                    <Link :href="route('growstream.hub.subscribe')" class="w-full sm:w-auto bg-primary text-on-primary px-8 py-4 rounded-full font-label-md text-base font-bold hover:bg-[#c94918] transition-all shadow-xl shadow-primary/25">
+                        Launch Your Hub
                     </Link>
                     <a href="#features" class="w-full sm:w-auto bg-surface-container-high/60 text-on-surface px-8 py-4 rounded-full font-label-md text-base font-semibold border border-outline-variant hover:bg-surface-container-high transition-all">
                         Explore Platform Features
@@ -139,7 +139,10 @@
                         </ul>
                     </div>
 
-                    <Link :href="route('growstream.creator.platform.show')" class="w-full text-center bg-primary text-on-primary py-3 rounded-full font-label-md text-sm font-bold hover:bg-[#c94918] transition-colors">
+                    <Link
+                        :href="route('growstream.hub.subscribe', { plan: tier.name.toLowerCase().replace(' hub', '').trim() })"
+                        class="w-full text-center bg-primary text-on-primary py-3 rounded-full font-label-md text-sm font-bold hover:bg-[#c94918] transition-colors"
+                    >
                         {{ tier.cta }}
                     </Link>
                 </div>

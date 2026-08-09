@@ -38,6 +38,19 @@ A MyGrowNet Business Application
 21. [Gap Analysis — Strategy vs. Current Implementation](#21-gap-analysis--strategy-vs-current-implementation)
 22. [Legal, Financial & Compliance Policies](#22-legal-financial--compliance-policies)
 23. [Deployment & Infrastructure Topology](#23-deployment--infrastructure-topology)
+24. [SEO & Discoverability Architecture](#24-seo--discoverability-architecture)
+25. [Progressive Web App (PWA) & Offline Strategy](#25-progressive-web-app-pwa--offline-strategy)
+26. [Performance & Bandwidth Optimization](#26-performance--bandwidth-optimization)
+27. [Multi-Language & i18n Strategy](#27-multi-language--i18n-strategy)
+28. [Analytics KPIs & Retention Metrics](#28-analytics-kpis--retention-metrics)
+29. [Security Architecture](#29-security-architecture)
+30. [Physical-to-Digital Bridge — QR Code & Offline Attribution](#30-physical-to-digital-bridge--qr-code--offline-attribution)
+31. [Template Versioning, Non-Destructive Upgrade & Rollback](#31-template-versioning-non-destructive-upgrade--rollback-architecture)
+32. [Static Site Generation (SSG) & CDN-First Serving](#32-static-site-generation-ssg--cdn-first-serving-architecture)
+33. [Infrastructure Scaling Roadmap](#33-infrastructure-scaling-roadmap)
+34. [Page Revision History & Editor Undo](#34-page-revision-history--editor-undo-architecture)
+35. [Architecture Evolution Summary & Stability Grading](#35-architecture-evolution-summary--stability-grading)
+36. [AI-Proof Resilience Guarantee & Strategic Pillars](#36-ai-proof-resilience-guarantee--strategic-pillars)
 
 ---
 
@@ -599,24 +612,39 @@ Defined in `config/modules/growbuilder.php`:
 
 ## 21. Gap Analysis — Strategy vs. Current Implementation
 
-### Critical Gaps (Must Build)
+### Critical Gaps (Must Build — Ordered by Impact)
 
-| Gap | Strategic Importance | Effort |
-|---|---|---|
-| **Structured Business Profile entity** | Foundation of entire strategy — without it, AI generates from prompts instead of data | Medium |
-| **Industry Blueprint layer** | Pharmacy-first vertical strategy requires blueprint abstraction | Medium |
-| **Monthly retention digest email** | Core retention loop — prevents one-shot churn | Small |
-| **AI improvement suggestions** | Proactive "your site could improve" notifications | Medium |
+| # | Gap | Strategic Importance | Effort | Section |
+|---|---|---|---|---|
+| 1 | **Static Site Generation (SSG) for published sites** | #1 long-term stability risk — solves SEO, 3G performance, server cost, and scaling in one change. Current client-side rendering (`Site.vue` 163.5 KB) is incompatible with the mobile-first, SEO-dependent Zambian market strategy. | Large | §32 |
+| 2 | **Structured Business Profile entity** | Foundation of entire strategy — without it, AI generates from prompts instead of structured data | Medium | §7 |
+| 3 | **Industry Blueprint layer** | Pharmacy-first vertical strategy requires blueprint abstraction | Medium | §8 |
+| 4 | **Page revision history** | No undo capability in editor — destructive edits are permanent. Table stakes for any serious content editor. | Medium | §34 |
+| 5 | **Monthly retention digest email** | Core retention loop — prevents one-shot churn | Small | §28 |
+| 6 | **AI improvement suggestions** | Proactive "your site could improve" notifications | Medium | §28 |
 
 ### Important Gaps (Should Build in Phase 1–2)
 
 | Gap | Strategic Importance | Effort |
 |---|---|---|
+| JSON-LD LocalBusiness schema markup | Critical for local SEO — "pharmacy near me Lusaka" | Small |
+| Sitemap.xml auto-generation | SEO baseline requirement for Google indexing | Small |
+| QR code auto-generation + print download | Physical-to-digital bridge — the real customer entry ramp for offline businesses | Small |
 | 3-variant AI style recommendations | Better onboarding UX — choice builds confidence | Small |
 | StockFlow ↔ product sync pipeline | Phase 2 differentiator — live inventory on website | Medium |
 | BizDocs company → Business Profile | Platform integration story — PACRA/TPIN trust badges | Small |
 | Business Profile JSON/CSV export | Trust and ownership policy compliance | Small |
 | Paystack/Flutterwave card payments | Broader payment coverage beyond mobile money | Medium |
+| Content Security Policy (CSP) headers | Published site security hardening | Small |
+
+### Infrastructure Gaps (Phase 2–3, Plan Now)
+
+| Gap | Trigger Point | Section |
+|---|---|---|
+| CDN-first serving for published sites | After SSG engine is built | §32 |
+| Database read replica for analytics | 50+ tenants | §33 |
+| Managed database migration | 200+ tenants or first SLA commitment | §33 |
+| Horizontal scaling (app server) | After CDN offloads published site traffic | §33 |
 
 ### Deferred Gaps (Phase 3+)
 
@@ -625,6 +653,7 @@ Defined in `config/modules/growbuilder.php`:
 | AI Change Engine (cascading multi-entity updates) | Highest-value Phase 3 feature — depends on Business Profile |
 | Proactive AI recommendation engine | Needs analytics baseline from Phase 1 retention loop |
 | Multi-channel publishing (WhatsApp catalog, Google Business) | Depends on structured Business Profile |
+| Template versioning & non-destructive upgrades | Depends on SSG + Business Profile being stable (§31) |
 
 ---
 
@@ -659,12 +688,13 @@ Sites hosted on GrowBuilder shall not publish:
 
 ## 23. Deployment & Infrastructure Topology
 
-### Component Matrix
+### Component Matrix — Current (Phase 0–1)
 
 | Component | Location | Technology |
 |---|---|---|
 | **Application Server** | DigitalOcean Droplet (138.197.187.134) | Laravel 13 / PHP 8.3 |
-| **Frontend** | Compiled Vue 3 SPA via Inertia.js | Vite build → `public/build/` |
+| **Frontend (Dashboard/Editor)** | Compiled Vue 3 SPA via Inertia.js | Vite build → `public/build/` |
+| **Frontend (Published Sites)** | Client-side rendered via Inertia (⚠️ see §32) | `Site.vue` (163.5 KB) renders JSON |
 | **Database** | Same droplet (production) | MySQL / SQLite (dev) |
 | **AI Providers** | External APIs | OpenAI, Groq, NVIDIA |
 | **CDN & DNS** | Cloudflare | Edge caching, SSL, custom domain routing |
@@ -672,12 +702,32 @@ Sites hosted on GrowBuilder shall not publish:
 | **Payment Gateways** | External APIs | MTN MoMo API, Airtel Money API |
 | **WhatsApp** | Meta Cloud API | Order notifications, click-to-chat |
 
-### Subdomain Routing
+### Component Matrix — Target (Phase 2+, after SSG)
+
+| Component | Location | Technology |
+|---|---|---|
+| **Application Server** | DigitalOcean Droplet(s) | Laravel 13 / PHP 8.3 |
+| **Frontend (Dashboard/Editor)** | Compiled Vue 3 SPA via Inertia.js | Vite build → `public/build/` |
+| **Frontend (Published Sites)** | **Cloudflare CDN edge (static HTML)** | Pre-rendered by SSG engine (§32) |
+| **Database** | Managed MySQL + read replica | Analytics offloaded to replica |
+| **AI Providers** | External APIs via abstraction layer | Swappable provider config |
+| **CDN & DNS** | Cloudflare Pages / R2 | Static site hosting + media |
+| **File Storage** | Cloudflare R2 or S3 | Media library, exports, static builds |
+
+### Subdomain Routing — Current
 
 ```
-growbuilder.mygrownet.com     → GrowBuilder dashboard & editor
-{subdomain}.mygrownet.com     → Published GrowBuilder site (tenant)
-{custom-domain.com}           → CNAME → Published GrowBuilder site
+growbuilder.mygrownet.com     → GrowBuilder dashboard & editor (dynamic, Inertia)
+{subdomain}.mygrownet.com     → Published GrowBuilder site (dynamic, Inertia — ⚠️ inefficient)
+{custom-domain.com}           → CNAME → Published GrowBuilder site (dynamic)
+```
+
+### Subdomain Routing — Target (after SSG)
+
+```
+growbuilder.mygrownet.com     → GrowBuilder dashboard & editor (dynamic, Inertia)
+{subdomain}.mygrownet.com     → Cloudflare CDN → Static HTML (zero server load)
+{custom-domain.com}           → CNAME → Cloudflare CDN → Static HTML (zero server load)
 ```
 
 ### Deployment Rules
@@ -685,6 +735,7 @@ growbuilder.mygrownet.com     → GrowBuilder dashboard & editor
 1. **NEVER run `npm run build` on production** — build locally, deploy separately
 2. Clear caches after pull: `php artisan route:clear && php artisan config:clear && php artisan cache:clear && php artisan route:cache && php artisan config:cache`
 3. Run pending migrations: `php artisan migrate --path=database/migrations/growbuilder`
+4. **After SSG implementation**: Published site deploys are triggered by `php artisan growbuilder:build-site {siteId}` or automatically on publish/update
 
 ---
 
@@ -895,4 +946,654 @@ The QR code is the **entry ramp** for businesses whose customers are physically 
 ### BizBoost Integration Opportunity
 
 QR codes with UTM attribution feed directly into BizBoost's physical attribution engine (Dynamic QR Code engine from `BIZBOOST_PLATFORM.md` Section 22). GrowBuilder generates the QR; BizBoost tracks the conversion.
+
+---
+
+## 31. Template Versioning, Non-Destructive Upgrade & Rollback Architecture
+
+### The Problem
+
+A business publishes a site using Template v1 in August 2026. In October 2026, GrowBuilder releases Template v2 with a better mobile layout, a new "Customer Reviews" section, improved performance, and updated design tokens. **How does the existing business owner upgrade without losing their custom content — text, images, products, Business Profile data, and CSS overrides?**
+
+Without a solution, published sites become frozen artifacts that drift further from the platform's evolving capabilities. Over time, this creates a two-tier user base: recent sites look modern and feature-complete, while early adopters are stuck on obsolete templates. That dynamic punishes loyalty and undermines the retention loop.
+
+### Architecture: Separation of Concerns
+
+GrowBuilder's JSON-based section architecture makes non-destructive upgrades possible because the template and content operate at different layers:
+
+```
+TEMPLATE LAYER (platform-owned, upgradeable)     CONTENT LAYER (user-owned, preserved)
+──────────────────────────────────────────────    ──────────────────────────────────────
+• Section component definitions                  • Section text, headings, descriptions
+• Section ordering / page structure              • Images, logos, uploaded media
+• Design tokens (colors, fonts, spacing)         • Products, prices, stock levels
+• Responsive breakpoints                         • Business Profile structured data
+• New feature sections (reviews, chatbot)         • Custom CSS overrides
+• Performance optimizations (lazy load, WebP)     • Form field configurations
+• SEO structure (JSON-LD, sitemap patterns)       • WhatsApp / contact settings
+```
+
+**Rule**: A template upgrade replaces the template layer while preserving the content layer. Content is mapped into the new structure by matching section types and field keys.
+
+### Data Model
+
+#### Template Version Tracking
+
+```
+growbuilder_sites
+├── template_id          (FK → site_templates.id)
+├── template_version     (integer — which version was applied)
+├── template_locked      (boolean — if true, skip upgrade notifications)
+└── last_template_sync   (timestamp — when template was last applied/upgraded)
+
+site_templates
+├── id
+├── current_version      (integer — latest published version)
+├── version_history      (JSON — array of version records with changelog)
+└── upgrade_strategy     (enum: 'merge', 'replace', 'manual')
+```
+
+#### Site Version Snapshots (Rollback Safety Net)
+
+```
+growbuilder_site_snapshots
+├── id
+├── site_id              (FK → growbuilder_sites.id)
+├── snapshot_type         (enum: 'pre_upgrade', 'manual', 'auto_backup')
+├── pages_json           (LONGTEXT — full serialized page sections JSON)
+├── design_tokens_json   (JSON — colors, fonts, spacing at time of snapshot)
+├── metadata             (JSON — template_version, trigger, user notes)
+├── expires_at           (timestamp — auto-cleanup after 90 days)
+├── created_at
+```
+
+### The Upgrade Flow
+
+#### Step 1: Detect & Notify
+
+When a template's `current_version` is incremented, every site using that template where `site.template_version < template.current_version` receives:
+
+- An in-app notification (via the existing `NotificationModel` infrastructure): *"A template update is available for your site. New features: Customer Reviews section, improved mobile layout."*
+- A dashboard badge: **🔄 Update Available** on the site card in `Dashboard.vue`.
+- Optionally, a mention in the monthly retention digest email (Section 28).
+
+#### Step 2: Preview (Side-by-Side Comparison)
+
+The user clicks **"Preview Update"** which:
+
+1. Creates a `pre_upgrade` snapshot of the current site state.
+2. Generates a temporary preview applying the new template version to the existing content.
+3. Renders a **split-screen comparison**:
+   - Left: Current site (live)
+   - Right: Updated site (preview)
+4. Highlights what's new (new sections, visual changes) and what content migrated automatically.
+
+#### Step 3: Selective Adoption
+
+Not every template change needs to be all-or-nothing. The upgrade UI presents toggleable options:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Template Update v2.0 — What's New                      │
+│                                                         │
+│  ☑ Updated design tokens (new color palette, fonts)     │
+│  ☑ Improved mobile responsive layout                    │
+│  ☑ New section: Customer Reviews                        │
+│  ☐ New section: Instagram Feed (requires API key)       │
+│  ☑ Performance: lazy-loaded images, WebP auto-convert   │
+│  ☑ SEO: JSON-LD LocalBusiness schema added              │
+│                                                         │
+│  ⚠ Your custom CSS overrides will be preserved.         │
+│  ⚠ Your product catalog is unchanged.                   │
+│                                                         │
+│  [Apply Selected Updates]     [Keep Current Version]    │
+└─────────────────────────────────────────────────────────┘
+```
+
+#### Step 4: Content Migration Engine
+
+The migration engine maps existing user content into the new template structure:
+
+```php
+// Pseudocode for content migration
+foreach ($existingPage->sections as $section) {
+    $newSection = $newTemplate->findMatchingSection($section->type);
+    
+    if ($newSection) {
+        // Same section type exists in new template — merge content into new structure
+        $newSection->mergeContent($section->userContent);
+    } else {
+        // Section type removed from new template — preserve as custom section
+        $migratedPage->appendCustomSection($section);
+    }
+}
+
+// Add new sections from template that didn't exist before
+foreach ($newTemplate->newSections as $section) {
+    if ($userSelectedThisSection) {
+        $migratedPage->insertAtRecommendedPosition($section);
+    }
+}
+```
+
+**Key Rules:**
+- **Text content** is never overwritten — it maps by section-type and field-key.
+- **Images** are never replaced — user-uploaded media stays in place.
+- **Products and Business Profile data** are untouched — they live in their own tables.
+- **Custom CSS** is appended after the new template CSS, preserving overrides.
+- **Sections that exist in the old template but not the new** are preserved as "custom sections" at the bottom of the page.
+- **New sections** are inserted at positions recommended by the template, with default content that the user can customize.
+
+#### Step 5: Rollback (30-Day Safety Window)
+
+After applying an upgrade, the user sees:
+
+```
+✅ Template updated to v2.0 — applied 4 of 5 available changes.
+   Undo this update within 30 days → [Rollback to Previous Version]
+```
+
+Clicking rollback restores the `pre_upgrade` snapshot. After 30 days (configurable), snapshots are auto-cleaned by a scheduled command.
+
+### Automatic vs. Manual Upgrades
+
+| Upgrade Type | When to Use | Example |
+|---|---|---|
+| **Silent / automatic** | Non-breaking performance and SEO improvements that don't change visible layout | WebP image optimization, JSON-LD injection, `<meta>` tag updates |
+| **Notified / opt-in** | Design changes, new sections, layout restructuring | New hero layout, customer reviews section, color palette refresh |
+| **Manual only** | Breaking changes that require content re-mapping | Complete template redesign, section type deprecation |
+
+The `upgrade_strategy` field on `site_templates` controls which mode applies:
+- `merge`: Automatic content migration with user notification
+- `replace`: Full template replacement with preview required
+- `manual`: User must manually rebuild (rare, only for complete redesigns)
+
+### Notification Integration
+
+Template update notifications use the same notification infrastructure as policy updates:
+
+```php
+// In a TemplateVersionService or Artisan command
+NotificationModel::create([
+    'id'              => (string) Str::uuid(),
+    'notifiable_type' => User::class,
+    'notifiable_id'   => $siteOwner->id,
+    'module'          => 'growbuilder',
+    'type'            => 'template_update',
+    'category'        => 'product',
+    'title'           => "Template update available for {$site->name}",
+    'message'         => "Version {$newVersion}: {$changelog}",
+    'action_url'      => route('growbuilder.sites.settings', $site->id) . '#template-update',
+    'action_text'     => 'Preview Update',
+    'priority'        => 'normal',
+    'created_at'      => now(),
+]);
+```
+
+### Current Implementation Status
+
+| Component | Status |
+|---|---|
+| Template versioning on `site_templates` | ❌ Gap — no `current_version` or `version_history` columns |
+| Site-level template version tracking | ❌ Gap — no `template_version` column on `growbuilder_sites` |
+| Site snapshot/rollback system | ❌ Gap — no `growbuilder_site_snapshots` table |
+| Content migration engine | ❌ Gap — `ApplySiteTemplateUseCase` applies templates to new sites but doesn't merge existing content |
+| Split-screen preview UI | ❌ Gap |
+| Template update notification | ❌ Gap — notification infrastructure exists, just needs wiring |
+| Silent SEO/performance upgrades | ❌ Gap — could be implemented server-side without UI changes |
+
+### Strategic Alignment
+
+This feature passes the AI advancement test from Section 2:
+
+> **Does it get stronger as AI improves?** Yes — AI can power smarter content migration (understanding which content maps where), generate better changelogs, and eventually auto-suggest template improvements based on analytics data. A generic AI tool cannot do this because it doesn't have the template version history or the structured content mapping.
+
+---
+
+## 32. Static Site Generation (SSG) & CDN-First Serving Architecture
+
+### Why This Is the #1 Architectural Priority
+
+Published GrowBuilder sites are currently rendered **client-side** — the browser downloads `Site.vue` (163.5 KB) plus the Vue 3 runtime, then executes JavaScript to parse the page's JSON sections and render them into HTML. This architecture has four compounding problems that worsen as the platform grows:
+
+| Problem | Impact | Severity |
+|---|---|---|
+| **SEO** | Google can index JS-rendered content but treats it as second-class. For "pharmacy near me Lusaka" — the primary acquisition channel — static HTML ranks faster and more reliably. | Critical |
+| **Performance on 3G** | A Zambian customer on MTN 3G waits for ~200KB+ of JavaScript to download and execute before seeing anything. The Section 26 target (FCP < 2s on 3G) is nearly impossible with client-side rendering. | Critical |
+| **Server load** | Every published page view hits the Laravel backend to serve the Inertia response. 100 sites × 50 visitors/day = 5,000 dynamic requests daily that could be zero. | High |
+| **Hosting cost** | Server costs scale linearly with published-site traffic. Static sites on CDN cost nearly nothing. | High |
+
+### The Architecture
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                     CURRENT: CLIENT-SIDE RENDERING                      │
+│                                                                          │
+│  Visitor → DNS → DigitalOcean Droplet → Laravel → Inertia → Vue SSR     │
+│           → Browser downloads 200KB+ JS → Parses JSON → Renders HTML    │
+│                                                                          │
+│  Problems: Slow FCP, poor SEO, server load per visit, linear cost       │
+└──────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌──────────────────────────────────────────────────────────────────────────┐
+│                     TARGET: STATIC SITE GENERATION                       │
+│                                                                          │
+│  Owner publishes/updates → SSG Engine compiles static HTML/CSS/JS        │
+│           → Deploys to Cloudflare CDN / Pages / R2                       │
+│                                                                          │
+│  Visitor → DNS → Cloudflare Edge (< 50ms) → Pre-rendered static HTML     │
+│           → Zero server load, perfect SEO, instant FCP                   │
+│                                                                          │
+│  Benefits: < 1s FCP on 3G, full SEO, zero server load, near-zero cost   │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### What Gets Statically Generated vs. What Stays Dynamic
+
+| Component | Rendering | Why |
+|---|---|---|
+| Published site pages (Home, About, Services, etc.) | **Static HTML on CDN** | Read-only content that changes infrequently |
+| Product catalog pages | **Static HTML on CDN** | Regenerated when products change |
+| Contact forms | **Static form + API endpoint** | Form HTML is static; submission POSTs to a serverless function or Laravel API |
+| AI chatbot widget | **Client-side JS embed** | Small JS widget loaded async, doesn't block page render |
+| E-commerce checkout | **Dynamic (Laravel/Inertia)** | Payment flows require server-side session and security |
+| Site dashboard & editor | **Dynamic (Laravel/Inertia)** | Interactive, authenticated — no change |
+| Analytics tracking | **Lightweight JS pixel** | Async, non-blocking |
+
+### Build Engine Architecture
+
+`StaticExportService` (92.0 KB) already compiles GrowBuilder sites into downloadable HTML/CSS/JS ZIP packages. The SSG engine is an evolution of this same service:
+
+```php
+// Pseudocode for the SSG build pipeline
+class StaticSiteBuilder
+{
+    public function build(Site $site): BuildResult
+    {
+        // 1. Resolve Business Profile
+        $profile = $this->profileRepo->findBySite($site);
+        
+        // 2. Compile each published page to static HTML
+        foreach ($site->publishedPages() as $page) {
+            $html = $this->renderer->renderToHtml($page, $profile, $site->designTokens);
+            $html = $this->injectSeo($html, $profile);      // JSON-LD, meta, canonical
+            $html = $this->injectAnalytics($html, $site);    // Tracking pixel
+            $html = $this->injectChatbot($html, $site);      // Async chatbot widget
+            $this->outputStore->write($site->subdomain, $page->slug, $html);
+        }
+        
+        // 3. Generate auxiliary files
+        $this->generateSitemap($site);
+        $this->generateRobotsTxt($site);
+        $this->generateManifest($site);                      // PWA manifest
+        
+        // 4. Optimize assets
+        $this->optimizeImages($site);                        // WebP, resize
+        $this->minifyCss($site);                             // Critical CSS inline
+        
+        // 5. Deploy to CDN
+        $this->deployer->deploy($site->subdomain, $this->outputStore);
+        
+        return new BuildResult(success: true, url: $site->publicUrl());
+    }
+}
+```
+
+### Build Triggers
+
+| Trigger | When | Rebuild Scope |
+|---|---|---|
+| `PublishSiteUseCase` | Owner clicks "Publish" | Full site rebuild |
+| `SavePageContentUseCase` | Owner saves a page edit (on published site) | Single page rebuild + sitemap |
+| Business Profile update | Owner changes phone, hours, address | Full site rebuild (structured data changes) |
+| Product CRUD | Owner adds/edits/deletes product | Product pages + catalog page |
+| Template upgrade (§31) | Owner applies template update | Full site rebuild |
+| `php artisan growbuilder:build-site {id}` | Manual / CI trigger | Full site rebuild |
+| `php artisan growbuilder:rebuild-all` | Platform-wide rebuild (e.g., after global SEO improvement) | All published sites |
+
+### CDN Deployment Options & Cost Analysis
+
+> **Key point: SSG costs nothing extra.** Phase 1 runs on your existing droplet and Cloudflare free tier. Phase 2 uses Cloudflare Pages/R2 free tiers. Paid Cloudflare tiers only become relevant at 100+ tenants, where subscription revenue far exceeds the cost.
+
+#### Option 1: Self-Hosted Nginx (Phase 1 — Recommended Start)
+
+**Extra cost: $0.** Your droplet already runs Nginx. SSG compiles HTML to disk; Nginx serves static files directly — no PHP, no Laravel, no new infrastructure.
+
+```nginx
+# Nginx config for serving GrowBuilder static sites
+# Added to existing server block — no new services needed
+
+# Published GrowBuilder sites: serve static HTML from disk
+location ~* ^/sites/(?<subdomain>[a-z0-9-]+)/(?<page>.*)$ {
+    root /var/www/growbuilder-sites/$subdomain;
+    try_files /$page /index.html =404;
+    expires 1h;                          # Cloudflare free tier caches this
+    add_header Cache-Control "public";
+    add_header X-Served-By "static";
+}
+```
+
+Since you already use Cloudflare for DNS, Cloudflare's **free tier** automatically caches these static responses at edge locations worldwide. Visitors in Lusaka hit the Cloudflare PoP in Johannesburg (~20ms) instead of your droplet.
+
+#### Option 2: Cloudflare Pages (Phase 2 — Optional Upgrade)
+
+**Extra cost: $0** on free tier (500 builds/month, unlimited bandwidth, unlimited requests). For 20–50 sites that update a few times per week, this is well within free limits.
+
+#### Option 3: Cloudflare R2 + Workers (Phase 3 — Scale)
+
+**Extra cost: $0** on free tier (10 GB storage, 10M Class B requests/month). Paid tier starts at ~$0.015/GB/month — for small business sites (a few pages each, ~5MB per site), 200 sites = 1 GB = $0.015/month.
+
+#### Cost Breakdown
+
+| Phase | SSG Engine Cost | CDN/Serving Cost | Cloudflare Tier | Total Extra Cost |
+|---|---|---|---|---|
+| **Phase 1** (1–50 tenants) | $0 (same droplet) | $0 (Nginx + CF free cache) | Free (already using it) | **$0** |
+| **Phase 2** (50–100 tenants) | $0 (same droplet) | $0 (CF Pages free: 500 builds/mo) | Free | **$0** |
+| **Phase 3** (100–200 tenants) | $0 (same droplet) | ~$20/mo (CF Pro for cache rules) | Pro ($20/mo) | **~$20/mo** |
+| **Phase 4** (200+ tenants) | $0 | ~$20/mo (CF Pro) + ~$1/mo (R2) | Pro | **~$21/mo** |
+
+At K149/month (Starter tier), 100 tenants = K14,900/month revenue. $20/month Cloudflare Pro is less than 0.5% of revenue.
+
+#### SSG Actually Saves Money
+
+SSG doesn't add cost — it **reduces** cost by eliminating PHP processing for published site traffic:
+
+| Scenario (100 tenants × 50 visits/day) | Current (CSR) | After SSG |
+|---|---|---|
+| Laravel requests per day | **5,000** | **~50** (dashboard/editor only) |
+| PHP workers needed | 4–8 | 1–2 |
+| Droplet RAM required | 4 GB ($48/mo) | **1–2 GB ($12–24/mo)** |
+| When second server needed | ~50 tenants | **~500+ tenants** |
+| Monthly droplet savings at 100 tenants | — | **~$24–36/mo saved** |
+
+**Recommended migration path**:
+1. **Phase 1 (now)**: SSG engine compiles HTML to disk on the same droplet. Nginx serves static files directly (bypasses Laravel entirely for published sites). Massive improvement over client-side rendering at **zero infrastructure cost**.
+2. **Phase 2 (optional)**: Move static builds to Cloudflare Pages or R2. Published sites served from global edge. Server handles only dashboard/editor/API. Still **$0 extra** on free tier.
+
+### Existing Foundation
+
+| Component | Reuse Potential |
+|---|---|
+| `StaticExportService` (92.0 KB) | **High** — already compiles full HTML/CSS/JS. Needs adaptation from ZIP output to disk/CDN deploy. |
+| `SectionTemplateService` (34.5 KB) | **High** — section definitions used by the renderer. |
+| `ImageOptimizationService` | **High** — WebP conversion and resizing. |
+| `Preview/Site.vue` (163.5 KB) | **Reference only** — the client-side renderer logic informs the server-side HTML compilation, but SSG replaces it for published sites. |
+
+### Impact Assessment
+
+| Metric | Before (CSR) | After (SSG) |
+|---|---|---|
+| First Contentful Paint (3G) | ~4–8s | **< 1.5s** |
+| Google PageSpeed score | ~40–60 | **85–100** |
+| SEO indexing reliability | Uncertain (JS-dependent) | **Guaranteed** (static HTML) |
+| Server load per published page view | 1 Laravel request | **0** (CDN serves) |
+| Hosting cost per 100 tenants | Linear server scaling | **Near-zero marginal cost** |
+| Time to first byte (TTFB) | ~200–500ms (droplet) | **< 50ms** (Cloudflare edge) |
+
+---
+
+## 33. Infrastructure Scaling Roadmap
+
+GrowBuilder currently runs on a single DigitalOcean droplet shared with the entire MyGrowNet platform. This section defines the scaling triggers and migration path.
+
+### Scaling Phases
+
+```
+ TENANTS    INFRASTRUCTURE                           TRIGGER
+ ───────    ──────────────                           ───────
+   1–20     Single droplet, shared DB                ← Current state
+            Acceptable. Focus on product-market fit.
+
+  20–50     + SSG engine (§32, Phase 1 interim)      ← First paying customers
+            Published sites served as static files
+            from disk via Nginx. Server load drops
+            dramatically.
+
+  50–100    + Database read replica                  ← Analytics queries slow down
+            Offload growbuilder_page_views, form
+            submissions, and reporting queries to
+            read replica. Write queries stay on
+            primary.
+
+ 100–200    + CDN-first serving (Cloudflare Pages)   ← Droplet CPU consistently > 60%
+            Published sites move to Cloudflare edge.
+            Server handles only dashboard, editor,
+            AI API, and payment webhooks.
+
+   200+     + Managed database (DO Managed MySQL)    ← First SLA commitment
+            + Horizontal app scaling (2+ droplets    ← Redundancy required
+              behind load balancer)
+            + Separate media storage (Cloudflare R2)
+```
+
+### Database Scaling Strategy
+
+| Phase | Database Config | Analytics Query Path |
+|---|---|---|
+| **Now** | Single MySQL on droplet | Direct queries on primary |
+| **50+ tenants** | Primary + read replica | `growbuilder_page_views`, `growbuilder_form_submissions`, `growbuilder_orders` read from replica |
+| **200+ tenants** | Managed MySQL (DO/AWS RDS) | Consider time-series DB for page views (ClickHouse, TimescaleDB) |
+
+### Table Growth Projections
+
+| Table | Rows per tenant/month | At 100 tenants (1 year) | Mitigation |
+|---|---|---|---|
+| `growbuilder_page_views` | ~1,500 | **1.8M rows** | Partition by month; archive after 12 months |
+| `growbuilder_form_submissions` | ~50 | 60K rows | Acceptable |
+| `growbuilder_orders` | ~20 | 24K rows | Acceptable |
+| `growbuilder_ai_usage` | ~100 | 120K rows | Reset monthly; archive |
+
+### Cost Model
+
+| Phase | Monthly Infrastructure Cost | Cost per Tenant |
+|---|---|---|
+| Now (1–20 tenants) | ~$24 (single droplet) | $1.20–$24.00 |
+| SSG interim (20–50) | ~$24 (same droplet, less load) | $0.48–$1.20 |
+| CDN-first (50–100) | ~$44 ($24 droplet + $20 Cloudflare Pro) | $0.44–$0.88 |
+| Scaled (200+) | ~$100 (managed DB + 2 droplets + CDN) | $0.50 |
+
+At K149/month (Starter tier), even the most expensive scaling phase yields healthy margins.
+
+---
+
+## 34. Page Revision History & Editor Undo Architecture
+
+### The Problem
+
+Currently, when a user saves a page edit in the visual editor, the previous version is permanently overwritten. There is no undo history, no "restore previous version", and no audit trail of content changes. If a user accidentally deletes a section and saves, that content is gone.
+
+This is below the baseline expectation set by WordPress (revisions), Google Docs (version history), Notion (page history), and every modern content editor.
+
+### Data Model
+
+```
+growbuilder_page_revisions
+├── id                 (bigint, auto-increment)
+├── page_id            (FK → growbuilder_pages.id)
+├── revision_number    (integer — monotonically increasing per page)
+├── sections_json      (LONGTEXT — full page sections JSON at this point in time)
+├── design_tokens_json (JSON — page-level design overrides at this point)
+├── meta_json          (JSON — page meta title, description, OG tags)
+├── change_summary     (string, nullable — auto-generated: "Added section: Customer Reviews")
+├── created_by         (FK → users.id)
+├── created_at         (timestamp)
+```
+
+### Revision Capture Rules
+
+| Trigger | Creates Revision? | Notes |
+|---|---|---|
+| User clicks "Save" in editor | ✅ Yes | Always capture before overwriting |
+| AI chat applies canvas action | ✅ Yes | AI edits are reversible |
+| Template upgrade applied (§31) | ✅ Yes | Pre-upgrade snapshot |
+| Auto-save (every 60s during editing) | ⚠️ Conditional | Only if content changed since last revision |
+| Publish/unpublish | ✅ Yes | Marks the "published" state for reference |
+
+### Retention Policy
+
+| Tier | Revisions Kept | Rationale |
+|---|---|---|
+| Free | Last 10 revisions per page | Sufficient for basic undo |
+| Starter | Last 30 revisions per page | 1 month of daily edits |
+| Business | Last 100 revisions per page | Full audit trail |
+| Agency | Unlimited (90-day window) | Client accountability |
+
+Older revisions are pruned by a scheduled command: `php artisan growbuilder:prune-revisions`.
+
+### Editor UI
+
+The visual editor (`Editor/Index.vue`) gains a **"Version History"** panel in the sidebar:
+
+```
+┌─────────────────────────────────────────┐
+│  📋 Version History                     │
+│                                         │
+│  v12 — Today 2:45 PM (current)          │
+│     Added "Customer Reviews" section    │
+│                                         │
+│  v11 — Today 1:30 PM                    │
+│     AI: Updated hero headline           │
+│                                         │
+│  v10 — Yesterday 4:15 PM                │
+│     Changed product prices              │
+│                                         │
+│  v9 — Aug 7, 11:00 AM                   │
+│     Template upgrade v2.0 applied       │
+│                                         │
+│  [Preview v10]  [Restore v10]           │
+└─────────────────────────────────────────┘
+```
+
+### Strategic Value
+
+Revision history is not just an undo feature — it creates a **content changelog** that feeds into:
+- **Retention metrics** (Section 28): "Your site was updated 12 times this month" vs. "Your site hasn't been edited in 45 days."
+- **AI recommendations**: "You reverted the hero section 3 times — would you like AI to suggest alternatives?"
+- **Agency accountability**: Clients can see exactly what their agency changed and when.
+
+---
+
+## 35. Architecture Evolution Summary & Stability Grading
+
+This section provides an honest assessment of every architectural dimension, its current grade, and the path to long-term stability.
+
+### Current Grading
+
+| Dimension | Grade | Assessment | Path to A |
+|---|---|---|---|
+| **Domain architecture (DDD)** | A | Strong. Entities, value objects, repository contracts, use cases — all properly layered. | Maintain discipline. |
+| **AI strategy** | A | Swappable engine thesis is correct. OpenAI/Groq/NVIDIA already abstracted. | Formalize provider abstraction into a config-driven factory. |
+| **Product thesis (Business Profile)** | A | Right strategic answer. | Build the entity (§7, §21 Gap #2). |
+| **Local-market fit** | A | MTN MoMo, Airtel Money, WhatsApp, PACRA/TPIN — genuine moat. | Add QR code bridge (§30). |
+| **Published site rendering** | C | Client-side rendering is incompatible with SEO + 3G performance targets. | Implement SSG (§32). |
+| **Hosting & scaling** | B- | Single droplet is fine for now. No plan documented for growth. | Follow scaling roadmap (§33). |
+| **Data model** | B+ | Strong entity design. Business Profile scattered across JSON. | Build Business Profile entity. |
+| **Editor UX** | B | Powerful drag-and-drop. No undo/revision history. | Implement page revisions (§34). |
+| **Security** | B | Solid basics (TLS, RBAC, tenant isolation, encrypted credentials). Missing CSP headers. | Add CSP, sanitize custom HTML injection. |
+| **SEO** | B- | AI-generated meta tags. No structured data, no sitemap, no robots.txt. | Implement local SEO stack (§24). |
+| **Performance** | B- | Image optimization and lazy loading built. FCP target unachievable with current CSR. | SSG fixes this automatically (§32). |
+| **Retention loop** | C+ | Analytics dashboard exists. No proactive outreach, no digest, no freshness scoring. | Build monthly digest + AI suggestions (§28). |
+
+### Architecture Evolution Trajectory
+
+```
+                    NOW                    PHASE 1               PHASE 2              PHASE 3
+                    Aug 2026               Oct 2026              Q1 2027              Q3 2027
+                    ────────               ────────              ────────             ────────
+
+Published Sites:    Client-side render  →  SSG to disk (Nginx) → CDN-first (CF Pages) → Edge compute
+                    Grade: C               Grade: B+              Grade: A              Grade: A+
+
+Business Data:      Scattered JSON      →  Business Profile     → Platform integration → Multi-channel
+                    Grade: B+              Grade: A               Grade: A              Grade: A+
+
+SEO:                Meta tags only      →  JSON-LD + Sitemap    → Google Business sync → Rich results
+                    Grade: B-              Grade: A-              Grade: A              Grade: A+
+
+Editor:             No undo             →  Page revisions       → Collaborative edit   → AI co-pilot
+                    Grade: B               Grade: A-              Grade: A              Grade: A+
+
+Retention:          Analytics only      →  Monthly digest email  → AI recommendations  → Auto-optimization
+                    Grade: C+              Grade: B+              Grade: A              Grade: A+
+
+Infrastructure:     Single droplet      →  Same (SSG reduces    → Read replica + CDN   → Managed DB +
+                    Grade: B-              load) Grade: B          Grade: A-              multi-node A
+
+Security:           Basic TLS + RBAC    →  CSP + sanitization   → WAF rules            → SOC 2 Type I
+                    Grade: B               Grade: A-              Grade: A              Grade: A+
+```
+
+### The Three-Move Sequence
+
+If GrowBuilder executes only three changes from this entire document, they should be:
+
+1. **Build the Business Profile entity** — unlocks everything else (AI from structured data, JSON-LD, multi-channel, template upgrades from profile).
+2. **Implement Static Site Generation** — solves SEO, performance, cost, and scaling simultaneously.
+Everything else improves the product. These three determine whether it survives.
+
+---
+
+## 36. AI-Proof Resilience Guarantee & Strategic Pillars
+
+### Core Principle
+
+> **GrowBuilder shall evolve in lockstep with AI advancements and must NEVER be susceptible to replacement by standalone AI generation tools.**
+
+Generic AI site generators (Durable, 10Web, Wix ADI, or raw LLM prompts) create static outputs in a vacuum. As AI models improve, standalone generators become commoditized, and users abandon them for newer tools. GrowBuilder is engineered so that **every breakthrough in AI automatically increases the platform's value**, rather than threatening it.
+
+### The 4 Strategic Pillars of AI Resilience
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        GENERIC AI BUILDERS                             │
+│                                                                        │
+│  User Prompt ──> AI Generator ──> One-time Static HTML File           │
+│                                                                        │
+│  Result: Commoditized and replaced when a new AI model drops.          │
+└────────────────────────────────────────────────────────────────────────┘
+
+                                  VS
+
+┌────────────────────────────────────────────────────────────────────────┐
+│                        GROWBUILDER PLATFORM                            │
+│                                                                        │
+│  Business Profile ──> Platform Context ──> Swappable AI Engine         │
+│         │                  │                      │                    │
+│         ├── StockFlow      ├── Payments (MoMo)    ├── Auto-Updates     │
+│         ├── BizDocs        ├── Local SEO & QR     └── SSG to Edge      │
+│         └── GrowFinance    └── WhatsApp Workflow                       │
+│                                                                        │
+│  Result: Continuously evolves WITH AI. Compounds in value over time.  │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Pillar 1: The Reality Anchor (Data & Operational Context)
+
+Standalone AI models have no connection to real-world business operations. They do not know a pharmacy's live stock levels, official PACRA registration, tax status, invoice records, or mobile money merchant details.
+
+GrowBuilder serves as the **Reality Anchor**. It anchors AI generation directly to authentic, live business data (via StockFlow, BizDocs, GrowFinance, and the Business Profile). As AI models grow more intelligent, they consume this structured context to produce increasingly accurate, automated, and high-converting digital presences.
+
+#### Pillar 2: Swappable AI Engine Architecture
+
+In GrowBuilder's codebase (`AIContentService`, domain services, provider contracts), AI is completely decoupled from business logic:
+- Today it invokes OpenAI, Groq, or NVIDIA endpoints.
+- When next-generation AI models launch, changing a provider configuration instantly upgrades the entire platform.
+- Overnight, every GrowBuilder tenant gains superior content synthesis, smarter visual layouts, more precise local SEO advice, and proactive business recommendations without rewriting underlying domain code.
+
+#### Pillar 3: Structured Business Profile (Persistent Data > Ephemeral Output)
+
+With generic AI tools, generated content is trapped inside static page structures. In GrowBuilder:
+- Business identity, offerings, hours, trust credentials, and locations reside in the canonical **Business Profile entity** (§7).
+- A website is merely **one presentation view** of this persistent data layer.
+- Future AI advancements allow the same Business Profile to automatically publish to WhatsApp catalogs, Google Business Profiles, AI voice assistants, and emerging digital channels without manual re-entry.
+
+#### Pillar 4: Local Execution Moat
+
+Global AI labs optimize for broad, high-volume markets. They will not build or maintain:
+- Zambian MTN Mobile Money & Airtel Money payment settlement integration
+- PACRA legal compliance & TPIN verification trust badges
+- Print-ready offline QR code window sticker generation with UTM attribution
+- WhatsApp Cloud API ordering workflows optimized for 3G conditions
+
+This operational execution moat ensures that no global AI generator can match GrowBuilder's local effectiveness.
 

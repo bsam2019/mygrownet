@@ -69,7 +69,7 @@ self.addEventListener('fetch', (event) => {
       fetch(request).then((res) => {
         if (res.status === 200) { const c = res.clone(); caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, c)); }
         return res;
-      }).catch(() => caches.match(request))
+      }).catch(() => caches.match(request).then((cached) => cached || Response.error()))
     );
     return;
   }
@@ -80,12 +80,12 @@ self.addEventListener('fetch', (event) => {
       fetch(request).then((res) => {
         if (res.status === 200) { const c = res.clone(); caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, c)); }
         return res;
-      }).catch(() => caches.match(request).then((cached) => cached || caches.match(OFFLINE_PAGE)))
+      }).catch(() => caches.match(request).then((cached) => cached || caches.match(OFFLINE_PAGE).then((off) => off || Response.error())))
     );
     return;
   }
 
-  event.respondWith(fetch(request).catch(() => caches.match(request)));
+  event.respondWith(fetch(request).catch(() => caches.match(request).then((cached) => cached || Response.error())));
 });
 
 self.addEventListener('message', (event) => {

@@ -1,18 +1,28 @@
 <script setup lang="ts">
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import GrowStreamHeader from '@/components/GrowStream/GrowStreamHeader.vue';
 import GrowStreamFooter from '@/components/GrowStream/GrowStreamFooter.vue';
 
 interface Props {
     title?: string;
     showPromo?: boolean;
+    categories?: any[];
+    selectedCategory?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     title: 'GrowStream',
     showPromo: false,
+    categories: () => [],
+    selectedCategory: '',
 });
+
+const emit = defineEmits(['selectCategory']);
+
+const handleSelectCategory = (slug: string) => {
+    emit('selectCategory', slug);
+};
 
 const page = usePage();
 const user = computed(() => (page.props as any).auth?.user ?? null);
@@ -41,7 +51,12 @@ const { activeVideo, isMinimized, expandVideo, closeMiniPlayer } = useMiniPlayer
     <Head :title="props.title" />
 
     <div class="gs-app bg-background text-on-background min-h-screen flex flex-col font-body-md antialiased">
-        <GrowStreamHeader :show-promo="props.showPromo" />
+        <GrowStreamHeader
+            :show-promo="props.showPromo"
+            :categories="props.categories"
+            :selected-category="props.selectedCategory"
+            @select-category="handleSelectCategory"
+        />
 
         <!-- Main Content -->
         <main class="flex-1 w-full max-w-6xl mx-auto px-margin-mobile md:px-margin-desktop pt-6 pb-24 md:pb-12">

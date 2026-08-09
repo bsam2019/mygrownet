@@ -1,21 +1,5 @@
 <template>
-    <GrowStreamLayout title="GrowStream" show-promo>
-        <!-- Sticky category chips -->
-        <div class="sticky top-16 z-20 -mx-margin-mobile md:-mx-0 px-margin-mobile md:px-0 py-3 bg-background/95 backdrop-blur-md flex gap-2 overflow-x-auto scrollbar-none">
-            <button
-                class="shrink-0 bg-primary text-on-primary px-5 py-2 rounded-full font-label-md text-label-md"
-                @click="goBrowse({})"
-            >All</button>
-            <button
-                v-for="cat in categories"
-                :key="cat.id"
-                @click="goBrowse({ category: cat.slug })"
-                class="shrink-0 bg-surface-container-low text-on-surface-variant px-5 py-2 rounded-full font-label-md text-label-md border border-outline-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"
-            >
-                {{ cat.name }}
-            </button>
-        </div>
-
+    <GrowStreamLayout title="GrowStream" show-promo :categories="categories" @select-category="onCategorySelect">
         <!-- Personalized hero -->
         <section class="mb-8">
             <div class="relative rounded-2xl overflow-hidden aspect-[16/9] md:aspect-[21/9] gs-hero">
@@ -295,6 +279,14 @@ const doSearch = () => {
 
 const goBrowse = (params: Record<string, string>) => {
     router.visit(route('growstream.browse', params));
+};
+
+const onCategorySelect = (slug: string) => {
+    if (slug) {
+        goBrowse({ category: slug });
+    } else {
+        goBrowse({});
+    }
 };
 
 const formatDuration = (seconds?: number): string => {

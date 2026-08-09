@@ -1,14 +1,16 @@
 <template>
-    <GrowStreamLayout title="Browse Videos - GrowStream">
+    <GrowStreamLayout
+        title="Browse Videos - GrowStream"
+        :categories="categories"
+        :selected-category="filters.category"
+        @select-category="(slug) => { filters.category = slug; applyFilters(); }"
+    >
         <div class="mx-auto max-w-7xl">
             <!-- Page Header -->
             <div class="mb-8">
                 <h1 class="mb-2 text-4xl font-bold text-[var(--gs-text)]">Discover</h1>
                 <p class="text-lg text-[var(--gs-muted)]">Explore content across categories and creators</p>
             </div>
-
-            <!-- Filters -->
-            <div class="mb-8 flex flex-wrap gap-4">
                 <!-- Search -->
                 <div class="flex-1 min-w-[300px]">
                     <input

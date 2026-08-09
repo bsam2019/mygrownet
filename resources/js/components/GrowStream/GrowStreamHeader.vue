@@ -5,11 +5,21 @@ import { useDataSaver } from '@/composables/useDataSaver';
 
 interface Props {
     showPromo?: boolean;
+    categories?: any[];
+    selectedCategory?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     showPromo: false,
+    categories: () => [],
+    selectedCategory: '',
 });
+
+const emit = defineEmits(['selectCategory']);
+
+const onCategoryClick = (categorySlug: string) => {
+    emit('selectCategory', categorySlug);
+};
 
 const page = usePage();
 const { dataSaver, toggle: toggleDataSaver } = useDataSaver();
@@ -134,7 +144,7 @@ const navLinks = computed(() => [
         <!-- Promo banner - REMOVED -->
 
         <!-- Header -->
-        <header class="border-b border-outline-variant/60 sticky top-0 z-40 bg-background/90 backdrop-blur-md">
+        <header class="border-b border-outline-variant/60 sticky top-0 z-40 bg-[#0e0b09] shadow-lg">
             <div class="max-w-6xl mx-auto flex items-center justify-between px-margin-mobile md:px-margin-desktop h-16 gap-4">
                 <!-- Mobile menu trigger (LEFT side on mobile) -->
                 <button
@@ -240,18 +250,41 @@ const navLinks = computed(() => [
                                         <p class="truncate text-sm font-semibold text-on-surface">{{ user?.name }}</p>
                                         <p class="truncate text-xs text-on-surface-variant">{{ user?.email }}</p>
                                     </div>
-                                    <div class="flex flex-col p-1.5">
-                                        <Link :href="route('growstream.my-videos')" class="rounded-lg px-3 py-2 text-sm text-on-surface hover:bg-surface-container-low" @click="closeAvatarMenu">My Saved Videos</Link>
-                                        <Link :href="route('growstream.subscription')" class="rounded-lg px-3 py-2 text-sm text-primary hover:bg-surface-container-low" @click="closeAvatarMenu">Subscribe / Plans</Link>
+                                    <div class="flex flex-col p-1.5 space-y-0.5">
+                                        <a href="/workspace" class="rounded-lg px-3 py-2 text-xs font-semibold text-primary hover:bg-surface-container-low flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-sm">apps</span> MyGrowNet Workspace
+                                        </a>
+                                        <Link :href="route('growstream.my-videos')" class="rounded-lg px-3 py-2 text-xs text-on-surface hover:bg-surface-container-low" @click="closeAvatarMenu">My Saved Videos</Link>
+                                        <Link :href="route('growstream.hub.client.dashboard')" class="rounded-lg px-3 py-2 text-xs font-semibold text-emerald-400 hover:bg-surface-container-low flex items-center gap-2" @click="closeAvatarMenu">
+                                            <span class="material-symbols-outlined text-sm">school</span> Student / Client Portal
+                                        </Link>
+                                        <Link :href="route('growstream.subscription')" class="rounded-lg px-3 py-2 text-xs text-primary hover:bg-surface-container-low" @click="closeAvatarMenu">Subscribe / Plans</Link>
                                         <template v-if="isCreator">
-                                            <Link :href="route('growstream.creator.dashboard')" class="rounded-lg px-3 py-2 text-sm text-on-surface hover:bg-surface-container-low" @click="closeAvatarMenu">Creator Hub Dashboard</Link>
-                                            <Link :href="route('growstream.creator.platform.show')" class="rounded-lg px-3 py-2 text-sm text-on-surface hover:bg-surface-container-low" @click="closeAvatarMenu">Platform Settings</Link>
+                                            <Link :href="route('growstream.creator.dashboard')" class="rounded-lg px-3 py-2 text-xs text-on-surface hover:bg-surface-container-low flex items-center gap-2" @click="closeAvatarMenu">
+                                                <span class="material-symbols-outlined text-sm">video_settings</span> Studio Dashboard
+                                            </Link>
+                                            <Link :href="route('growstream.creator.platform.show')" class="rounded-lg px-3 py-2 text-xs text-on-surface hover:bg-surface-container-low flex items-center gap-2" @click="closeAvatarMenu">
+                                                <span class="material-symbols-outlined text-sm">domain</span> Platform Settings
+                                            </Link>
                                         </template>
                                         <template v-else>
-                                            <Link :href="route('growstream.creator.register')" class="rounded-lg px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/10" @click="closeAvatarMenu">🚀 Become a Creator</Link>
+                                            <Link :href="route('growstream.creator.register')" class="rounded-lg px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/10" @click="closeAvatarMenu">🚀 Become a Creator</Link>
                                         </template>
-                                        <Link v-if="isAdmin" :href="route('growstream.admin.videos')" class="rounded-lg px-3 py-2 text-sm text-on-surface hover:bg-surface-container-low" @click="closeAvatarMenu">Admin</Link>
-                                        <button class="rounded-lg px-3 py-2 text-left text-sm text-error hover:bg-error-container" @click="logout">Sign Out</button>
+
+                                        <template v-if="isAdmin">
+                                            <div class="my-1 border-t border-outline-variant/60"></div>
+                                            <Link :href="route('growstream.admin.videos')" class="rounded-lg px-3 py-2 text-xs font-bold text-amber-400 hover:bg-surface-container-low flex items-center gap-2" @click="closeAvatarMenu">
+                                                <span class="material-symbols-outlined text-sm">admin_panel_settings</span> Admin Panel
+                                            </Link>
+                                            <Link :href="route('growstream.admin.hubs')" class="rounded-lg px-3 py-2 text-xs text-amber-300 hover:bg-surface-container-low flex items-center gap-2" @click="closeAvatarMenu">
+                                                <span class="material-symbols-outlined text-sm">domain</span> Manage Creator Hubs
+                                            </Link>
+                                        </template>
+
+                                        <div class="my-1 border-t border-outline-variant/60"></div>
+                                        <button class="rounded-lg px-3 py-2 text-left text-xs font-medium text-error hover:bg-error-container flex items-center gap-2" @click="logout">
+                                            <span class="material-symbols-outlined text-sm">logout</span> Sign Out
+                                        </button>
                                     </div>
                                 </div>
                             </transition>
@@ -261,6 +294,30 @@ const navLinks = computed(() => [
                         <a :href="loginHref" class="hidden sm:block font-label-md text-label-md text-on-surface-variant px-2 sm:px-3 py-2">Sign In</a>
                         <a :href="registerHref" class="bg-primary text-on-primary px-4 py-2 rounded-full font-label-md text-label-md hover:bg-[#c94918] transition-colors">Sign Up</a>
                     </template>
+                </div>
+            </div>
+
+            <!-- Row 2: Category Pill Bar (YouTube-Style Opaque Sticky Header Component) -->
+            <div v-if="categories && categories.length > 0" class="border-t border-outline-variant/40 bg-[#0e0b09] py-2 px-margin-mobile md:px-margin-desktop">
+                <div class="max-w-6xl mx-auto flex items-center gap-2 overflow-x-auto scrollbar-none">
+                    <button
+                        :class="[
+                            'shrink-0 px-4 py-1.5 rounded-full text-xs transition-all',
+                            !selectedCategory ? 'bg-primary text-on-primary font-bold shadow' : 'bg-surface-container-low text-on-surface-variant border border-outline-variant/60 hover:bg-surface-container-high hover:text-on-surface'
+                        ]"
+                        @click="onCategoryClick('')"
+                    >All</button>
+                    <button
+                        v-for="cat in categories"
+                        :key="cat.id"
+                        @click="onCategoryClick(cat.slug)"
+                        :class="[
+                            'shrink-0 px-4 py-1.5 rounded-full text-xs transition-all',
+                            selectedCategory === cat.slug ? 'bg-primary text-on-primary font-bold shadow' : 'bg-surface-container-low text-on-surface-variant border border-outline-variant/60 hover:bg-surface-container-high hover:text-on-surface'
+                        ]"
+                    >
+                        {{ cat.name }}
+                    </button>
                 </div>
             </div>
         </header>

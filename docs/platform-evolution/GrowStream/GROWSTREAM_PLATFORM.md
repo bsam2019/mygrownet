@@ -249,9 +249,14 @@ Two additions from other sections that the API surface must include:
 
 Feature gating across Creator / Professional / Business / Enterprise tiers is a reasonable starting shape. **Explicitly flagging, not silently deferring:** none of these tiers have pricing, and per Section 6 above, they can't be priced responsibly until the cost model exists. Do not communicate tier pricing externally until that modelling is done.
 
-### Consider a free / hobby tier as an acquisition mechanic
+### Creator Hub Subscription Policy — No Free Package
 
-The original tiers are all paid. Like consumer GrowStream's free tier, a **free/hobby Hubs tier** (hosted subdomain only, hard storage/delivery caps, GrowStream branding) is a low-friction way to get individual educators and creators in before they upgrade. It also gives real per-tenant usage data to feed the Section 6 cost model. Worth including in the pricing exercise even if it ships later.
+**Policy Update (August 2026):** GrowStream Creator Hub enforces a strict **Paid Subscription Only** model. There is **no free tier or free package** for Creator Hub platform operation. Every creator, tutor, or academy operating an independent hub must subscribe to a paid tier:
+- **Starter Hub** (K150 / month): 500 mins video storage, 50 GB delivery, hosted subdomain (`acme.growstream.app`).
+- **Professional Hub** (K450 / month): 1,500 mins video storage, 200 GB delivery, custom domain (`www.acmeacademy.com`), BYOP direct merchant settlement.
+- **Enterprise Hub** (Custom / Contact Sales): Unlimited storage & streaming, dedicated bandwidth, Moodle LMS integration, multi-domain.
+
+*(Note: Consumer GrowStream viewers still retain free episode previews for public catalog content; this policy applies strictly to the B2B Creator Hub platform).*
 
 ### Per-tenant operations story is thin
 

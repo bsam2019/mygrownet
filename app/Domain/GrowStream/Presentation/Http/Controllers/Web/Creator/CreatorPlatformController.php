@@ -16,19 +16,40 @@ class CreatorPlatformController
         private TenantPaymentResolver $paymentResolver,
     ) {}
 
-    public function show(Request $request): Response
+    public function show(Request $request): Response|\Illuminate\Http\RedirectResponse
     {
         $user = $request->user();
         $orgId = $user->organization_id ?? $user->id;
 
-        $platform = CreatorPlatform::firstOrCreate(
-            ['organization_id' => $orgId],
-            [
-                'brand_name' => $user->name . ' Platform',
-                'subdomain' => strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $user->name)),
-                'brand_color' => '#e2571f',
-            ]
-        );
+        $platform = CreatorPlatform::where('organization_id', $orgId)->first();
+
+        // If no active subscribed platform exists
+        if (!$platform || !$platform->is_active || $platform->subscription_status !== 'active') {
+            $isAdmin = false;
+            if (method_exists($user, 'hasRole')) {
+                $isAdmin = $user->hasRole('super_admin') || $user->hasRole('admin');
+            }
+            $isAdmin = $isAdmin || ($user->is_admin ?? false);
+
+            if ($isAdmin) {
+                // Auto-provision platform for platform admins
+                $platform = CreatorPlatform::updateOrCreate(
+                    ['organization_id' => $orgId],
+                    [
+                        'brand_name' => $user->name . ' Platform',
+                        'subdomain' => strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $user->name)),
+                        'brand_color' => '#e2571f',
+                        'subscription_plan' => 'business',
+                        'subscription_status' => 'active',
+                        'subscribed_at' => now(),
+                        'is_active' => true,
+                    ]
+                );
+            } else {
+                return redirect()->route('growstream.hub.subscribe')
+                    ->with('info', 'Please choose a Creator Hub subscription plan to launch your platform.');
+            }
+        }
 
         $quotaSummary = $this->usageMeter->getUsageSummary($orgId);
 
