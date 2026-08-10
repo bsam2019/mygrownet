@@ -60,3 +60,12 @@ Route::domain('auth.mygrownet.com')->middleware('auth:web')->group(function () {
 // Session validation API — used by applications to verify tokens
 Route::get('/session/validate', [SessionValidationController::class, 'validate'])
     ->name('identity.session.validate');
+
+// Catch-all redirect for auth.mygrownet.com/workspace -> mygrownet.com/workspace
+Route::domain('auth.mygrownet.com')->get('/workspace', function () {
+    $baseUrl = config('app.url', 'https://mygrownet.com');
+    if (str_contains($baseUrl, 'auth.')) {
+        $baseUrl = str_replace('auth.', '', $baseUrl);
+    }
+    return redirect()->away(rtrim($baseUrl, '/') . '/workspace');
+});

@@ -13,7 +13,7 @@ class EmailVerificationController extends Controller
     public function showNotice(Request $request): View|RedirectResponse
     {
         return $request->user() && $request->user()->hasVerifiedEmail()
-            ? redirect()->intended(route('workspace'))
+            ? redirect()->intended($this->platformWorkspaceUrl())
             : view('identity.verify-email');
     }
 
@@ -34,24 +34,34 @@ class EmailVerificationController extends Controller
         }
 
         if ($user->hasVerifiedEmail()) {
-            return redirect()->intended(route('workspace') . '?verified=1');
+            return redirect()->intended($this->platformWorkspaceUrl('?verified=1'));
         }
 
         if ($user->markEmailAsVerified()) {
             event(new Verified($user));
         }
 
-        return redirect()->intended(route('workspace') . '?verified=1');
+        return redirect()->intended($this->platformWorkspaceUrl('?verified=1'));
     }
 
     public function resend(Request $request): RedirectResponse
     {
         if ($request->user() && $request->user()->hasVerifiedEmail()) {
-            return redirect()->intended(route('workspace'));
+            return redirect()->intended($this->platformWorkspaceUrl());
         }
 
         $request->user()?->sendEmailVerificationNotification();
 
         return back()->with('status', 'verification-link-sent');
+    }
+
+    private function platformWorkspaceUrl(?string $suffix = null): string
+    {
+        $baseUrl = config('app.url', 'https://mygrownet.com');
+        if (str_contains($baseUrl, 'auth.')) {
+            $baseUrl = str_replace('auth.', '', $baseUrl);
+        }
+        $url = rtrim($baseUrl, '/') . '/workspace';
+        return $suffix ? $url . $suffix : $url;
     }
 }

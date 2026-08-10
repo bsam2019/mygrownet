@@ -34,7 +34,7 @@ class TwoFactorController extends Controller
             return back()->withErrors(['code' => 'Invalid two-factor authentication code.']);
         }
 
-        return redirect()->intended(route('workspace'));
+        return redirect()->intended($this->platformWorkspaceUrl());
     }
 
     public function disable(Request $request): RedirectResponse
@@ -45,6 +45,15 @@ class TwoFactorController extends Controller
 
         $request->user()->disableTwoFactorAuth();
 
-        return redirect()->intended(route('workspace'));
+        return redirect()->intended($this->platformWorkspaceUrl());
+    }
+
+    private function platformWorkspaceUrl(): string
+    {
+        $baseUrl = config('app.url', 'https://mygrownet.com');
+        if (str_contains($baseUrl, 'auth.')) {
+            $baseUrl = str_replace('auth.', '', $baseUrl);
+        }
+        return rtrim($baseUrl, '/') . '/workspace';
     }
 }

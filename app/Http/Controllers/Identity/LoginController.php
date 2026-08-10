@@ -30,7 +30,7 @@ class LoginController extends Controller
         }
 
         return view('identity.login', [
-            'returnUrl' => $returnUrl ?? route('workspace'),
+            'returnUrl' => $returnUrl ?? $this->platformWorkspaceUrl(),
         ]);
     }
 
@@ -79,6 +79,15 @@ class LoginController extends Controller
             }
         }
 
-        return redirect()->intended(route('workspace'));
+        return redirect()->intended($this->platformWorkspaceUrl());
+    }
+
+    private function platformWorkspaceUrl(): string
+    {
+        $baseUrl = config('app.url', 'https://mygrownet.com');
+        if (str_contains($baseUrl, 'auth.')) {
+            $baseUrl = str_replace('auth.', '', $baseUrl);
+        }
+        return rtrim($baseUrl, '/') . '/workspace';
     }
 }

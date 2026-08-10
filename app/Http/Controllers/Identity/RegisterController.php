@@ -44,6 +44,15 @@ class RegisterController extends Controller
         $request->session()->regenerate();
         $request->session()->save();
 
-        return redirect()->intended(route('workspace'));
+        return redirect()->intended($this->platformWorkspaceUrl());
+    }
+
+    private function platformWorkspaceUrl(): string
+    {
+        $baseUrl = config('app.url', 'https://mygrownet.com');
+        if (str_contains($baseUrl, 'auth.')) {
+            $baseUrl = str_replace('auth.', '', $baseUrl);
+        }
+        return rtrim($baseUrl, '/') . '/workspace';
     }
 }
