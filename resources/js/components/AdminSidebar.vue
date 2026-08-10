@@ -550,53 +550,13 @@ onMounted(() => {
                             'flex items-center px-4 py-2 transition-colors duration-200 text-sm rounded-lg',
                             'hover:bg-gray-100 dark:hover:bg-gray-800',
                             isUrlActive('/admin/dashboard') || isUrlActive('/admin')
-                                ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600'
+                                ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600 font-semibold'
                                 : 'text-gray-700 dark:text-gray-300'
                         ]"
                     >
                         <LayoutGrid class="h-5 w-5" />
-                        <span v-show="!isCollapsed || isMobile" class="ml-3">Dashboard</span>
+                        <span v-show="!isCollapsed || isMobile" class="ml-3">Command Center</span>
                     </Link>
-                </div>
-
-                <!-- Module Admin Hubs Section -->
-                <div class="pt-1 pb-2">
-                    <button @click="toggleSubmenu('moduleHubs')"
-                        :class="[
-                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200 font-semibold text-sm rounded-lg',
-                            'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40',
-                            'hover:bg-blue-100 dark:hover:bg-blue-900/40 focus:outline-none',
-                            'text-blue-700 dark:text-blue-300'
-                        ]"
-                        @mouseenter="showItemTooltip($event, 'Module Admin Hubs')"
-                        @mouseleave="hideTooltip"
-                    >
-                        <div class="flex items-center">
-                            <LayoutGrid class="h-5 w-5 text-blue-600" />
-                            <span v-show="!isCollapsed || isMobile" class="ml-3 font-semibold">Module Admin Hubs</span>
-                        </div>
-                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200 text-blue-600"
-                            :class="{ 'rotate-180': showSubmenu.moduleHubs }" />
-                    </button>
-
-                    <div v-if="showSubmenu.moduleHubs" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
-                        <a v-for="item in moduleAdminHubs" :key="item.title"
-                            :href="item.href"
-                            :class="[
-                                'flex items-center justify-between px-3 py-2 transition-colors duration-200 text-xs rounded-lg',
-                                'hover:bg-blue-50 dark:hover:bg-blue-900/30',
-                                isUrlActive(item.href) ? 'text-blue-600 font-bold bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
-                            ]"
-                        >
-                            <div class="flex items-center truncate">
-                                <component :is="item.icon" class="h-4 w-4 text-blue-500 flex-shrink-0" />
-                                <span class="ml-2.5 truncate">{{ item.title }}</span>
-                            </div>
-                            <span v-if="item.badge" class="px-1.5 py-0.5 text-[10px] font-semibold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded ml-1 flex-shrink-0">
-                                {{ item.badge }}
-                            </span>
-                        </a>
-                    </div>
                 </div>
 
                 <!-- User Management Section -->

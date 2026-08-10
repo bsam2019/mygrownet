@@ -12,12 +12,12 @@
                             System {{ platformOverview?.system_status || 'Operational' }}
                         </span>
                     </h1>
-                    <p class="text-sm text-gray-500 mt-1">Global administrative control, application catalog, and domain module status.</p>
+                    <p class="text-sm text-gray-500 mt-1">Platform-wide control, application provisioning, and domain module status.</p>
                 </div>
                 <div class="flex items-center gap-3">
                     <span class="text-xs font-medium text-gray-500">{{ currentDate }}</span>
                     <a href="/admin/applications"
-                        class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-colors flex items-center gap-1.5">
+                        class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition-colors flex items-center gap-1.5">
                         <span class="material-symbols-outlined text-base">apps</span>
                         Manage Catalog
                     </a>
@@ -73,10 +73,13 @@
                 <!-- Header + Search + Category Tabs -->
                 <div class="flex flex-col gap-3">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-blue-600">apps</span>
-                            Modular Application Directory
-                        </h2>
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-blue-600">apps</span>
+                                Modular Application Directory
+                            </h2>
+                            <p class="text-xs text-gray-500 mt-0.5">Single launching authority for platform application admin contexts.</p>
+                        </div>
                         <!-- Search -->
                         <div class="relative">
                             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none">search</span>
@@ -84,31 +87,38 @@
                                 v-model="searchQuery"
                                 type="text"
                                 placeholder="Search modules…"
-                                class="pl-9 pr-4 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-56 bg-white"
+                                class="pl-9 pr-4 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-64 bg-white shadow-sm"
                             />
                         </div>
                     </div>
 
-                    <!-- Category Filter Tabs -->
-                    <div class="flex items-center gap-0.5 border-b border-gray-200">
-                        <button
-                            v-for="cat in categories"
-                            :key="cat.key"
-                            @click="activeCategory = cat.key"
-                            :class="[
-                                'px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px flex items-center gap-1.5',
-                                activeCategory === cat.key
-                                    ? 'border-blue-600 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                            ]"
-                        >
-                            <span class="material-symbols-outlined text-sm">{{ cat.icon }}</span>
-                            {{ cat.label }}
-                            <span :class="[
-                                'px-1.5 py-0.5 rounded-full text-[10px] font-bold',
-                                activeCategory === cat.key ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'
-                            ]">{{ getCategoryCount(cat.key) }}</span>
-                        </button>
+                    <!-- Legend & Category Filter Tabs -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200">
+                        <div class="flex items-center gap-1 -mb-px">
+                            <button
+                                v-for="cat in categories"
+                                :key="cat.key"
+                                @click="activeCategory = cat.key"
+                                :class="[
+                                    'px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5',
+                                    activeCategory === cat.key
+                                        ? 'border-blue-600 text-blue-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                ]"
+                            >
+                                <span class="material-symbols-outlined text-sm">{{ cat.icon }}</span>
+                                {{ cat.label }}
+                                <span :class="[
+                                    'px-1.5 py-0.5 rounded-full text-[10px] font-bold',
+                                    activeCategory === cat.key ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'
+                                ]">{{ getCategoryCount(cat.key) }}</span>
+                            </button>
+                        </div>
+                        <div class="text-[11px] text-gray-400 pb-2 sm:pb-0 flex items-center gap-3">
+                            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Healthy</span>
+                            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Action Required</span>
+                            <span class="inline-flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Own Auth = Independent Login</span>
+                        </div>
                     </div>
                 </div>
 
@@ -119,56 +129,59 @@
                             v-for="(app, index) in activeApps"
                             :key="app.slug"
                             :class="[
-                                'flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-blue-50/50',
-                                index < activeApps.length - 1 ? 'border-b border-gray-50' : ''
+                                'flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-slate-50/80',
+                                index < activeApps.length - 1 ? 'border-b border-gray-100' : ''
                             ]"
                         >
                             <!-- App Icon -->
-                            <div :class="['flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center', getAppMeta(app.slug).bgClass]">
+                            <div :class="['flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center shadow-xs', getAppMeta(app.slug).bgClass]">
                                 <span :class="['material-symbols-outlined text-xl', getAppMeta(app.slug).textClass]">{{ getAppMeta(app.slug).icon }}</span>
                             </div>
 
                             <!-- Name + Description -->
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="text-sm font-semibold text-gray-900">{{ app.name }}</span>
-                                    <span class="text-[10px] font-medium px-1.5 py-0.5 rounded capitalize"
+                                    <span class="text-sm font-bold text-gray-900">{{ app.name }}</span>
+                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded capitalize"
                                         :class="getCategoryBadgeClass(app.category)">
                                         {{ app.category }}
                                     </span>
+                                    <!-- Tooltip / Legend for StockFlow Own Auth -->
                                     <span v-if="app.separate_auth"
-                                        class="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">
+                                        title="Authenticates independently via StockFlow domain credentials"
+                                        class="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 cursor-help flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-xs">key</span>
                                         Own Auth
                                     </span>
                                 </div>
                                 <p class="text-xs text-gray-500 truncate mt-0.5">{{ app.description }}</p>
                             </div>
 
-                            <!-- Installs + Lifecycle -->
-                            <div class="hidden lg:flex items-center gap-6 flex-shrink-0 text-xs text-gray-500">
-                                <div class="text-center min-w-[60px]">
-                                    <div class="font-bold text-gray-900 text-sm">{{ app.installed_orgs || 0 }}</div>
-                                    <div class="text-[10px]">Installs</div>
-                                </div>
-                                <div class="text-center min-w-[52px]">
-                                    <div class="font-semibold text-gray-700 capitalize">{{ app.lifecycle || 'active' }}</div>
-                                    <div class="text-[10px]">Lifecycle</div>
+                            <!-- Combined Health & Adoption Status (Replaces 3 repetitive columns) -->
+                            <div class="hidden sm:flex items-center gap-3 flex-shrink-0">
+                                <div class="text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <span :class="['w-2 h-2 rounded-full flex-shrink-0', getStatusDotClass(app)]"></span>
+                                        <span :class="['text-xs font-semibold capitalize', getStatusTextClass(app)]">
+                                            {{ getStatusLabel(app) }}
+                                        </span>
+                                    </div>
+                                    <div class="text-[10px] text-gray-400 mt-0.5">
+                                        {{ app.installed_orgs > 0 ? `${app.installed_orgs} org installs` : '0 org installs (ramp-up)' }}
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Status Dot -->
-                            <div class="hidden sm:flex items-center gap-1.5 flex-shrink-0 min-w-[80px]">
-                                <span :class="['w-2 h-2 rounded-full flex-shrink-0', getStatusDotClass(app)]"></span>
-                                <span :class="['text-xs font-medium capitalize', getStatusTextClass(app)]">
-                                    {{ app.operational_status || 'online' }}
-                                </span>
-                            </div>
-
-                            <!-- Launch Button -->
+                            <!-- Quieter Subdued Launch Button by Default -->
                             <div class="flex-shrink-0">
                                 <a
                                     :href="app.admin_url"
-                                    class="inline-flex items-center gap-1 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors whitespace-nowrap shadow-sm"
+                                    :class="[
+                                        'inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all border shadow-xs',
+                                        app.operational_status === 'maintenance'
+                                            ? 'bg-amber-600 text-white border-amber-600 hover:bg-amber-700'
+                                            : 'bg-white hover:bg-slate-100 text-slate-700 hover:text-blue-600 border-slate-200 hover:border-slate-300'
+                                    ]"
                                 >
                                     Open Admin
                                     <span class="material-symbols-outlined text-sm">arrow_forward</span>
@@ -191,7 +204,7 @@
                         >
                             <span class="flex items-center gap-1.5">
                                 <span class="material-symbols-outlined text-sm">expand_{{ showInactive ? 'less' : 'more' }}</span>
-                                {{ inactiveApps.length }} modules without a dedicated admin panel
+                                {{ inactiveApps.length }} modules without a dedicated admin panel (unadopted / core only)
                             </span>
                             <span class="material-symbols-outlined text-sm">{{ showInactive ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</span>
                         </button>
@@ -325,7 +338,7 @@ const activeCategory = ref('all');
 const showInactive = ref(false);
 
 const categories = [
-    { key: 'all',           label: 'All',            icon: 'grid_view' },
+    { key: 'all',           label: 'All Modules',    icon: 'grid_view' },
     { key: 'business',      label: 'Business',        icon: 'business_center' },
     { key: 'consumer',      label: 'Consumer',        icon: 'person' },
     { key: 'shared',        label: 'Infrastructure',  icon: 'hub' },
@@ -398,14 +411,21 @@ const getStatusTextClass = (app: any) => {
     if (s === 'offline') return 'text-red-500';
     return 'text-emerald-600';
 };
+const getStatusLabel = (app: any) => {
+    if (!app.is_active) return 'Inactive';
+    const s = app.operational_status;
+    if (s === 'maintenance') return 'Needs Setup';
+    if (s === 'offline') return 'Offline';
+    return 'Healthy';
+};
 
 // ── Category Badge ────────────────────────────────────────────────
 const getCategoryBadgeClass = (cat: string) => {
     const map: Record<string, string> = {
-        business:      'bg-blue-50 text-blue-600',
-        consumer:      'bg-purple-50 text-purple-600',
-        shared:        'bg-teal-50 text-teal-600',
-        infrastructure:'bg-slate-100 text-slate-600',
+        business:      'bg-blue-50 text-blue-600 border border-blue-100',
+        consumer:      'bg-purple-50 text-purple-600 border border-purple-100',
+        shared:        'bg-teal-50 text-teal-600 border border-teal-100',
+        infrastructure:'bg-slate-100 text-slate-600 border border-slate-200',
     };
     return map[cat] ?? 'bg-gray-100 text-gray-500';
 };
