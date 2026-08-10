@@ -1,9 +1,7 @@
 #!/bin/bash
 
 # MyGrowNet FAST Low-Memory Parallel Build Script
-# Optimized for low-RAM systems (uses 2 parallel jobs capped at 512MB each = ~1GB RAM total peak)
-
-set -e
+# Optimized for low-RAM systems (uses 2 parallel jobs, 512MB limit per process, 1024MB for main)
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -48,7 +46,7 @@ FAILED=()
 build_module() {
     local MODULE=$1
     local MEMORY=$MAX_MEMORY
-    [[ "$MODULE" == "main" ]] && MEMORY=$((MAX_MEMORY + 256))
+    [[ "$MODULE" == "main" ]] && MEMORY=1024
     
     if NODE_OPTIONS="--max-old-space-size=${MEMORY}" MODULE="${MODULE}" npx vite build 2>&1 | sed "s/^/[$MODULE] /"; then
         echo -e "${GREEN}✓${NC} ${MODULE} completed"
@@ -68,15 +66,20 @@ for ((i=0; i<${#MODULES[@]}; i+=BATCH_SIZE)); do
     echo -e "${BLUE}Batch ${BATCH_NUM}/${TOTAL_BATCHES}:${NC} ${BATCH[*]}"
     
     PIDS=()
+    declare -A MODULE_MAP
     for MODULE in "${BATCH[@]}"; do
         build_module "$MODULE" &
-        PIDS+=($!)
+        PID=$!
+        PIDS+=($PID)
+        MODULE_MAP[$PID]=$MODULE
     done
     
-    # Wait for batch to complete
+    # Wait for batch processes to complete
     for PID in "${PIDS[@]}"; do
-        if ! wait $PID; then
-            FAILED+=("module")
+        wait $PID
+        EXIT_CODE=$?
+        if [ $EXIT_CODE -ne 0 ]; then
+            FAILED+=("${MODULE_MAP[$PID]:-$PID}")
         fi
     done
     
@@ -92,6 +95,9 @@ if [ ${#FAILED[@]} -eq 0 ]; then
     echo -e "${GREEN}✓ All ${TOTAL} modules built successfully!${NC}"
     exit 0
 else
-    echo -e "${RED}✗ ${#FAILED[@]} module(s) failed${NC}"
+    echo -e "${RED}✗ ${#FAILED[@]} module(s) failed:${NC}"
+    for m in "${FAILED[@]}"; do
+        echo -e "  ${RED}•${NC} $m"
+    done
     exit 1
 fi
