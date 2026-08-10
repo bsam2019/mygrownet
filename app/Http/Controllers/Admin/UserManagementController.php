@@ -56,34 +56,27 @@ class UserManagementController extends Controller
 
         return Inertia::render('Admin/Users/Index', [
             'users' => $query
-                ->select([
-                    'id', 'name', 'email', 'phone', 'status', 'current_professional_level', 
-                    'last_login_at', 'created_at', 'starter_kit_tier',
-                    'loyalty_points', 'loyalty_points_awarded_total', 'loyalty_points_withdrawn_total',
-                    'lgr_custom_withdrawable_percentage', 'lgr_withdrawal_blocked', 'lgr_restriction_reason',
-                    'loan_balance', 'loan_limit'
-                ])
                 ->paginate(50)
                 ->withQueryString()
                 ->through(fn ($user) => [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'phone' => $user->phone,
-                    'status' => $user->status,
+                    'phone' => $user->phone ?? null,
+                    'status' => $user->status ?? 'active',
                     'role' => $user->roles->first()?->name ?? 'user',
-                    'level' => $user->current_professional_level,
+                    'level' => $user->current_professional_level ?? null,
                     'created_at' => $user->created_at,
-                    'last_login_at' => $user->last_login_at,
-                    'loyalty_points' => $user->loyalty_points,
-                    'loyalty_points_awarded_total' => $user->loyalty_points_awarded_total,
-                    'loyalty_points_withdrawn_total' => $user->loyalty_points_withdrawn_total,
-                    'lgr_custom_withdrawable_percentage' => $user->lgr_custom_withdrawable_percentage,
-                    'lgr_withdrawal_blocked' => $user->lgr_withdrawal_blocked,
-                    'lgr_restriction_reason' => $user->lgr_restriction_reason,
-                    'starter_kit_tier' => $user->starter_kit_tier,
-                    'loan_balance' => $user->loan_balance,
-                    'loan_limit' => $user->loan_limit,
+                    'last_login_at' => $user->last_login_at ?? null,
+                    'loyalty_points' => $user->loyalty_points ?? 0,
+                    'loyalty_points_awarded_total' => $user->loyalty_points_awarded_total ?? 0,
+                    'loyalty_points_withdrawn_total' => $user->loyalty_points_withdrawn_total ?? 0,
+                    'lgr_custom_withdrawable_percentage' => $user->lgr_custom_withdrawable_percentage ?? null,
+                    'lgr_withdrawal_blocked' => (bool) ($user->lgr_withdrawal_blocked ?? false),
+                    'lgr_restriction_reason' => $user->lgr_restriction_reason ?? null,
+                    'starter_kit_tier' => $user->starter_kit_tier ?? null,
+                    'loan_balance' => $user->loan_balance ?? 0,
+                    'loan_limit' => $user->loan_limit ?? 0,
                 ]),
             'roles' => Role::select('id', 'name')->get(),
             'filters' => $request->only(['search', 'status', 'role', 'level', 'date_from', 'date_to', 'sort', 'direction']),
