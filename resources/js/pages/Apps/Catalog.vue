@@ -66,6 +66,7 @@ interface App {
 const page = usePage();
 
 const apps = computed(() => (page.props as any).apps as Record<string, App[]> ?? {});
+const context = computed(() => (page.props as any).workspace?.context);
 
 const categoryLabels: Record<string, string> = {
     business: 'Business Tools',
@@ -94,8 +95,18 @@ const categoryDescriptions: Record<string, string> = {
             </Link>
 
             <div class="mb-8">
-                <h1 class="text-2xl font-bold text-gray-900">App Catalog</h1>
-                <p class="text-sm text-gray-500 mt-1">Browse all available applications on the platform</p>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-2xl font-bold text-gray-900">App Catalog</h1>
+                    <span
+                        v-if="context?.type === 'organization'"
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100"
+                    >
+                        {{ context?.organization_name || 'Organization Workspace' }}
+                    </span>
+                </div>
+                <p class="text-sm text-gray-500 mt-1">
+                    {{ context?.type === 'organization' ? 'Browse business applications for your organization' : 'Browse all available applications on the platform' }}
+                </p>
             </div>
 
             <div class="space-y-8">

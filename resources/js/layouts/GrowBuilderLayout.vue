@@ -251,14 +251,14 @@ function navItemClass(item: NavItem): string {
 
             <!-- Back to Workspace -->
             <div :class="showCollapsed ? 'px-1.5 pb-2' : 'px-3 pb-2'">
-                <Link
-                    :href="route('workspace')"
+                <a
+                    href="https://mygrownet.com/workspace/"
                     class="group flex items-center gap-3 rounded-lg text-sm transition-all duration-150 flex-shrink-0 w-full text-gray-400 hover:text-gray-600 dark:text-white/40 dark:hover:text-white/60 hover:bg-gray-50 dark:hover:bg-white/[0.03]"
                     :class="showCollapsed ? 'w-10 h-10 justify-center rounded-lg' : 'px-3 py-2 border-l-2 border-transparent'"
                 >
                     <LayoutDashboard class="w-[18px] h-[18px] flex-shrink-0" stroke-width="1.5" />
                     <span v-if="!showCollapsed" class="font-medium text-xs whitespace-nowrap">Back to Workspace</span>
-                </Link>
+                </a>
             </div>
 
             <!-- Bottom Section -->
@@ -331,13 +331,13 @@ function navItemClass(item: NavItem): string {
                             <Globe class="w-3.5 h-3.5" stroke-width="1.5" />
                             GrowBuilder Home
                         </Link>
-                        <Link
-                            :href="route('workspace')"
+                        <a
+                            href="https://mygrownet.com/workspace/"
                             class="flex items-center gap-2 px-4 py-2 text-xs text-gray-600 dark:text-white/60 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors"
                         >
                             <LayoutDashboard class="w-3.5 h-3.5" stroke-width="1.5" />
                             Back to Workspace
-                        </Link>
+                        </a>
                         <div class="h-px bg-gray-100 dark:bg-white/[0.04] mx-4"></div>
                             <button
                                 @click="router.post(route(r('logout')))"

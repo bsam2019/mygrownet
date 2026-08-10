@@ -14,10 +14,10 @@
                     </p>
                 </div>
                 <div>
-                    <Link href="/workspace" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors text-sm font-medium">
+                    <a href="https://mygrownet.com/workspace/" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors text-sm font-medium">
                         <ArrowLeftIcon class="w-4 h-4" />
                         Back to Workspace
-                    </Link>
+                    </a>
                 </div>
             </div>
         </header>
