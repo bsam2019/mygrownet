@@ -133,6 +133,7 @@ class PlatformAdminMetricsService
             'growbuilder' => '/growbuilder/admin',
             'venture' => '/venture/admin',
             'investor' => '/investor/admin',
+            'employee' => '/employee/delegated',
             'growmusic' => '/growmusic/admin',
             'growstream' => '/growstream/admin',
             'bizboost' => '/bizboost/admin',
@@ -158,6 +159,7 @@ class PlatformAdminMetricsService
             'growbuilder' => 'Website & E-Commerce Builder with AI Content Generation',
             'venture' => 'Venture Capital, Equity Shares & Business Growth Fund (BGF)',
             'investor' => 'Investor Relations, Funding Rounds, Dividends & Legal Docs',
+            'employee' => 'HR Portal, Delegated Approvals, Employee Self-Service & Tasks',
             'grownet' => 'MLM Matrix, Member Tiers, Points & Learning Platform',
             'growmusic' => 'Music Catalog, Track Distribution & Licensing Royalties',
             'growstream' => 'Video Streaming, Moderation & Creator Hubs',
@@ -178,7 +180,7 @@ class PlatformAdminMetricsService
     {
         $slugs = [
             'bms', 'stockflow', 'growfinance', 'bizdocs', 'growbuilder',
-            'venture', 'investor', 'grownet', 'growmusic', 'growstream',
+            'venture', 'investor', 'employee', 'grownet', 'growmusic', 'growstream',
             'growmart', 'lifeplus', 'zamstay', 'primeedge', 'growstorage',
             'bizboost', 'quick-invoice'
         ];

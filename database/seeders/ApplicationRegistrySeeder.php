@@ -91,6 +91,21 @@ class ApplicationRegistrySeeder extends Seeder
                 'is_visible' => true,
                 'is_active' => true,
             ],
+            [
+                'slug' => 'employee',
+                'name' => 'Employee Portal & HR',
+                'type' => 'business',
+                'category' => 'business',
+                'access_model' => 'organization_members',
+                'context_support' => 'organization',
+                'requires_organization_context' => false,
+                'subscription_required' => false,
+                'url' => '/employee',
+                'lifecycle' => 'active',
+                'operational_status' => 'online',
+                'is_visible' => true,
+                'is_active' => true,
+            ],
 
             // === Consumer (personal context, subscription) ===
             [
