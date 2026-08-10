@@ -153,12 +153,23 @@ class WorkspaceController extends Controller
 
         $result = $this->appLaunch->launch($application, $context, $user);
 
-        // If service returns array (external URL), do direct redirect
+        // If service returns array (external URL), redirect via Inertia::location if Inertia XHR
         if (is_array($result) && isset($result['redirect_url'])) {
-            return redirect()->away($result['redirect_url']);
+            $url = $result['redirect_url'];
+            if ($request->header('X-Inertia')) {
+                return Inertia::location($url);
+            }
+            return redirect()->away($url);
         }
 
-        // Otherwise it's a RedirectResponse for internal routes
+        // If it's a RedirectResponse to a different domain, use Inertia::location for XHR
+        if ($result instanceof \Illuminate\Http\RedirectResponse && $request->header('X-Inertia')) {
+            $targetUrl = $result->getTargetUrl();
+            if (parse_url($targetUrl, PHP_URL_HOST) !== $request->getHost()) {
+                return Inertia::location($targetUrl);
+            }
+        }
+
         return $result;
     }
 
