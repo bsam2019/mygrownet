@@ -27,7 +27,7 @@ return new class extends Migration
                     $table->timestamp('last_ssg_deployed_at')->nullable()->after('theme_preset');
                 }
                 if (!Schema::hasColumn('growbuilder_sites', 'template_version')) {
-                    $table->unsignedInteger('template_version')->default(1)->after('template_id');
+                    $table->unsignedInteger('template_version')->default(1);
                 }
                 if (!Schema::hasColumn('growbuilder_sites', 'template_locked')) {
                     $table->boolean('template_locked')->default(false)->after('template_version');
