@@ -60,7 +60,8 @@ class ApplicationAccessService
 
         if ($context->isOrganization()) {
             $query->whereIn('context_support', ['organization', 'both'])
-                  ->where('type', 'business');
+                  ->where('type', 'business')
+                  ->where('category', '!=', 'consumer');
         } else {
             $query->whereIn('context_support', ['personal', 'both']);
         }

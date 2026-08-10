@@ -111,7 +111,7 @@ const categoryDescriptions: Record<string, string> = {
 
             <div class="space-y-8">
                 <div v-for="(categoryApps, category) in apps" :key="category">
-                    <div v-if="categoryApps.length > 0">
+                    <div v-if="categoryApps.length > 0 && !(context?.type === 'organization' && category === 'consumer')">
                         <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ categoryLabels[category] || category }}</h3>
                         <p class="text-sm text-gray-500 mb-4">{{ categoryDescriptions[category] || '' }}</p>
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
