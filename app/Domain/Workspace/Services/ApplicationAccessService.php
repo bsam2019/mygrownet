@@ -43,6 +43,7 @@ class ApplicationAccessService
 
         return Application::where('is_active', true)
             ->whereIn('context_support', ['organization', 'both'])
+            ->where('type', 'business')
             ->whereHas('installations', fn($q) => $q->where('organization_id', $orgId)->where('status', 'active'))
             ->where('lifecycle', '!=', 'retired')
             ->where('operational_status', 'online')
@@ -52,11 +53,19 @@ class ApplicationAccessService
 
     public function getAllVisibleApps(User $user, WorkspaceContext $context): Collection
     {
-        return Application::where('is_active', true)
+        $query = Application::where('is_active', true)
             ->where('is_visible', true)
             ->whereIn('lifecycle', ['active', 'legacy'])
-            ->where('operational_status', 'online')
-            ->get()
+            ->where('operational_status', 'online');
+
+        if ($context->isOrganization()) {
+            $query->whereIn('context_support', ['organization', 'both'])
+                  ->where('type', 'business');
+        } else {
+            $query->whereIn('context_support', ['personal', 'both']);
+        }
+
+        return $query->get()
             ->map(fn($app) => [
                 'id' => $app->id,
                 'name' => $app->name,

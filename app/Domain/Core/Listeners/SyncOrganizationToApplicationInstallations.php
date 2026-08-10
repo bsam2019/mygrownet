@@ -15,7 +15,7 @@ class SyncOrganizationToApplicationInstallations
 
         if ($event instanceof OrganizationCreated) {
             $coreApps = Application::where('is_active', true)
-                ->whereIn('slug', ['bms', 'stockflow'])
+                ->whereIn('slug', ['bms', 'stockflow', 'growfinance', 'bizdocs', 'bizboost'])
                 ->get();
 
             foreach ($coreApps as $app) {

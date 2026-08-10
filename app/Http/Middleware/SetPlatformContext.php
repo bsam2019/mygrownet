@@ -40,11 +40,14 @@ class SetPlatformContext
                                 'type' => $org->type,
                                 'country' => $org->country,
                                 'currency' => $org->currency,
-                                'apps' => $org->installations->map(fn($inst) => [
-                                    'id' => $inst->application->id,
-                                    'name' => $inst->application->name,
-                                    'slug' => $inst->application->slug,
-                                ]),
+                                'apps' => $org->installations
+                                    ->where('status', 'active')
+                                    ->filter(fn($inst) => $inst->application && in_array($inst->application->context_support, ['organization', 'both']) && $inst->application->type === 'business')
+                                    ->map(fn($inst) => [
+                                        'id' => $inst->application->id,
+                                        'name' => $inst->application->name,
+                                        'slug' => $inst->application->slug,
+                                    ])->values(),
                             ]);
                     },
                 ]);

@@ -212,6 +212,7 @@ class OrganizationWorkspaceController extends Controller
                 'status' => $org->status,
                 'installed_apps' => $org->installations
                     ->where('status', 'active')
+                    ->filter(fn($inst) => $inst->application && in_array($inst->application->context_support, ['organization', 'both']) && $inst->application->type === 'business')
                     ->values()
                     ->map(fn($inst) => [
                         'id' => $inst->application->id,
@@ -232,11 +233,14 @@ class OrganizationWorkspaceController extends Controller
                         'type' => $o->type,
                         'country' => $o->country,
                         'currency' => $o->currency,
-                        'apps' => $o->installations->map(fn($inst) => [
-                            'id' => $inst->application->id,
-                            'name' => $inst->application->name,
-                            'slug' => $inst->application->slug,
-                        ]),
+                        'apps' => $o->installations
+                            ->where('status', 'active')
+                            ->filter(fn($inst) => $inst->application && in_array($inst->application->context_support, ['organization', 'both']) && $inst->application->type === 'business')
+                            ->map(fn($inst) => [
+                                'id' => $inst->application->id,
+                                'name' => $inst->application->name,
+                                'slug' => $inst->application->slug,
+                            ])->values(),
                     ]),
             ],
             'apps' => $this->appAccess->getAvailableApps($user, $context),
