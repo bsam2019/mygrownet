@@ -114,6 +114,8 @@ class PlatformAdminMetricsService
                 'is_active' => (bool) $app->is_active,
                 'installed_orgs' => $installedOrgs,
                 'admin_url' => $adminUrl,
+                'has_admin_panel' => $this->hasAdminPanel($app->slug),
+                'separate_auth' => $app->slug === 'stockflow',
                 'description' => $this->getAppDescription($app->slug),
             ];
         })->toArray();
@@ -121,32 +123,44 @@ class PlatformAdminMetricsService
 
     /**
      * Resolve domain admin URL for each app.
+     * URLs verified against actual route files — only real, working routes.
      */
     private function resolveAppAdminUrl(string $slug): string
     {
         $adminRoutes = [
-            'grownet' => '/admin/dashboard',
-            'bms' => '/bms/admin',
-            'stockflow' => '/stock-audit/admin',
-            'growfinance' => '/growfinance/admin',
-            'bizdocs' => '/bizdocs/admin',
-            'growbuilder' => '/growbuilder/admin',
-            'venture' => '/venture/admin',
-            'investor' => '/investor/admin',
-            'employee' => '/employee/delegated',
-            'growmusic' => '/growmusic/admin',
-            'growstream' => '/growstream/admin',
-            'bizboost' => '/bizboost/admin',
-            'marketplace' => '/admin/marketplace',
-            'growmart' => '/admin/marketplace',
-            'quick-invoice' => '/admin/quick-invoice',
-            'lifeplus' => '/lifeplus/admin',
-            'zamstay' => '/zamstay/admin',
-            'primeedge' => '/primeedge/admin',
-            'growstorage' => '/growstorage/admin',
+            // Platform admin section (/admin/* — all protected by auth+admin middleware)
+            'grownet'       => '/admin/grownet/dashboard',
+            'bizboost'      => '/admin/bizboost/dashboard',
+            'marketplace'   => '/admin/marketplace/dashboard',
+            'growmart'      => '/admin/marketplace/dashboard',
+            'quick-invoice' => '/admin/quick-invoice/dashboard',
+            'venture'       => '/admin/ventures/dashboard',
+            'investor'      => '/admin/ventures/dashboard',  // investor lives under ventures
+            'growstream'    => '/admin/growstream/dashboard',
+            'bms'           => '/admin/employees',           // BMS HR via platform admin
+            'growfinance'   => '/admin/financial/v2/dashboard',
+            'growmusic'     => '/admin/grownet/dashboard',   // music managed via grownet admin
+            'bizdocs'       => '/admin/cms-companies',       // BizDocs via CMS companies
+
+            // Module-level admin entry points (own auth/middleware)
+            'growbuilder'   => '/growbuilder/admin',         // auth-only, no admin guard
+            'employee'      => '/employee/delegated',        // delegated admin functions
+            'stockflow'     => '/stockflow-admin',           // own auth panel (stockflow.admin guard)
         ];
 
-        return $adminRoutes[$slug] ?? "/admin/{$slug}";
+        return $adminRoutes[$slug] ?? '';
+    }
+
+    /**
+     * Whether this module has a working dedicated admin section.
+     */
+    private function hasAdminPanel(string $slug): bool
+    {
+        return in_array($slug, [
+            'grownet', 'bizboost', 'marketplace', 'growmart', 'quick-invoice',
+            'venture', 'investor', 'growstream', 'bms', 'growfinance',
+            'growmusic', 'bizdocs', 'growbuilder', 'employee', 'stockflow',
+        ]);
     }
 
     private function getAppDescription(string $slug): string
@@ -189,14 +203,16 @@ class PlatformAdminMetricsService
             return [
                 'id' => 0,
                 'slug' => $slug,
-                'name' => ucfirst($slug),
+                'name' => ucfirst(str_replace(['-', '_'], ' ', $slug)),
                 'type' => 'business',
                 'category' => 'business',
                 'lifecycle' => 'active',
                 'operational_status' => 'online',
                 'is_active' => true,
                 'installed_orgs' => 0,
-                'admin_url' => "/admin/{$slug}",
+                'admin_url' => $this->resolveAppAdminUrl($slug),
+                'has_admin_panel' => $this->hasAdminPanel($slug),
+                'separate_auth' => $slug === 'stockflow',
                 'description' => $this->getAppDescription($slug),
             ];
         }, $slugs);

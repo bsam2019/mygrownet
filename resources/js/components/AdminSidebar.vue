@@ -265,21 +265,20 @@ const systemNavItems: NavItem[] = [
 ];
 
 const moduleAdminHubs = [
-    { title: 'StockFlow (POS & Stock)', href: '/stock-audit/admin', icon: Store, badge: 'POS' },
-    { title: 'BMS (Construction & HR)', href: '/bms/admin', icon: Building2 },
-    { title: 'GrowBuilder (Sites & AI)', href: '/growbuilder/admin', icon: Globe },
-    { title: 'GrowFinance (Accounting)', href: '/growfinance/admin', icon: DollarSign },
-    { title: 'BizDocs (Business Profiles)', href: '/bizdocs/admin', icon: FileText },
-    { title: 'Employee Portal & HR', href: '/employee/delegated', icon: Users },
-    { title: 'Venture Builder (Equity)', href: '/venture/admin', icon: Briefcase },
-    { title: 'Investor Portal (Rounds)', href: '/investor/admin', icon: TrendingUp },
-    { title: 'GrowStream (Video Hub)', href: '/growstream/admin', icon: VideoIcon },
-    { title: 'GrowMusic (Catalog)', href: '/growmusic/admin', icon: PlayIcon },
-    { title: 'Marketplace (Sellers)', href: '/admin/marketplace', icon: Package },
-    { title: 'BizBoost (Marketing)', href: '/bizboost/admin', icon: SparklesIcon },
-    { title: 'QuickInvoice (Billing)', href: '/admin/quick-invoice', icon: ReceiptRefundIcon },
-    { title: 'LifePlus (Wellness)', href: '/lifeplus/admin', icon: Star },
-    { title: 'PrimeEdge (Advisory)', href: '/primeedge/admin', icon: Shield },
+    // Platform admin (/admin/* — same session, no extra auth)
+    { title: 'GrowNet (MLM & Points)', href: '/admin/grownet/dashboard', icon: LayoutGrid },
+    { title: 'BizBoost (Marketing)', href: '/admin/bizboost/dashboard', icon: SparklesIcon },
+    { title: 'GrowStream (Video & Creators)', href: '/admin/growstream/dashboard', icon: VideoIcon },
+    { title: 'Marketplace (Sellers & Orders)', href: '/admin/marketplace/dashboard', icon: Package },
+    { title: 'QuickInvoice (Billing)', href: '/admin/quick-invoice/dashboard', icon: ReceiptRefundIcon },
+    { title: 'Venture Builder (Equity & BGF)', href: '/admin/ventures/dashboard', icon: TrendingUp },
+    { title: 'GrowFinance (Accounting)', href: '/admin/financial/v2/dashboard', icon: DollarSign },
+    { title: 'Employee & HR', href: '/employee/delegated', icon: Users },
+    { title: 'BMS (Construction & HR)', href: '/admin/employees', icon: Building2 },
+    { title: 'BizDocs (Companies)', href: '/admin/cms-companies', icon: FileText },
+    // Module-level admin entry points
+    { title: 'GrowBuilder (Sites & AI)', href: '/growbuilder/admin', icon: Globe, badge: 'Module' },
+    { title: 'StockFlow POS & Inventory', href: '/stockflow-admin', icon: Store, badge: 'Own Auth' },
 ];
 
 const emit = defineEmits<{
