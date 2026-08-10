@@ -15,8 +15,19 @@ const props = defineProps<{
     apps: Record<string, App[]>;
 }>();
 
+const isOrgContext = computed(() => {
+    const host = window.location.hostname;
+    const orgSubdomains = ['stockflow.mygrownet.com', 'bms.mygrownet.com', 'growfinance.mygrownet.com', 'bizdocs.mygrownet.com', 'bizboost.mygrownet.com'];
+    return orgSubdomains.includes(host);
+});
+
 const allApps = computed(() => {
-    return Object.values(props.apps).flat();
+    const list = Object.values(props.apps).flat();
+    if (isOrgContext.value) {
+        const consumerSlugs = ['grownet', 'growmusic', 'growstream', 'growmart', 'lifeplus', 'zamstay', 'primeedge'];
+        return list.filter(a => !consumerSlugs.includes(a.slug));
+    }
+    return list;
 });
 </script>
 
