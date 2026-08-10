@@ -264,6 +264,24 @@ const systemNavItems: NavItem[] = [
     { title: 'User Roles', href: safeRoute('admin.role-management.users.index'), icon: Users },
 ];
 
+const moduleAdminHubs = [
+    { title: 'StockFlow (POS & Stock)', href: '/stock-audit/admin', icon: Store, badge: 'POS' },
+    { title: 'BMS (Construction & HR)', href: '/bms/admin', icon: Building2 },
+    { title: 'GrowBuilder (Sites & AI)', href: '/growbuilder/admin', icon: Globe },
+    { title: 'GrowFinance (Accounting)', href: '/growfinance/admin', icon: DollarSign },
+    { title: 'BizDocs (Business Profiles)', href: '/bizdocs/admin', icon: FileText },
+    { title: 'Employee Portal & HR', href: '/employee/delegated', icon: Users },
+    { title: 'Venture Builder (Equity)', href: '/venture/admin', icon: Briefcase },
+    { title: 'Investor Portal (Rounds)', href: '/investor/admin', icon: TrendingUp },
+    { title: 'GrowStream (Video Hub)', href: '/growstream/admin', icon: VideoIcon },
+    { title: 'GrowMusic (Catalog)', href: '/growmusic/admin', icon: PlayIcon },
+    { title: 'Marketplace (Sellers)', href: '/admin/marketplace', icon: Package },
+    { title: 'BizBoost (Marketing)', href: '/bizboost/admin', icon: SparklesIcon },
+    { title: 'QuickInvoice (Billing)', href: '/admin/quick-invoice', icon: ReceiptRefundIcon },
+    { title: 'LifePlus (Wellness)', href: '/lifeplus/admin', icon: Star },
+    { title: 'PrimeEdge (Advisory)', href: '/primeedge/admin', icon: Shield },
+];
+
 const emit = defineEmits<{
     (e: 'update:collapsed', value: boolean): void;
 }>();
@@ -540,6 +558,46 @@ onMounted(() => {
                         <LayoutGrid class="h-5 w-5" />
                         <span v-show="!isCollapsed || isMobile" class="ml-3">Dashboard</span>
                     </Link>
+                </div>
+
+                <!-- Module Admin Hubs Section -->
+                <div class="pt-1 pb-2">
+                    <button @click="toggleSubmenu('moduleHubs')"
+                        :class="[
+                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200 font-semibold text-sm rounded-lg',
+                            'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40',
+                            'hover:bg-blue-100 dark:hover:bg-blue-900/40 focus:outline-none',
+                            'text-blue-700 dark:text-blue-300'
+                        ]"
+                        @mouseenter="showItemTooltip($event, 'Module Admin Hubs')"
+                        @mouseleave="hideTooltip"
+                    >
+                        <div class="flex items-center">
+                            <LayoutGrid class="h-5 w-5 text-blue-600" />
+                            <span v-show="!isCollapsed || isMobile" class="ml-3 font-semibold">Module Admin Hubs</span>
+                        </div>
+                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200 text-blue-600"
+                            :class="{ 'rotate-180': showSubmenu.moduleHubs }" />
+                    </button>
+
+                    <div v-if="showSubmenu.moduleHubs" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
+                        <a v-for="item in moduleAdminHubs" :key="item.title"
+                            :href="item.href"
+                            :class="[
+                                'flex items-center justify-between px-3 py-2 transition-colors duration-200 text-xs rounded-lg',
+                                'hover:bg-blue-50 dark:hover:bg-blue-900/30',
+                                isUrlActive(item.href) ? 'text-blue-600 font-bold bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
+                            ]"
+                        >
+                            <div class="flex items-center truncate">
+                                <component :is="item.icon" class="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                <span class="ml-2.5 truncate">{{ item.title }}</span>
+                            </div>
+                            <span v-if="item.badge" class="px-1.5 py-0.5 text-[10px] font-semibold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded ml-1 flex-shrink-0">
+                                {{ item.badge }}
+                            </span>
+                        </a>
+                    </div>
                 </div>
 
                 <!-- User Management Section -->
