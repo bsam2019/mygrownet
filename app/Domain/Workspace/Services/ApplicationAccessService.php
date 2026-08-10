@@ -58,7 +58,19 @@ class ApplicationAccessService
             ->whereIn('lifecycle', ['active', 'legacy'])
             ->where('operational_status', 'online');
 
-        $isOrgContext = $context->isOrganization();
+        $isOrgContext = $context->isOrganization() || $context->organizationId !== null;
+
+        if (!$isOrgContext) {
+            $sessionCtx = session('workspace_context');
+            if (is_array($sessionCtx) && isset($sessionCtx['type']) && $sessionCtx['type'] === 'organization') {
+                $isOrgContext = true;
+            }
+        }
+
+        if (!$isOrgContext && (request()->query('context') === 'organization' || request()->query('org'))) {
+            $isOrgContext = true;
+        }
+
         if (!$isOrgContext && $context->applicationId) {
             $currentApp = Application::find($context->applicationId);
             if ($currentApp && ($currentApp->requires_organization_context || $currentApp->context_support === 'organization')) {
@@ -68,17 +80,26 @@ class ApplicationAccessService
 
         if (!$isOrgContext && request()->attributes->get('domain_resolution')) {
             $res = request()->attributes->get('domain_resolution');
-            if ($res?->application && ($res->application->requires_organization_context || $res->application->context_support === 'organization')) {
+            if ($res?->organization || ($res?->application && ($res->application->requires_organization_context || $res->application->context_support === 'organization'))) {
+                $isOrgContext = true;
+            }
+        }
+
+        if (!$isOrgContext) {
+            $host = request()->getHost();
+            $orgSubdomains = ['bms.mygrownet.com', 'stockflow.mygrownet.com', 'growfinance.mygrownet.com', 'bizdocs.mygrownet.com', 'bizboost.mygrownet.com'];
+            if (in_array($host, $orgSubdomains)) {
                 $isOrgContext = true;
             }
         }
 
         if ($isOrgContext) {
             $query->whereIn('context_support', ['organization', 'both'])
-                  ->where('type', 'business')
-                  ->where('category', '!=', 'consumer');
+                  ->where('category', '!=', 'consumer')
+                  ->where('type', '!=', 'consumer');
         } else {
-            $query->whereIn('context_support', ['personal', 'both']);
+            $query->whereIn('context_support', ['personal', 'both'])
+                  ->where('requires_organization_context', false);
         }
 
         return $query->get()

@@ -69,10 +69,12 @@ const apps = computed(() => (page.props as any).apps as Record<string, App[]> ??
 const context = computed(() => (page.props as any).workspace?.context);
 
 const isOrgContext = computed(() => {
-    if (context.value?.type === 'organization') return true;
+    if (context.value?.type === 'organization' || context.value?.organization_id != null) return true;
     const host = window.location.hostname;
     const orgSubdomains = ['stockflow.mygrownet.com', 'bms.mygrownet.com', 'growfinance.mygrownet.com', 'bizdocs.mygrownet.com', 'bizboost.mygrownet.com'];
-    return orgSubdomains.includes(host);
+    if (orgSubdomains.includes(host)) return true;
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('context') === 'organization' || urlParams.has('org');
 });
 
 const categoryLabels: Record<string, string> = {
