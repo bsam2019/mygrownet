@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# MyGrowNet FAST Parallel Build Script
-# Builds 4 modules at a time for speed (requires ~4-6GB RAM)
+# MyGrowNet FAST Low-Memory Parallel Build Script
+# Optimized for low-RAM systems (uses 2 parallel jobs capped at 512MB each = ~1GB RAM total peak)
 
 set -e
 
@@ -33,19 +33,22 @@ MODULES=(
     "marketplace"
 )
 
+# Configurable batch size (defaults to 2 for low RAM) and max memory (defaults to 512MB)
+BATCH_SIZE=${BATCH_SIZE:-2}
+MAX_MEMORY=${MAX_MEMORY:-512}
+
 echo -e "${YELLOW}╔════════════════════════════════════════╗${NC}"
-echo -e "${YELLOW}║   FAST PARALLEL BUILD (4 at a time)    ║${NC}"
+echo -e "${YELLOW}║   FAST PARALLEL BUILD (${BATCH_SIZE} at a time, ${MAX_MEMORY}MB limit) ║${NC}"
 echo -e "${YELLOW}╚════════════════════════════════════════╝${NC}"
 echo ""
 
 TOTAL=${#MODULES[@]}
 FAILED=()
-BATCH_SIZE=4
 
 build_module() {
     local MODULE=$1
-    local MEMORY=1024
-    [[ "$MODULE" == "main" ]] && MEMORY=1536
+    local MEMORY=$MAX_MEMORY
+    [[ "$MODULE" == "main" ]] && MEMORY=$((MAX_MEMORY + 256))
     
     if NODE_OPTIONS="--max-old-space-size=${MEMORY}" MODULE="${MODULE}" npx vite build 2>&1 | sed "s/^/[$MODULE] /"; then
         echo -e "${GREEN}✓${NC} ${MODULE} completed"
