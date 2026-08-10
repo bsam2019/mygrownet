@@ -37,7 +37,7 @@ if [ -d "public/build/assets" ] && [ -f "public/build/manifest.json" ]; then
     echo "  ✓ main module detected"
 fi
 
-for module in admin bizboost bizdocs bms employee growbuilder growfinance growmart grownet growstream lifephus marketplace primeedge stockflow venture zamstay; do
+for module in admin bizboost bizdocs bms employee growbuilder growfinance growmart growmusic grownet growstream lifephus marketplace primeedge stockflow venture zamstay; do
     if [ -d "public/build/$module" ]; then
         MODULES_TO_DEPLOY+=("$module")
         echo "  ✓ $module module detected"
@@ -142,35 +142,42 @@ echo "✅ Workspace catalog updated"
 # Clean up old unused asset files (keep files referenced in current manifests)
 echo "🧹 Cleaning up old unused asset files..."
 
-# Function to clean assets for a module
+# Function to clean assets for a module safely
 cleanup_module_assets() {
     local module_dir=\$1
-    if [ -d "public/build/\${module_dir}/assets" ]; then
-        cd "public/build/\${module_dir}/assets"
+    local assets_path="public/build/assets"
+    local manifest_path="public/build/manifest.json"
+
+    if [ -n "\$module_dir" ]; then
+        assets_path="public/build/\${module_dir}/assets"
+        manifest_path="public/build/\${module_dir}/manifest.json"
+    fi
+
+    if [ -d "\$assets_path" ] && [ -f "\$manifest_path" ]; then
+        # Extract ALL filenames inside assets/ referenced anywhere in manifest.json (file, css, imports, assets)
+        MANIFEST_FILES=\$(grep -oP 'assets/\K[a-zA-Z0-9_.-]+' "\$manifest_path" 2>/dev/null | sort | uniq)
         
-        # Get list of files referenced in this module's manifest
-        if [ -f "../manifest.json" ]; then
-            MANIFEST_FILES=\$(grep -oP '"file":\\s*"assets/\\K[^"]+' ../manifest.json | sort | uniq)
-            
-            # Remove files NOT in manifest (older versions)
+        if [ -n "\$MANIFEST_FILES" ]; then
+            cd "\$assets_path"
             for file in *; do
                 if [ -f "\$file" ]; then
                     if ! echo "\$MANIFEST_FILES" | grep -q "^\$file\$"; then
-                        # Only remove if file is older than 1 hour (safety check)
-                        if [ \$(find "\$file" -mmin +60 2>/dev/null | wc -l) -gt 0 ]; then
-                            echo "  [\${module_dir}] Removing old file: \$file"
+                        # Safety check: only remove if file is older than 10 minutes (-mmin +10)
+                        # (gives open browser tabs 10 minutes to finish loading old chunks before purging dead code)
+                        if [ \$(find "\$file" -mmin +10 2>/dev/null | wc -l) -gt 0 ]; then
+                            echo "  [\${module_dir:-main}] Purging dead asset: \$file"
                             rm "\$file"
                         fi
                     fi
                 fi
             done
+            cd \${PROJECT_PATH}
         fi
-        cd ../../..
     fi
 }
 
 # Only clean up modules that were deployed this run (passed from local)
-DEPLOYED_MODULES="${MODULES_TO_DEPLOY[@]}"
+DEPLOYED_MODULES="${MODULES_TO_DEPLOY[*]}"
 echo "  Cleaning only deployed modules: \$DEPLOYED_MODULES"
 
 for module_name in \$DEPLOYED_MODULES; do

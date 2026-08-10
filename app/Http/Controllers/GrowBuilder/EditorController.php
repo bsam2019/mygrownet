@@ -11,6 +11,7 @@ use App\Domain\GrowBuilder\ValueObjects\SiteId;
 use App\Http\Controllers\Controller;
 use App\Services\GrowBuilder\AIUsageService;
 use App\Services\GrowBuilder\TierRestrictionService;
+use App\Services\GrowBuilder\PageRevisionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -22,6 +23,7 @@ class EditorController extends Controller
         private SavePageContentUseCase $savePageContentUseCase,
         private AIUsageService $aiUsageService,
         private TierRestrictionService $tierRestrictionService,
+        private PageRevisionService $revisionService,
     ) {}
 
     public function index(Request $request, int $siteId)
@@ -139,6 +141,21 @@ class EditorController extends Controller
 
             $page = $this->savePageContentUseCase->execute($dto);
 
+            // ── Auto-snapshot page revision on save ──
+            if (isset($validated['page_id']) && !empty($validated['sections'])) {
+                try {
+                    $this->revisionService->saveRevision(
+                        siteId:  $siteId,
+                        pageId:  (int) $validated['page_id'],
+                        layoutJson: $validated['sections'],
+                        userId:  $request->user()->id,
+                        trigger: 'auto_save',
+                    );
+                } catch (\Throwable) {
+                    // Revisions are non-blocking — never fail the save
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'page' => $this->pageToArray($page),
@@ -149,6 +166,42 @@ class EditorController extends Controller
                 'error' => $e->getMessage(),
             ], 422);
         }
+    }
+
+    /**
+     * GET /dashboard/sites/{siteId}/pages/{pageId}/revisions
+     * List page revision history for the editor sidebar.
+     */
+    public function revisions(Request $request, int $siteId, int $pageId): \Illuminate\Http\JsonResponse
+    {
+        $site = $this->siteRepository->findById(SiteId::fromInt($siteId));
+        abort_if(!$site || $site->getUserId() !== $request->user()->id, 404);
+
+        $revisions = $this->revisionService->listRevisions($siteId, $pageId);
+
+        return response()->json(['revisions' => $revisions]);
+    }
+
+    /**
+     * POST /dashboard/sites/{siteId}/pages/{pageId}/revisions/{revision}/rollback
+     * Roll back a page to a specific revision.
+     */
+    public function rollback(Request $request, int $siteId, int $pageId, int $revision): \Illuminate\Http\JsonResponse
+    {
+        $site = $this->siteRepository->findById(SiteId::fromInt($siteId));
+        abort_if(!$site || $site->getUserId() !== $request->user()->id, 404);
+
+        $layout = $this->revisionService->rollbackToRevision($siteId, $pageId, $revision, $request->user()->id);
+
+        if (!$layout) {
+            return response()->json(['success' => false, 'error' => 'Revision not found.'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'layout'  => $layout,
+            'message' => "Page restored to revision #{$revision}.",
+        ]);
     }
 
     public function savePageContent(Request $request, int $siteId, int $pageId)
@@ -187,6 +240,19 @@ class EditorController extends Controller
             );
 
             $page = $this->savePageContentUseCase->execute($dto);
+
+            // ── Auto-snapshot page revision on content save ──
+            try {
+                $this->revisionService->saveRevision(
+                    siteId:  $siteId,
+                    pageId:  $pageId,
+                    layoutJson: $validated['content']['sections'] ?? [],
+                    userId:  $request->user()->id,
+                    trigger: 'auto_save',
+                );
+            } catch (\Throwable) {
+                // Non-blocking
+            }
 
             return response()->json([
                 'success' => true,

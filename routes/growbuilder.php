@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\GrowBuilder\AIController;
+use App\Http\Controllers\GrowBuilder\BusinessProfileController;
 use App\Http\Controllers\GrowBuilder\CheckoutController;
 use App\Http\Controllers\GrowBuilder\CustomDomainController;
 use App\Http\Controllers\GrowBuilder\EditorController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\GrowBuilder\MediaController;
 use App\Http\Controllers\GrowBuilder\OrderController;
 use App\Http\Controllers\GrowBuilder\PaymentSettingsController;
 use App\Http\Controllers\GrowBuilder\ProductController;
+use App\Http\Controllers\GrowBuilder\QrCodeController;
 use App\Http\Controllers\GrowBuilder\SiteAuthController;
 use App\Http\Controllers\GrowBuilder\SiteBlogController;
 use App\Http\Controllers\GrowBuilder\SiteContactController;
@@ -20,6 +22,7 @@ use App\Http\Controllers\GrowBuilder\SiteProductController;
 use App\Http\Controllers\GrowBuilder\SiteTemplateController;
 use App\Http\Controllers\GrowBuilder\SiteUserManagementController;
 use App\Http\Controllers\GrowBuilder\SiteController;
+use App\Http\Controllers\GrowBuilder\SsgDeployController;
 use App\Http\Controllers\GrowBuilder\SubscriptionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -50,6 +53,12 @@ $registerGrowBuilderAuthRoutes = function (string $prefix, string $namePrefix) {
 
         // DEBUG: Test controller method
         Route::get('/test-controller', [SiteController::class, 'test'])->name('test-controller');
+
+        // ── Module-level Domain Admin entry point (§21 Gap Analysis — Tier 2 Domain Admin) ──
+        // Served at /admin within the module subdomain or main-domain prefix.
+        // Same pattern as BizBoost's /admin route — controller lives in Admin namespace
+        // but is accessed through the module's own authenticated route group.
+        Route::get('/admin', [\App\Http\Controllers\Admin\GrowBuilderAdminController::class, 'dashboard'])->name('admin');
 
         // Agency Management
         Route::prefix('agency')->name('agency.')->group(function () {
@@ -170,6 +179,28 @@ $registerGrowBuilderAuthRoutes = function (string $prefix, string $namePrefix) {
         Route::put('/editor/{siteId}/pages/{pageId}', [EditorController::class, 'updatePageMeta'])->name('editor.updateMeta');
         Route::delete('/editor/{siteId}/pages/{pageId}', [EditorController::class, 'deletePage'])->name('editor.delete');
         Route::post('/editor/{siteId}/settings', [EditorController::class, 'saveSiteSettings'])->name('editor.saveSettings');
+
+        // ── Page Revision History & Rollback (§34) ──
+        Route::get('/editor/{siteId}/pages/{pageId}/revisions', [EditorController::class, 'revisions'])->name('editor.revisions');
+        Route::post('/editor/{siteId}/pages/{pageId}/revisions/{revision}/rollback', [EditorController::class, 'rollback'])->name('editor.rollback');
+
+        // ── Business Profile & SEO (§7, §24) ──
+        Route::get('/sites/{siteId}/business-profile', [BusinessProfileController::class, 'edit'])->name('sites.business-profile.edit');
+        Route::put('/sites/{siteId}/business-profile', [BusinessProfileController::class, 'update'])->name('sites.business-profile.update');
+        Route::get('/sites/{siteId}/business-profile/payload', [BusinessProfileController::class, 'payload'])->name('sites.business-profile.payload');
+        Route::post('/sites/{siteId}/business-profile/sync-org', [BusinessProfileController::class, 'syncFromOrg'])->name('sites.business-profile.sync-org');
+        Route::get('/sites/{siteId}/seo', [BusinessProfileController::class, 'seoDashboard'])->name('sites.seo');
+
+        // ── Static Site Generation (§32) ──
+        Route::get('/sites/{siteId}/ssg', [SsgDeployController::class, 'index'])->name('sites.ssg.index');
+        Route::post('/sites/{siteId}/ssg/deploy', [SsgDeployController::class, 'deploy'])->name('sites.ssg.deploy');
+        Route::get('/sites/{siteId}/ssg/deployments', [SsgDeployController::class, 'history'])->name('sites.ssg.history');
+        Route::post('/sites/{siteId}/ssg/toggle', [SsgDeployController::class, 'toggleSsg'])->name('sites.ssg.toggle');
+
+        // ── QR Code Management (§30) ──
+        Route::get('/sites/{siteId}/qr-codes', [QrCodeController::class, 'index'])->name('sites.qr-codes.index');
+        Route::post('/sites/{siteId}/qr-codes', [QrCodeController::class, 'store'])->name('sites.qr-codes.store');
+        Route::delete('/sites/{siteId}/qr-codes/{code}', [QrCodeController::class, 'destroy'])->name('sites.qr-codes.destroy');
 
         // Media (support both URL patterns)
         Route::get('/media/{siteId}', [MediaController::class, 'index'])->name('media.index');
@@ -412,6 +443,31 @@ Route::prefix('sites/{subdomain}')->group(function () {
 
 // Dynamic PWA manifest for GrowBuilder sites
 Route::get('/sites/{subdomain}/manifest.json', [ManifestController::class, 'manifest'])->name('site.manifest');
+
+// ── Physical-to-Digital Bridge: QR Code redirect (§30) ──
+// Public — tracks scan count, then redirects to the target UTM-tagged URL
+Route::get('/qr/{code}', [QrCodeController::class, 'redirect'])->name('growbuilder.qr.redirect');
+
+// ── SEO: sitemap.xml and robots.txt per-site (§24) ──
+Route::get('/sites/{subdomain}/sitemap.xml', function (string $subdomain) {
+    $site = \Illuminate\Support\Facades\DB::table('growbuilder_sites')
+        ->where('subdomain', $subdomain)
+        ->whereNull('deleted_at')
+        ->first();
+    if (!$site) abort(404);
+    $sitemap = app(\App\Services\GrowBuilder\SeoSchemaService::class)->generateSitemap($site->id);
+    return response($sitemap, 200)->header('Content-Type', 'application/xml');
+})->name('site.sitemap');
+
+Route::get('/sites/{subdomain}/robots.txt', function (string $subdomain) {
+    $site = \Illuminate\Support\Facades\DB::table('growbuilder_sites')
+        ->where('subdomain', $subdomain)
+        ->whereNull('deleted_at')
+        ->first();
+    if (!$site) abort(404);
+    $robots = app(\App\Services\GrowBuilder\SeoSchemaService::class)->generateRobotsTxt($site);
+    return response($robots, 200)->header('Content-Type', 'text/plain');
+})->name('site.robots');
 
 // Public blog routes (before the catch-all preview route)
 Route::get('/sites/{subdomain}/blog', [SiteBlogController::class, 'index'])->name('site.blog.index');

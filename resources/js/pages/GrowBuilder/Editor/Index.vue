@@ -25,6 +25,7 @@ const ApplyTemplateModal = defineAsyncComponent(() => import('./components/modal
 const MediaLibraryModal = defineAsyncComponent(() => import('./components/modals/MediaLibraryModal.vue'));
 const AIAssistantModal = defineAsyncComponent(() => import('./components/modals/AIAssistantModal.vue'));
 const AIFloatingButton = defineAsyncComponent(() => import('./components/ai/AIFloatingButton.vue'));
+const PageRevisionDrawer = defineAsyncComponent(() => import('./components/PageRevisionDrawer.vue'));
 
 // Config
 import { sectionBlocks } from './config/sectionBlocks';
@@ -133,6 +134,7 @@ const hasAISEO = computed(() => {
 // ============================================
 const isMobileDevice = ref(false);
 const showMobileWarning = ref(false);
+const showRevisionDrawer = ref(false);
 const ONBOARDING_KEY = computed(() => `growbuilder_onboarding_completed_${props.site.id}`);
 const aiUsage = ref<AIUsage | undefined>(props.aiUsage);
 watch(() => props.aiUsage, (newUsage) => {
@@ -2042,6 +2044,16 @@ onUnmounted(() => {
         :siteName="site.name"
         @close="closeOnboarding"
         @complete="completeOnboarding"
+    />
+
+    <!-- Page Revision History Drawer (§34) -->
+    <PageRevisionDrawer
+        v-if="currentPage"
+        :site-id="site.id"
+        :page-id="currentPage.id"
+        :open="showRevisionDrawer"
+        @close="showRevisionDrawer = false"
+        @rollback="(newSections) => { if (currentPage) { currentPage.sections = newSections; showToast('Page rolled back to selected revision', 'success'); } }"
     />
 
     <!-- Toast Notifications -->
