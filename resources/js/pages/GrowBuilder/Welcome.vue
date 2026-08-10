@@ -11,9 +11,18 @@ interface TemplateCard {
     isPremium: boolean;
 }
 
+import { usePage } from '@inertiajs/vue3';
+
 const isSubdomain = computed(() => window.location.hostname === 'growbuilder.mygrownet.com');
+const user = computed(() => (usePage().props.auth as any)?.user);
 const templates = ref<TemplateCard[]>([]);
 const templatesLoading = ref(true);
+
+const dashboardUrl = computed(() => isSubdomain.value ? '/dashboard' : '/growbuilder/dashboard');
+const signInUrl = computed(() => user.value ? dashboardUrl.value : '/login');
+const registerUrl = computed(() => user.value ? dashboardUrl.value : '/register');
+const signInLabel = computed(() => user.value ? 'Dashboard' : 'Sign In');
+const getStartedLabel = computed(() => user.value ? 'Go to Dashboard' : 'Get Started Free');
 
 onMounted(async () => {
     try {
@@ -70,14 +79,14 @@ onMounted(() => {
                             <Link :href="pricingUrl" class="px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-800 rounded-md hover:bg-gray-100/60 transition-colors">Pricing</Link>
                         </div>
                         <div class="flex items-center gap-3">
-                            <Link href="/login" class="hidden sm:inline text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors">
-                                Sign In
+                            <Link :href="signInUrl" class="hidden sm:inline text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors">
+                                {{ signInLabel }}
                             </Link>
                         <Link
-                            href="/register"
+                            :href="registerUrl"
                             class="relative inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md shadow-blue-600/20 hover:shadow-blue-600/35"
                         >
-                            Get Started Free
+                            {{ getStartedLabel }}
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
                         </Link>
                         <!-- Mobile hamburger -->
@@ -95,8 +104,8 @@ onMounted(() => {
                     <a href="#features" @click="mobileMenuOpen = false" class="block px-4 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50">Features</a>
                     <a href="#templates" @click="mobileMenuOpen = false" class="block px-4 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50">Templates</a>
                     <Link :href="pricingUrl" @click="mobileMenuOpen = false" class="block px-4 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50">Pricing</Link>
-                    <Link href="/login" @click="mobileMenuOpen = false" class="block px-4 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50">Sign In</Link>
-                    <Link href="/register" @click="mobileMenuOpen = false" class="block px-4 py-3 text-sm font-bold text-white bg-blue-600 rounded-lg text-center mt-3">Get Started Free</Link>
+                    <Link :href="signInUrl" @click="mobileMenuOpen = false" class="block px-4 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50">{{ signInLabel }}</Link>
+                    <Link :href="registerUrl" @click="mobileMenuOpen = false" class="block px-4 py-3 text-sm font-bold text-white bg-blue-600 rounded-lg text-center mt-3">{{ getStartedLabel }}</Link>
                 </div>
             </div>
         </header>
@@ -129,10 +138,10 @@ onMounted(() => {
 
                         <div class="mt-10 flex flex-col sm:flex-row gap-4">
                             <Link
-                                href="/register"
+                                :href="registerUrl"
                                 class="relative inline-flex items-center justify-center gap-2.5 px-8 py-4 text-base font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-xl shadow-blue-600/25 hover:shadow-blue-600/40 group"
                             >
-                                Build Your Site Free
+                                {{ user ? 'Go to Dashboard' : 'Build Your Site Free' }}
                                 <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
                             </Link>
                             <Link

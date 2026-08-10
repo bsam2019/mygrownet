@@ -495,6 +495,9 @@ Route::domain('growbuilder.mygrownet.com')->group(function () use ($registerGrow
 
     // Public welcome page at root
     Route::get('/', function () {
+        if (auth()->check()) {
+            return redirect()->route('growbuilder.sub.dashboard');
+        }
         $tiers = app(\App\Domain\Module\Services\TierConfigurationService::class)->getAllTiersForDisplay('growbuilder');
         return Inertia::render('GrowBuilder/Welcome', ['tiers' => $tiers]);
     })->name('growbuilder.sub.welcome');

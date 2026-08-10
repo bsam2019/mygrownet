@@ -10,6 +10,10 @@ class GuestController extends Controller
 {
     public function login()
     {
+        if (auth()->check()) {
+            return redirect()->route(request()->getHost() === 'growbuilder.mygrownet.com' ? 'growbuilder.sub.dashboard' : 'growbuilder.dashboard');
+        }
+
         return Inertia::render('GrowBuilder/Auth/Login', [
             'canResetPassword' => true,
             'status' => session('status'),
@@ -18,6 +22,10 @@ class GuestController extends Controller
 
     public function register()
     {
+        if (auth()->check()) {
+            return redirect()->route(request()->getHost() === 'growbuilder.mygrownet.com' ? 'growbuilder.sub.dashboard' : 'growbuilder.dashboard');
+        }
+
         return Inertia::render('GrowBuilder/Auth/Register', [
             'status' => session('status'),
         ]);

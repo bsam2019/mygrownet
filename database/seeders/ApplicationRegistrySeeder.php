@@ -85,7 +85,7 @@ class ApplicationRegistrySeeder extends Seeder
                 'context_support' => 'both',
                 'requires_organization_context' => false,
                 'subscription_required' => false,
-                'url' => 'https://growbuilder.mygrownet.com',
+                'url' => 'https://growbuilder.mygrownet.com/dashboard',
                 'lifecycle' => 'active',
                 'operational_status' => 'online',
                 'is_visible' => true,
