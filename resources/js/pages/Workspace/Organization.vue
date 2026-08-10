@@ -112,30 +112,30 @@ function launchApp(app: App) {
             </div>
 
             <!-- Org Header -->
-            <div class="bg-white rounded-xl border border-gray-200/80 p-6 mb-6">
+            <div class="bg-gradient-to-br from-white via-slate-50/80 to-indigo-50/20 dark:from-[#0b1120] dark:via-[#0b1120] dark:to-indigo-950/20 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] p-6 mb-6 shadow-sm">
                 <div class="flex items-start justify-between">
                     <div class="flex items-start gap-4">
-                        <div class="w-14 h-14 flex items-center justify-center rounded-xl bg-[#0b1120] text-white shadow-sm">
+                        <div class="w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-900 dark:bg-indigo-600 text-white shadow-lg shadow-slate-900/20 dark:shadow-indigo-500/25 flex-shrink-0">
                             <BuildingOfficeIcon class="w-7 h-7" />
                         </div>
                         <div class="flex-1 min-w-0">
-                            <h1 class="text-xl font-bold text-gray-900">{{ organization.name }}</h1>
-                            <p class="text-xs text-gray-400 mt-1">
+                            <h1 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{{ organization.name }}</h1>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
                                 {{ organization.type || 'Organization' }}
                                 <span v-if="organization.country"> &middot; {{ organization.country }}</span>
                                 <span v-if="organization.currency"> &middot; {{ organization.currency }}</span>
                             </p>
-                            <div class="flex items-center gap-2 mt-2">
+                            <div class="flex items-center gap-2 mt-2.5">
                                 <span
                                     v-if="userRole"
-                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-50 text-indigo-700 capitalize"
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-500/20 capitalize"
                                 >
                                     {{ userRole }}
                                 </span>
                                 <span
                                     :class="[
-                                        'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium capitalize',
-                                        organization.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600',
+                                        'inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize border',
+                                        organization.status === 'active' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-500/20' : 'bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-white/[0.08]',
                                     ]"
                                 >
                                     {{ organization.status }}
@@ -148,31 +148,31 @@ function launchApp(app: App) {
                     <div class="relative">
                         <button
                             @click="appSwitcherOpen = !appSwitcherOpen"
-                            class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                            class="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/[0.12] rounded-xl shadow-sm transition-all"
                         >
-                            <Squares2X2Icon class="w-3.5 h-3.5" />
-                            <span class="hidden sm:inline">Switch</span>
+                            <Squares2X2Icon class="w-4 h-4 text-indigo-500" />
+                            <span class="hidden sm:inline">Switch App</span>
                         </button>
                         <div
                             v-if="appSwitcherOpen"
-                            class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 p-3 z-50"
+                            class="absolute right-0 mt-2 w-64 bg-white dark:bg-[#0c1322] rounded-2xl shadow-xl border border-slate-200/80 dark:border-white/[0.08] p-3 z-50"
                         >
-                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">Switch to</p>
+                            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 px-1">Switch Application</p>
                             <button
                                 v-for="app in allApps"
                                 :key="app.id"
                                 @click="launchApp(app)"
-                                class="w-full text-left px-2.5 py-2 text-sm text-gray-700 hover:bg-indigo-50 rounded-lg transition-colors flex items-center gap-2"
+                                class="w-full text-left px-2.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-xl transition-colors flex items-center gap-2 font-medium"
                             >
-                                <div class="w-6 h-6 rounded bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                                    <CubeIcon class="w-3.5 h-3.5 text-indigo-600" />
+                                <div class="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
+                                    <CubeIcon class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                                 </div>
                                 {{ app.name }}
                             </button>
-                            <div class="border-t border-gray-100 mt-2 pt-2">
+                            <div class="border-t border-slate-100 dark:border-white/[0.06] mt-2 pt-2">
                                 <Link
                                     :href="route('workspace')"
-                                    class="block w-full text-left px-2.5 py-2 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg font-medium"
+                                    class="block w-full text-left px-2.5 py-2 text-xs text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-xl font-semibold"
                                 >
                                     MyGrowNet Platform
                                 </Link>
@@ -183,39 +183,41 @@ function launchApp(app: App) {
             </div>
 
             <!-- Quick Stats -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-                <div class="bg-white rounded-xl border border-gray-200/80 p-4 flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                        <CubeIcon class="w-5 h-5 text-indigo-600" />
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                <div class="bg-white dark:bg-[#0b1120] rounded-2xl border border-slate-200/80 dark:border-white/[0.08] p-4 flex items-center gap-3.5 shadow-sm">
+                    <div class="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
+                        <CubeIcon class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                     </div>
                     <div>
-                        <p class="text-lg font-semibold text-gray-900 tabular-nums">{{ organization.installed_apps.length }}</p>
-                        <p class="text-xs text-gray-400 mt-0.5">Active Applications</p>
+                        <p class="text-lg font-bold text-slate-900 dark:text-white tabular-nums tracking-tight">{{ organization.installed_apps.length }}</p>
+                        <p class="text-xs text-slate-400 dark:text-slate-400">Active Applications</p>
                     </div>
                 </div>
-                <div class="bg-white rounded-xl border border-gray-200/80 p-4 flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                        <UsersIcon class="w-5 h-5 text-emerald-600" />
+                <div class="bg-white dark:bg-[#0b1120] rounded-2xl border border-slate-200/80 dark:border-white/[0.08] p-4 flex items-center gap-3.5 shadow-sm">
+                    <div class="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                        <UsersIcon class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div>
-                        <p class="text-lg font-semibold text-gray-900 tabular-nums">{{ members.length }}</p>
-                        <p class="text-xs text-gray-400 mt-0.5">Team Members</p>
+                        <p class="text-lg font-bold text-slate-900 dark:text-white tabular-nums tracking-tight">{{ members.length }}</p>
+                        <p class="text-xs text-slate-400 dark:text-slate-400">Team Members</p>
                     </div>
                 </div>
-                <div class="bg-white rounded-xl border border-gray-200/80 p-4 flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
-                        <CreditCardIcon class="w-5 h-5 text-amber-600" />
+                <div class="bg-white dark:bg-[#0b1120] rounded-2xl border border-slate-200/80 dark:border-white/[0.08] p-4 flex items-center gap-3.5 shadow-sm">
+                    <div class="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                        <CreditCardIcon class="w-5 h-5 text-amber-600 dark:text-amber-400" />
                     </div>
                     <div>
-                        <p class="text-sm font-semibold text-gray-900">{{ organization.currency || 'ZMW' }}</p>
-                        <p class="text-xs text-gray-400 mt-0.5">Default Currency</p>
+                        <p class="text-sm font-bold text-slate-900 dark:text-white">{{ organization.currency || 'ZMW' }}</p>
+                        <p class="text-xs text-slate-400 dark:text-slate-400">Default Currency</p>
                     </div>
                 </div>
             </div>
 
             <!-- App Grid -->
             <section class="mb-8">
-                <h2 class="text-base font-semibold text-gray-900 mb-4">Installed Applications</h2>
+                <div class="mb-4 pb-2 border-b border-slate-200/60 dark:border-white/[0.06]">
+                    <h2 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Installed Applications</h2>
+                </div>
                 <AppGrid :apps="apps" />
             </section>
 

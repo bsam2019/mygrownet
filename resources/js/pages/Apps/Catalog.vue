@@ -97,53 +97,64 @@ const categoryDescriptions: Record<string, string> = {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <Link
                 :href="route('workspace')"
-                class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors"
+                class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white mb-6 transition-colors"
             >
                 <ArrowLeftIcon class="w-4 h-4" />
                 Back to Workspace
             </Link>
 
-            <div class="mb-8">
+            <div class="mb-8 p-6 bg-gradient-to-br from-white via-slate-50/80 to-indigo-50/20 dark:from-[#0b1120] dark:via-[#0b1120] dark:to-indigo-950/20 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm">
                 <div class="flex items-center gap-3">
-                    <h1 class="text-2xl font-bold text-gray-900">App Catalog</h1>
+                    <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">App Catalog</h1>
                     <span
                         v-if="isOrgContext"
-                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100"
+                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-500/20"
                     >
+                        <SparklesIcon class="w-3.5 h-3.5" />
                         {{ context?.organization_name || 'Organization Workspace' }}
                     </span>
+                    <span
+                        v-else
+                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-white/[0.08]"
+                    >
+                        Personal Workspace
+                    </span>
                 </div>
-                <p class="text-sm text-gray-500 mt-1">
-                    {{ isOrgContext ? 'Browse business applications for your organization' : 'Browse all available applications on the platform' }}
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5">
+                    {{ isOrgContext ? 'Browse and launch business applications available for your organization' : 'Browse all available applications and personal tools on the platform' }}
                 </p>
             </div>
 
-            <div class="space-y-8">
+            <div class="space-y-10">
                 <div v-for="(categoryApps, category) in apps" :key="category">
                     <div v-if="categoryApps.length > 0 && !(isOrgContext && category === 'consumer')">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ categoryLabels[category] || category }}</h3>
-                        <p class="text-sm text-gray-500 mb-4">{{ categoryDescriptions[category] || '' }}</p>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                        <div class="mb-4 pb-2 border-b border-slate-200/60 dark:border-white/[0.06]">
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">{{ categoryLabels[category] || category }}</h3>
+                            <p class="text-xs text-slate-400 dark:text-slate-400 mt-0.5">{{ categoryDescriptions[category] || '' }}</p>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                             <Link
                                 v-for="app in categoryApps"
                                 :key="app.id"
                                 :href="route('apps.show', { slug: app.slug })"
-                                class="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all w-full group"
+                                class="group flex flex-col items-center gap-3 p-5 bg-white dark:bg-[#0c1322] rounded-2xl border border-slate-200/80 dark:border-white/[0.08] hover:border-indigo-400/50 dark:hover:border-indigo-400/40 hover:shadow-xl hover:shadow-indigo-500/10 dark:hover:shadow-indigo-500/15 hover:-translate-y-1 hover:scale-[1.02] transition-all duration-300 cursor-pointer text-left relative overflow-hidden"
                             >
                                 <div
                                     :class="[
-                                        'w-12 h-12 flex items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm group-hover:scale-110 transition-transform',
-                                        appColors[app.slug] || 'from-blue-500 to-blue-600',
+                                        'w-13 h-13 sm:w-14 sm:h-14 flex items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg group-hover:scale-110 transition-all duration-300',
+                                        appColors[app.slug] || 'from-indigo-500 to-indigo-600 shadow-indigo-500/25',
                                     ]"
                                 >
-                                    <component :is="appIcons[app.slug] || CubeIcon" class="w-6 h-6" />
+                                    <component :is="appIcons[app.slug] || CubeIcon" class="w-6 h-6 sm:w-7 sm:h-7" />
                                 </div>
-                                <span class="text-sm font-medium text-gray-700 text-center group-hover:text-blue-600 transition-colors">
-                                    {{ app.name }}
-                                </span>
-                                <span class="text-[10px] text-gray-400 text-center line-clamp-1 leading-tight">
-                                    {{ appDescriptions[app.slug] || '' }}
-                                </span>
+                                <div class="text-center relative z-10">
+                                    <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-200 line-clamp-1">
+                                        {{ app.name }}
+                                    </span>
+                                    <span class="text-[11px] text-slate-400 dark:text-slate-400 text-center line-clamp-1 leading-tight mt-0.5 block">
+                                        {{ appDescriptions[app.slug] || '' }}
+                                    </span>
+                                </div>
                             </Link>
                         </div>
                     </div>

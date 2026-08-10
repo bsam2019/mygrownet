@@ -201,65 +201,67 @@ const quickActions = [
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <IntendedAppHighlight />
 
-            <!-- Welcome -->
-            <div class="relative overflow-hidden mb-8 bg-white dark:bg-[#0b1120] rounded-xl border border-gray-200 dark:border-white/[0.06] shadow-sm">
-                <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-500/5 dark:from-indigo-500/10 via-transparent to-transparent"></div>
-                <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 dark:bg-indigo-500/5 rounded-full blur-[80px] pointer-events-none"></div>
-                <div class="relative px-6 py-5 sm:px-8">
-                    <div class="flex items-start justify-between">
+            <!-- Welcome Hero -->
+            <div class="relative overflow-hidden mb-8 bg-gradient-to-br from-white via-slate-50/80 to-indigo-50/30 dark:from-[#0b1120] dark:via-[#0b1120] dark:to-indigo-950/20 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm">
+                <div class="absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent dark:from-indigo-500/15 dark:via-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="relative px-6 py-6 sm:px-8 sm:py-7">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
-                            <h1 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white tracking-tight">
-                                Welcome back, <span class="text-indigo-600 dark:text-indigo-300">{{ user?.name?.split(' ')[0] || 'there' }}</span>
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-500/20 mb-3">
+                                <SparklesIcon class="w-3.5 h-3.5" />
+                                <span>Platform Workspace</span>
+                            </div>
+                            <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                                Welcome back, <span class="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-500 dark:from-indigo-400 dark:via-purple-400 dark:to-indigo-300 bg-clip-text text-transparent">{{ user?.name?.split(' ')[0] || 'there' }}</span>
                             </h1>
-                            <p class="mt-1 text-sm text-gray-500 dark:text-white/50">
+                            <p class="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
                                 <template v-if="context?.type === 'organization'">
-                                    Working in <span class="text-gray-700 dark:text-white/70 font-medium">{{ context?.organization_name }}</span>
+                                    Working in <span class="text-slate-800 dark:text-slate-200 font-semibold">{{ context?.organization_name }}</span>
                                 </template>
                                 <template v-else>
-                                    Your personal workspace — explore apps and tools to grow your business.
+                                    Your personal workspace — explore applications and tools to manage your business.
                                 </template>
                             </p>
                         </div>
                         <Link
                             :href="route('apps.catalog')"
-                            class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 bg-gray-100 dark:bg-white/[0.08] hover:bg-gray-200 dark:hover:bg-white/[0.12] text-gray-600 dark:text-white/80 hover:text-gray-900 dark:hover:text-white text-xs font-medium rounded-lg border border-gray-200 dark:border-white/[0.06] transition-all"
+                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/30 hover:scale-[1.02] transition-all duration-200 flex-shrink-0"
                         >
-                            Browse Apps
+                            <Squares2X2Icon class="w-4 h-4" />
+                            Browse Catalog
                             <ArrowRightIcon class="w-3.5 h-3.5" />
                         </Link>
                     </div>
 
                     <!-- Mini Stats -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-white/[0.06]">
-                        <div v-for="(stat, idx) in stats" :key="idx" class="flex flex-col">
-                            <span class="text-base font-semibold text-gray-900 dark:text-white tabular-nums">{{ stat.value }}</span>
-                            <span class="text-xs text-gray-400 dark:text-white/40 mt-0.5">{{ stat.label }}</span>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-5 border-t border-slate-200/60 dark:border-white/[0.06]">
+                        <div v-for="(stat, idx) in stats" :key="idx" class="flex flex-col p-3 rounded-xl bg-white/60 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.04] backdrop-blur-sm">
+                            <span class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tabular-nums tracking-tight">{{ stat.value }}</span>
+                            <span class="text-xs font-medium text-slate-400 dark:text-slate-400 mt-0.5">{{ stat.label }}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Quick Actions -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                 <Link
                     v-for="action in quickActions"
                     :key="action.label"
                     :href="action.disabled ? '#' : action.href"
                     :class="[
-                        'flex items-center gap-4 p-4 bg-white dark:bg-[#0b1120] rounded-xl border border-gray-200 dark:border-white/[0.06] shadow-sm transition-all duration-200',
-                        action.disabled
-                            ? 'opacity-50 cursor-not-allowed'
-                            : 'hover:border-gray-300 dark:hover:border-white/[0.12] hover:shadow-md hover:-translate-y-0.5'
+                        'group flex items-center gap-4 p-4 bg-white dark:bg-[#0b1120] rounded-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:border-indigo-400/50 dark:hover:border-indigo-400/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300',
+                        action.disabled ? 'opacity-50 cursor-not-allowed' : ''
                     ]"
                 >
-                    <div :class="[action.color, 'w-10 h-10 rounded-lg flex items-center justify-center text-white shadow-sm flex-shrink-0']">
+                    <div :class="[action.color, 'w-11 h-11 rounded-xl flex items-center justify-center text-white shadow-md flex-shrink-0 group-hover:scale-110 transition-transform duration-300']">
                         <component :is="action.icon" class="w-5 h-5" />
                     </div>
-                    <div class="min-w-0">
-                        <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ action.label }}</p>
-                        <p class="text-xs text-gray-400 dark:text-white/40 truncate">{{ action.desc }}</p>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">{{ action.label }}</p>
+                        <p class="text-xs text-slate-400 dark:text-slate-400 truncate mt-0.5">{{ action.desc }}</p>
                     </div>
-                    <ChevronRightIcon v-if="!action.disabled" class="w-4 h-4 text-gray-300 dark:text-white/20 ml-auto flex-shrink-0" />
+                    <ChevronRightIcon v-if="!action.disabled" class="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
                 </Link>
             </div>
 
