@@ -61,7 +61,7 @@ $registerBizBoostAuthRoutes = function (string $prefix, string $namePrefix, stri
         Route::post('/leads/{lead}/stage', [\App\Http\Controllers\BizBoost\LeadPipelineController::class, 'updateStage'])->name('leads.update-stage');
 
         // Omnichannel Campaigns & Marketing ROI Attribution
-        Route::get('/campaign-attributions', [\App\Http\Controllers\BizBoost\CampaignAttributionController::class, 'index'])->name('campaigns.index');
+        Route::get('/campaign-attributions', [\App\Http\Controllers\BizBoost\CampaignAttributionController::class, 'index'])->name('campaign-attributions.index');
         Route::post('/links', [\App\Http\Controllers\BizBoost\CampaignAttributionController::class, 'createLink'])->name('links.store');
 
         // Domain App Admin Entry Point
