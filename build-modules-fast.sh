@@ -23,6 +23,8 @@ MODULES=(
     "grownet"
     "growbuilder"
     "growmart"
+    "growstream"
+    "growmusic"
     "zamstay"
     "bms"
     "primeedge"

@@ -23,6 +23,8 @@ MODULES=(
     "grownet:1024"
     "growbuilder:1024"
     "growmart:1024"
+    "growstream:1024"
+    "growmusic:1024"
     "zamstay:1024"
     "bms:1024"
     "primeedge:1024"
