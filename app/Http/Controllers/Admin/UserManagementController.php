@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Spatie\Permission\Models\Role;
 
 class UserManagementController extends Controller
 {
@@ -84,7 +85,7 @@ class UserManagementController extends Controller
                     'loan_balance' => $user->loan_balance,
                     'loan_limit' => $user->loan_limit,
                 ]),
-            'roles' => \App\Models\Role::select('id', 'name')->get(),
+            'roles' => Role::select('id', 'name')->get(),
             'filters' => $request->only(['search', 'status', 'role', 'level', 'date_from', 'date_to', 'sort', 'direction']),
             'professionalLevels' => [
                 'associate' => 'Associate',
@@ -133,7 +134,7 @@ class UserManagementController extends Controller
                 'avatar' => null,
                 'kyc_status' => 'not_started'
             ],
-            'roles' => \App\Models\Role::select('id', 'name')->get()
+            'roles' => Role::select('id', 'name')->get()
         ]);
     }
 
