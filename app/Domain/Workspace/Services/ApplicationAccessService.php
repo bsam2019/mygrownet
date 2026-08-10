@@ -58,7 +58,22 @@ class ApplicationAccessService
             ->whereIn('lifecycle', ['active', 'legacy'])
             ->where('operational_status', 'online');
 
-        if ($context->isOrganization()) {
+        $isOrgContext = $context->isOrganization();
+        if (!$isOrgContext && $context->applicationId) {
+            $currentApp = Application::find($context->applicationId);
+            if ($currentApp && ($currentApp->requires_organization_context || $currentApp->context_support === 'organization')) {
+                $isOrgContext = true;
+            }
+        }
+
+        if (!$isOrgContext && request()->attributes->get('domain_resolution')) {
+            $res = request()->attributes->get('domain_resolution');
+            if ($res?->application && ($res->application->requires_organization_context || $res->application->context_support === 'organization')) {
+                $isOrgContext = true;
+            }
+        }
+
+        if ($isOrgContext) {
             $query->whereIn('context_support', ['organization', 'both'])
                   ->where('type', 'business')
                   ->where('category', '!=', 'consumer');

@@ -68,6 +68,13 @@ const page = usePage();
 const apps = computed(() => (page.props as any).apps as Record<string, App[]> ?? {});
 const context = computed(() => (page.props as any).workspace?.context);
 
+const isOrgContext = computed(() => {
+    if (context.value?.type === 'organization') return true;
+    const host = window.location.hostname;
+    const orgSubdomains = ['stockflow.mygrownet.com', 'bms.mygrownet.com', 'growfinance.mygrownet.com', 'bizdocs.mygrownet.com', 'bizboost.mygrownet.com'];
+    return orgSubdomains.includes(host);
+});
+
 const categoryLabels: Record<string, string> = {
     business: 'Business Tools',
     consumer: 'Personal Apps',
@@ -98,20 +105,20 @@ const categoryDescriptions: Record<string, string> = {
                 <div class="flex items-center gap-3">
                     <h1 class="text-2xl font-bold text-gray-900">App Catalog</h1>
                     <span
-                        v-if="context?.type === 'organization'"
+                        v-if="isOrgContext"
                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100"
                     >
                         {{ context?.organization_name || 'Organization Workspace' }}
                     </span>
                 </div>
                 <p class="text-sm text-gray-500 mt-1">
-                    {{ context?.type === 'organization' ? 'Browse business applications for your organization' : 'Browse all available applications on the platform' }}
+                    {{ isOrgContext ? 'Browse business applications for your organization' : 'Browse all available applications on the platform' }}
                 </p>
             </div>
 
             <div class="space-y-8">
                 <div v-for="(categoryApps, category) in apps" :key="category">
-                    <div v-if="categoryApps.length > 0 && !(context?.type === 'organization' && category === 'consumer')">
+                    <div v-if="categoryApps.length > 0 && !(isOrgContext && category === 'consumer')">
                         <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ categoryLabels[category] || category }}</h3>
                         <p class="text-sm text-gray-500 mb-4">{{ categoryDescriptions[category] || '' }}</p>
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
