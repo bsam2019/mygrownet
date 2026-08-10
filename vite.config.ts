@@ -198,9 +198,12 @@ export default defineConfig({
     },
     resolve: {
         alias: [
-            { find: '@/Layouts', replacement: path.resolve(__dirname, './resources/js/layouts') },
-            { find: '@/Components', replacement: path.resolve(__dirname, './resources/js/components') },
-            { find: '@/Composables', replacement: path.resolve(__dirname, './resources/js/composables') },
+            { find: '@/Layouts', replacement: path.resolve(__dirname, './resources/js/Layouts') },
+            { find: '@/layouts', replacement: path.resolve(__dirname, './resources/js/Layouts') },
+            { find: '@/Components', replacement: path.resolve(__dirname, './resources/js/Components') },
+            { find: '@/components', replacement: path.resolve(__dirname, './resources/js/Components') },
+            { find: '@/Composables', replacement: path.resolve(__dirname, './resources/js/Composables') },
+            { find: '@/composables', replacement: path.resolve(__dirname, './resources/js/Composables') },
             { find: '@', replacement: path.resolve(__dirname, './resources/js') },
             { find: 'ziggy-js', replacement: resolve(__dirname, 'vendor/tightenco/ziggy') },
         ],

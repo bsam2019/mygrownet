@@ -91,21 +91,6 @@ class ApplicationRegistrySeeder extends Seeder
                 'is_visible' => true,
                 'is_active' => true,
             ],
-            [
-                'slug' => 'growmart',
-                'name' => 'GrowMart',
-                'type' => 'consumer',
-                'category' => 'consumer',
-                'access_model' => 'customer',
-                'context_support' => 'personal',
-                'requires_organization_context' => false,
-                'subscription_required' => false,
-                'url' => 'https://growmart.mygrownet.com',
-                'lifecycle' => 'active',
-                'operational_status' => 'online',
-                'is_visible' => true,
-                'is_active' => true,
-            ],
 
             // === Consumer (personal context, subscription) ===
             [
@@ -118,6 +103,51 @@ class ApplicationRegistrySeeder extends Seeder
                 'requires_organization_context' => false,
                 'subscription_required' => false,
                 'url' => 'https://grownet.mygrownet.com',
+                'lifecycle' => 'active',
+                'operational_status' => 'online',
+                'is_visible' => true,
+                'is_active' => true,
+            ],
+            [
+                'slug' => 'growmusic',
+                'name' => 'GrowMusic',
+                'type' => 'consumer',
+                'category' => 'consumer',
+                'access_model' => 'customer',
+                'context_support' => 'personal',
+                'requires_organization_context' => false,
+                'subscription_required' => false,
+                'url' => 'https://growmusic.mygrownet.com',
+                'lifecycle' => 'active',
+                'operational_status' => 'online',
+                'is_visible' => true,
+                'is_active' => true,
+            ],
+            [
+                'slug' => 'growstream',
+                'name' => 'GrowStream',
+                'type' => 'consumer',
+                'category' => 'consumer',
+                'access_model' => 'customer',
+                'context_support' => 'personal',
+                'requires_organization_context' => false,
+                'subscription_required' => false,
+                'url' => 'https://growstream.mygrownet.com',
+                'lifecycle' => 'active',
+                'operational_status' => 'online',
+                'is_visible' => true,
+                'is_active' => true,
+            ],
+            [
+                'slug' => 'growmart',
+                'name' => 'GrowMart',
+                'type' => 'consumer',
+                'category' => 'consumer',
+                'access_model' => 'customer',
+                'context_support' => 'personal',
+                'requires_organization_context' => false,
+                'subscription_required' => false,
+                'url' => 'https://growmart.mygrownet.com',
                 'lifecycle' => 'active',
                 'operational_status' => 'online',
                 'is_visible' => true,
@@ -169,6 +199,38 @@ class ApplicationRegistrySeeder extends Seeder
                 'is_active' => true,
             ],
 
+            // === Capital & Investments ===
+            [
+                'slug' => 'venture',
+                'name' => 'Venture Builder',
+                'type' => 'business',
+                'category' => 'business',
+                'access_model' => 'both',
+                'context_support' => 'both',
+                'requires_organization_context' => false,
+                'subscription_required' => false,
+                'url' => 'https://venture.mygrownet.com',
+                'lifecycle' => 'active',
+                'operational_status' => 'online',
+                'is_visible' => true,
+                'is_active' => true,
+            ],
+            [
+                'slug' => 'investor',
+                'name' => 'Investor Portal',
+                'type' => 'business',
+                'category' => 'business',
+                'access_model' => 'both',
+                'context_support' => 'both',
+                'requires_organization_context' => false,
+                'subscription_required' => false,
+                'url' => 'https://investor.mygrownet.com',
+                'lifecycle' => 'active',
+                'operational_status' => 'online',
+                'is_visible' => true,
+                'is_active' => true,
+            ],
+
             // === Shared (both contexts) ===
             [
                 'slug' => 'growstorage',
@@ -186,22 +248,7 @@ class ApplicationRegistrySeeder extends Seeder
                 'is_active' => true,
             ],
 
-            // === Legacy ===
-            [
-                'slug' => 'bizboost',
-                'name' => 'BizBoost',
-                'type' => 'business',
-                'category' => 'business',
-                'access_model' => 'organization_members',
-                'context_support' => 'organization',
-                'requires_organization_context' => true,
-                'subscription_required' => false,
-                'url' => 'https://bizboost.mygrownet.com',
-                'lifecycle' => 'legacy',
-                'operational_status' => 'maintenance',
-                'is_visible' => false,
-                'is_active' => true,
-            ],
+            // === Utilities & Legacy ===
             [
                 'slug' => 'quick-invoice',
                 'name' => 'Quick Invoice',
@@ -217,6 +264,21 @@ class ApplicationRegistrySeeder extends Seeder
                 'is_visible' => true,
                 'is_active' => true,
             ],
+            [
+                'slug' => 'bizboost',
+                'name' => 'BizBoost',
+                'type' => 'business',
+                'category' => 'business',
+                'access_model' => 'organization_members',
+                'context_support' => 'organization',
+                'requires_organization_context' => true,
+                'subscription_required' => false,
+                'url' => 'https://bizboost.mygrownet.com',
+                'lifecycle' => 'legacy',
+                'operational_status' => 'maintenance',
+                'is_visible' => false,
+                'is_active' => true,
+            ],
         ];
 
         foreach ($applications as $appData) {
@@ -226,6 +288,8 @@ class ApplicationRegistrySeeder extends Seeder
             );
         }
 
-        $this->command->info('Synced ' . count($applications) . ' application records with metadata.');
+        if ($this->command) {
+            $this->command->info('Synced ' . count($applications) . ' application records with metadata.');
+        }
     }
 }
