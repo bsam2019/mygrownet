@@ -14,17 +14,53 @@ class ApplicationAccessService
 {
     public function getAvailableApps(User $user, WorkspaceContext $context): EloquentCollection
     {
-        if ($context->isPersonal() || $context->isGuest()) {
-            return $this->getPersonalApps($user);
+        $isOrgContext = $context->isOrganization() || $context->organizationId !== null;
+
+        if (!$isOrgContext) {
+            $sessionCtx = session('workspace_context');
+            if (is_array($sessionCtx) && isset($sessionCtx['type']) && $sessionCtx['type'] === 'organization') {
+                $isOrgContext = true;
+            }
         }
 
-        return $this->getOrganizationApps($user, $context);
+        if (!$isOrgContext && (request()->query('context') === 'organization' || request()->query('org'))) {
+            $isOrgContext = true;
+        }
+
+        if (!$isOrgContext && $context->applicationId) {
+            $currentApp = Application::find($context->applicationId);
+            if ($currentApp && ($currentApp->requires_organization_context || $currentApp->context_support === 'organization')) {
+                $isOrgContext = true;
+            }
+        }
+
+        if (!$isOrgContext && request()->attributes->get('domain_resolution')) {
+            $res = request()->attributes->get('domain_resolution');
+            if ($res?->organization || ($res?->application && ($res->application->requires_organization_context || $res->application->context_support === 'organization'))) {
+                $isOrgContext = true;
+            }
+        }
+
+        if (!$isOrgContext) {
+            $host = request()->getHost();
+            $orgSubdomains = ['bms.mygrownet.com', 'stockflow.mygrownet.com', 'growfinance.mygrownet.com', 'bizdocs.mygrownet.com', 'bizboost.mygrownet.com'];
+            if (in_array($host, $orgSubdomains)) {
+                $isOrgContext = true;
+            }
+        }
+
+        if ($isOrgContext) {
+            return $this->getOrganizationApps($user, $context);
+        }
+
+        return $this->getPersonalApps($user);
     }
 
     protected function getPersonalApps(User $user): EloquentCollection
     {
         return Application::where('is_active', true)
             ->whereIn('context_support', ['personal', 'both'])
+            ->where('requires_organization_context', false)
             ->where(function ($q) use ($user) {
                 $q->where(function ($sub) {
                     $sub->whereIn('access_model', ['customer', 'both'])
@@ -41,14 +77,18 @@ class ApplicationAccessService
     {
         $orgId = $context->organizationId;
 
-        return Application::where('is_active', true)
+        $query = Application::where('is_active', true)
             ->whereIn('context_support', ['organization', 'both'])
             ->where('type', 'business')
-            ->whereHas('installations', fn($q) => $q->where('organization_id', $orgId)->where('status', 'active'))
+            ->where('category', '!=', 'consumer')
             ->where('lifecycle', '!=', 'retired')
-            ->where('operational_status', 'online')
-            ->get()
-            ->groupBy('category');
+            ->where('operational_status', 'online');
+
+        if ($orgId) {
+            $query->whereHas('installations', fn($q) => $q->where('organization_id', $orgId)->where('status', 'active'));
+        }
+
+        return $query->get()->groupBy('category');
     }
 
     public function getAllVisibleApps(User $user, WorkspaceContext $context): Collection
