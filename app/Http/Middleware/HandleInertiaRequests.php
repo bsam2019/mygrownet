@@ -65,6 +65,7 @@ class HandleInertiaRequests extends Middleware
             'venturebuilder'                    => 'venture',
             'ventures'                          => 'venture',
             'grownet'                           => 'grownet',
+            'growmusic'                         => 'growmusic',
         ];
 
         foreach ($pathMap as $prefix => $view) {
@@ -94,6 +95,12 @@ class HandleInertiaRequests extends Middleware
         if (str_starts_with($host, 'growstream.')) {
             if (file_exists(public_path('build/growstream/manifest.json'))) {
                 return md5_file(public_path('build/growstream/manifest.json'));
+            }
+        }
+
+        if (str_starts_with($host, 'growmusic.')) {
+            if (file_exists(public_path('build/growmusic/manifest.json'))) {
+                return md5_file(public_path('build/growmusic/manifest.json'));
             }
         }
 

@@ -14,6 +14,7 @@
         "build:bizboost": "NODE_OPTIONS=--max-old-space-size=1024 MODULE=bizboost vite build",
         "build:bizdocs": "NODE_OPTIONS=--max-old-space-size=1024 MODULE=bizdocs vite build",
         "build:grownet": "NODE_OPTIONS=--max-old-space-size=1024 MODULE=grownet vite build",
+        "build:growmusic": "NODE_OPTIONS=--max-old-space-size=1024 MODULE=growmusic vite build",
         "build:growbuilder": "NODE_OPTIONS=--max-old-space-size=1024 MODULE=growbuilder vite build",
         "build:growmart": "NODE_OPTIONS=--max-old-space-size=1024 MODULE=growmart vite build",
         "build:zamstay": "NODE_OPTIONS=--max-old-space-size=1024 MODULE=zamstay vite build",

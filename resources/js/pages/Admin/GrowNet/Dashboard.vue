@@ -134,6 +134,25 @@ const maxMembers = computed(() => Math.max(...props.monthlyTrend.map(m => m.new_
                 </div>
             </div>
 
+            <!-- Ecosystem Telemetry KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div class="bg-white rounded-lg shadow p-5 border-l-4 border-amber-500">
+                    <p class="text-sm text-gray-600">Physical Rewards Allocated</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ (kpis as any).allocated_rewards_count ?? 0 }}</p>
+                    <p class="text-xs text-amber-600 mt-1">Smartphones, Motorbikes, Vehicles</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-5 border-l-4 border-indigo-500">
+                    <p class="text-sm text-gray-600">GrowMusic Verified Streams</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ (kpis as any).music_streams_count ?? 0 }}</p>
+                    <p class="text-xs text-indigo-600 mt-1">ZAMCO Royalty Streams</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-5 border-l-4 border-emerald-500">
+                    <p class="text-sm text-gray-600">Workshop QR Check-Ins</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ (kpis as any).workshop_checkins_count ?? 0 }}</p>
+                    <p class="text-xs text-emerald-600 mt-1">Verified Attendance (+100 LP / +25 BP)</p>
+                </div>
+            </div>
+
             <!-- Period Metrics -->
             <div class="bg-white rounded-lg shadow mb-6">
                 <div class="px-6 py-4 border-b border-gray-200">

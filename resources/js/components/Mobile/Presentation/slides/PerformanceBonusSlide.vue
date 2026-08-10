@@ -73,7 +73,7 @@
           </div>
           <div class="flex items-start gap-2">
             <span class="text-green-400 mt-0.5">✓</span>
-            <span>Commission rates: 15%, 10%, 8%, 5%, 3%, 2%, 2% (7 levels)</span>
+            <span>Commission rates: 15%, 10%, 8%, 6%, 4%, 3%, 2% (7 levels)</span>
           </div>
         </div>
       </div>
@@ -96,7 +96,7 @@ const props = defineProps<{
 }>();
 
 // Default commission rates
-const defaultRates = [15, 10, 8, 5, 3, 2, 2];
+const defaultRates = [15, 10, 8, 6, 4, 3, 2];
 
 // Extract rate numbers from the commission rates
 const rateNumbers = computed(() => {

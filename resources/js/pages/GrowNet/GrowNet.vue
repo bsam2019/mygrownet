@@ -236,19 +236,42 @@
               <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-2">
                 <FileTextIcon class="h-6 w-6 text-blue-600" />
               </div>
-              <span class="text-sm font-semibold text-gray-900">E-Books</span>
+              <span class="text-sm font-semibold text-gray-900">E-Books &amp; Audio</span>
               <span class="text-xs text-gray-500 mt-1">Digital library</span>
             </button>
             
             <button
-              @click="$inertia.visit(route('mygrownet.content.index'))"
+              @click="$inertia.visit(route('grownet.sub.library.index'))"
               class="flex flex-col items-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl hover:shadow-md transition-all active:scale-95 border border-purple-100"
             >
               <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-2">
                 <VideoIcon class="h-6 w-6 text-purple-600" />
               </div>
-              <span class="text-sm font-semibold text-gray-900">Videos</span>
-              <span class="text-xs text-gray-500 mt-1">Training series</span>
+              <span class="text-sm font-semibold text-gray-900">Downloads</span>
+              <span class="text-xs text-gray-500 mt-1">Kit materials &amp; Audio</span>
+            </button>
+
+            <a
+              href="https://growmusic.mygrownet.com"
+              target="_blank"
+              class="flex flex-col items-center p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl hover:shadow-md transition-all active:scale-95 border border-amber-100"
+            >
+              <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-2">
+                <SparklesIcon class="h-6 w-6 text-amber-600" />
+              </div>
+              <span class="text-sm font-semibold text-gray-900">GrowMusic</span>
+              <span class="text-xs text-gray-500 mt-1">Audio streaming</span>
+            </a>
+
+            <button
+              @click="$inertia.visit(route('grownet.sub.rewards.index'))"
+              class="flex flex-col items-center p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl hover:shadow-md transition-all active:scale-95 border border-indigo-100"
+            >
+              <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-2">
+                <BuildingOffice2Icon class="h-6 w-6 text-indigo-600" />
+              </div>
+              <span class="text-sm font-semibold text-gray-900">Rewards</span>
+              <span class="text-xs text-gray-500 mt-1">Physical assets</span>
             </button>
             
             <button

@@ -83,6 +83,11 @@ class DashboardController extends Controller
             $data['supportTickets'] = $this->getSupportTickets($user);
             $data['isMobileDashboard'] = true;
 
+            // Ecosystem integration props for GrowNet.vue
+            $data['educationProgression'] = app(\App\Domain\GrowNet\Services\EducationLevelAdvancementService::class)->evaluateAdvancement($user);
+            $data['entitledDownloads'] = app(\App\Domain\GrowNet\Services\ResourceEntitlementService::class)->getEntitledResources($user);
+            $data['allocatedRewards'] = DB::table('physical_reward_allocations')->where('user_id', $user->id)->get();
+
             return Inertia::render('GrowNet/GrowNet', $data);
 
         } catch (\Exception $e) {

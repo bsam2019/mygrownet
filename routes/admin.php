@@ -309,6 +309,15 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
         Route::get('/earnings', [\App\Http\Controllers\Admin\GrowNet\EarningsManagementController::class, 'index'])->name('earnings');
         Route::get('/earnings/{user}', [\App\Http\Controllers\Admin\GrowNet\EarningsManagementController::class, 'show'])->name('earnings.show');
         Route::post('/earnings/{user}/adjust-bonus', [\App\Http\Controllers\Admin\GrowNet\EarningsManagementController::class, 'adjustBonusBalance'])->name('earnings.adjust-bonus');
+
+        // Education Program Management
+        Route::get('/education', [\App\Http\Controllers\Admin\GrowNet\EducationAdminController::class, 'index'])->name('education.index');
+        Route::post('/education/curriculum', [\App\Http\Controllers\Admin\GrowNet\EducationAdminController::class, 'storeCurriculum'])->name('education.curriculum.store');
+        Route::post('/education/grade/{id}', [\App\Http\Controllers\Admin\GrowNet\EducationAdminController::class, 'gradeSubmission'])->name('education.grade');
+
+        // GrowMusic Subdomain Administration
+        Route::get('/music', [\App\Http\Controllers\Admin\GrowMusic\GrowMusicAdminController::class, 'dashboard'])->name('music.dashboard');
+        Route::post('/music/toggle-vip/{id}', [\App\Http\Controllers\Admin\GrowMusic\GrowMusicAdminController::class, 'toggleVip'])->name('music.toggle-vip');
     });
 
     // Asset Management Administration Routes

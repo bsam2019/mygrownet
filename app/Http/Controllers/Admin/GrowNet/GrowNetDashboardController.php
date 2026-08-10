@@ -104,6 +104,9 @@ class GrowNetDashboardController extends Controller
                 'lgr_current_balance' => $lgrCurrentBalance,
                 'lgr_withdrawn_total' => $lgrWithdrawnTotal,
                 'total_team_volume' => $totalTeamVolume,
+                'allocated_rewards_count' => DB::table('physical_reward_allocations')->count(),
+                'music_streams_count' => DB::table('music_stream_logs')->count(),
+                'workshop_checkins_count' => DB::table('workshop_attendance')->whereNotNull('checked_in_at')->count(),
             ],
             'periodMetrics' => [
                 'period' => $period,

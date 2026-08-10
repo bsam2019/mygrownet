@@ -24,6 +24,7 @@ return [
     App\Providers\BizDocsServiceProvider::class,
     App\Providers\BizDocsIntegrationServiceProvider::class,
     App\Domain\GrowStream\GrowStreamServiceProvider::class,
+App\Domain\GrowMusic\GrowMusicServiceProvider::class,
     App\Providers\PrimeEdgeServiceProvider::class,
     App\Providers\GrowNetServiceProvider::class,
     App\Providers\MarketplaceServiceProvider::class,

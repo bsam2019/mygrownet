@@ -14,7 +14,7 @@
         7-Level Professional Journey
       </h2>
       <p class="text-purple-200 mb-3 text-xs">
-        From Associate to Ambassador - Your path to financial freedom
+        From Associate to Ambassador — Life Points (LP) &amp; Education Level progression
       </p>
       
       <!-- Timeline - All 7 Levels -->
@@ -30,12 +30,12 @@
             </div>
             <div class="flex-1 bg-white/10 backdrop-blur-sm rounded-lg p-2 border border-white/20">
               <div class="flex items-center justify-between">
-                <span class="font-bold text-sm">Associate</span>
-                <span class="text-[10px] text-purple-200 bg-white/10 px-1.5 py-0.5 rounded">Month 1-2</span>
+                <span class="font-bold text-sm">Associate (0 LP)</span>
+                <span class="text-[10px] text-purple-200 bg-white/10 px-1.5 py-0.5 rounded">Month 1</span>
               </div>
               <div class="flex items-center justify-between mt-1">
                 <span class="text-[10px] text-purple-200">3 referrals • 1.0x profit share</span>
-                <span class="text-[10px] text-green-400 font-medium">📚 Learning</span>
+                <span class="text-[10px] text-green-400 font-medium">📦 Starter Kit</span>
               </div>
             </div>
           </div>
@@ -47,12 +47,12 @@
             </div>
             <div class="flex-1 bg-white/10 backdrop-blur-sm rounded-lg p-2 border border-white/20">
               <div class="flex items-center justify-between">
-                <span class="font-bold text-sm">Professional</span>
-                <span class="text-[10px] text-purple-200 bg-white/10 px-1.5 py-0.5 rounded">Month 2-4</span>
+                <span class="font-bold text-sm">Professional (2,500 LP)</span>
+                <span class="text-[10px] text-purple-200 bg-white/10 px-1.5 py-0.5 rounded">Month 2-3</span>
               </div>
               <div class="flex items-center justify-between mt-1">
                 <span class="text-[10px] text-purple-200">9 network • 1.2x profit share</span>
-                <span class="text-[10px] text-green-400 font-medium">🎓 Skilled</span>
+                <span class="text-[10px] text-green-400 font-medium">💰 K500 Cash</span>
               </div>
             </div>
           </div>
@@ -64,12 +64,12 @@
             </div>
             <div class="flex-1 bg-white/10 backdrop-blur-sm rounded-lg p-2 border border-white/20">
               <div class="flex items-center justify-between">
-                <span class="font-bold text-sm">Senior</span>
-                <span class="text-[10px] text-purple-200 bg-white/10 px-1.5 py-0.5 rounded">Month 4-8</span>
+                <span class="font-bold text-sm">Senior (4,000 LP)</span>
+                <span class="text-[10px] text-purple-200 bg-white/10 px-1.5 py-0.5 rounded">Month 3-6</span>
               </div>
               <div class="flex items-center justify-between mt-1">
                 <span class="text-[10px] text-purple-200">27 network • 1.5x profit share</span>
-                <span class="text-[10px] text-green-400 font-medium">📱 Rewards</span>
+                <span class="text-[10px] text-green-400 font-medium">📱 Smartphone</span>
               </div>
             </div>
           </div>
@@ -81,12 +81,12 @@
             </div>
             <div class="flex-1 bg-white/10 backdrop-blur-sm rounded-lg p-2 border border-white/20">
               <div class="flex items-center justify-between">
-                <span class="font-bold text-sm">Manager</span>
-                <span class="text-[10px] text-purple-200 bg-white/10 px-1.5 py-0.5 rounded">Month 8-15</span>
+                <span class="font-bold text-sm">Manager (12,500 LP)</span>
+                <span class="text-[10px] text-purple-200 bg-white/10 px-1.5 py-0.5 rounded">Month 6-12</span>
               </div>
               <div class="flex items-center justify-between mt-1">
                 <span class="text-[10px] text-purple-200">81 network • 2.0x profit share</span>
-                <span class="text-[10px] text-amber-400 font-medium">💰 K5,000</span>
+                <span class="text-[10px] text-amber-400 font-medium">🛵 Motorbike + K5,000</span>
               </div>
             </div>
           </div>
@@ -98,12 +98,12 @@
             </div>
             <div class="flex-1 bg-white/10 backdrop-blur-sm rounded-lg p-2 border border-white/20">
               <div class="flex items-center justify-between">
-                <span class="font-bold text-sm">Director</span>
-                <span class="text-[10px] text-purple-200 bg-white/10 px-1.5 py-0.5 rounded">Month 15-24</span>
+                <span class="font-bold text-sm">Director (60,000 LP)</span>
+                <span class="text-[10px] text-purple-200 bg-white/10 px-1.5 py-0.5 rounded">Month 12-18</span>
               </div>
               <div class="flex items-center justify-between mt-1">
                 <span class="text-[10px] text-purple-200">243 network • 2.5x profit share</span>
-                <span class="text-[10px] text-amber-400 font-medium">💰 K10,000</span>
+                <span class="text-[10px] text-amber-400 font-medium">🚗 Car + K15,000</span>
               </div>
             </div>
           </div>
@@ -115,12 +115,12 @@
             </div>
             <div class="flex-1 bg-white/10 backdrop-blur-sm rounded-lg p-2 border border-white/20">
               <div class="flex items-center justify-between">
-                <span class="font-bold text-sm">Executive</span>
-                <span class="text-[10px] text-purple-200 bg-white/10 px-1.5 py-0.5 rounded">Month 24-36</span>
+                <span class="font-bold text-sm">Executive (160,000 LP)</span>
+                <span class="text-[10px] text-purple-200 bg-white/10 px-1.5 py-0.5 rounded">Month 18-24</span>
               </div>
               <div class="flex items-center justify-between mt-1">
                 <span class="text-[10px] text-purple-200">729 network • 3.0x profit share</span>
-                <span class="text-[10px] text-amber-400 font-medium">💰 K25,000 + ✈️</span>
+                <span class="text-[10px] text-amber-400 font-medium">🚘 Luxury Car + K50,000</span>
               </div>
             </div>
           </div>
@@ -132,12 +132,12 @@
             </div>
             <div class="flex-1 bg-gradient-to-r from-amber-500/20 to-orange-500/20 backdrop-blur-sm rounded-lg p-2 border border-amber-400/30">
               <div class="flex items-center justify-between">
-                <span class="font-bold text-sm text-amber-300">Ambassador</span>
-                <span class="text-[10px] text-amber-200 bg-amber-500/20 px-1.5 py-0.5 rounded">Month 36+</span>
+                <span class="font-bold text-sm text-amber-300">Ambassador (350,000 LP)</span>
+                <span class="text-[10px] text-amber-200 bg-amber-500/20 px-1.5 py-0.5 rounded">Month 24+</span>
               </div>
               <div class="flex items-center justify-between mt-1">
                 <span class="text-[10px] text-amber-200">2,187 network • 4.0x profit share</span>
-                <span class="text-[10px] text-amber-300 font-medium">💰 K50,000+ 🚗</span>
+                <span class="text-[10px] text-amber-300 font-medium">🏠 Property + K150,000</span>
               </div>
             </div>
           </div>
@@ -148,12 +148,12 @@
       <div class="mt-3 bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
         <div class="grid grid-cols-3 gap-2 text-center">
           <div>
-            <div class="text-lg font-bold text-green-400">K16,740+</div>
-            <div class="text-[10px] text-purple-200">Monthly at L7</div>
+            <div class="text-lg font-bold text-green-400">K150,000</div>
+            <div class="text-[10px] text-purple-200">Max Cash Bonus</div>
           </div>
           <div>
-            <div class="text-lg font-bold text-amber-400">3,279</div>
-            <div class="text-[10px] text-purple-200">Max Network</div>
+            <div class="text-lg font-bold text-amber-400">2,187</div>
+            <div class="text-[10px] text-purple-200">3x7 Matrix Max</div>
           </div>
           <div>
             <div class="text-lg font-bold text-blue-400">4.0x</div>
@@ -161,12 +161,6 @@
           </div>
         </div>
       </div>
-      
-      <!-- Motivation -->
-      <p class="mt-2 text-xs text-purple-200">
-        <span class="mr-1">⭐</span>
-        Every Ambassador started as an Associate. Your journey begins today!
-      </p>
     </div>
   </div>
 </template>

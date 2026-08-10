@@ -59,6 +59,14 @@ $modules = [
         'start_url' => '/',
         'icons_prefix' => '/images',
     ],
+    'growmusic' => [
+        'name' => 'GrowMusic',
+        'short_name' => 'GrowMusic',
+        'description' => 'Zambian music streaming with fair royalties for creators',
+        'theme_color' => '#7c3aed',
+        'start_url' => '/',
+        'icons_prefix' => '/images',
+    ],
     'growstorage' => [
         'name' => 'GrowStorage',
         'short_name' => 'GrowStorage',

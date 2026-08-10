@@ -47,9 +47,16 @@ $registerGrowNetSubdomainRoutes = function (string $prefix, string $namePrefix, 
         Route::get('/gifts/history', [GiftController::class, 'getHistory'])->name('gifts.history');
         Route::get('/network/level/{level}/members', [GiftController::class, 'getLevelMembers'])->name('network.level.members');
 
-        Route::get('/library', [LibraryController::class, 'index'])->name('library.index');
+        Route::get('/library', [\App\Domain\GrowNet\Presentation\Http\Controllers\Web\LibraryResourceController::class, 'index'])->name('library.index');
         Route::get('/library/{resource}', [LibraryController::class, 'show'])->name('library.show');
         Route::post('/library/{resource}/complete', [LibraryController::class, 'markCompleted'])->name('library.complete');
+
+        Route::get('/facilitator', [\App\Domain\GrowNet\Presentation\Http\Controllers\Web\FacilitatorPortalController::class, 'index'])->name('facilitator.index');
+        Route::post('/facilitator/checkin', [\App\Domain\GrowNet\Presentation\Http\Controllers\Web\FacilitatorPortalController::class, 'checkIn'])->name('facilitator.checkin');
+        Route::post('/facilitator/upload-voice-note', [\App\Domain\GrowNet\Presentation\Http\Controllers\Web\FacilitatorPortalController::class, 'uploadVoiceNote'])->name('facilitator.upload-voice-note');
+
+        Route::get('/team/matrix', fn() => inertia('GrowNet/Team/Matrix'))->name('team.matrix');
+        Route::get('/rewards', fn() => inertia('GrowNet/Rewards'))->name('rewards.index');
 
         Route::get('/benefits', fn() => inertia('GrowNet/Benefits'))->name('benefits.index');
 
@@ -143,6 +150,7 @@ $registerGrowNetSubdomainRoutes = function (string $prefix, string $namePrefix, 
         Route::get('/payments', [MemberPaymentController::class, 'index'])->name('payments.index');
         Route::get('/payments/create', [MemberPaymentController::class, 'create'])->name('payments.create');
         Route::post('/payments', [MemberPaymentController::class, 'store'])->name('payments.store');
+        Route::post('/payments/pawapay-initiate', [MemberPaymentController::class, 'initiatePawaPay'])->name('payments.pawapay-initiate');
 
         Route::get('/workshops', [WorkshopController::class, 'index'])->name('workshops.index');
         Route::get('/workshops/my-workshops', [WorkshopController::class, 'myWorkshops'])->name('workshops.my-workshops');

@@ -278,15 +278,53 @@
                   </p>
                 </div>
 
-                <!-- Insufficient Balance Warning -->
-                <div v-if="!hasSufficientBalance" class="bg-red-50 border border-red-200 rounded-xl p-4">
+                <!-- Payment Method Toggle (Wallet vs PawaPay Mobile Money) -->
+                <div class="space-y-2">
+                  <p class="text-xs font-semibold text-gray-700">Payment Method</p>
+                  <div class="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      @click="paymentMethod = 'wallet'"
+                      :class="[
+                        'p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2',
+                        paymentMethod === 'wallet' ? 'border-indigo-600 bg-indigo-50 text-indigo-900' : 'border-gray-200 bg-white text-gray-700'
+                      ]"
+                    >
+                      <span>💳 Wallet (K{{ walletBalance }})</span>
+                    </button>
+                    <button
+                      type="button"
+                      @click="paymentMethod = 'pawapay'"
+                      :class="[
+                        'p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2',
+                        paymentMethod === 'pawapay' ? 'border-amber-600 bg-amber-50 text-amber-900' : 'border-gray-200 bg-white text-gray-700'
+                      ]"
+                    >
+                      <span>📱 PawaPay Mobile Money</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- PawaPay Phone Number Input -->
+                <div v-if="paymentMethod === 'pawapay'" class="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2">
+                  <label class="text-xs font-bold text-amber-900">MTN / Airtel / Zamtel Mobile Number</label>
+                  <input
+                    type="tel"
+                    v-model="pawaPayPhone"
+                    placeholder="096XXXXXXX or 097XXXXXXX"
+                    class="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm font-mono focus:ring-amber-500 focus:border-amber-500"
+                  />
+                  <p class="text-[11px] text-amber-700">A PawaPay USSD prompt will be sent to your phone to enter your Mobile Money PIN.</p>
+                </div>
+
+                <!-- Insufficient Balance Warning (Wallet mode only) -->
+                <div v-if="paymentMethod === 'wallet' && !hasSufficientBalance" class="bg-red-50 border border-red-200 rounded-xl p-4">
                   <div class="flex gap-3">
                     <ExclamationTriangleIcon class="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
                     <div class="text-sm text-red-800">
                       <p class="font-medium mb-1">Insufficient Balance</p>
                       <p class="text-xs">
-                        You need K{{ selectedTierPrice.toLocaleString() }} to purchase this tier. 
-                        Please deposit funds to your wallet first.
+                        You need K{{ selectedTierPrice.toLocaleString() }} in your wallet. Select PawaPay Mobile Money above to pay directly from your phone.
                       </p>
                     </div>
                   </div>
@@ -306,13 +344,24 @@
 
                 <!-- Purchase Button -->
                 <button
+                  v-if="paymentMethod === 'wallet'"
                   @click="handlePurchase"
                   :disabled="!termsAccepted || purchasing || !hasSufficientBalance"
                   class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-98"
                 >
                   <span v-if="purchasing">Processing...</span>
-                  <span v-else-if="!hasSufficientBalance">Insufficient Balance</span>
+                  <span v-else-if="!hasSufficientBalance">Insufficient Wallet Balance</span>
                   <span v-else>Purchase K{{ selectedTierPrice.toLocaleString() }} from Wallet</span>
+                </button>
+
+                <button
+                  v-else
+                  @click="handlePawaPayPurchase"
+                  :disabled="!termsAccepted || purchasing || !pawaPayPhone"
+                  class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-4 rounded-xl font-semibold hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-98"
+                >
+                  <span v-if="purchasing">Initiating PawaPay...</span>
+                  <span v-else>Pay K{{ selectedTierPrice.toLocaleString() }} via PawaPay USSD</span>
                 </button>
               </div>
             </div>
@@ -369,6 +418,50 @@ const emit = defineEmits(['close', 'success', 'error']);
 const selectedTier = ref('lite');
 const termsAccepted = ref(false);
 const purchasing = ref(false);
+const paymentMethod = ref('wallet');
+const pawaPayPhone = ref('');
+
+const handlePawaPayPurchase = async () => {
+  if (!termsAccepted.value) {
+    emit('error', 'Please accept the terms and conditions');
+    return;
+  }
+
+  if (!pawaPayPhone.value) {
+    emit('error', 'Please enter your Mobile Money phone number');
+    return;
+  }
+
+  purchasing.value = true;
+
+  try {
+    const response = await fetch(route('grownet.sub.payments.pawapay-initiate'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+      },
+      body: JSON.stringify({
+        amount: selectedTierPrice.value,
+        phone_number: pawaPayPhone.value,
+        payment_type: 'starter_kit',
+        description: `Starter Kit ${selectedTier.value} Purchase`,
+      }),
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      emit('success', data.message);
+      emit('close');
+    } else {
+      emit('error', data.message || 'PawaPay payment initiation failed.');
+    }
+  } catch (err) {
+    emit('error', 'Failed to connect to PawaPay gateway.');
+  } finally {
+    purchasing.value = false;
+  }
+};
 
 // Check if user has sufficient balance
 const hasSufficientBalance = computed(() => {

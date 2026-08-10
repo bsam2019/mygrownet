@@ -152,6 +152,28 @@ class DetectSubdomain
                     return $next($request);
                 }
 
+                // Handle GrowMusic subdomain
+                if ($subdomain === 'growmusic') {
+                    $branch = 'growmusic';
+                    $this->configureSubdomainUrl($subdomain);
+
+                    $route = $request->route();
+                    if ($route) {
+                        $name = $route->getName();
+                        if ($name) {
+                            $isGrowMusicSubdomain = str_starts_with($name, 'growmusic.')
+                                && !str_starts_with($name, 'growmusic.main.');
+                            $isSharedRoute = str_starts_with($name, 'payments.shared.')
+                                || str_starts_with($name, 'identity.session.');
+                            if (!$isGrowMusicSubdomain && !$isSharedRoute) {
+                                abort(404);
+                            }
+                        }
+                    }
+
+                    return $next($request);
+                }
+
                 // Resolve standard application subdomains via domains table
                 $domainHost = "{$subdomain}.mygrownet.com";
                 try {
