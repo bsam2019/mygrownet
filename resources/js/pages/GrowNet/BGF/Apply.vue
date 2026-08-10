@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
+import AppLayout from '@/Layouts/app/AppSidebarLayout.vue';
 import { ref } from 'vue';
 
 const props = defineProps<{

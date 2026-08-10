@@ -56,6 +56,17 @@ $registerBizBoostAuthRoutes = function (string $prefix, string $namePrefix, stri
             Route::post('/mini-website/unpublish', [BusinessController::class, 'unpublishMiniWebsite'])->name('mini-website.unpublish');
         });
 
+        // Lead Pipeline Engine (Kanban)
+        Route::get('/pipeline', [\App\Http\Controllers\BizBoost\LeadPipelineController::class, 'index'])->name('pipeline.index');
+        Route::post('/leads/{lead}/stage', [\App\Http\Controllers\BizBoost\LeadPipelineController::class, 'updateStage'])->name('leads.update-stage');
+
+        // Omnichannel Campaigns & Marketing ROI Attribution
+        Route::get('/campaign-attributions', [\App\Http\Controllers\BizBoost\CampaignAttributionController::class, 'index'])->name('campaigns.index');
+        Route::post('/links', [\App\Http\Controllers\BizBoost\CampaignAttributionController::class, 'createLink'])->name('links.store');
+
+        // Domain App Admin Entry Point
+        Route::get('/admin', [DashboardController::class, 'index'])->name('admin');
+
         // Products
         Route::prefix('products')->name('products.')->group(function () {
             Route::get('/', [ProductController::class, 'index'])->name('index');
@@ -494,6 +505,10 @@ Route::domain('bizboost.mygrownet.com')->group(function () use ($registerBizBoos
 
         // Social Login - Google (subdomain)
         Route::get('/auth/google', [\App\Http\Controllers\Auth\SocialiteController::class, 'redirectToGoogle'])->name('bizboost.sub.auth.google');
-        Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\SocialiteController::class, 'handleGoogleCallback'])->name('bizboost.sub.auth.google.callback');
     });
 });
+
+// Public JavaScript SDK & Web Event Stream Ingest
+Route::get('/bizboost-tracker.js', [\App\Http\Controllers\BizBoost\TrackerSdkController::class, 'serveJsSdk'])->name('bizboost.tracker-js');
+Route::post('/bizboost/api/track', [\App\Http\Controllers\BizBoost\TrackerSdkController::class, 'trackEvent'])->name('bizboost.api.track');
+

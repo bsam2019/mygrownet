@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import GrowNetGuestLayout from '@/layouts/GrowNetGuestLayout.vue';
+import GrowNetGuestLayout from '@/Layouts/GrowNetGuestLayout.vue';
 import { BookOpenIcon, SparklesIcon, UsersIcon, GlobeAltIcon, ShieldCheckIcon, ArrowRightIcon } from '@heroicons/vue/24/outline';
 
 const values = [

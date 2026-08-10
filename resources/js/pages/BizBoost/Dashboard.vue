@@ -39,6 +39,10 @@ interface Props {
         posts_this_month: number;
         ai_credits_used: number;
         ai_credits_limit: number;
+        uncontacted_leads?: number;
+        pending_quotations_value?: number;
+        high_intent_visitors?: number;
+        inactive_customers_90d?: number;
     };
     recentPosts: Array<{
         id: number;

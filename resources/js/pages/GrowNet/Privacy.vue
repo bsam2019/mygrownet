@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import GrowNetGuestLayout from '@/layouts/GrowNetGuestLayout.vue';
+import GrowNetGuestLayout from '@/Layouts/GrowNetGuestLayout.vue';
 </script>
 
 <template>

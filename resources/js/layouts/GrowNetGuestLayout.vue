@@ -6,12 +6,48 @@ const user = computed(() => usePage().props.auth?.user);
 const isSubdomain = computed(() => window.location.hostname === 'grownet.mygrownet.com');
 const mobileMenuOpen = ref(false);
 
-const homeUrl = computed(() => isSubdomain.value ? route('grownet.sub.welcome') : route('grownet.welcome'));
-const loginUrl = computed(() => isSubdomain.value ? route('grownet.sub.login') : '/login');
-const registerUrl = computed(() => isSubdomain.value ? route('grownet.sub.register') : '/register');
-const aboutUrl = computed(() => isSubdomain.value ? route('grownet.sub.about') : '/grownet/about');
-const termsUrl = computed(() => isSubdomain.value ? route('grownet.sub.terms') : '/grownet/terms');
-const privacyUrl = computed(() => isSubdomain.value ? route('grownet.sub.privacy') : '/grownet/privacy');
+const homeUrl = computed(() => {
+    try {
+        return isSubdomain.value ? route('grownet.sub.welcome') : route('grownet.welcome');
+    } catch {
+        return '/grownet';
+    }
+});
+const loginUrl = computed(() => {
+    try {
+        return isSubdomain.value ? route('grownet.sub.login') : '/login';
+    } catch {
+        return '/login';
+    }
+});
+const registerUrl = computed(() => {
+    try {
+        return isSubdomain.value ? route('grownet.sub.register') : '/register';
+    } catch {
+        return '/register';
+    }
+});
+const aboutUrl = computed(() => {
+    try {
+        return isSubdomain.value ? route('grownet.sub.about') : '/grownet/about';
+    } catch {
+        return '/grownet/about';
+    }
+});
+const termsUrl = computed(() => {
+    try {
+        return isSubdomain.value ? route('grownet.sub.terms') : '/grownet/terms';
+    } catch {
+        return '/grownet/terms';
+    }
+});
+const privacyUrl = computed(() => {
+    try {
+        return isSubdomain.value ? route('grownet.sub.privacy') : '/grownet/privacy';
+    } catch {
+        return '/grownet/privacy';
+    }
+});
 
 const navLinks = [
     { label: 'Features', href: '#features' },

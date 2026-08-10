@@ -91,6 +91,22 @@ class BizBoostAdminController extends Controller
 
         $recentActivity = $recentBusinesses->concat($recentBilling)->sortByDesc('time')->take(8)->values();
 
+        $totalLeads = 0;
+        $totalAttributedRevenue = 0;
+        $uncontactedSlaBreaches = 0;
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('bizboost_leads')) {
+            $totalLeads = DB::table('bizboost_leads')->count();
+            $uncontactedSlaBreaches = DB::table('bizboost_leads')
+                ->whereNull('first_response_at')
+                ->count();
+        }
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('bizboost_attributions')) {
+            $totalAttributedRevenue = DB::table('bizboost_attributions')
+                ->sum('attributed_amount_zmw');
+        }
+
         return Inertia::render('Admin/BizBoost/Dashboard/Index', [
             'stats' => [
                 'total_businesses' => $totalBusinesses,
@@ -107,6 +123,9 @@ class BizBoostAdminController extends Controller
                 'ad_campaigns_total' => $adCampaignsTotal,
                 'ad_campaigns_active' => $adCampaignsActive,
                 'ad_spend_total' => round($adSpendTotal, 2),
+                'total_leads' => $totalLeads,
+                'total_attributed_revenue_zmw' => round($totalAttributedRevenue, 2),
+                'uncontacted_sla_breaches' => $uncontactedSlaBreaches,
             ],
             'topBusinesses' => $topBusinesses,
             'recentActivity' => $recentActivity,

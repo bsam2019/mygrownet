@@ -65,11 +65,45 @@ class DashboardController extends Controller
         $aiCreditsUsed = $this->aiUsageService->getMonthlyCredits($business->id, now()->startOfMonth()->toDateTimeString(), now()->endOfMonth()->toDateTimeString());
         $aiCreditsLimit = $this->subscriptionService->canIncrement($user, 'ai_credits_per_month', 'bizboost')['limit'] ?? 10;
 
+        // Missed Revenue KPIs (from BIZBOOST_PLATFORM.md Section 15)
+        $uncontactedLeads = 0;
+        $pendingQuotationsValue = 0;
+        $highIntentVisitors = 0;
+        $inactiveCustomers90Days = 0;
+
+        if (Schema::hasTable('bizboost_leads')) {
+            $uncontactedLeads = DB::table('bizboost_leads')
+                ->where('business_id', $business->id)
+                ->whereNull('first_response_at')
+                ->count();
+
+            $pendingQuotationsValue = (float) DB::table('bizboost_leads')
+                ->where('business_id', $business->id)
+                ->whereNull('won_lost_at')
+                ->sum('estimated_value_zmw');
+        }
+
+        if (Schema::hasTable('bizboost_customers')) {
+            $highIntentVisitors = DB::table('bizboost_customers')
+                ->where('business_id', $business->id)
+                ->whereIn('intent_tier', ['hot', 'high_intent'])
+                ->count();
+
+            $inactiveCustomers90Days = DB::table('bizboost_customers')
+                ->where('business_id', $business->id)
+                ->where('last_purchase_at', '<', now()->subDays(90))
+                ->count();
+        }
+
         return Inertia::render('BizBoost/Dashboard', [
             'business' => ['id' => $business->id, 'name' => $business->name, 'slug' => $business->slug],
             'stats' => array_merge($stats, [
                 'engagement' => ['total' => $engagement],
                 'ai_credits_limit' => $aiCreditsLimit,
+                'uncontacted_leads' => $uncontactedLeads,
+                'pending_quotations_value' => $pendingQuotationsValue,
+                'high_intent_visitors' => $highIntentVisitors,
+                'inactive_customers_90d' => $inactiveCustomers90Days,
             ]),
             'recentPosts' => array_slice($recentPosts, 0, 5),
             'recentSales' => array_slice($recentSales, 0, 5),

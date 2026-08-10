@@ -13,6 +13,7 @@ import {
     ShoppingBagIcon,
     TagIcon,
     ChatBubbleLeftIcon,
+    SparklesIcon,
 } from '@heroicons/vue/24/outline';
 import Swal from 'sweetalert2';
 
@@ -45,6 +46,10 @@ interface Customer {
     last_purchase_at: string | null;
     is_active: boolean;
     created_at: string;
+    intent_score?: number;
+    intent_tier?: string;
+    clv_zmw?: number;
+    ai_summary?: string;
     tags: Tag[];
     sales: Sale[];
 }
@@ -123,6 +128,26 @@ const deleteCustomer = () => {
             <div class="grid gap-6 lg:grid-cols-3">
                 <!-- Main Info -->
                 <div class="lg:col-span-2 space-y-6">
+                    <!-- AI Sales Briefing Card -->
+                    <div v-if="customer.ai_summary" class="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-indigo-200 dark:border-indigo-800 rounded-2xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-sm font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-2">
+                                <SparklesIcon class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                AI Sales Assistant Briefing
+                            </h3>
+                            <span v-if="customer.intent_tier" class="text-xs px-2 py-0.5 rounded-full font-bold uppercase tracking-wider" :class="{
+                                'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300': customer.intent_tier === 'high_intent' || customer.intent_tier === 'hot',
+                                'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300': customer.intent_tier === 'interested',
+                                'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300': customer.intent_tier === 'low'
+                            }">
+                                {{ customer.intent_tier.replace('_', ' ') }} Intent (Score: {{ customer.intent_score || 0 }})
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-700 dark:text-gray-300">
+                            {{ customer.ai_summary }}
+                        </p>
+                    </div>
+
                     <!-- Customer Card -->
                     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm ring-1 ring-gray-200/60 dark:ring-gray-700/60 p-6">
                         <div class="flex items-start justify-between mb-4">

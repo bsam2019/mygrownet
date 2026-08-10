@@ -183,7 +183,7 @@
 
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
+import AppLayout from '@/Layouts/app/AppSidebarLayout.vue';
 
 defineProps<{
   stats: {

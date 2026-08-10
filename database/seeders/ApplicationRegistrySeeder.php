@@ -289,9 +289,9 @@ class ApplicationRegistrySeeder extends Seeder
                 'requires_organization_context' => true,
                 'subscription_required' => false,
                 'url' => 'https://bizboost.mygrownet.com',
-                'lifecycle' => 'legacy',
-                'operational_status' => 'maintenance',
-                'is_visible' => false,
+                'lifecycle' => 'active',
+                'operational_status' => 'online',
+                'is_visible' => true,
                 'is_active' => true,
             ],
         ];

@@ -14,12 +14,27 @@
 
 This implementation plan outlines the step-by-step technical execution for refactoring and upgrading the **BizBoost** module from a legacy SME utility into a unified **Customer Engagement, Lead Pipeline & Marketing Revenue Attribution System** as specified in `BIZBOOST_PLATFORM.md`.
 
-### Core Technical Pillars:
-1. **Single Customer View (Customer Hub)**: Unify identity, sessions, enquiries, quotations (BizDocs), and sales (StockFlow/GrowMart) under `bizboost_customers`.
-2. **Multi-Source Lead Pipeline Engine**: Configurable pipeline stages, Kanban board, response-time SLA monitoring (<30 min target), and AI lead scoring.
-3. **Omnichannel Communication & Tracking Engine**: Trackable WhatsApp link generator, phone enquiry dialog, and Africala SMS dispatch integration.
-4. **JavaScript Tracker SDK (`bizboost-tracker.js`)**: Anonymous session tracking, identity resolution upon form/WhatsApp click, and event stream ingestion.
-5. **Offline & Online Revenue Attribution**: Connect in-store POS transactions, invoice completions, and web orders back to marketing touchpoints.
+### 17-Section Specification Traceability Matrix:
+
+| Specification Section (`BIZBOOST_PLATFORM.md`) | Implementation Component & File |
+|---|---|
+| **1. Executive Summary & Vision** | Unified in `CustomerHubService.php` & `RevenueAttributionService.php` |
+| **2. Problem Statement & Silos** | Multi-channel integration (`BizDocs`, `StockFlow`, `GrowMart`, `GrowBuilder`) |
+| **3. Core 5-Pillar Model** | Handled in `Dashboard/Index.vue` & `LeadManagementService.php` |
+| **4. Customer Journey Engine** | Configured via `bizboost_lead_pipelines` & `bizboost_pipeline_stages` |
+| **5. Business Conversion Events** | Tracked via `bizboost_attributions` & `EventTrackingService.php` |
+| **6. Single Customer View (Hub)** | Rendered in `Customers/Show.vue` & `CustomerHubService.php` |
+| **7. Multi-Source Lead Capture** | Ingested via 11 sources in `LeadPipelineController.php` |
+| **8. Visitor Intelligence & Tracker** | Served via `TrackerSdkController.php` & `bizboost-tracker.js` |
+| **9. Native & Standalone Integrations**| GrowBuilder auto-inject + standalone JS snippet endpoint |
+| **10. Omnichannel Links & SMS** | Trackable links (`https://bizboost.link/wa/{hash}`) & `SmsGatewayInterface` |
+| **11. Sales Productivity & AI** | Response SLA (<30 min) + `AiSalesAssistantService.php` |
+| **12. Lead Scoring & Intent Tiers** | Calculated via `LeadScoringService.php` (`Low`, `Interested`, `Hot`, `High`) |
+| **13. Customer Lifecycle & Retention**| Reactivation workflows (90+ days inactive) & repeat predictor |
+| **14. Revenue Attribution & ROI** | Multi-touch ROI calculated in `RevenueAttributionService.php` |
+| **15. Actionable Dashboard** | Redesigned `Dashboard/Index.vue` ("Missed Revenue" KPIs) |
+| **16. Commercial & Tier Model** | Starter/Business/Pro tier caps + SMS top-up packs |
+| **17. Admin Governance (Tiers 1 & 2)** | Tier 1 Command Center + Tier 2 Domain Admin `/bizboost/admin` |
 
 ---
 
@@ -56,9 +71,24 @@ This implementation plan outlines the step-by-step technical execution for refac
 - Handles anonymous session ingestion from `bizboost-tracker.js`.
 - Resolves anonymous session IDs to registered customer profiles upon form submission or WhatsApp link click.
 
-#### [NEW] [`LeadScoringService.php`](file:///c:/Apache24/htdocs/mygrownet/app/Services/BizBoost/LeadScoringService.php)
-- Evaluates dynamic customer intent scores based on interaction weights (`page_view` +5, `pricing_view` +10, `whatsapp_click` +20, `form_submit` +30).
-- Assigns intent tiers (`Low`, `Interested`, `Hot`, `High Intent`).
+#### [NEW] [`SmsGatewayInterface.php`](file:///c:/Apache24/htdocs/mygrownet/app/Domain/BizBoost/Contracts/SmsGatewayInterface.php)
+- Decoupled Strategy Pattern interface contract defining `sendSms()`, `getBalance()`, and `getProviderName()`.
+- Allows plugging in any SMS gateway provider (`AfricalaSmsGateway`, `TwilioSmsGateway`, `TermiiSmsGateway`, or `MockSmsGateway` for dev) via `config('services.sms.provider')` without touching business logic or controllers.
+
+#### [NEW] [`OmnichannelService.php`](file:///c:/Apache24/htdocs/mygrownet/app/Services/BizBoost/OmnichannelService.php)
+- Manages trackable WhatsApp links, phone click-to-call dialogs, and SMS dispatch through `SmsGatewayInterface`.
+- Supports automatic fallback routing if the primary SMS provider returns an error. 
+
+#### [NEW] [`AiProviderInterface.php`](file:///c:/Apache24/htdocs/mygrownet/app/Domain/Core/Contracts/AiProviderInterface.php)
+- Decoupled Strategy Pattern contract defining `generateText()`, `extractStructuredData()`, and `getProviderName()`.
+- Allows plugging in any AI provider (`GeminiAiProvider`, `OpenAiProvider`, `ClaudeAiProvider`, `DeepSeekAiProvider`, or `MockAiProvider` for dev) via `config('services.ai.provider')` without provider lock-in.
+
+#### [NEW] [`AiSalesAssistantService.php`](file:///c:/Apache24/htdocs/mygrownet/app/Services/BizBoost/AiSalesAssistantService.php)
+- **Instant Customer Summaries**: Generates 2-sentence conversational summaries from customer timeline (*"John visited 3x, viewed 5kW Solar twice, clicked WhatsApp, requested quote 24h ago"*).
+- **Contextual Follow-up Prompts**: Recommends high-converting sales questions tailored to the customer's intent score and target product.
+- **Personalized Message Drafting**: Generates tailored SMS/WhatsApp/email follow-up drafts based on pipeline stage, quote expiration, and inactive customer reactivation goals.
+- **Natural Language Lead Extraction**: Parses raw chat notes or emails into structured lead attributes (name, phone, interest, budget, location).
+- **Token Usage Tracking**: Logged in `bizboost_ai_usage_logs` per business tenant.
 
 #### [NEW] [`RevenueAttributionService.php`](file:///c:/Apache24/htdocs/mygrownet/app/Services/BizBoost/RevenueAttributionService.php)
 - Attributes completed POS sales (StockFlow), invoice payments (BizDocs), or online orders (GrowMart) back to original marketing campaigns.
@@ -105,9 +135,23 @@ This implementation plan outlines the step-by-step technical execution for refac
 
 #### [MODIFY] [`routes/bizboost.php`](file:///c:/Apache24/htdocs/mygrownet/routes/bizboost.php)
 - Registers new pipeline, customer hub, attribution, and tracker SDK routes for both subdomain (`bizboost.mygrownet.com`) and main path (`/bizboost`).
+- Adds `/bizboost/admin` (and `bizboost.sub.admin`) routes for domain-level management.
 
 #### [MODIFY] [`ApplicationRegistrySeeder.php`](file:///c:/Apache24/htdocs/mygrownet/database/seeders/ApplicationRegistrySeeder.php)
 - Updates `bizboost` application status from `legacy/maintenance` to `active/online`.
+
+---
+
+### Component 6: Admin Integrations (Tier 1 Governance & Tier 2 Domain Admin)
+
+#### Tier 1: Platform Command Center Integration (`App\Services\Admin\PlatformAdminMetricsService.php` & `routes/admin.php`)
+- **Metrics Aggregation**: Updates `PlatformAdminMetricsService.php` to fetch live BizBoost metrics: Total Registered Businesses, Active Customer Hub Profiles, Total Captured Leads, WhatsApp Click Conversions, and Total Attributed Marketing Revenue (ZMW).
+- **Platform Admin Hub (`routes/admin.php`)**: Connects `/admin/bizboost` to `BizBoostAdminController.php` to provide super-admins with platform-wide visibility across all tenant businesses, AI usage, and SMS gateway credit balances.
+
+#### Tier 2: Domain Application Admin (`/bizboost/admin` & `/bizboost/settings`)
+- **Pipeline Stage Builder**: Allows business owners & sales managers to customize their industry-specific pipeline stages (`New`, `Contacted`, `Qualified`, `Quotation`, `Won`, `Lost`), sort order, and response SLA target minutes.
+- **SMS Gateway & Africala Balance**: Displays current SMS credit balance, recharge packs, and automated dispatch logs.
+- **SLA & Audit Management**: Surfaces SLA violation alerts (uncontacted leads > 30 mins) and sales rep response performance reports.
 
 ---
 

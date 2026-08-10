@@ -15,6 +15,8 @@ class CustomerController extends Controller
         private CustomerService $customerService,
         private BusinessService $businessService,
         private CustomerTagRepositoryInterface $tagRepo,
+        private \App\Services\BizBoost\CustomerHubService $hubService,
+        private \App\Services\BizBoost\AiSalesAssistantService $aiAssistantService,
     ) {}
 
     public function index(Request $request)
@@ -74,6 +76,19 @@ class CustomerController extends Controller
 
         if (!$customerData) {
             abort(404);
+        }
+
+        // Fetch aggregated hub profile & AI summary
+        $hubProfile = $this->hubService->getCustomerProfile($business->id, $id);
+        $aiSummary = $this->aiAssistantService->generateCustomerSummary($id);
+
+        if ($hubProfile && isset($customerData['customer'])) {
+            $customerData['customer'] = array_merge($customerData['customer'], [
+                'intent_score' => $hubProfile['intent_score'],
+                'intent_tier' => $hubProfile['intent_tier'],
+                'clv_zmw' => $hubProfile['clv_zmw'],
+                'ai_summary' => $aiSummary,
+            ]);
         }
 
         return Inertia::render('BizBoost/Customers/Show', $customerData);

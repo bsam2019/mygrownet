@@ -55,6 +55,9 @@ interface Props {
         ad_campaigns_total: number;
         ad_campaigns_active: number;
         ad_spend_total: number;
+        total_leads?: number;
+        total_attributed_revenue_zmw?: number;
+        uncontacted_sla_breaches?: number;
     };
     topBusinesses: TopBusiness[];
     recentActivity: Activity[];
