@@ -14,37 +14,52 @@ class ApplicationAccessService
 {
     public function getAvailableApps(User $user, WorkspaceContext $context): EloquentCollection
     {
+        $host = request()->getHost();
+        $domainResolution = request()->attributes->get('domain_resolution');
+        $activeApp = null;
+
+        if ($domainResolution?->application) {
+            $activeApp = $domainResolution->application;
+        } elseif ($context->applicationId) {
+            $activeApp = Application::find($context->applicationId);
+        } else {
+            $subdomain = explode('.', $host)[0];
+            if ($subdomain && !in_array($subdomain, ['mygrownet', 'www', 'auth', 'app'])) {
+                $activeApp = Application::where('slug', $subdomain)->where('is_active', true)->first();
+            }
+        }
+
+        if ($activeApp) {
+            $orgId = $context->organizationId;
+            $appIds = [$activeApp->id];
+
+            $userSubAppIds = Application::whereHas('userSubscriptions', function ($q) use ($user) {
+                $q->where('user_id', $user->id)->where('status', 'active');
+            })->pluck('id')->toArray();
+            $appIds = array_merge($appIds, $userSubAppIds);
+
+            if ($orgId) {
+                $orgInstalledAppIds = Application::whereHas('installations', function ($q) use ($orgId) {
+                    $q->where('organization_id', $orgId)->where('status', 'active');
+                })->pluck('id')->toArray();
+                $appIds = array_merge($appIds, $orgInstalledAppIds);
+            }
+
+            $appIds = array_unique(array_filter($appIds));
+
+            return Application::whereIn('id', $appIds)
+                ->where('is_active', true)
+                ->where('lifecycle', '!=', 'retired')
+                ->where('operational_status', 'online')
+                ->get()
+                ->groupBy('category');
+        }
+
         $isOrgContext = $context->isOrganization() || $context->organizationId !== null;
 
         if (!$isOrgContext) {
             $sessionCtx = session('workspace_context');
             if (is_array($sessionCtx) && isset($sessionCtx['type']) && $sessionCtx['type'] === 'organization') {
-                $isOrgContext = true;
-            }
-        }
-
-        if (!$isOrgContext && (request()->query('context') === 'organization' || request()->query('org'))) {
-            $isOrgContext = true;
-        }
-
-        if (!$isOrgContext && $context->applicationId) {
-            $currentApp = Application::find($context->applicationId);
-            if ($currentApp && ($currentApp->requires_organization_context || $currentApp->context_support === 'organization')) {
-                $isOrgContext = true;
-            }
-        }
-
-        if (!$isOrgContext && request()->attributes->get('domain_resolution')) {
-            $res = request()->attributes->get('domain_resolution');
-            if ($res?->organization || ($res?->application && ($res->application->requires_organization_context || $res->application->context_support === 'organization'))) {
-                $isOrgContext = true;
-            }
-        }
-
-        if (!$isOrgContext) {
-            $host = request()->getHost();
-            $orgSubdomains = ['bms.mygrownet.com', 'stockflow.mygrownet.com', 'growfinance.mygrownet.com', 'bizdocs.mygrownet.com', 'bizboost.mygrownet.com'];
-            if (in_array($host, $orgSubdomains)) {
                 $isOrgContext = true;
             }
         }
