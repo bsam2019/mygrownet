@@ -62,7 +62,7 @@ const expiringSoon = ref(props.filters.expiring_soon || false)
 
 const applyFilters = () => {
   router.get(
-    route('admin.cms-companies.index'),
+    route('admin.bms-companies.index'),
     {
       search: search.value,
       subscription_type: subscriptionType.value,
@@ -334,7 +334,7 @@ const getStatusBadge = (status: string) => {
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <Link
-                  :href="route('admin.cms-companies.edit', company.id)"
+                  :href="route('admin.bms-companies.edit', company.id)"
                   class="text-blue-600 hover:text-blue-900"
                 >
                   Edit Access

@@ -164,7 +164,7 @@ const adminNavItems: NavItem[] = [
     { title: 'Manage Members', href: route('admin.users.index'), icon: UsersIcon },
     { title: 'Investment Rounds', href: route('admin.investment-rounds.index'), icon: ChartBarIcon },
     { title: 'Withdrawal Approvals', href: route('admin.withdrawals.index'), icon: BanknoteIcon },
-    { title: 'GrowSuite Companies', href: route('admin.cms-companies.index'), icon: BuildingOfficeIcon },
+    { title: 'GrowSuite Companies', href: route('admin.bms-companies.index'), icon: BuildingOfficeIcon },
 ];
 
 const emit = defineEmits<{
