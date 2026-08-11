@@ -13,6 +13,7 @@ use App\Domain\Employee\Repositories\EmployeePerformanceRepositoryInterface;
 use App\Domain\Employee\Repositories\EmployeeRepositoryInterface;
 use App\Domain\Employee\Repositories\ExpenseRepositoryInterface;
 use App\Domain\Employee\Repositories\NotificationRepositoryInterface;
+use App\Domain\Employee\Repositories\PositionRepositoryInterface;
 use App\Domain\Employee\Repositories\SupportTicketRepositoryInterface;
 use App\Domain\Employee\Repositories\TrainingRepositoryInterface;
 use App\Infrastructure\Persistence\Repositories\EloquentEmployeeRepository;
