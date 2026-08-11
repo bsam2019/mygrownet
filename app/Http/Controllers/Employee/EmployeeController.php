@@ -77,8 +77,8 @@ class EmployeeController extends Controller
 
         return Inertia::render('Employee/Index', [
             'employees' => $employees,
-            'departments' => $this->departmentRepo->getAllActive()->toQuery()->orderBy('name')->get(['id', 'name']),
-            'positions' => $this->positionRepo->getAllActive()->toQuery()->orderBy('title')->get(['id', 'title']),
+            'departments' => $this->departmentRepo->query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'positions' => $this->positionRepo->query()->where('is_active', true)->orderBy('title')->get(['id', 'title']),
             'filters' => $filters,
             'stats' => $this->getEmployeeStatistics(),
         ]);
@@ -87,8 +87,8 @@ class EmployeeController extends Controller
     public function create()
     {
         return Inertia::render('Employee/Create', [
-            'departments' => $this->departmentRepo->getAllActive()->toQuery()->orderBy('name')->get(['id', 'name']),
-            'positions' => $this->positionRepo->getAllActive()->toQuery()->with('department:id,name')->orderBy('title')->get(['id', 'title', 'department_id'])
+            'departments' => $this->departmentRepo->query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'positions' => $this->positionRepo->query()->where('is_active', true)->with('department:id,name')->orderBy('title')->get(['id', 'title', 'department_id'])
         ]);
     }
 
@@ -150,8 +150,8 @@ class EmployeeController extends Controller
 
         return Inertia::render('Employee/Edit', [
             'employee' => $employee,
-            'departments' => $this->departmentRepo->getAllActive()->toQuery()->orderBy('name')->get(['id', 'name']),
-            'positions' => $this->positionRepo->getAllActive()->toQuery()->orderBy('title')->get(['id', 'title'])
+            'departments' => $this->departmentRepo->query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'positions' => $this->positionRepo->query()->where('is_active', true)->orderBy('title')->get(['id', 'title'])
         ]);
     }
 
