@@ -12,9 +12,7 @@ class FinancialReportingController extends Controller
 {
     public function __construct(
         protected FinancialReportingService $financialReportingService
-    ) {
-        $this->middleware(['auth', 'admin']);
-    }
+    ) {}
 
     /**
      * Display the financial reporting dashboard

@@ -5,11 +5,18 @@ import { bootInertia, registerModuleSW } from './modules/createApp';
 
 registerModuleSW('/sw.js', 'StockFlow');
 
+const stockFlowGlobs = {
+    ...import.meta.glob<DefineComponent>('./pages/StockFlow/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./Pages/StockFlow/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Workspace/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./Pages/Workspace/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Apps/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./Pages/Apps/**/*.vue'),
+};
+
 bootInertia('StockFlow', (name: string) => {
-    const pageGlobs: Record<string, () => Promise<DefineComponent>> = {
-        ...import.meta.glob<DefineComponent>('./pages/StockFlow/**/*.vue'),
-        ...import.meta.glob<DefineComponent>('./pages/Workspace/**/*.vue'),
-    ...import.meta.glob<DefineComponent>('./pages/Apps/**/*.vue'), // App catalog
-    };
-    return resolvePageComponent(`./pages/${name}.vue`, pageGlobs);
+    return resolvePageComponent(
+        `./Pages/${name}.vue`,
+        stockFlowGlobs
+    ).catch(() => resolvePageComponent(`./pages/${name}.vue`, stockFlowGlobs));
 });

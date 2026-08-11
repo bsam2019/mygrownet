@@ -3,12 +3,14 @@ import { Head, Link, usePage, router } from '@inertiajs/vue3';
 import { computed, ref, onMounted, onUnmounted } from 'vue';
 import {
     PlayCircleIcon, AcademicCapIcon, DocumentTextIcon,
-    CloudArrowUpIcon, CpuChipIcon, UsersIcon,
+    MusicalNoteIcon, CpuChipIcon, UsersIcon,
     RocketLaunchIcon, ChevronRightIcon, UserCircleIcon,
     Cog6ToothIcon, ArrowRightOnRectangleIcon,
     UserGroupIcon, CreditCardIcon, BellIcon,
-    ChartBarIcon, GiftIcon, ChevronDownIcon,
+    ChartBarIcon, GiftIcon, ChevronDownIcon, FolderIcon,
+    SparklesIcon, WrenchScrewdriverIcon,
 } from '@heroicons/vue/24/outline';
+import GrowNetHeaderBadge from '@/Components/GrowNet/GrowNetHeaderBadge.vue';
 
 const page = usePage();
 const user = computed(() => (page.props as any).user ?? {});
@@ -32,106 +34,137 @@ function logout() {
 onMounted(() => document.addEventListener('click', onClickOutside));
 onUnmounted(() => document.removeEventListener('click', onClickOutside));
 
+// Product Ecosystem aligned 100% with Section 1A of the GrowNet Specification
 const products = [
     {
-        slug: 'growstream', name: 'GrowStream', tagline: 'Film & Comedy',
-        icon: PlayCircleIcon, gradient: 'from-fuchsia-500 to-pink-600',
-        bg: 'bg-fuchsia-50', text: 'text-fuchsia-600',
-        description: 'Zambian movies, comedy shows, and drama series from local creators.',
-        status: 'Coming Soon',
+        slug: 'education',
+        name: 'Education & Workshops',
+        tagline: '7 Education Levels & Regional Workshops',
+        icon: AcademicCapIcon,
+        gradient: 'from-indigo-600 to-purple-600',
+        bg: 'bg-indigo-50',
+        text: 'text-indigo-600',
+        description: 'Native multi-format curriculum (video, audio, workshops, practical tasks, oral & written assessments).',
+        url: route('grownet.learning.index'),
+        status: 'Active',
+        external: false,
     },
     {
-        slug: 'growlearn', name: 'GrowLearn', tagline: 'Practical Skills',
-        icon: AcademicCapIcon, gradient: 'from-violet-500 to-purple-600',
-        bg: 'bg-violet-50', text: 'text-violet-600',
-        description: 'Locally relevant skills training with live workshops.',
-        status: 'Coming Soon',
+        slug: 'growstream',
+        name: 'GrowStream',
+        tagline: 'Video & Film Streaming',
+        icon: PlayCircleIcon,
+        gradient: 'from-purple-600 to-fuchsia-600',
+        bg: 'bg-purple-50',
+        text: 'text-purple-600',
+        description: 'Zambian movies, series, shows, and creator channels with SSO authentication.',
+        url: 'https://growstream.mygrownet.com',
+        status: 'Active',
+        external: true,
     },
     {
-        slug: 'growtemplates', name: 'GrowTemplates', tagline: 'Documents & Templates',
-        icon: DocumentTextIcon, gradient: 'from-amber-500 to-orange-600',
-        bg: 'bg-amber-50', text: 'text-amber-600',
-        description: 'Business plans, CVs, invoices & more — one-time or subscribe.',
-        status: 'Coming Soon',
+        slug: 'growmusic',
+        name: 'GrowMusic',
+        tagline: 'Music & Audio Portal',
+        icon: MusicalNoteIcon,
+        gradient: 'from-rose-500 to-pink-600',
+        bg: 'bg-rose-50',
+        text: 'text-rose-600',
+        description: 'Audio tracks, podcasts, artist fan hubs, and educational audio streams.',
+        url: 'https://growmusic.mygrownet.com',
+        status: 'Active',
+        external: true,
     },
     {
-        slug: 'growbackup', name: 'GrowBackup', tagline: 'Cloud Storage',
-        icon: CloudArrowUpIcon, gradient: 'from-sky-500 to-blue-600',
-        bg: 'bg-sky-50', text: 'text-sky-600',
-        description: 'Secure file storage, accessible from anywhere.',
-        status: 'Coming Soon',
+        slug: 'library',
+        name: 'Digital Resource Library',
+        tagline: 'Kit Resources & Downloads',
+        icon: FolderIcon,
+        gradient: 'from-emerald-600 to-teal-600',
+        bg: 'bg-emerald-50',
+        text: 'text-emerald-600',
+        description: 'Downloadable training manuals, PDFs, starter kit materials, and business guides.',
+        url: route('grownet.sub.library.index'),
+        status: 'Active',
+        external: false,
     },
     {
-        slug: 'growai', name: 'GrowAI', tagline: 'AI Tools',
-        icon: CpuChipIcon, gradient: 'from-emerald-500 to-teal-600',
-        bg: 'bg-emerald-50', text: 'text-emerald-600',
-        description: 'AI-powered content creation & productivity tools.',
-        status: 'Coming Soon',
+        slug: 'tools',
+        name: 'Business Plan Generator & Tools',
+        tagline: 'AI Business Planning & Calculators',
+        icon: WrenchScrewdriverIcon,
+        gradient: 'from-amber-500 to-orange-600',
+        bg: 'bg-amber-50',
+        text: 'text-amber-600',
+        description: 'Create 20-module business plans, calculate commissions, and simulate growth ROI.',
+        url: route('grownet.sub.business-plan-generator'),
+        status: 'Active',
+        external: false,
     },
 ];
 </script>
 
 <template>
-    <Head title="GrowNet" />
+    <Head title="GrowNet Products" />
 
     <div class="min-h-screen bg-slate-50">
+        <!-- Header -->
         <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
             <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center shadow-sm">
-                            <RocketLaunchIcon class="w-5 h-5 text-white" />
+                        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-sm text-white">
+                            <RocketLaunchIcon class="w-5 h-5" />
                         </div>
                         <div>
-                            <h1 class="text-base font-bold text-slate-900 leading-tight">GrowNet</h1>
-                            <p class="text-[11px] text-slate-500 leading-tight">Product Platform</p>
+                            <h1 class="text-base font-extrabold text-slate-900 leading-tight">MyGrowNet</h1>
+                            <p class="text-[11px] text-slate-500 font-medium leading-tight">GrowNet Member Engagement Portal</p>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-3">
+                        <!-- GrowNet Active Status / In-Platform Activation Badge -->
+                        <GrowNetHeaderBadge />
+
                         <Link
                             :href="route('grownet.network')"
-                            class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                            class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
                         >
-                            <UserGroupIcon class="w-4 h-4" />
-                            Network
+                            <UserGroupIcon class="w-4 h-4 text-indigo-600" />
+                            Member Dashboard
                         </Link>
-
-                        <button class="relative w-9 h-9 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
-                            <BellIcon class="w-5 h-5" />
-                        </button>
 
                         <div ref="dropdownEl" class="relative">
                             <button @click="toggleDropdown"
-                                class="flex items-center gap-2 pl-2 pr-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200"
+                                class="flex items-center gap-2 pl-2 pr-2.5 py-1.5 rounded-xl hover:bg-slate-100 transition-colors border border-slate-200"
                             >
-                                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
                                     {{ (user.name || 'U').charAt(0).toUpperCase() }}
                                 </div>
                                 <ChevronDownIcon class="w-3.5 h-3.5 text-slate-400" :class="{ 'rotate-180': dropdownOpen }" />
                             </button>
 
                             <div v-if="dropdownOpen"
-                                class="absolute right-0 top-full mt-1.5 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-50"
+                                class="absolute right-0 top-full mt-1.5 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 z-50 text-xs"
                             >
                                 <div class="px-4 py-2 border-b border-slate-100">
-                                    <p class="text-sm font-medium text-slate-900 truncate">{{ user.name }}</p>
-                                    <p class="text-xs text-slate-500 truncate">{{ user.email }}</p>
+                                    <p class="font-bold text-slate-900 truncate">{{ user.name }}</p>
+                                    <p class="text-[11px] text-slate-500 truncate">{{ user.email }}</p>
                                 </div>
                                 <Link :href="route('workspace')"
-                                    class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                                    class="flex items-center gap-2.5 px-4 py-2.5 text-slate-700 hover:bg-slate-50 transition-colors font-medium"
                                 >
                                     <RocketLaunchIcon class="w-4 h-4 text-slate-400" />
-                                    Workspace
+                                    Platform Workspace
                                 </Link>
                                 <Link :href="route('grownet.network')"
-                                    class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors sm:hidden"
+                                    class="flex items-center gap-2.5 px-4 py-2.5 text-slate-700 hover:bg-slate-50 transition-colors font-medium"
                                 >
-                                    <UsersIcon class="w-4 h-4 text-slate-400" />
-                                    Network Dashboard
+                                    <UsersIcon class="w-4 h-4 text-indigo-600" />
+                                    Member Dashboard
                                 </Link>
                                 <button @click="logout"
-                                    class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                    class="w-full flex items-center gap-2.5 px-4 py-2.5 text-red-600 hover:bg-red-50 transition-colors font-medium text-left"
                                 >
                                     <ArrowRightOnRectangleIcon class="w-4 h-4" />
                                     Sign Out
@@ -143,85 +176,68 @@ const products = [
             </div>
         </header>
 
-        <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="mb-8">
-                <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Welcome back{{ user.name ? ', ' + user.name.split(' ')[0] : '' }}</h2>
-                <p class="text-sm text-slate-500 mt-1">Access all GrowNet products from one place.</p>
-            </div>
-
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base font-semibold text-slate-900">Products</h3>
-                <span class="text-xs text-slate-400">5 products</span>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                <div
-                    v-for="product in products"
-                    :key="product.slug"
-                    class="group bg-white rounded-xl border border-slate-200 p-5 hover:border-slate-300 hover:shadow-md transition-all cursor-pointer"
-                >
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="w-11 h-11 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-110" :class="product.bg">
-                            <component :is="product.icon" class="w-5.5 h-5.5" :class="product.text" />
+        <!-- Main Content -->
+        <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            
+            <!-- Hero Welcome Card -->
+            <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 rounded-2xl p-6 text-white shadow-xl border border-white/10 relative overflow-hidden">
+                <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 text-indigo-300 text-xs font-semibold mb-2 border border-white/15">
+                            <SparklesIcon class="w-3.5 h-3.5 text-emerald-400" />
+                            Content & Engagement Ecosystem
                         </div>
-                        <span class="text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full shrink-0">{{ product.status }}</span>
+                        <h2 class="text-xl sm:text-2xl font-black text-white">Welcome back{{ user.name ? ', ' + user.name.split(' ')[0] : '' }}! 👋</h2>
+                        <p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">Access Education, GrowStream video, GrowMusic audio, and business tools from your single account.</p>
                     </div>
-                    <h4 class="text-sm font-semibold text-slate-900">{{ product.name }}</h4>
-                    <p class="text-xs text-slate-500 mt-0.5">{{ product.tagline }}</p>
-                    <p class="text-xs text-slate-400 mt-2 leading-relaxed">{{ product.description }}</p>
-                </div>
-            </div>
 
-            <details class="group bg-white rounded-xl border border-slate-200 mb-6 open:shadow-sm transition-shadow">
-                <summary class="flex items-center justify-between p-4 cursor-pointer list-none text-sm font-medium text-slate-600 hover:text-slate-900">
-                    <span class="flex items-center gap-2">
-                        <ChartBarIcon class="w-4 h-4 text-slate-400" />
-                        Network Stats
-                    </span>
-                    <ChevronDownIcon class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform" />
-                </summary>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-slate-100 border-t border-slate-200">
-                    <div class="bg-white p-4">
-                        <p class="text-xs text-slate-500">Referrals</p>
-                        <p class="text-lg font-bold text-violet-600">{{ stats.referrals ?? 0 }}</p>
-                        <p class="text-[10px] text-slate-400">Direct referrals</p>
-                    </div>
-                    <div class="bg-white p-4">
-                        <p class="text-xs text-slate-500">Earnings</p>
-                        <p class="text-lg font-bold text-fuchsia-600">K{{ stats.earnings || '0' }}</p>
-                        <p class="text-[10px] text-slate-400">Total earned</p>
-                    </div>
-                    <div class="bg-white p-4">
-                        <p class="text-xs text-slate-500">Team</p>
-                        <p class="text-lg font-bold text-amber-600">{{ stats.team ?? 0 }}</p>
-                        <p class="text-[10px] text-slate-400">Network size</p>
-                    </div>
-                    <div class="bg-white p-4">
-                        <p class="text-xs text-slate-500">Tier</p>
-                        <p class="text-lg font-bold text-emerald-600">{{ stats.tier || '—' }}</p>
-                        <p class="text-[10px] text-slate-400">Current rank</p>
-                    </div>
-                </div>
-            </details>
-
-            <div class="bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-xl p-5 sm:p-6 text-white">
-                <div class="flex items-center justify-between gap-4">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
-                            <UserGroupIcon class="w-5 h-5" />
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold">Network Dashboard</p>
-                            <p class="text-xs text-white/70">Track referrals, commissions, and team performance</p>
-                        </div>
-                    </div>
-                    <Link :href="route('grownet.network')"
-                        class="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 bg-white text-violet-700 text-sm font-medium rounded-lg hover:bg-violet-50 transition-colors shadow-sm"
-                    >
-                        Open
-                        <ChevronRightIcon class="w-4 h-4" />
+                    <Link :href="route('grownet.network')" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5 flex-shrink-0">
+                        <UserGroupIcon class="w-4 h-4" />
+                        Open Member Dashboard
                     </Link>
                 </div>
             </div>
+
+            <!-- Product Grid Aligned 100% with Spec -->
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-base font-bold text-slate-900">Participating Content & Services</h3>
+                    <span class="text-xs text-slate-500 font-medium">5 Core Modules Active</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div v-for="item in products" :key="item.slug"
+                        class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
+                    >
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <div :class="['w-10 h-10 rounded-xl flex items-center justify-center shadow-xs', item.bg, item.text]">
+                                    <component :is="item.icon" class="w-5 h-5" />
+                                </div>
+                                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    {{ item.status }}
+                                </span>
+                            </div>
+
+                            <h4 class="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{{ item.name }}</h4>
+                            <p class="text-xs font-semibold text-slate-500 mb-2">{{ item.tagline }}</p>
+                            <p class="text-xs text-slate-600 leading-relaxed">{{ item.description }}</p>
+                        </div>
+
+                        <div class="pt-5 mt-4 border-t border-slate-100 flex items-center justify-between">
+                            <a v-if="item.external" :href="item.url" target="_blank" class="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
+                                Launch Platform
+                                <ChevronRightIcon class="w-4 h-4" />
+                            </a>
+                            <Link v-else :href="item.url" class="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
+                                Access Module
+                                <ChevronRightIcon class="w-4 h-4" />
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 </template>

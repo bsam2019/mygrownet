@@ -15,7 +15,7 @@ interface UserRow {
     pending_earnings: number;
     commissions: number;
     profit_shares: number;
-    bonus_points: number;
+    monthly_points: number;
     loyalty_points: number;
     bonus_balance: number;
     created_at: string;

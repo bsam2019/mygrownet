@@ -109,6 +109,62 @@ class ClientController extends Controller
     }
 
     /**
+     * Seed sample agency clients for testing.
+     */
+    public function seedSample(Request $request)
+    {
+        $agencyId = $request->user()->currentAgency->id ?? null;
+
+        $samples = [
+            [
+                'client_code' => 'CLI-1001',
+                'client_type' => 'business',
+                'client_name' => 'Kondwani Tembo',
+                'company_name' => 'Lusaka Tech Hub',
+                'email' => 'kondwani@lusakatech.com',
+                'phone' => '+260 977 123456',
+                'city' => 'Lusaka',
+                'country' => 'Zambia',
+                'status' => 'active',
+                'onboarding_status' => 'completed',
+            ],
+            [
+                'client_code' => 'CLI-1002',
+                'client_type' => 'business',
+                'client_name' => 'Mutale Banda',
+                'company_name' => 'Copperbelt Logistics',
+                'email' => 'm.banda@cblogistics.zm',
+                'phone' => '+260 966 987654',
+                'city' => 'Ndola',
+                'country' => 'Zambia',
+                'status' => 'active',
+                'onboarding_status' => 'completed',
+            ],
+            [
+                'client_code' => 'CLI-1003',
+                'client_type' => 'individual',
+                'client_name' => 'Thandiwe Phiri',
+                'company_name' => 'Phiri Advisory Services',
+                'email' => 'thandiwe@phiri.zm',
+                'phone' => '+260 955 456789',
+                'city' => 'Livingstone',
+                'country' => 'Zambia',
+                'status' => 'lead',
+                'onboarding_status' => 'pending',
+            ],
+        ];
+
+        foreach ($samples as $sample) {
+            AgencyClient::updateOrCreate(
+                ['email' => $sample['email']],
+                array_merge($sample, ['agency_id' => $agencyId])
+            );
+        }
+
+        return back()->with('success', 'Sample agency clients seeded successfully!');
+    }
+
+    /**
      * Show create client form
      */
     public function create(): Response

@@ -1,350 +1,291 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 text-white font-sans selection:bg-indigo-500/30 pb-12">
-        <Head title="GrowBuilder Domain Admin" />
+    <AdminLayout title="GrowBuilder Admin Control Center">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
-        <!-- Header -->
-        <header class="sticky top-0 z-10 backdrop-blur-md bg-slate-950/50 border-b border-white/10 px-6 py-4">
-            <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <!-- Page Header -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-5">
                 <div>
-                    <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">
-                        GrowBuilder Domain Admin
+                    <h1 class="text-2xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
+                        GrowBuilder Platform Control Center
+                        <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                            Sites & AI Builder
+                        </span>
                     </h1>
-                    <p class="text-sm text-slate-400 mt-1">
-                        Overview of sites, AI usage, and infrastructure.
-                    </p>
+                    <p class="text-sm text-gray-500 mt-1">Aggregate administrative control across all GrowBuilder tenant sites, SSG deployments, AI usage, and agencies.</p>
                 </div>
-                <div>
-                    <a href="https://mygrownet.com/workspace/" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors text-sm font-medium">
-                        <ArrowLeftIcon class="w-4 h-4" />
-                        Back to Workspace
+                <div class="flex items-center gap-3">
+                    <a href="/admin/dashboard"
+                        class="px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-base">arrow_back</span>
+                        Back to Command Center
                     </a>
                 </div>
             </div>
-        </header>
 
-        <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
-            <!-- Stats Grid -->
-            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Sites -->
-                <div class="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-5 relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-slate-400 text-sm font-medium">Sites (Total / Active)</p>
-                            <div class="mt-2 flex items-baseline gap-2">
-                                <span class="text-3xl font-bold text-white">{{ stats.total_sites }}</span>
-                                <span class="text-sm text-emerald-400">/ {{ stats.active_sites }}</span>
-                            </div>
-                        </div>
-                        <div class="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
-                            <GlobeAltIcon class="w-6 h-6" />
-                        </div>
-                    </div>
-                    <div class="mt-4 text-xs text-slate-400 flex items-center gap-1">
-                        <ArrowTrendingUpIcon class="w-4 h-4 text-emerald-400" />
-                        <span class="text-emerald-400 font-medium">+{{ stats.new_sites_this_month }}</span> new this month
-                    </div>
-                </div>
-
-                <!-- Infrastructure -->
-                <div class="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-5 relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-slate-400 text-sm font-medium">Infrastructure</p>
-                            <div class="mt-2 flex items-baseline gap-2">
-                                <span class="text-3xl font-bold text-white">{{ stats.custom_domains }}</span>
-                            </div>
-                        </div>
-                        <div class="w-12 h-12 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/20">
-                            <ServerStackIcon class="w-6 h-6" />
-                        </div>
-                    </div>
-                    <div class="mt-4 text-xs text-slate-400 flex items-center gap-1">
-                        <span>{{ stats.custom_domains }} custom domains &bull; {{ stats.ssg_enabled_sites }} SSG enabled</span>
-                    </div>
-                </div>
-
-                <!-- Profiles -->
-                <div class="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-5 relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-slate-400 text-sm font-medium">Business Profiles</p>
-                            <div class="mt-2 flex items-baseline gap-2">
-                                <span class="text-3xl font-bold text-white">{{ stats.business_profiles }}</span>
-                            </div>
-                        </div>
-                        <div class="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 border border-amber-500/20">
-                            <BriefcaseIcon class="w-6 h-6" />
-                        </div>
-                    </div>
-                    <div class="mt-4 text-xs text-slate-400 flex items-center gap-1">
-                        <span>{{ stats.profiles_with_tpin }} profiles with TPIN</span>
-                    </div>
-                </div>
-
-                <!-- Commerce -->
-                <div class="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-5 relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-slate-400 text-sm font-medium">Commerce</p>
-                            <div class="mt-2 flex flex-col gap-1">
-                                <span class="text-2xl font-bold text-white">{{ formatCurrency(stats.total_revenue_zmw) }}</span>
-                            </div>
-                        </div>
-                        <div class="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
-                            <ShoppingCartIcon class="w-6 h-6" />
-                        </div>
-                    </div>
-                    <div class="mt-4 text-xs text-slate-400 flex items-center gap-1">
-                        <span>{{ stats.total_orders.toLocaleString() }} total orders</span>
-                    </div>
-                </div>
-            </section>
-
-            <!-- AI & Infrastructure Row -->
-            <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-5 flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400 border border-purple-500/30">
-                        <SparklesIcon class="w-6 h-6" />
-                    </div>
+            <!-- Top Metric Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center justify-between">
                     <div>
-                        <p class="text-xs text-slate-400">AI Usage (This Month)</p>
-                        <p class="text-xl font-semibold text-white">{{ stats.ai_usage_this_month.toLocaleString() }} <span class="text-xs font-normal text-slate-500">tokens</span></p>
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Tenant Sites</p>
+                        <p class="text-2xl font-extrabold text-gray-900 mt-1">{{ formatNumber(stats?.total_sites || 0) }}</p>
+                        <p class="text-xs text-indigo-600 font-medium mt-1">+{{ stats?.new_sites_this_month || 0 }} new this month</p>
+                    </div>
+                    <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                        <span class="material-symbols-outlined text-2xl">web</span>
                     </div>
                 </div>
 
-                <div class="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-5 flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 border border-blue-500/30">
-                        <RocketLaunchIcon class="w-6 h-6" />
-                    </div>
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center justify-between">
                     <div>
-                        <p class="text-xs text-slate-400">SSG Deployments (This Month)</p>
-                        <p class="text-xl font-semibold text-white">{{ stats.ssg_deployments_month.toLocaleString() }} <span class="text-xs font-normal text-slate-500">builds</span></p>
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Active Published Sites</p>
+                        <p class="text-2xl font-extrabold text-gray-900 mt-1">{{ formatNumber(stats?.active_sites || 0) }}</p>
+                        <p class="text-xs text-emerald-600 font-medium mt-1">{{ stats?.custom_domains || 0 }} custom domains</p>
+                    </div>
+                    <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                        <span class="material-symbols-outlined text-2xl">language</span>
                     </div>
                 </div>
 
-                <div class="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-5 flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-xl bg-pink-500/20 flex items-center justify-center text-pink-400 border border-pink-500/30">
-                        <QrCodeIcon class="w-6 h-6" />
-                    </div>
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center justify-between">
                     <div>
-                        <p class="text-xs text-slate-400">QR Code Bridge</p>
-                        <p class="text-xl font-semibold text-white">{{ stats.qr_codes_total.toLocaleString() }} <span class="text-xs font-normal text-slate-500">codes</span> <span class="text-slate-600">/</span> {{ stats.qr_scans_total.toLocaleString() }} <span class="text-xs font-normal text-slate-500">scans</span></p>
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">SSG Deployments</p>
+                        <p class="text-2xl font-extrabold text-gray-900 mt-1">{{ formatNumber(stats?.ssg_deployments_month || 0) }}</p>
+                        <p class="text-xs text-purple-600 font-medium mt-1">{{ stats?.ssg_enabled_sites || 0 }} SSG enabled</p>
+                    </div>
+                    <div class="p-3 bg-purple-50 text-purple-600 rounded-xl">
+                        <span class="material-symbols-outlined text-2xl">rocket_launch</span>
                     </div>
                 </div>
-            </section>
 
-            <!-- Two Column Layout -->
-            <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Left: Top Sites -->
-                <div class="lg:col-span-2 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm overflow-hidden flex flex-col">
-                    <div class="p-5 border-b border-white/10 flex items-center justify-between">
-                        <h2 class="text-lg font-medium text-white flex items-center gap-2">
-                            <StarIcon class="w-5 h-5 text-indigo-400" />
-                            Top Sites
-                        </h2>
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">AI Generation Tokens</p>
+                        <p class="text-2xl font-extrabold text-gray-900 mt-1">{{ formatNumber(stats?.ai_usage_this_month || 0) }}</p>
+                        <p class="text-xs text-amber-600 font-medium mt-1">Tokens this month</p>
                     </div>
-                    <div class="overflow-x-auto flex-1">
-                        <table class="w-full text-left text-sm whitespace-nowrap">
-                            <thead>
-                                <tr class="bg-white/5 text-slate-400 text-xs uppercase tracking-wider">
-                                    <th class="px-5 py-3 font-medium">Site & Business</th>
-                                    <th class="px-5 py-3 font-medium">Location & Industry</th>
-                                    <th class="px-5 py-3 font-medium">Status / Stack</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-white/10">
-                                <tr v-for="site in topSites" :key="site.id" class="hover:bg-white/5 transition-colors">
-                                    <td class="px-5 py-4">
-                                        <div class="font-medium text-white">{{ site.name }}</div>
-                                        <div class="text-slate-400 text-xs mt-0.5">{{ site.business_name }}</div>
-                                        <div class="text-indigo-300 text-xs mt-0.5">
-                                            {{ site.custom_domain || site.subdomain + '.mygrownet.com' }}
-                                        </div>
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        <div class="text-slate-300">{{ site.city || '—' }}</div>
-                                        <div class="text-slate-400 text-xs mt-0.5">{{ site.industry || '—' }}</div>
-                                    </td>
-                                    <td class="px-5 py-4 flex flex-col items-start gap-2">
+                    <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                        <span class="material-symbols-outlined text-2xl">auto_awesome</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GrowBuilder Quick Management Hub Navigation -->
+            <div class="bg-gradient-to-r from-slate-900 to-indigo-950 rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-base font-bold flex items-center gap-2">
+                        <span class="material-symbols-outlined text-indigo-400">admin_panel_settings</span>
+                        GrowBuilder Administrative Quick Hub
+                    </h2>
+                    <p class="text-xs text-slate-300 mt-0.5">Manage agency accounts, client portfolios, billing services, and subscription plans directly.</p>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <a href="/growbuilder/agency/dashboard" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">business</span>
+                        Agency Hub
+                    </a>
+                    <a href="/growbuilder/clients" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">group</span>
+                        Clients
+                    </a>
+                    <a href="/growbuilder/services" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">design_services</span>
+                        Services
+                    </a>
+                    <a href="/growbuilder/invoices" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">receipt_long</span>
+                        Invoices
+                    </a>
+                    <a href="/admin/module-subscriptions" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">loyalty</span>
+                        Pricing Tiers
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- Interactive Sites Management Directory (2 cols) -->
+                <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
+                        <h3 class="text-sm font-bold text-gray-900 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-indigo-600">web</span>
+                            Tenant Sites Management Directory
+                        </h3>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">search</span>
+                            <input
+                                v-model="siteSearchQuery"
+                                type="text"
+                                placeholder="Filter sites…"
+                                class="pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-48 bg-white"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="divide-y divide-gray-50">
+                        <template v-if="filteredSites && filteredSites.length > 0">
+                            <div v-for="site in filteredSites" :key="site.id" class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="font-bold text-sm text-gray-900 truncate">{{ site.name }}</span>
                                         <span :class="[
-                                            'px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border',
-                                            site.status === 'published' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-500/20 text-slate-400 border-slate-500/30'
+                                            'px-2 py-0.5 rounded text-[10px] font-semibold capitalize',
+                                            site.status === 'published' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
                                         ]">
                                             {{ site.status }}
                                         </span>
-                                        <span v-if="site.ssg_enabled" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center gap-1">
-                                            <BoltIcon class="w-3 h-3" /> SSG
+                                        <span v-if="site.ssg_enabled" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-50 text-purple-700">
+                                            SSG
                                         </span>
-                                    </td>
-                                </tr>
-                                <tr v-if="topSites.length === 0">
-                                    <td colspan="3" class="px-5 py-8 text-center text-slate-500">
-                                        No sites found.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                    </div>
+                                    <p class="text-xs text-gray-500 truncate mt-0.5">
+                                        {{ site.subdomain }}.mygrownet.com
+                                        <span v-if="site.custom_domain" class="text-indigo-600 font-medium">({{ site.custom_domain }})</span>
+                                        <span class="text-gray-400 ml-2">• {{ site.user_email }}</span>
+                                    </p>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="flex items-center gap-2 flex-shrink-0">
+                                    <button
+                                        @click="triggerSSG(site.id)"
+                                        title="Trigger manual SSG rebuild"
+                                        class="px-2.5 py-1 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-medium transition-colors flex items-center gap-1"
+                                    >
+                                        <span class="material-symbols-outlined text-xs">rocket</span>
+                                        Build SSG
+                                    </button>
+                                    <button
+                                        @click="toggleStatus(site.id)"
+                                        :class="[
+                                            'px-2.5 py-1 rounded-lg border text-xs font-medium transition-colors flex items-center gap-1',
+                                            site.status === 'published'
+                                                ? 'border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-800'
+                                                : 'border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800'
+                                        ]"
+                                    >
+                                        <span class="material-symbols-outlined text-xs">{{ site.status === 'published' ? 'block' : 'check_circle' }}</span>
+                                        {{ site.status === 'published' ? 'Suspend' : 'Publish' }}
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div v-else class="py-10 text-center text-gray-400 text-xs">
+                            No sites match "{{ siteSearchQuery }}".
+                        </div>
                     </div>
                 </div>
 
-                <!-- Right: Recent SSG Deployments -->
-                <div class="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm overflow-hidden flex flex-col">
-                    <div class="p-5 border-b border-white/10">
-                        <h2 class="text-lg font-medium text-white flex items-center gap-2">
-                            <CloudArrowUpIcon class="w-5 h-5 text-cyan-400" />
-                            Recent Deployments
-                        </h2>
-                    </div>
-                    <div class="p-2 flex-1 overflow-y-auto max-h-[400px]">
-                        <div v-for="dep in recentDeployments" :key="dep.id" class="p-4 mb-2 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 transition-colors">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="font-medium text-sm text-white truncate pr-2">{{ dep.site_name }}</div>
-                                <span :class="[
-                                    'px-2 py-1 rounded-md text-[10px] font-semibold capitalize whitespace-nowrap',
-                                    dep.status === 'deployed' ? 'bg-emerald-500/20 text-emerald-400' :
-                                    dep.status === 'failed' ? 'bg-red-500/20 text-red-400' :
-                                    'bg-amber-500/20 text-amber-400 flex items-center gap-1'
-                                ]">
-                                    <ArrowPathIcon v-if="dep.status === 'building' || dep.status === 'pending'" class="w-3 h-3 animate-spin" />
-                                    {{ dep.status }}
-                                </span>
-                            </div>
-                            <div class="text-xs text-slate-400 flex items-center justify-between mb-2">
-                                <span>{{ dep.subdomain }}.mygrownet.com</span>
-                                <span>{{ (dep.build_duration_ms / 1000).toFixed(1) }}s</span>
-                            </div>
-                            <div class="text-[11px] text-slate-500 flex items-center justify-between border-t border-white/5 pt-2">
-                                <span>by {{ dep.triggered_by }}</span>
-                                <span>{{ formatRelativeTime(dep.deployed_at) }}</span>
-                            </div>
-                        </div>
-                        <div v-if="recentDeployments.length === 0" class="p-5 text-center text-sm text-slate-500">
-                            No recent deployments.
-                        </div>
-                    </div>
-                </div>
-            </section>
+                <!-- Right Column: Compliance & Deployments -->
+                <div class="space-y-6">
 
-            <!-- Recent Activity Timeline -->
-            <section class="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-6">
-                <h2 class="text-lg font-medium text-white mb-6 flex items-center gap-2">
-                    <ClockIcon class="w-5 h-5 text-slate-400" />
-                    Recent Activity
-                </h2>
-                <div class="relative pl-5 border-l border-white/10 space-y-8 ml-2">
-                    <div v-for="(item, index) in recentActivity" :key="index" class="relative">
-                        <div class="absolute -left-[25px] top-1 w-2.5 h-2.5 rounded-full bg-indigo-500 ring-4 ring-slate-900"></div>
-                        <div class="text-sm">
-                            <span class="font-semibold text-white mr-2">{{ item.type }}</span>
-                            <span class="text-slate-300">{{ item.description }}</span>
+                    <!-- Compliance & Business Profile Summary -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                            <h3 class="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-emerald-600">verified</span>
+                                Compliance & Tax Records
+                            </h3>
                         </div>
-                        <div class="text-xs text-slate-500 mt-1.5">{{ formatRelativeTime(item.time) }}</div>
+                        <div class="space-y-3 text-xs">
+                            <div class="flex justify-between py-1 border-b border-gray-50">
+                                <span class="text-gray-500">Business Profiles Registered:</span>
+                                <span class="font-bold text-gray-900">{{ stats?.business_profiles || 0 }}</span>
+                            </div>
+                            <div class="flex justify-between py-1 border-b border-gray-50">
+                                <span class="text-gray-500">TPIN Registered Businesses:</span>
+                                <span class="font-bold text-emerald-600">{{ stats?.profiles_with_tpin || 0 }}</span>
+                            </div>
+                            <div class="flex justify-between py-1 border-b border-gray-50">
+                                <span class="text-gray-500">QR Codes Generated:</span>
+                                <span class="font-bold text-gray-900">{{ stats?.qr_codes_total || 0 }}</span>
+                            </div>
+                            <div class="flex justify-between py-1">
+                                <span class="text-gray-500">QR Code Scan Count:</span>
+                                <span class="font-bold text-indigo-600">{{ stats?.qr_scans_total || 0 }} scans</span>
+                            </div>
+                        </div>
                     </div>
-                    <div v-if="recentActivity.length === 0" class="text-sm text-slate-500">
-                        No recent activity.
+
+                    <!-- SSG Deployments -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                            <h3 class="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-purple-600">cloud_upload</span>
+                                Recent SSG Deployments
+                            </h3>
+                        </div>
+                        <div class="space-y-3">
+                            <template v-if="recentDeployments && recentDeployments.length > 0">
+                                <div v-for="dep in recentDeployments" :key="dep.id" class="flex items-center justify-between text-xs">
+                                    <div>
+                                        <div class="font-semibold text-gray-900">{{ dep.site_name || dep.subdomain }}</div>
+                                        <div class="text-[10px] text-gray-400">{{ dep.deployed_at }}</div>
+                                    </div>
+                                    <span :class="[
+                                        'px-2 py-0.5 rounded text-[10px] font-bold capitalize',
+                                        dep.status === 'deployed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                                    ]">
+                                        {{ dep.status }}
+                                    </span>
+                                </div>
+                            </template>
+                            <div v-else class="text-xs text-gray-400 text-center py-4">
+                                No recent deployments.
+                            </div>
+                        </div>
                     </div>
+
                 </div>
-            </section>
-        </main>
-    </div>
+
+            </div>
+
+        </div>
+    </AdminLayout>
 </template>
 
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3'
-import {
-    ArrowLeftIcon,
-    GlobeAltIcon,
-    ArrowTrendingUpIcon,
-    ServerStackIcon,
-    BriefcaseIcon,
-    ShoppingCartIcon,
-    SparklesIcon,
-    RocketLaunchIcon,
-    QrCodeIcon,
-    StarIcon,
-    BoltIcon,
-    CloudArrowUpIcon,
-    ArrowPathIcon,
-    ClockIcon
-} from '@heroicons/vue/24/outline'
-
-interface Stats {
-    total_sites: number;
-    active_sites: number;
-    custom_domains: number;
-    ssg_enabled_sites: number;
-    total_pages: number;
-    total_orders: number;
-    total_revenue_zmw: number;
-    ai_usage_this_month: number;
-    business_profiles: number;
-    profiles_with_tpin: number;
-    ssg_deployments_month: number;
-    qr_codes_total: number;
-    qr_scans_total: number;
-    page_revisions_saved: number;
-    new_sites_this_month: number;
-}
-
-interface TopSite {
-    id: number;
-    name: string;
-    subdomain: string;
-    custom_domain: string | null;
-    status: string;
-    ssg_enabled: boolean;
-    template_version: number;
-    created_at: string;
-    user_email: string;
-    business_name: string;
-    industry: string;
-    city: string;
-}
-
-interface SsgDeployment {
-    id: number;
-    status: 'pending' | 'building' | 'deployed' | 'failed';
-    build_duration_ms: number;
-    triggered_by: string;
-    deployed_at: string;
-    site_name: string;
-    subdomain: string;
-}
-
-interface ActivityItem {
-    type: string;
-    description: string;
-    time: string;
-}
+import { computed, ref } from 'vue';
+import { router } from '@inertiajs/vue3';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps<{
-    stats: Stats;
-    topSites: TopSite[];
-    recentDeployments: SsgDeployment[];
-    recentActivity: ActivityItem[];
-}>()
+    stats?: any;
+    topSites?: any[];
+    recentDeployments?: any[];
+    recentActivity?: any[];
+}>();
 
-const formatCurrency = (amount: number) => {
-    return `K ${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
+const siteSearchQuery = ref('');
 
-const formatRelativeTime = (dateString: string) => {
-    if (!dateString) return ''
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-    
-    if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`
-    const diffInMinutes = Math.floor(diffInSeconds / 60)
-    if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`
-    const diffInHours = Math.floor(diffInMinutes / 60)
-    if (diffInHours < 24) return `${diffInHours} hours ago`
-    const diffInDays = Math.floor(diffInHours / 24)
-    if (diffInDays === 1) return `1 day ago`
-    return `${diffInDays} days ago`
-}
+const filteredSites = computed(() => {
+    let sites = props.topSites ?? [];
+    if (siteSearchQuery.value.trim()) {
+        const q = siteSearchQuery.value.toLowerCase();
+        sites = sites.filter(s =>
+            s.name?.toLowerCase().includes(q) ||
+            s.subdomain?.toLowerCase().includes(q) ||
+            s.user_email?.toLowerCase().includes(q) ||
+            s.business_name?.toLowerCase().includes(q)
+        );
+    }
+    return sites;
+});
+
+const toggleStatus = (id: number) => {
+    router.post(route('growbuilder.admin.sites.toggle-status', id), {}, {
+        preserveScroll: true
+    });
+};
+
+const triggerSSG = (id: number) => {
+    router.post(route('growbuilder.admin.sites.trigger-ssg', id), {}, {
+        preserveScroll: true
+    });
+};
+
+const formatNumber = (num: number) => new Intl.NumberFormat().format(Math.round(num || 0));
 </script>

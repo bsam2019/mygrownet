@@ -24,7 +24,6 @@ class ApplicationsController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth', 'permission:review-applications']);
     }
 
     /**

@@ -14,7 +14,6 @@ class ReferralController extends Controller
     public function __construct(ReferralService $referralService)
     {
         $this->referralService = $referralService;
-        $this->middleware('admin');
     }
 
     public function stats()

@@ -211,4 +211,10 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI', '/auth/google/callback'),
     ],
 
+    // Cloudflare Stream Platform Video Engine
+    'cloudflare_stream' => [
+        'account_id' => env('CLOUDFLARE_STREAM_ACCOUNT_ID', env('CLOUDFLARE_ACCOUNT_ID')),
+        'api_token' => env('CLOUDFLARE_STREAM_API_TOKEN', env('CLOUDFLARE_API_TOKEN')),
+        'customer_code' => env('CLOUDFLARE_STREAM_CUSTOMER_CODE'),
+    ],
 ];

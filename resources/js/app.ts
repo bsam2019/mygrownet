@@ -11,10 +11,14 @@ registerModuleSW('/sw.js', 'MyGrowNet');
 // Only include pages that are actually needed for the main app
 // Module-specific pages are handled by their own entry points (app-*.ts files)
 const pageGlobs: Record<string, () => Promise<DefineComponent>> = {
-    ...import.meta.glob<DefineComponent>('./pages/*.vue'), // Root level pages (Welcome, About, Contact, etc.)
-    ...import.meta.glob<DefineComponent>('./pages/Workspace/**/*.vue'), // Workspace/Platform Core
-    ...import.meta.glob<DefineComponent>('./pages/Auth/**/*.vue'), // Authentication
-    ...import.meta.glob<DefineComponent>('./pages/Apps/**/*.vue'), // App catalog
+    ...import.meta.glob<DefineComponent>('./pages/*.vue'), // Root level pages
+    ...import.meta.glob<DefineComponent>('./pages/Admin/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./Pages/Admin/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/GrowBuilder/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./Pages/GrowBuilder/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Workspace/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Auth/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Apps/**/*.vue'),
     
     // Core Platform pages (NOT modules with their own entry points)
     ...import.meta.glob<DefineComponent>('./pages/QuickInvoice/**/*.vue'), // Quick Invoice (no dedicated module)

@@ -15,13 +15,18 @@ interface ProfitShare { id: number; amount: number; status: string; distribution
 interface PointTx { id: number; source: string; lp_amount: number; bp_amount: number; description: string; created_at: string; }
 interface Transaction { id: number; transaction_type: string; amount: number; status: string; description: string; created_at: string; }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     user: UserSummary;
-    commissions: Commission[];
-    profitShares: ProfitShare[];
-    pointTransactions: PointTx[];
-    transactions: Transaction[];
-}>();
+    commissions?: Commission[];
+    profitShares?: ProfitShare[];
+    pointTransactions?: PointTx[];
+    transactions?: Transaction[];
+}>(), {
+    commissions: () => [],
+    profitShares: () => [],
+    pointTransactions: () => [],
+    transactions: () => [],
+});
 
 const adjustAmount = ref(0);
 const adjustReason = ref('');
@@ -38,7 +43,7 @@ const submitAdjust = () => {
     });
 };
 
-const formatCurrency = (value: number) => `K${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const formatCurrency = (value?: number | null) => `K${(value ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const activeTab = ref<'commissions' | 'profits' | 'points' | 'transactions'>('commissions');
 </script>

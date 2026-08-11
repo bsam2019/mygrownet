@@ -16,7 +16,7 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <span class="text-xs font-medium text-gray-500">{{ currentDate }}</span>
-                    <a href="/admin/applications"
+                    <a href="/admin/module-subscriptions"
                         class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition-colors flex items-center gap-1.5">
                         <span class="material-symbols-outlined text-base">apps</span>
                         Manage Catalog

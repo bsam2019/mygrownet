@@ -70,6 +70,106 @@
       
       <!-- HOME TAB -->
       <div v-show="activeTab === 'home'" class="space-y-6">
+
+        <!-- Content-First Learning & Engagement Hub Hero Card (Section 21 Spec) -->
+        <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 rounded-2xl p-5 text-white shadow-xl border border-white/10 relative overflow-hidden">
+          <div class="absolute -right-8 -bottom-8 w-48 h-48 bg-indigo-500/10 rounded-full blur-2xl"></div>
+          <div class="relative space-y-4">
+            <div>
+              <div class="flex items-center gap-2 text-xs font-semibold text-indigo-300 uppercase tracking-wider">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                MyGrowNet Member Engagement Hub
+              </div>
+              <h2 class="text-base sm:text-lg font-extrabold text-white mt-1">
+                {{ timeBasedGreeting }}, {{ user?.name?.split(' ')[0] || 'Member' }} — continue your development journey.
+              </h2>
+            </div>
+
+            <!-- Content Entry Shortcuts -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+              <button @click="activeTab = 'learning'" class="flex items-center gap-2.5 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 transition-all text-left group">
+                <div class="p-2 rounded-lg bg-indigo-500/30 text-indigo-300 group-hover:scale-105 transition-transform">
+                  <BookOpenIcon class="h-5 w-5" />
+                </div>
+                <div>
+                  <span class="block text-xs font-bold text-white">Learning</span>
+                  <span class="block text-[10px] text-slate-300">Courses & Modules</span>
+                </div>
+              </button>
+
+              <button @click="activeTab = 'workshops'" class="flex items-center gap-2.5 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 transition-all text-left group">
+                <div class="p-2 rounded-lg bg-emerald-500/30 text-emerald-300 group-hover:scale-105 transition-transform">
+                  <AcademicCapIcon class="h-5 w-5" />
+                </div>
+                <div>
+                  <span class="block text-xs font-bold text-white">Workshops</span>
+                  <span class="block text-[10px] text-slate-300">Live & Regional</span>
+                </div>
+              </button>
+
+              <a href="https://growstream.mygrownet.com" target="_blank" class="flex items-center gap-2.5 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 transition-all text-left group">
+                <div class="p-2 rounded-lg bg-purple-500/30 text-purple-300 group-hover:scale-105 transition-transform">
+                  <PlayIcon class="h-5 w-5" />
+                </div>
+                <div>
+                  <span class="block text-xs font-bold text-white">GrowStream</span>
+                  <span class="block text-[10px] text-slate-300">Watch Content</span>
+                </div>
+              </a>
+
+              <a href="https://growmusic.mygrownet.com" target="_blank" class="flex items-center gap-2.5 p-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 transition-all text-left group">
+                <div class="p-2 rounded-lg bg-rose-500/30 text-rose-300 group-hover:scale-105 transition-transform">
+                  <MusicalNoteIcon class="h-5 w-5" />
+                </div>
+                <div>
+                  <span class="block text-xs font-bold text-white">GrowMusic</span>
+                  <span class="block text-[10px] text-slate-300">Listen Audio</span>
+                </div>
+              </a>
+            </div>
+
+            <!-- Two-Gate Progression Progress Breakdown (Section 18 & 21 Spec) -->
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3 mt-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                  <SparklesIcon class="h-4 w-4 text-emerald-400" />
+                  Education Level: <span class="text-emerald-400 ml-1">{{ currentTier || 'Level 1: Starter' }}</span>
+                </span>
+                <span class="text-[11px] font-mono bg-white/10 px-2 py-0.5 rounded text-indigo-200">
+                  {{ pointsData?.lifetime_points || 0 }} PB • {{ pointsData?.bonus_points || 0 }} MP
+                </span>
+              </div>
+
+              <!-- Gate Progress Bars -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <!-- Gate 1: Position Gate (PB Points) -->
+                <div class="space-y-1">
+                  <div class="flex justify-between text-[11px] text-slate-300">
+                    <span>Position Gate (PB Points)</span>
+                    <span class="font-bold text-emerald-400">{{ pointsData?.lifetime_points || 0 }} / 2,500 PB</span>
+                  </div>
+                  <div class="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                    <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-2 rounded-full transition-all duration-500"
+                      :style="{ width: `${Math.min(100, ((pointsData?.lifetime_points || 0) / 2500) * 100)}%` }"></div>
+                  </div>
+                </div>
+
+                <!-- Gate 2: Education & Workshop Gate -->
+                <div class="space-y-1">
+                  <div class="flex justify-between text-[11px] text-slate-300">
+                    <span>Education & Assessment Gate</span>
+                    <span class="font-bold text-purple-300">Level 1 Active</span>
+                  </div>
+                  <div class="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                    <div class="bg-gradient-to-r from-purple-500 to-indigo-400 h-2 rounded-full transition-all duration-500"
+                      :style="{ width: '100%' }"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
         <!-- Starter Kit Banner (if not purchased) -->
         <div
           v-if="!user?.has_starter_kit"

@@ -84,6 +84,7 @@ const userManagementNavItems: NavItem[] = [
 const growNetNavItems: NavItem[] = [
     // Core
     { title: 'Dashboard', href: safeRoute('admin.grownet.dashboard'), icon: LayoutGrid },
+    { title: 'Education & Workshops', href: safeRoute('admin.grownet.education.index'), icon: BookOpen },
     { title: 'Earnings Management', href: safeRoute('admin.grownet.earnings'), icon: DollarSign },
 
     // Network / MLM
@@ -126,19 +127,19 @@ const financeNavItems: NavItem[] = [
     { title: 'Profit & Loss', href: safeRoute('admin.profit-loss.index'), icon: TrendingUp },
     { title: 'Budget Management', href: safeRoute('admin.budget.index'), icon: ChartPieIcon, badge: 'CMS' },
     
-    // CMS Expense Management Integration
+    // BMS Expense Management Integration
     { 
         title: 'Record Expense', 
-        href: safeRoute('cms.expenses.index'), 
+        href: safeRoute('bms.expenses.index'), 
         icon: PlusCircleIcon,
-        badge: 'CMS',
+        badge: 'BMS',
         external: true
     },
     { 
         title: 'Manage Expenses', 
-        href: safeRoute('cms.expenses.index'), 
+        href: safeRoute('bms.expenses.index'), 
         icon: ReceiptRefundIcon,
-        badge: 'CMS',
+        badge: 'BMS',
         external: true
     },
     
@@ -226,11 +227,16 @@ const quickInvoiceNavItems: NavItem[] = [
 ];
 
 const reportsNavItems: NavItem[] = [
-    { title: 'Points Analytics', href: safeRoute('admin.analytics.points'), icon: Target },
-    { title: 'Matrix Analytics', href: safeRoute('admin.analytics.matrix'), icon: LayoutGrid },
-    { title: 'Member Analytics', href: safeRoute('admin.analytics.members'), icon: Users },
-    { title: 'Financial Reports', href: safeRoute('admin.analytics.financial'), icon: DollarSign },
-    { title: 'System Analytics', href: safeRoute('admin.analytics.system'), icon: Activity },
+    // Platform-wide financial governance
+    { title: 'Financial Reports', href: safeRoute('admin.financial.v2.dashboard'), icon: ChartBarIcon },
+    { title: 'Profit & Loss', href: safeRoute('admin.profit-loss.index'), icon: TrendingUp },
+    { title: 'Receipts', href: safeRoute('admin.receipts.index'), icon: FileText },
+    { title: 'Withdrawals', href: safeRoute('admin.withdrawals.index'), icon: Activity },
+    // Platform-wide activity
+    { title: 'Transaction Log', href: safeRoute('admin.transactions.index'), icon: DollarSign },
+    { title: 'Activity Log', href: safeRoute('admin.activity.index'), icon: Activity },
+    // Module-level usage overview
+    { title: 'Module Subscriptions', href: safeRoute('admin.module-subscriptions.index'), icon: CreditCard },
 ];
 
 const employeeNavItems: NavItem[] = [
@@ -258,7 +264,6 @@ const systemNavItems: NavItem[] = [
     { title: 'Announcements', href: safeRoute('admin.announcements.index'), icon: Bell },
     { title: 'Module Management', href: safeRoute('admin.modules.index'), icon: Settings },
     { title: 'Module Subscriptions', href: safeRoute('admin.module-subscriptions.index'), icon: CreditCard },
-    { title: 'GrowSuite Companies', href: safeRoute('admin.cms-companies.index'), icon: Building2 },
     { title: 'Roles', href: safeRoute('admin.role-management.roles.index'), icon: Shield },
     { title: 'Permissions', href: safeRoute('admin.role-management.permissions.index'), icon: Key },
     { title: 'User Roles', href: safeRoute('admin.role-management.users.index'), icon: Users },
@@ -275,7 +280,7 @@ const moduleAdminHubs = [
     { title: 'GrowFinance (Accounting)', href: '/admin/financial/v2/dashboard', icon: DollarSign },
     { title: 'Employee & HR', href: '/employee/delegated', icon: Users },
     { title: 'BMS (Construction & HR)', href: '/admin/employees', icon: Building2 },
-    { title: 'BizDocs (Companies)', href: '/admin/cms-companies', icon: FileText },
+    { title: 'BizDocs (Companies)', href: '/admin/bms-companies', icon: FileText },
     // Module-level admin entry points
     { title: 'GrowBuilder (Sites & AI)', href: '/growbuilder/admin', icon: Globe, badge: 'Module' },
     { title: 'StockFlow POS & Inventory', href: '/stockflow-admin', icon: Store, badge: 'Own Auth' },
@@ -572,7 +577,7 @@ onMounted(() => {
                     >
                         <div class="flex items-center">
                             <Users class="h-5 w-5" />
-                            <span v-show="!isCollapsed || isMobile" class="ml-3">User Management</span>
+                            <span v-show="!isCollapsed || isMobile" class="ml-3">User & Identity</span>
                         </div>
                         <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
                             :class="{ 'rotate-180': showSubmenu.userManagement }" />
@@ -591,359 +596,6 @@ onMounted(() => {
                             <span class="ml-3">{{ item.title }}</span>
                         </Link>
                     </div>
-                </div>
-
-                <!-- GrowNet Section -->
-                <div class="pt-2">
-                    <button @click="toggleSubmenu('growNet')"
-                        :class="[
-                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
-                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
-                            'text-gray-700 dark:text-gray-300'
-                        ]"
-                        @mouseenter="showItemTooltip($event, 'GrowNet')"
-                        @mouseleave="hideTooltip"
-                    >
-                        <div class="flex items-center">
-                            <LayoutGrid class="h-5 w-5" />
-                            <span v-show="!isCollapsed || isMobile" class="ml-3">GrowNet</span>
-                        </div>
-                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
-                            :class="{ 'rotate-180': showSubmenu.growNet }" />
-                    </button>
-
-                    <div v-if="showSubmenu.growNet" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
-                        <Link v-for="item in growNetNavItems" :key="item.title"
-                            :href="item.href"
-                            :class="[
-                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
-                                'hover:bg-gray-100 dark:hover:bg-gray-800',
-                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
-                            ]"
-                        >
-                            <component :is="item.icon" class="h-4 w-4" />
-                            <span class="ml-3">{{ item.title }}</span>
-                        </Link>
-                    </div>
-                </div>
-
-                <!-- Finance Section -->
-                <div class="pt-2">
-                    <button @click="toggleSubmenu('finance')"
-                        :class="[
-                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
-                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
-                            'text-gray-700 dark:text-gray-300'
-                        ]"
-                        @mouseenter="showItemTooltip($event, 'Finance')"
-                        @mouseleave="hideTooltip"
-                    >
-                        <div class="flex items-center">
-                            <DollarSign class="h-5 w-5" />
-                            <span v-show="!isCollapsed || isMobile" class="ml-3">Finance</span>
-                        </div>
-                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
-                            :class="{ 'rotate-180': showSubmenu.finance }" />
-                    </button>
-
-                    <div v-if="showSubmenu.finance" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
-                        <Link v-for="item in financeNavItems" :key="item.title"
-                            :href="item.href"
-                            :class="[
-                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
-                                'hover:bg-gray-100 dark:hover:bg-gray-800',
-                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
-                            ]"
-                        >
-                            <component :is="item.icon" class="h-4 w-4" />
-                            <span class="ml-3">{{ item.title }}</span>
-                        </Link>
-                    </div>
-                </div>
-
-                <!-- Investor Relations Section -->
-                <div class="pt-2">
-                    <button @click="toggleSubmenu('investorRelations')"
-                        :class="[
-                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
-                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
-                            'text-gray-700 dark:text-gray-300'
-                        ]"
-                        @mouseenter="showItemTooltip($event, 'Investor Relations')"
-                        @mouseleave="hideTooltip"
-                    >
-                        <div class="flex items-center">
-                            <TrendingUp class="h-5 w-5" />
-                            <span v-show="!isCollapsed || isMobile" class="ml-3">Investor Relations</span>
-                        </div>
-                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
-                            :class="{ 'rotate-180': showSubmenu.investorRelations }" />
-                    </button>
-
-                    <div v-if="showSubmenu.investorRelations" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
-                        <Link v-for="item in investorRelationsNavItems" :key="item.title"
-                            :href="item.href"
-                            :class="[
-                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
-                                'hover:bg-gray-100 dark:hover:bg-gray-800',
-                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
-                            ]"
-                        >
-                            <component :is="item.icon" class="h-4 w-4" />
-                            <span class="ml-3">{{ item.title }}</span>
-                        </Link>
-                    </div>
-                </div>
-
-                <!-- Venture Builder Section (only if module enabled) -->
-                <div v-if="isModuleEnabled('venture_builder')" class="pt-2">
-                    <button @click="toggleSubmenu('ventureBuilder')"
-                        :class="[
-                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
-                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
-                            'text-gray-700 dark:text-gray-300'
-                        ]"
-                        @mouseenter="showItemTooltip($event, 'Venture Builder')"
-                        @mouseleave="hideTooltip"
-                    >
-                        <div class="flex items-center">
-                            <Briefcase class="h-5 w-5" />
-                            <span v-show="!isCollapsed || isMobile" class="ml-3">Venture Builder</span>
-                        </div>
-                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
-                            :class="{ 'rotate-180': showSubmenu.ventureBuilder }" />
-                    </button>
-
-                    <div v-if="showSubmenu.ventureBuilder" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
-                        <Link v-for="item in ventureBuilderNavItems" :key="item.title"
-                            :href="item.href"
-                            :class="[
-                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
-                                'hover:bg-gray-100 dark:hover:bg-gray-800',
-                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
-                            ]"
-                        >
-                            <component :is="item.icon" class="h-4 w-4" />
-                            <span class="ml-3">{{ item.title }}</span>
-                        </Link>
-                    </div>
-                </div>
-
-                <!-- Business Growth Fund Section -->
-                <div class="pt-2">
-                    <button @click="toggleSubmenu('bgf')"
-                        :class="[
-                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
-                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
-                            'text-gray-700 dark:text-gray-300'
-                        ]"
-                        @mouseenter="showItemTooltip($event, 'Growth Fund')"
-                        @mouseleave="hideTooltip"
-                    >
-                        <div class="flex items-center">
-                            <TrendingUp class="h-5 w-5" />
-                            <span v-show="!isCollapsed || isMobile" class="ml-3">Growth Fund</span>
-                        </div>
-                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
-                            :class="{ 'rotate-180': showSubmenu.bgf }" />
-                    </button>
-
-                    <div v-if="showSubmenu.bgf" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
-                        <Link v-for="item in bgfNavItems" :key="item.title"
-                            :href="item.href"
-                            :class="[
-                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
-                                'hover:bg-gray-100 dark:hover:bg-gray-800',
-                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
-                            ]"
-                        >
-                            <component :is="item.icon" class="h-4 w-4" />
-                            <span class="ml-3">{{ item.title }}</span>
-                        </Link>
-                    </div>
-                </div>
-
-                <!-- GrowBuilder Section -->
-                <div class="pt-2">
-                    <button @click="toggleSubmenu('growBuilder')"
-                        :class="[
-                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
-                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
-                            'text-gray-700 dark:text-gray-300'
-                        ]"
-                        @mouseenter="showItemTooltip($event, 'GrowBuilder')"
-                        @mouseleave="hideTooltip"
-                    >
-                        <div class="flex items-center">
-                            <Globe class="h-5 w-5" />
-                            <span v-show="!isCollapsed || isMobile" class="ml-3">GrowBuilder</span>
-                        </div>
-                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
-                            :class="{ 'rotate-180': showSubmenu.growBuilder }" />
-                    </button>
-
-                    <div v-if="showSubmenu.growBuilder" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
-                        <Link v-for="item in growBuilderNavItems" :key="item.title"
-                            :href="item.href"
-                            :class="[
-                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
-                                'hover:bg-gray-100 dark:hover:bg-gray-800',
-                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
-                            ]"
-                        >
-                            <component :is="item.icon" class="h-4 w-4" />
-                            <span class="ml-3">{{ item.title }}</span>
-                        </Link>
-                    </div>
-                </div>
-
-                <!-- GrowBackup Section -->
-                <div class="pt-2">
-                    <button @click="toggleSubmenu('growBackup')"
-                        :class="[
-                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
-                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
-                            'text-gray-700 dark:text-gray-300'
-                        ]"
-                        @mouseenter="showItemTooltip($event, 'GrowBackup')"
-                        @mouseleave="hideTooltip"
-                    >
-                        <div class="flex items-center">
-                            <Cloud class="h-5 w-5" />
-                            <span v-show="!isCollapsed || isMobile" class="ml-3">GrowBackup</span>
-                        </div>
-                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
-                            :class="{ 'rotate-180': showSubmenu.growBackup }" />
-                    </button>
-
-                    <div v-if="showSubmenu.growBackup" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
-                        <Link v-for="item in growBackupNavItems" :key="item.title"
-                            :href="item.href"
-                            :class="[
-                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
-                                'hover:bg-gray-100 dark:hover:bg-gray-800',
-                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
-                            ]"
-                        >
-                            <component :is="item.icon" class="h-4 w-4" />
-                            <span class="ml-3">{{ item.title }}</span>
-                        </Link>
-                    </div>
-                </div>
-
-                <!-- GrowStream Section -->
-                <div class="pt-2">
-                    <button @click="toggleSubmenu('growStream')"
-                        :class="[
-                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
-                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
-                            'text-gray-700 dark:text-gray-300'
-                        ]"
-                        @mouseenter="showItemTooltip($event, 'GrowStream')"
-                        @mouseleave="hideTooltip"
-                    >
-                        <div class="flex items-center">
-                            <VideoIcon class="h-5 w-5" />
-                            <span v-show="!isCollapsed || isMobile" class="ml-3">GrowStream</span>
-                        </div>
-                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
-                            :class="{ 'rotate-180': showSubmenu.growStream }" />
-                    </button>
-
-                    <div v-if="showSubmenu.growStream" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
-                        <Link v-for="item in growStreamNavItems" :key="item.title"
-                            :href="item.href"
-                            :class="[
-                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
-                                'hover:bg-gray-100 dark:hover:bg-gray-800',
-                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
-                            ]"
-                        >
-                            <component :is="item.icon" class="h-4 w-4" />
-                            <span class="ml-3">{{ item.title }}</span>
-                        </Link>
-                    </div>
-                </div>
-
-                <!-- BizBoost Section -->
-                <div class="pt-2">
-                    <button @click="toggleSubmenu('bizBoost')"
-                        :class="[
-                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
-                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
-                            'text-gray-700 dark:text-gray-300'
-                        ]"
-                        @mouseenter="showItemTooltip($event, 'BizBoost')"
-                        @mouseleave="hideTooltip"
-                    >
-                        <div class="flex items-center">
-                            <SparklesIcon class="h-5 w-5" />
-                            <span v-show="!isCollapsed || isMobile" class="ml-3">BizBoost</span>
-                        </div>
-                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
-                            :class="{ 'rotate-180': showSubmenu.bizBoost }" />
-                    </button>
-
-                    <div v-if="showSubmenu.bizBoost" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
-                        <Link v-for="item in bizBoostNavItems" :key="item.title"
-                            :href="item.href"
-                            :class="[
-                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
-                                'hover:bg-gray-100 dark:hover:bg-gray-800',
-                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
-                            ]"
-                        >
-                            <component :is="item.icon" class="h-4 w-4" />
-                            <span class="ml-3">{{ item.title }}</span>
-                        </Link>
-                    </div>
-                </div>
-
-                <!-- Quick Invoice Section -->
-                <div class="pt-2">
-                    <button @click="toggleSubmenu('quickInvoice')"
-                        class="w-full flex items-center justify-between px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 rounded-lg"
-                        @mouseenter="showItemTooltip($event, 'Quick Invoice')"
-                        @mouseleave="hideTooltip"
-                    >
-                        <div class="flex items-center">
-                            <FileText class="h-5 w-5" />
-                            <span v-show="!isCollapsed || isMobile" class="ml-3">Quick Invoice</span>
-                        </div>
-                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
-                            :class="{ 'rotate-180': showSubmenu.quickInvoice }" />
-                    </button>
-
-                    <div v-if="showSubmenu.quickInvoice" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
-                        <Link v-for="item in quickInvoiceNavItems" :key="item.title"
-                            :href="item.href"
-                            :class="[
-                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
-                                'hover:bg-gray-100 dark:hover:bg-gray-800',
-                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
-                            ]"
-                        >
-                            <component :is="item.icon" class="h-4 w-4" />
-                            <span class="ml-3">{{ item.title }}</span>
-                        </Link>
-                    </div>
-                </div>
-
-                <!-- Marketplace Section -->
-                <div class="pt-2">
-                    <Link
-                        :href="safeRoute('admin.marketplace.dashboard')"
-                        :class="[
-                            'w-full flex items-center px-4 py-2 transition-colors duration-200',
-                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
-                            isUrlActive('/admin/marketplace') ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600' : 'text-gray-700 dark:text-gray-300'
-                        ]"
-                        @mouseenter="showItemTooltip($event, 'Marketplace')"
-                        @mouseleave="hideTooltip"
-                    >
-                        <ShoppingBag class="h-5 w-5" />
-                        <span v-show="!isCollapsed || isMobile" class="ml-3">Marketplace</span>
-                    </Link>
                 </div>
 
                 <!-- Reports Section -->

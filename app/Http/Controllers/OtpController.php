@@ -17,7 +17,6 @@ class OtpController extends Controller
     public function __construct(OtpService $otpService)
     {
         $this->otpService = $otpService;
-        $this->middleware('auth');
     }
 
     public function generate(GenerateOtpRequest $request): JsonResponse

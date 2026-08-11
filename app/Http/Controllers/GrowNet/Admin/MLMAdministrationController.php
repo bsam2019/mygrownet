@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\GrowNet\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Domain\GrowNet\Services\MLMAdministrationService;
@@ -12,9 +12,7 @@ class MLMAdministrationController extends Controller
 {
     public function __construct(
         protected MLMAdministrationService $mlmAdminService
-    ) {
-        $this->middleware(['auth', 'admin']);
-    }
+    ) {}
 
     /**
      * Display the MLM administration dashboard

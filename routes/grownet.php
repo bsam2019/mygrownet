@@ -47,6 +47,21 @@ $registerGrowNetSubdomainRoutes = function (string $prefix, string $namePrefix, 
         Route::get('/gifts/history', [GiftController::class, 'getHistory'])->name('gifts.history');
         Route::get('/network/level/{level}/members', [GiftController::class, 'getLevelMembers'])->name('network.level.members');
 
+        // ── My Learning Hub & Learn/Practise/Prove Lessons ──
+        Route::get('/learning', [\App\Http\Controllers\GrowNet\LearningHubController::class, 'index'])->name('learning.index');
+        Route::get('/learning/lesson/{id}', [\App\Http\Controllers\GrowNet\LearningHubController::class, 'showLesson'])->name('learning.lesson');
+        Route::post('/learning/lesson/{id}/learn', [\App\Http\Controllers\GrowNet\LearningHubController::class, 'markLearnCompleted'])->name('learning.lesson.learn');
+        Route::post('/learning/lesson/{id}/practise', [\App\Http\Controllers\GrowNet\LearningHubController::class, 'submitPractice'])->name('learning.lesson.practise');
+        Route::post('/learning/lesson/{id}/prove', [\App\Http\Controllers\GrowNet\LearningHubController::class, 'submitProve'])->name('learning.lesson.prove');
+
+        // ── Skills Training & Demand Explorer ──
+        Route::get('/skills-training', [\App\Http\Controllers\GrowNet\SkillsController::class, 'index'])->name('skills.index');
+        Route::post('/skills-training/express-interest', [\App\Http\Controllers\GrowNet\SkillsController::class, 'expressInterest'])->name('skills.express-interest');
+
+        // ── Level 5 & Level 6 Business Funding Assessment Portal ──
+        Route::get('/funding-eligibility', [\App\Http\Controllers\GrowNet\BusinessFundingController::class, 'index'])->name('funding.index');
+        Route::post('/funding-eligibility/apply', [\App\Http\Controllers\GrowNet\BusinessFundingController::class, 'apply'])->name('funding.apply');
+
         Route::get('/library', [\App\Domain\GrowNet\Presentation\Http\Controllers\Web\LibraryResourceController::class, 'index'])->name('library.index');
         Route::get('/library/{resource}', [LibraryController::class, 'show'])->name('library.show');
         Route::post('/library/{resource}/complete', [LibraryController::class, 'markCompleted'])->name('library.complete');
@@ -170,12 +185,12 @@ Route::domain('grownet.mygrownet.com')->group(function () use ($registerGrowNetS
         return Inertia::render('GrowNet/Welcome');
     })->name('grownet.sub.welcome');
 
-    // GrowNet product hub (landing dashboard)
+    // GrowNet Product Hub (landing page / product platform)
     Route::get('/dashboard', [DashboardController::class, 'productHub'])
         ->middleware(['identity.redirect:grownet', 'auth'])
         ->name('grownet.sub.dashboard');
 
-    // GrowNet network & referral dashboard
+    // GrowNet Network & Referral Management System
     Route::get('/network', [DashboardController::class, 'mobileIndex'])
         ->middleware(['identity.redirect:grownet', 'auth'])
         ->name('grownet.sub.network');

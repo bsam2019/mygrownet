@@ -98,6 +98,12 @@ Route::middleware(['web', 'auth'])->post('/set-user-currency', function(\Illumin
     ]);
 })->name('api.set-user-currency');
 
+// GrowNet in-platform activation (supports web auth & sanctum)
+Route::middleware(['web', 'auth'])->prefix('grownet')->name('api.grownet.')->group(function () {
+    Route::post('/activate', [\App\Http\Controllers\Api\GrowNetActivationController::class, 'activate'])->name('activate');
+    Route::get('/status', [\App\Http\Controllers\Api\GrowNetActivationController::class, 'status'])->name('status');
+});
+
 // Crypto Payment Routes
 Route::middleware(['web', 'auth'])->prefix('payments/crypto')->name('payments.crypto.')->group(function () {
     Route::post('/create', [\App\Http\Controllers\CryptoPaymentController::class, 'create'])->name('create');

@@ -17,9 +17,7 @@ class SecurityController extends Controller
     public function __construct(
         private FraudDetectionService $fraudDetectionService,
         private AuditService $auditService
-    ) {
-        $this->middleware('can:manage-security');
-    }
+    ) {}
 
     /**
      * Security dashboard

@@ -12,9 +12,7 @@ class AssetManagementController extends Controller
 {
     public function __construct(
         protected AssetManagementAdministrationService $assetAdminService
-    ) {
-        $this->middleware(['auth', 'admin']);
-    }
+    ) {}
 
     /**
      * Display the asset management dashboard

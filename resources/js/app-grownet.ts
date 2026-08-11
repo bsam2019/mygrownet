@@ -5,31 +5,24 @@ import { bootInertia, registerModuleSW } from './modules/createApp';
 
 registerModuleSW('/grownet-sw.js', 'GrowNet');
 
+const growNetGlobs = {
+    ...import.meta.glob<DefineComponent>('./pages/GrowNet/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./Pages/GrowNet/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Membership/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./Pages/Membership/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Learning/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./Pages/Learning/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Skills/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./Pages/Skills/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Workspace/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./Pages/Workspace/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./pages/Apps/**/*.vue'),
+    ...import.meta.glob<DefineComponent>('./Pages/Apps/**/*.vue'),
+};
+
 bootInertia('GrowNet', (name: string) => {
     return resolvePageComponent(
-        `./pages/${name}.vue`,
-        import.meta.glob<DefineComponent>([
-            './pages/GrowNet/**/*.vue',
-            './pages/Membership/**/*.vue',
-            './pages/Matrix/**/*.vue',
-            './pages/Performance/**/*.vue',
-            './pages/Opportunities/**/*.vue',
-            './pages/Tools/**/*.vue',
-            './pages/ReferralProgram/**/*.vue',
-            './pages/Referrals/**/*.vue',
-            './pages/Reports/**/*.vue',
-            './pages/Training/**/*.vue',
-            './pages/Learning/**/*.vue',
-            './pages/StarterKit/**/*.vue',
-            './pages/StarterKits/**/*.vue',
-            './pages/Commission/**/*.vue',
-            './pages/CompensationPlan/**/*.vue',
-            './pages/LoyaltyReward/**/*.vue',
-            './pages/Rewards/**/*.vue',
-            './pages/Points/**/*.vue',
-            './pages/Wallet/**/*.vue',
-            './pages/Workspace/**/*.vue',
-            './pages/Apps/**/*.vue', // App catalog
-        ])
-    );
+        `./Pages/${name}.vue`,
+        growNetGlobs
+    ).catch(() => resolvePageComponent(`./pages/${name}.vue`, growNetGlobs));
 });

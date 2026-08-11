@@ -55,10 +55,9 @@ $registerGrowBuilderAuthRoutes = function (string $prefix, string $namePrefix) {
         Route::get('/test-controller', [SiteController::class, 'test'])->name('test-controller');
 
         // ── Module-level Domain Admin entry point (§21 Gap Analysis — Tier 2 Domain Admin) ──
-        // Served at /admin within the module subdomain or main-domain prefix.
-        // Same pattern as BizBoost's /admin route — controller lives in Admin namespace
-        // but is accessed through the module's own authenticated route group.
         Route::get('/admin', [\App\Http\Controllers\Admin\GrowBuilderAdminController::class, 'dashboard'])->name('admin');
+        Route::post('/admin/sites/{id}/toggle-status', [\App\Http\Controllers\Admin\GrowBuilderAdminController::class, 'toggleSiteStatus'])->name('admin.sites.toggle-status');
+        Route::post('/admin/sites/{id}/trigger-ssg', [\App\Http\Controllers\Admin\GrowBuilderAdminController::class, 'triggerSsgBuild'])->name('admin.sites.trigger-ssg');
 
         // Agency Management
         Route::prefix('agency')->name('agency.')->group(function () {
@@ -70,6 +69,7 @@ $registerGrowBuilderAuthRoutes = function (string $prefix, string $namePrefix) {
         // Client Management
         Route::prefix('clients')->name('clients.')->group(function () {
             Route::get('/', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'index'])->name('index');
+            Route::post('/seed-sample', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'seedSample'])->name('seed-sample');
             Route::get('/create', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'store'])->name('store');
             Route::get('/{id}', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'show'])->name('show');

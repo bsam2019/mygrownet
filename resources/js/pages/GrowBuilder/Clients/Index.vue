@@ -267,13 +267,21 @@
                 <div v-else class="text-center py-12">
                     <UsersIcon class="mx-auto h-12 w-12 text-gray-400" aria-hidden="true" />
                     <h3 class="mt-2 text-sm font-medium text-gray-900">No clients found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Get started by adding your first client.</p>
-                    <div class="mt-6">
+                    <p class="mt-1 text-sm text-gray-500">
+                        No agency clients exist yet. You need an active agency to manage clients, or seed sample data to get started.
+                    </p>
+                    <div class="mt-6 flex items-center justify-center gap-3 flex-wrap">
                         <Link :href="route('growbuilder.clients.create')"
                               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                             <PlusIcon class="h-5 w-5 mr-2" aria-hidden="true" />
                             Add Client
                         </Link>
+                        <button
+                            @click="seedSampleClients"
+                            class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm"
+                        >
+                            Seed Sample Clients
+                        </button>
                     </div>
                 </div>
             </div>
@@ -380,5 +388,12 @@ const debouncedSearch = debounce(() => {
 function toggleTagFilter(tagId: number) {
     tagFilter.value = tagFilter.value === tagId ? null : tagId;
     applyFilters();
+}
+
+function seedSampleClients() {
+    router.post(route('growbuilder.clients.seed-sample'), {}, {
+        preserveScroll: true,
+        onSuccess: () => applyFilters(),
+    });
 }
 </script>

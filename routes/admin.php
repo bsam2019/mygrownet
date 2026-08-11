@@ -286,34 +286,42 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
 
     // MLM Administration Routes
     Route::prefix('mlm')->name('mlm.')->group(function () {
-        Route::get('/dashboard', [App\Http\Controllers\Admin\MLMAdministrationController::class, 'index'])->name('dashboard');
-        Route::get('/commissions', [App\Http\Controllers\Admin\MLMAdministrationController::class, 'commissions'])->name('commissions');
-        Route::get('/network-analysis', [App\Http\Controllers\Admin\MLMAdministrationController::class, 'networkAnalysis'])->name('network-analysis');
-        Route::get('/performance-monitoring', [App\Http\Controllers\Admin\MLMAdministrationController::class, 'performanceMonitoring'])->name('performance-monitoring');
+        Route::get('/dashboard', [\App\Http\Controllers\GrowNet\Admin\MLMAdministrationController::class, 'index'])->name('dashboard');
+        Route::get('/commissions', [\App\Http\Controllers\GrowNet\Admin\MLMAdministrationController::class, 'commissions'])->name('commissions');
+        Route::get('/network-analysis', [\App\Http\Controllers\GrowNet\Admin\MLMAdministrationController::class, 'networkAnalysis'])->name('network-analysis');
+        Route::get('/performance-monitoring', [\App\Http\Controllers\GrowNet\Admin\MLMAdministrationController::class, 'performanceMonitoring'])->name('performance-monitoring');
         
         // AJAX endpoints
-        Route::post('/adjust-commission', [App\Http\Controllers\Admin\MLMAdministrationController::class, 'adjustCommission'])->name('adjust-commission');
-        Route::post('/process-pending-commissions', [App\Http\Controllers\Admin\MLMAdministrationController::class, 'processPendingCommissions'])->name('process-pending-commissions');
-        Route::post('/recalculate-network', [App\Http\Controllers\Admin\MLMAdministrationController::class, 'recalculateNetwork'])->name('recalculate-network');
-        Route::get('/commission-details/{commission}', [App\Http\Controllers\Admin\MLMAdministrationController::class, 'getCommissionDetails'])->name('commission-details');
-        Route::get('/dashboard-data', [App\Http\Controllers\Admin\MLMAdministrationController::class, 'getDashboardData'])->name('dashboard-data');
+        Route::post('/adjust-commission', [\App\Http\Controllers\GrowNet\Admin\MLMAdministrationController::class, 'adjustCommission'])->name('adjust-commission');
+        Route::post('/process-pending-commissions', [\App\Http\Controllers\GrowNet\Admin\MLMAdministrationController::class, 'processPendingCommissions'])->name('process-pending-commissions');
+        Route::post('/recalculate-network', [\App\Http\Controllers\GrowNet\Admin\MLMAdministrationController::class, 'recalculateNetwork'])->name('recalculate-network');
+        Route::get('/commission-details/{commission}', [\App\Http\Controllers\GrowNet\Admin\MLMAdministrationController::class, 'getCommissionDetails'])->name('commission-details');
+        Route::get('/dashboard-data', [\App\Http\Controllers\GrowNet\Admin\MLMAdministrationController::class, 'getDashboardData'])->name('dashboard-data');
         
         // Export endpoints
-        Route::get('/export-commissions', [App\Http\Controllers\Admin\MLMAdministrationController::class, 'exportCommissions'])->name('export-commissions');
-        Route::get('/export-network-analysis', [App\Http\Controllers\Admin\MLMAdministrationController::class, 'exportNetworkAnalysis'])->name('export-network-analysis');
+        Route::get('/export-commissions', [\App\Http\Controllers\GrowNet\Admin\MLMAdministrationController::class, 'exportCommissions'])->name('export-commissions');
+        Route::get('/export-network-analysis', [\App\Http\Controllers\GrowNet\Admin\MLMAdministrationController::class, 'exportNetworkAnalysis'])->name('export-network-analysis');
     });
 
     // GrowNet Administration Routes
     Route::prefix('grownet')->name('grownet.')->group(function () {
-        Route::get('/dashboard', [\App\Http\Controllers\Admin\GrowNet\GrowNetDashboardController::class, 'index'])->name('dashboard');
-        Route::get('/earnings', [\App\Http\Controllers\Admin\GrowNet\EarningsManagementController::class, 'index'])->name('earnings');
-        Route::get('/earnings/{user}', [\App\Http\Controllers\Admin\GrowNet\EarningsManagementController::class, 'show'])->name('earnings.show');
-        Route::post('/earnings/{user}/adjust-bonus', [\App\Http\Controllers\Admin\GrowNet\EarningsManagementController::class, 'adjustBonusBalance'])->name('earnings.adjust-bonus');
+        Route::get('/dashboard', [\App\Http\Controllers\GrowNet\Admin\GrowNetDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/earnings', [\App\Http\Controllers\GrowNet\Admin\EarningsManagementController::class, 'index'])->name('earnings');
+        Route::get('/earnings/{user}', [\App\Http\Controllers\GrowNet\Admin\EarningsManagementController::class, 'show'])->name('earnings.show');
+        Route::post('/earnings/{user}/adjust-bonus', [\App\Http\Controllers\GrowNet\Admin\EarningsManagementController::class, 'adjustBonusBalance'])->name('earnings.adjust-bonus');
 
         // Education Program Management
-        Route::get('/education', [\App\Http\Controllers\Admin\GrowNet\EducationAdminController::class, 'index'])->name('education.index');
-        Route::post('/education/curriculum', [\App\Http\Controllers\Admin\GrowNet\EducationAdminController::class, 'storeCurriculum'])->name('education.curriculum.store');
-        Route::post('/education/grade/{id}', [\App\Http\Controllers\Admin\GrowNet\EducationAdminController::class, 'gradeSubmission'])->name('education.grade');
+        Route::get('/education', [\App\Http\Controllers\GrowNet\Admin\EducationAdminController::class, 'index'])->name('education.index');
+        Route::post('/education/curriculum', [\App\Http\Controllers\GrowNet\Admin\EducationAdminController::class, 'storeCurriculum'])->name('education.curriculum.store');
+        Route::post('/education/curriculum/tus-init', [\App\Http\Controllers\GrowNet\Admin\EducationAdminController::class, 'tusInit'])->name('education.curriculum.tus-init');
+        Route::post('/education/curriculum/{id}/update', [\App\Http\Controllers\GrowNet\Admin\EducationAdminController::class, 'updateCurriculum'])->name('education.curriculum.update');
+        Route::delete('/education/curriculum/{id}', [\App\Http\Controllers\GrowNet\Admin\EducationAdminController::class, 'deleteCurriculum'])->name('education.curriculum.delete');
+
+        Route::post('/education/workshop', [\App\Http\Controllers\GrowNet\Admin\EducationAdminController::class, 'storeWorkshop'])->name('education.workshop.store');
+        Route::post('/education/workshop/{id}/update', [\App\Http\Controllers\GrowNet\Admin\EducationAdminController::class, 'updateWorkshop'])->name('education.workshop.update');
+        Route::delete('/education/workshop/{id}', [\App\Http\Controllers\GrowNet\Admin\EducationAdminController::class, 'deleteWorkshop'])->name('education.workshop.delete');
+
+        Route::post('/education/grade/{id}', [\App\Http\Controllers\GrowNet\Admin\EducationAdminController::class, 'gradeSubmission'])->name('education.grade');
 
         // GrowMusic Subdomain Administration
         Route::get('/music', [\App\Http\Controllers\Admin\GrowMusic\GrowMusicAdminController::class, 'dashboard'])->name('music.dashboard');

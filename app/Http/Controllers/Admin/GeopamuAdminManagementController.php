@@ -12,7 +12,6 @@ class GeopamuAdminManagementController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('admin'); // Only MyGrowNet admins can access
     }
 
     public function index(): Response

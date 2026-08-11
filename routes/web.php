@@ -1147,15 +1147,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Note: Main /dashboard route now shows the Universal App Launcher (HomeHub)
     // Users can access the GrowNet dashboard directly via /grownet
     
-    // GrowNet - Product Hub (landing dashboard)
+    // GrowNet - Product Hub (landing page / product platform)
     Route::get('/grownet/dashboard', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'productHub'])
         ->middleware(['auth'])
         ->name('grownet.dashboard');
 
-    // GrowNet - Network & Referral Dashboard
+    // GrowNet - Network & Referral Management System
     Route::get('/grownet/network', [App\Http\Controllers\GrowNet\GrowNetDashboardController::class, 'mobileIndex'])
         ->middleware(['auth'])
         ->name('grownet.network');
+
+    // GrowNet - My Learning Hub & Lessons (main domain / 127.0.0.1 fallback)
+    Route::get('/grownet/learning', [\App\Http\Controllers\GrowNet\LearningHubController::class, 'index'])->middleware(['auth'])->name('grownet.learning.index');
+    Route::get('/grownet/learning/lesson/{id}', [\App\Http\Controllers\GrowNet\LearningHubController::class, 'showLesson'])->middleware(['auth'])->name('grownet.learning.lesson');
+    Route::post('/grownet/learning/lesson/{id}/learn', [\App\Http\Controllers\GrowNet\LearningHubController::class, 'markLearnCompleted'])->middleware(['auth'])->name('grownet.learning.lesson.learn');
+    Route::post('/grownet/learning/lesson/{id}/practise', [\App\Http\Controllers\GrowNet\LearningHubController::class, 'submitPractice'])->middleware(['auth'])->name('grownet.learning.lesson.practise');
+    Route::post('/grownet/learning/lesson/{id}/prove', [\App\Http\Controllers\GrowNet\LearningHubController::class, 'submitProve'])->middleware(['auth'])->name('grownet.learning.lesson.prove');
+
+    // GrowNet - Skills Training & Demand Explorer
+    Route::get('/grownet/skills-training', [\App\Http\Controllers\GrowNet\SkillsController::class, 'index'])->middleware(['auth'])->name('grownet.skills.index');
+    Route::post('/grownet/skills-training/express-interest', [\App\Http\Controllers\GrowNet\SkillsController::class, 'expressInterest'])->middleware(['auth'])->name('grownet.skills.express-interest');
+
+    // GrowNet - Level 5 & 6 Business Funding Assessment Portal
+    Route::get('/grownet/funding-eligibility', [\App\Http\Controllers\GrowNet\BusinessFundingController::class, 'index'])->middleware(['auth'])->name('grownet.funding.index');
+    Route::post('/grownet/funding-eligibility/apply', [\App\Http\Controllers\GrowNet\BusinessFundingController::class, 'apply'])->middleware(['auth'])->name('grownet.funding.apply');
     
     // Legacy /mygrownet routes (keep for backward compatibility)
     Route::prefix('mygrownet')->name('mygrownet.')->middleware(['auth'])->group(function () {

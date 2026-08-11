@@ -198,6 +198,7 @@ class User extends Authenticatable
         'block_reason',
         'blocked_at',
         'blocked_by',
+        'is_grownet_active',
         // PWA settings
         'pwa_default_app',
         // Wallet policy and rewards
@@ -2427,5 +2428,22 @@ class User extends Authenticatable
             'user_id',
             'customer_id'
         )->withPivot('company_id', 'is_active', 'last_login_at')->withTimestamps();
+    }
+
+    public function isGrowNetActive(): bool
+    {
+        return (bool) ($this->is_grownet_active ?? !empty($this->referral_code));
+    }
+
+    public function getPbPointsAttribute(): int
+    {
+        $pts = \DB::table('user_points')->where('user_id', $this->id)->value('lifetime_points');
+        return (int) ($pts ?? 0);
+    }
+
+    public function getMpPointsAttribute(): int
+    {
+        $pts = \DB::table('user_points')->where('user_id', $this->id)->value('monthly_points');
+        return (int) ($pts ?? 0);
     }
 }

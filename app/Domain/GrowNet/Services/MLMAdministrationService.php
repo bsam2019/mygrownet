@@ -389,7 +389,7 @@ class MLMAdministrationService
     {
         $current = ReferralCommission::where('created_at', '>=', $startDate)->sum('amount');
         $previous = ReferralCommission::whereBetween('created_at', [
-            $startDate->copy()->subPeriod($startDate->diffInDays(now())),
+            $startDate->copy()->subDays((int) $startDate->diffInDays(now())),
             $startDate
         ])->sum('amount');
         
