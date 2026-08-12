@@ -305,6 +305,9 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
 
     // GrowNet Administration Routes
     Route::prefix('grownet')->name('grownet.')->group(function () {
+        Route::get('/', function () {
+            return redirect()->route('admin.grownet.dashboard');
+        });
         Route::get('/dashboard', [\App\Http\Controllers\GrowNet\Admin\GrowNetDashboardController::class, 'index'])->name('dashboard');
         Route::get('/earnings', [\App\Http\Controllers\GrowNet\Admin\EarningsManagementController::class, 'index'])->name('earnings');
         Route::get('/earnings/{user}', [\App\Http\Controllers\GrowNet\Admin\EarningsManagementController::class, 'show'])->name('earnings.show');

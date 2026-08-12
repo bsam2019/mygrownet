@@ -13,24 +13,24 @@ NC='\033[0m' # No Color
 
 # Modules to build (module:memory_in_mb)
 MODULES=(
-    "main:1536"        # main module
-    "admin:1024"
-    "employee:1024"
-    "lifephus:1024"
-    "stockflow:1024"
-    "bizboost:1024"
-    "bizdocs:1024"
-    "grownet:1024"
-    "growbuilder:1024"
-    "growmart:1024"
-    "growstream:1024"
-    "growmusic:1024"
-    "zamstay:1024"
-    "bms:1024"
-    "primeedge:1024"
-    "venture:1024"
-    "growfinance:1024"
-    "marketplace:1024"
+    "main:768"        # main module
+    "admin:512"
+    "employee:512"
+    "lifephus:512"
+    "stockflow:512"
+    "bizboost:512"
+    "bizdocs:512"
+    "grownet:512"
+    "growbuilder:512"
+    "growmart:512"
+    "growstream:512"
+    "growmusic:512"
+    "zamstay:512"
+    "bms:512"
+    "primeedge:512"
+    "venture:512"
+    "growfinance:512"
+    "marketplace:512"
 )
 
 echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
